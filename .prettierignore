@@ -1,0 +1,7 @@
+./out
+./dist
+./.vscode
+./node_modules
+./package-lock.yaml
+./tsconfig.json
+./tsconfig.*.json
