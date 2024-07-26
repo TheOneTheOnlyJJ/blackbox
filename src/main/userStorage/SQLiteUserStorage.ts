@@ -41,7 +41,7 @@ export default class SQLiteUserStorage implements IUserStorage {
     console.log(`Journal mode: ${this.db.pragma("journal_mode", { simple: true }) as SQLiteJournalMode}.`);
     const SQLITE_VERSION: SQLiteVersion = this.db.prepare("SELECT sqlite_version() AS version").get() as SQLiteVersion;
     console.log(`SQLite version: ${SQLITE_VERSION.version}.`);
-    this.initialiseTables();
+    this.initialiseUsersTable();
     console.log("SQLite user storage ready.");
   }
 
@@ -103,7 +103,7 @@ export default class SQLiteUserStorage implements IUserStorage {
     return true;
   }
 
-  initialiseTables(): void {
+  private initialiseUsersTable(): void {
     const SELECT_USERS_TABLE_SQL = `SELECT name FROM sqlite_master WHERE type='table' AND name='users'`;
     const doesUsersTableExist: boolean = this.db.prepare(SELECT_USERS_TABLE_SQL).get() !== undefined;
     if (doesUsersTableExist) {
