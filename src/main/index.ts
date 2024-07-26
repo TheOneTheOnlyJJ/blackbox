@@ -4,15 +4,13 @@ import IUserStorage from "./userStorage/IUserStorage";
 import SQLiteUserStorage from "./userStorage/SQLiteUserStorage";
 import { join, resolve } from "node:path";
 
-/* eslint-disable @typescript-eslint/no-extraneous-class, @typescript-eslint/unbound-method */
-
 class App {
   private static instance: null | App = null;
 
-  private static mainWindow: null | BrowserWindow = null;
-  private static userStorage: null | IUserStorage = null;
+  private mainWindow: null | BrowserWindow = null;
+  private userStorage: null | IUserStorage = null;
 
-  private static readonly MAIN_WINDOW_CONSTRUCTOR_OPTIONS: BrowserWindowConstructorOptions = {
+  private readonly MAIN_WINDOW_CONSTRUCTOR_OPTIONS: BrowserWindowConstructorOptions = {
     width: 900,
     height: 670,
     show: false,
@@ -27,72 +25,106 @@ class App {
     }
   };
 
+  /* private constructor to prevent direct instantiation */
   private constructor() {
-    app.on("ready", App.onAppReady);
-    app.on("window-all-closed", App.onAppWindowAllClosed);
-    app.on("will-quit", App.onAppWillQuit);
+    console.log("Running App constructor. To start, run the run() function.");
   }
 
-  static run(): App {
-    if (!App.instance) {
+  public run(): void {
+    console.log("Running run() function, starting app.");
+    app.on("ready", () => {
+      this.onAppReady();
+    });
+    app.on("window-all-closed", () => {
+      this.onAppWindowAllClosed();
+    });
+    app.on("will-quit", () => {
+      this.onAppWillQuit();
+    });
+  }
+
+  public static getInstance(): App {
+    if (App.instance === null) {
       App.instance = new App();
     }
     return App.instance;
   }
 
-  static createMainWindow(): void {
-    App.mainWindow = new BrowserWindow(App.MAIN_WINDOW_CONSTRUCTOR_OPTIONS);
-    App.mainWindow.on("closed", App.onMainWindowClosed);
-    App.mainWindow.on("ready-to-show", App.onMainWindowReadyToShow);
-    App.mainWindow.webContents.on("did-finish-load", App.onMainWindowWebContentsDidFinishLoad);
-    App.mainWindow.webContents.on("did-fail-load", App.onMainWindowWebContentsDidFailLoad);
-    App.mainWindow.webContents.setWindowOpenHandler(App.mainWindowOpenHandler);
-
+  private createMainWindow(): void {
+    console.log("Creating main window.");
+    this.mainWindow = new BrowserWindow(this.MAIN_WINDOW_CONSTRUCTOR_OPTIONS);
+    console.log("Created main window.");
+    console.log("Registering main window event handlers.");
+    this.mainWindow.on("closed", () => {
+      this.onMainWindowClosed();
+    });
+    this.mainWindow.on("ready-to-show", () => {
+      this.onMainWindowReadyToShow();
+    });
+    this.mainWindow.webContents.on("did-finish-load", () => {
+      this.onMainWindowWebContentsDidFinishLoad();
+    });
+    this.mainWindow.webContents.on("did-fail-load", () => {
+      this.onMainWindowWebContentsDidFailLoad();
+    });
+    this.mainWindow.webContents.setWindowOpenHandler((details) => {
+      return this.mainWindowOpenHandler(details);
+    });
+    console.log("Registered main window event handlers.");
+    console.log("Choosing main window web contents source...");
     let isDevToolsShortcutRegistered = false;
     if (!app.isPackaged && process.env.ELECTRON_RENDERER_URL) {
-      void App.mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL);
-      isDevToolsShortcutRegistered = globalShortcut.register("CmdOrCtrl+F12", App.developerToolsGlobalShortcutCallback);
+      console.log(`Loading main window web contents from URL: ${process.env.ELECTRON_RENDERER_URL}.`);
+      void this.mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL);
+      isDevToolsShortcutRegistered = globalShortcut.register("CmdOrCtrl+F12", () => {
+        this.developerToolsGlobalShortcutCallback();
+      });
     } else {
-      void App.mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
+      const INDEX_HTML_FILE_PATH: string = join(__dirname, "../renderer/index.html");
+      console.log(`Loading main window web contents from file at path: ${INDEX_HTML_FILE_PATH}.`);
+      void this.mainWindow.loadFile(INDEX_HTML_FILE_PATH);
     }
     // Log dev tools shortcut registration
+    // TODO: Investigate this
+    const MODE: string = app.isPackaged ? "production" : "development" + " mode";
     if (isDevToolsShortcutRegistered) {
-      console.log("Developer tools shortcut registered in development mode.");
-    } else if (!app.isPackaged) {
-      console.log("Developer tools shortcut could not be registered in development mode.");
+      console.log(`Developer tools shortcut registered (${MODE}).`);
     } else {
-      console.log("Developer tools shortcut not registered in production mode.");
+      console.log(`Developer tools shortcut not registered (${MODE}).`);
     }
   }
 
-  static onMainWindowClosed(): void {
-    App.mainWindow = null;
+  private onMainWindowClosed(): void {
+    console.log("Main window closed.");
+    this.mainWindow = null;
   }
 
-  static onMainWindowReadyToShow(): void {
+  private onMainWindowReadyToShow(): void {
     console.log("Showing main window.");
-    App.mainWindow?.show();
+    this.mainWindow?.show();
   }
 
-  static onMainWindowWebContentsDidFinishLoad(): void {
-    console.log("Loaded main window web content.");
+  private onMainWindowWebContentsDidFinishLoad(): void {
+    console.log("Loaded main window web contents.");
   }
 
-  static onMainWindowWebContentsDidFailLoad(): void {
-    console.log("Could not load main window web content.");
+  private onMainWindowWebContentsDidFailLoad(): void {
+    console.log("Could not load main window web contents.");
   }
 
-  static developerToolsGlobalShortcutCallback(): void {
+  private developerToolsGlobalShortcutCallback(): void {
     console.log("Developer tools shortcut pressed.");
-    if (App.mainWindow !== null) {
-      console.log("Main window is not null. Opening developer tools.");
-      App.mainWindow.webContents.openDevTools({ mode: "detach" });
+    if (this.mainWindow !== null) {
+      console.log("Opening developer tools.");
+      this.mainWindow.webContents.openDevTools({ mode: "detach" });
+      console.log("Opened developer tools.");
     } else {
       console.log("Main window is null. No-op.");
     }
   }
 
-  static mainWindowOpenHandler(details: HandlerDetails): WindowOpenHandlerResponse {
+  private mainWindowOpenHandler(details: HandlerDetails): WindowOpenHandlerResponse {
+    console.log("Running main window open handler.");
     shell
       .openExternal(details.url)
       .then(() => {
@@ -105,45 +137,48 @@ class App {
     return { action: "deny" };
   }
 
-  static onAppReady(): void {
-    App.createMainWindow();
-    app.on("activate", App.onAppActivate);
-    ipcMain.on("new-user-storage", App.onIPCMainNewUserStorage);
+  private onAppReady(): void {
+    console.log("App ready.");
+    this.createMainWindow();
+    app.on("activate", () => {
+      this.onAppActivate();
+    });
+    ipcMain.on("new-user-storage", () => {
+      this.onIPCMainNewUserStorage();
+    });
   }
 
-  static onAppActivate(): void {
-    if (App.mainWindow === null) {
-      App.createMainWindow();
+  private onAppActivate(): void {
+    if (this.mainWindow === null) {
+      this.createMainWindow();
     }
   }
 
-  static onAppWindowAllClosed(): void {
+  private onAppWindowAllClosed(): void {
     if (process.platform !== "darwin") {
       app.quit();
     }
   }
 
-  static onAppWillQuit(): void {
+  private onAppWillQuit(): void {
     console.log("App will quit.");
     console.log("Unregistering all global shortcuts.");
     globalShortcut.unregisterAll();
     console.log("Unregistered all global shortcuts.");
     console.log("Checking for active user storage.");
-    if (App.userStorage !== null) {
+    if (this.userStorage !== null) {
       console.log("Found active user storage. Closing...");
-      App.userStorage.close();
+      this.userStorage.close();
       console.log("Closed user storage.");
     }
   }
 
-  static onIPCMainNewUserStorage(): void {
+  private onIPCMainNewUserStorage(): void {
     console.log("New user storage command received by main.");
     const DB_DIR_PATH: string = resolve(join(app.getAppPath(), "data"));
     const DB_FILE_NAME = "users.sqlite";
-    App.userStorage = new SQLiteUserStorage(DB_DIR_PATH, DB_FILE_NAME);
+    this.userStorage = new SQLiteUserStorage(DB_DIR_PATH, DB_FILE_NAME);
   }
 }
 
-/* eslint-enable @typescript-eslint/no-extraneous-class, @typescript-eslint/unbound-method */
-
-App.run();
+App.getInstance().run();
