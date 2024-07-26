@@ -1,6 +1,6 @@
 import { app, globalShortcut, BrowserWindow, ipcMain } from "electron/main";
 import { BrowserWindowConstructorOptions, HandlerDetails, nativeImage, shell, WindowOpenHandlerResponse } from "electron/common";
-import { IUserStorage } from "./userStorage/IUserStorage";
+import IUserStorage from "./userStorage/IUserStorage";
 import SQLiteUserStorage from "./userStorage/SQLiteUserStorage";
 import { join, resolve } from "node:path";
 

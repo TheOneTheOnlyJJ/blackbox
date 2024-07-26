@@ -1,9 +1,8 @@
-import { IUser, UserId } from "./../user/IUser";
-import { IUserStorage } from "./IUserStorage";
+import IUser, { UserId } from "./../user/IUser";
+import IUserStorage from "./IUserStorage";
 import DatabaseConstructor, { Database } from "better-sqlite3";
 import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { IUserStorageIPCInfo } from "./IUserStorageIPCInfo";
 
 type SQLiteJournalMode = string;
 
@@ -102,13 +101,6 @@ export default class SQLiteUserStorage implements IUserStorage {
     console.log("Closing SQLite user storage database.");
     this.db.close();
     return true;
-  }
-
-  getIPCInfo(): IUserStorageIPCInfo {
-    return {
-      storageType: this.storageType,
-      isLocal: this.isLocal()
-    };
   }
 
   initialiseTables(): void {

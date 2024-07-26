@@ -1,3 +1,3 @@
-export interface IDataStorage {
+export default interface IDataStorage {
   isLocal: boolean;
 }

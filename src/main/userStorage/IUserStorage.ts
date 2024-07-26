@@ -1,7 +1,6 @@
-import { IUser, UserId } from "../user/IUser";
-import { IUserStorageIPCInfo } from "./IUserStorageIPCInfo";
+import IUser, { UserId } from "../user/IUser";
 
-export interface IUserStorage {
+export default interface IUserStorage {
   isLocal: () => boolean;
   addUser: (user: IUser) => boolean;
   deleteUser: (userId: UserId) => boolean;
@@ -12,5 +11,4 @@ export interface IUserStorage {
   getUserCount: () => number;
   isIdValid: (id: UserId) => boolean;
   close: () => boolean;
-  getIPCInfo: () => IUserStorageIPCInfo;
 }
