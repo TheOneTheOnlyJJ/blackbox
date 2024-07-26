@@ -1,17 +1,12 @@
-import { FC } from "react";
+import { FC, useEffect } from "react";
 
 const App: FC = () => {
+  useEffect(() => {
+    window.api.newUserStorage();
+  }, []);
+
   return (
     <>
-      <button
-        onClick={() => {
-          console.log("Clicked button!");
-          window.api.newUserStorage();
-          console.log("Event sent!");
-        }}
-      >
-        New User Storage
-      </button>
       <div>Hello, Electron with React and TypeScript!</div>
     </>
   );
