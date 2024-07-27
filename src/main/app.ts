@@ -35,6 +35,7 @@ export default class App {
   // Private constructor to prevent direct instantiation
   private constructor() {
     let wasElectronLogInitialisedNow: boolean;
+    // Initialise electron-log only once per app lifecycle
     if (!App.isElectronLogInitialised) {
       App.initialiseElectronLog();
       App.isElectronLogInitialised = true;
@@ -42,7 +43,12 @@ export default class App {
     } else {
       wasElectronLogInitialisedNow = false;
     }
+    // Initialise scoped loggers
     this.bootstrapLogger = log.scope("main-bootstrap");
+    this.windowLogger = log.scope("main-window");
+    this.appLogger = log.scope("main-app");
+    this.userStorageLogger = log.scope("main-user-storage");
+    // These are here to make sure I'm not insane
     this.bootstrapLogger.info("Running App constructor.");
     if (wasElectronLogInitialisedNow) {
       this.bootstrapLogger.info("Electron-log initialised.");
@@ -50,9 +56,6 @@ export default class App {
       this.bootstrapLogger.info("Electron-log was already initialised."); // This should never run if the App class is a proper singleton
     }
     this.bootstrapLogger.info(`Using log file at path: ${log.transports.file.getFile().path}.`);
-    this.windowLogger = log.scope("main-window");
-    this.appLogger = log.scope("main-app");
-    this.userStorageLogger = log.scope("main-user-storage");
   }
 
   public run(): void {
@@ -81,7 +84,7 @@ export default class App {
     log.initialize();
     // Set log file path
     log.transports.file.resolvePathFn = () => {
-      return join(app.getAppPath(), "logs", "BlackBox.log");
+      return join(app.getAppPath(), "logs", "BlackBoxLogs.log");
     };
     // Override all console functions with electron-log functions
     Object.assign(console, log.functions);
@@ -119,7 +122,7 @@ export default class App {
         this.developerToolsGlobalShortcutCallback();
       });
     } else {
-      const INDEX_HTML_FILE_PATH: string = join(__dirname, "../renderer/index.html");
+      const INDEX_HTML_FILE_PATH: string = join(__dirname, "..", "renderer", "index.html");
       this.windowLogger.info(`Loading main window web contents from file at path: ${INDEX_HTML_FILE_PATH}.`);
       void this.mainWindow.loadFile(INDEX_HTML_FILE_PATH);
     }
