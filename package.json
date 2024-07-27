@@ -1,7 +1,7 @@
 {
   "name": "blackbox",
   "version": "1.0.0",
-  "main": "./out/main/index.js",
+  "main": "./out/main/main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "electron-vite preview",
@@ -14,7 +14,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "better-sqlite3": "^11.1.2"
+    "better-sqlite3": "^11.1.2",
+    "electron-log": "^5.1.7"
   },
   "devDependencies": {
     "@electron/rebuild": "^3.6.0",
