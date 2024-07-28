@@ -1,6 +1,6 @@
 export type UserId = string;
 
-export default interface IUser {
+export interface IUser {
   id: UserId;
   username: string;
   password: string;

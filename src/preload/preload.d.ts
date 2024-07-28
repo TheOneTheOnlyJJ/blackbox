@@ -1,5 +1,7 @@
 interface Api {
-  newUserStorage(): void;
+  newUserAccountManager(): void;
+  onCreatedUserAccountManager(callback: () => void): void;
+  onFailedCreatingUserAccountManager(callback: () => void): void;
 }
 
 declare global {
