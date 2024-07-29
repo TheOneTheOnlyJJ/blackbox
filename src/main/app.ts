@@ -85,7 +85,7 @@ export default class App {
   }
 
   public run(): void {
-    this.bootstrapLogger.debug("Running run() function, starting app.");
+    this.bootstrapLogger.info("Running App.");
     this.bootstrapLogger.debug("Registering app event handlers.");
     app.on("ready", () => {
       this.onAppReady();
@@ -279,7 +279,7 @@ export default class App {
       this.appLogger.debug("Closed user storage.");
     }
     this.appLogger.debug("Pre-quit steps done. Appending end log separator to log file.");
-    appendFileSync(App.LOG_FILE_PATH, `---------- End : ${new Date().toISOString()} ----------\n`, "utf-8");
+    appendFileSync(App.LOG_FILE_PATH, `---------- End : ${new Date().toISOString()} ----------\n\n`, "utf-8");
   }
 
   private onIPCMainNewUserAccountManager(): void {

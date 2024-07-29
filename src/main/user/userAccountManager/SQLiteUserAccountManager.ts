@@ -13,6 +13,7 @@ interface SQLiteVersion {
 }
 
 export interface SQLiteUserAccountManagerConfig extends UserAccountManagerBaseConfig {
+  type: UserAccountManagerType.SQLite;
   dbDirPath: string;
   dbFileName: string;
 }
