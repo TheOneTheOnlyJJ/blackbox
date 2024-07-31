@@ -1,5 +1,5 @@
 import { IUser, UserId } from "../IUser";
-import { UserAccountManager, UserAccountManagerBaseConfig } from "./UserAccountManager";
+import { UserAccountManager, BaseUserAccountManagerConfig } from "./UserAccountManager";
 import DatabaseConstructor, { Database } from "better-sqlite3";
 import { LogFunctions } from "electron-log";
 import { existsSync, mkdirSync } from "node:fs";
@@ -12,7 +12,7 @@ interface SQLiteVersion {
   version: string;
 }
 
-export interface SQLiteUserAccountManagerConfig extends UserAccountManagerBaseConfig {
+export interface SQLiteUserAccountManagerConfig extends BaseUserAccountManagerConfig {
   type: UserAccountManagerType.SQLite;
   dbDirPath: string;
   dbFileName: string;
@@ -25,25 +25,25 @@ export class SQLiteUserAccountManager extends UserAccountManager<SQLiteUserAccou
     super(config, logger);
     // Validate config
     if (this.isConfigValid()) {
-      this.logger.debug("Given config is valid.");
+      this.logger.debug("Valid config.");
     } else {
-      throw new Error("Invalid config passed to user account manager constructor");
+      throw new Error("Invalid config passed to User Account Manager constructor");
     }
     // Create db and directories as required
     const DB_DIR_PATH: string = config.dbDirPath;
     if (existsSync(DB_DIR_PATH)) {
-      this.logger.debug(`Found database directory at path: ${DB_DIR_PATH}. Looking for SQLite file.`);
+      this.logger.debug(`Found database directory at path: "${DB_DIR_PATH}". Looking for SQLite file.`);
     } else {
-      this.logger.debug(`Could not find database directory path: ${DB_DIR_PATH}. Creating required directories.`);
+      this.logger.debug(`Could not find database directory path: "${DB_DIR_PATH}". Creating required directories.`);
       mkdirSync(DB_DIR_PATH, { recursive: true });
-      this.logger.debug(`Database directory path created: ${DB_DIR_PATH}.`);
+      this.logger.debug(`Database directory path created: "${DB_DIR_PATH}".`);
     }
     const DB_FILE_NAME: string = config.dbFileName;
     const DB_FILE_PATH: string = join(DB_DIR_PATH, DB_FILE_NAME);
     if (existsSync(DB_FILE_PATH)) {
-      this.logger.debug(`Found SQLite file "${DB_FILE_NAME}" at path: ${DB_FILE_PATH}. Opening.`);
+      this.logger.debug(`Found SQLite file "${DB_FILE_NAME}" at path: "${DB_FILE_PATH}". Opening.`);
     } else {
-      this.logger.debug(`Could not find SQLite file "${DB_FILE_NAME}" at path: ${DB_FILE_PATH}. Creating new.`);
+      this.logger.debug(`Could not find SQLite file "${DB_FILE_NAME}" at path: "${DB_FILE_PATH}". Creating new.`);
     }
     this.logger.silly("Running SQLite database constructor.");
     this.db = new DatabaseConstructor(DB_FILE_PATH);
@@ -55,7 +55,7 @@ export class SQLiteUserAccountManager extends UserAccountManager<SQLiteUserAccou
     this.db.pragma("journal_mode = WAL");
     this.logger.silly(`Journal mode: ${this.db.pragma("journal_mode", { simple: true }) as SQLiteJournalMode}.`);
     this.initialiseUsersTable();
-    this.logger.info("SQLite user storage ready.");
+    this.logger.info("SQLite User Account Manager ready.");
   }
 
   isConfigValid(): boolean {
@@ -123,7 +123,7 @@ export class SQLiteUserAccountManager extends UserAccountManager<SQLiteUserAccou
   }
 
   close(): boolean {
-    this.logger.info(`Closing ${this.config.type} user account manager.`);
+    this.logger.info(`Closing "${this.config.type}" User Account Manager.`);
     this.db.close();
     return true;
   }

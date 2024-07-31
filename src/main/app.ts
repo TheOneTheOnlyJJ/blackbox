@@ -2,33 +2,79 @@ import { app, globalShortcut, BrowserWindow, ipcMain } from "electron/main";
 import { BrowserWindowConstructorOptions, HandlerDetails, nativeImage, shell, WindowOpenHandlerResponse } from "electron/common";
 import { UserAccountManager } from "./user/userAccountManager/UserAccountManager";
 import { userAccountManagerFactory, UserAccountManagerConfig } from "./user/userAccountManager/userAccountManagerFactory";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import log, { LogFunctions } from "electron-log";
 import { UserAccountManagerType } from "./user/userAccountManager/UserAccountManagerType";
 import { appendFileSync, existsSync, mkdirSync } from "node:fs";
+import { ConfigManager } from "./config/ConfigManager";
+import { JSONSchemaType } from "ajv/dist/types/json-schema";
 
-export default class App {
+export interface AppConfig {
+  windowOptions: {
+    width: number;
+    height: number;
+  };
+}
+
+export class App {
   private static instance: null | App = null;
-  private static isElectronLogInitialised = false; // This exists to make sure electron-log initialisation is done only once
 
-  private static readonly LOG_FILE_DIR_PATH: string = join(app.getAppPath(), "logs");
-  private static readonly LOG_FILE_NAME = "BlackBoxLogs.log";
-  private static readonly LOG_FILE_PATH: string = join(App.LOG_FILE_DIR_PATH, App.LOG_FILE_NAME);
+  private isElectronLogInitialised = false; // This exists to make sure electron-log initialisation is done only once
 
+  private readonly ICON_FILE_PATH: string = resolve(join(app.getAppPath(), "resources", "icon.png"));
+
+  private readonly LOG_FILE_DIR_PATH: string = resolve(join(app.getAppPath(), "logs"));
+  private readonly LOG_FILE_NAME = "BlackBoxLogs.log";
+  private readonly LOG_FILE_PATH: string = join(this.LOG_FILE_DIR_PATH, this.LOG_FILE_NAME);
+
+  private readonly CONFIG_FILE_DIR_PATH: string = resolve(join(app.getAppPath(), "config"));
+  private readonly CONFIG_FILE_NAME: string = "BlackBoxConfig.json";
+
+  private configManager: null | ConfigManager<AppConfig> = null;
   private mainWindow: null | BrowserWindow = null;
   private userAccountManager: null | UserAccountManager<UserAccountManagerConfig> = null;
 
   private bootstrapLogger: LogFunctions;
   private appLogger: LogFunctions;
+  private configLoaderLogger: LogFunctions;
   private windowLogger: LogFunctions;
   private userAccountManagerLogger: LogFunctions;
 
+  private readonly CONFIG_SCHEMA: JSONSchemaType<AppConfig> = {
+    $schema: "http://json-schema.org/draft-07/schema#",
+    type: "object",
+    properties: {
+      windowOptions: {
+        type: "object",
+        properties: {
+          width: {
+            type: "number"
+          },
+          height: {
+            type: "number"
+          }
+        },
+        required: ["width", "height"],
+        additionalProperties: false
+      }
+    },
+    required: ["windowOptions"],
+    additionalProperties: false
+  };
+
+  private readonly DEFAULT_CONFIG: AppConfig = {
+    windowOptions: {
+      width: 900,
+      height: 670
+    }
+  };
+
+  private config: AppConfig = this.DEFAULT_CONFIG;
+
   private readonly MAIN_WINDOW_CONSTRUCTOR_OPTIONS: BrowserWindowConstructorOptions = {
-    width: 900,
-    height: 670,
     show: false,
     autoHideMenuBar: true,
-    icon: nativeImage.createFromPath(join(app.getAppPath(), "resources", "icon.png")),
+    icon: nativeImage.createFromPath(this.ICON_FILE_PATH),
     webPreferences: {
       preload: join(__dirname, "..", "preload", "preload.js"),
       nodeIntegration: false,
@@ -44,9 +90,9 @@ export default class App {
     let wasLogFilePathCreatedNow: boolean | null;
     let wasLogFileCreatedNow: boolean | null;
     // Initialise electron-log only once per app lifecycle
-    if (!App.isElectronLogInitialised) {
-      [wasLogFilePathCreatedNow, wasLogFileCreatedNow] = App.initialiseElectronLog();
-      App.isElectronLogInitialised = true;
+    if (!this.isElectronLogInitialised) {
+      [wasLogFilePathCreatedNow, wasLogFileCreatedNow] = this.initialiseElectronLog();
+      this.isElectronLogInitialised = true;
       wasElectronLogInitialisedNow = true;
     } else {
       wasLogFilePathCreatedNow = null;
@@ -57,6 +103,7 @@ export default class App {
     this.bootstrapLogger = log.scope("main-bootstrap");
     this.windowLogger = log.scope("main-browser-window");
     this.appLogger = log.scope("main-electron-app");
+    this.configLoaderLogger = log.scope("main-config-loader");
     this.userAccountManagerLogger = log.scope("main-user-account-manager");
     // These are here to make sure I'm not insane
     this.bootstrapLogger.info("Running App constructor.");
@@ -65,14 +112,14 @@ export default class App {
     } else {
       this.bootstrapLogger.debug("Electron-log was already initialised."); // This should never run if the App class is a proper singleton
     }
-    this.bootstrapLogger.info(`Using log file at path: ${log.transports.file.getFile().path}.`);
+    this.bootstrapLogger.info(`Using log file at path: "${log.transports.file.getFile().path}".`);
     if (wasLogFilePathCreatedNow !== null) {
       if (wasLogFilePathCreatedNow) {
         this.bootstrapLogger.debug("Log file directory path created.");
       } else {
         this.bootstrapLogger.debug("Log file directory path already existed.");
       }
-      this.bootstrapLogger.silly(`Log file directory path: ${App.LOG_FILE_DIR_PATH}.`);
+      this.bootstrapLogger.silly(`Log file directory path: "${this.LOG_FILE_DIR_PATH}".`);
     }
     if (wasLogFileCreatedNow !== null) {
       if (wasLogFileCreatedNow) {
@@ -80,7 +127,22 @@ export default class App {
       } else {
         this.bootstrapLogger.debug("Log file already existed.");
       }
-      this.bootstrapLogger.silly(`Log file: ${App.LOG_FILE_PATH}.`);
+      this.bootstrapLogger.silly(`Log file: "${this.LOG_FILE_PATH}".`);
+    }
+    // Initialise config manager & read config
+    try {
+      this.configManager = new ConfigManager<AppConfig>(
+        this.CONFIG_SCHEMA,
+        this.DEFAULT_CONFIG,
+        this.CONFIG_FILE_DIR_PATH,
+        this.CONFIG_FILE_NAME,
+        this.configLoaderLogger
+      );
+      this.config = this.configManager.read();
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      this.windowLogger.error(`Could not initialise Config Manager & read config: ${errorMessage}!`);
+      app.exit();
     }
   }
 
@@ -106,27 +168,27 @@ export default class App {
     return App.instance;
   }
 
-  private static initialiseElectronLog(): [boolean, boolean] {
+  private initialiseElectronLog(): [boolean, boolean] {
     log.initialize();
     // Create path to log file if required
     let wasLogFileDirPathCreatedNow: boolean;
-    if (existsSync(App.LOG_FILE_DIR_PATH)) {
+    if (existsSync(this.LOG_FILE_DIR_PATH)) {
       wasLogFileDirPathCreatedNow = false;
     } else {
-      mkdirSync(App.LOG_FILE_DIR_PATH, { recursive: true });
+      mkdirSync(this.LOG_FILE_DIR_PATH, { recursive: true });
       wasLogFileDirPathCreatedNow = true;
     }
     // Determine log file existence
     let wasLogFileCreatedNow: boolean;
-    if (existsSync(App.LOG_FILE_PATH)) {
+    if (existsSync(this.LOG_FILE_PATH)) {
       wasLogFileCreatedNow = false;
     } else {
       wasLogFileCreatedNow = true;
     }
     // Add start log separator (also create file if required)
-    appendFileSync(App.LOG_FILE_PATH, `---------- Start : ${new Date().toISOString()} ----------\n`, "utf-8");
+    appendFileSync(this.LOG_FILE_PATH, `---------- Start : ${new Date().toISOString()} ----------\n`, "utf-8");
     log.transports.file.resolvePathFn = () => {
-      return App.LOG_FILE_PATH;
+      return this.LOG_FILE_PATH;
     };
     // Override all console functions with electron-log functions
     Object.assign(console, log.functions);
@@ -137,7 +199,7 @@ export default class App {
 
   private createMainWindow(): void {
     this.windowLogger.info("Creating main window.");
-    this.mainWindow = new BrowserWindow(this.MAIN_WINDOW_CONSTRUCTOR_OPTIONS);
+    this.mainWindow = new BrowserWindow({ ...this.MAIN_WINDOW_CONSTRUCTOR_OPTIONS, ...this.config.windowOptions });
     this.windowLogger.debug("Created main window.");
     this.windowLogger.debug("Registering main window event handlers.");
     this.mainWindow.on("closed", () => {
@@ -159,14 +221,14 @@ export default class App {
     this.windowLogger.info("Selecting main window web contents source.");
     let isDevToolsShortcutRegistered = false;
     if (!app.isPackaged && process.env.ELECTRON_RENDERER_URL) {
-      this.windowLogger.info(`Loading main window web contents from URL: ${process.env.ELECTRON_RENDERER_URL}.`);
+      this.windowLogger.info(`Loading main window web contents from URL: "${process.env.ELECTRON_RENDERER_URL}".`);
       void this.mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL);
       isDevToolsShortcutRegistered = globalShortcut.register("CmdOrCtrl+F12", () => {
         this.developerToolsGlobalShortcutCallback();
       });
     } else {
       const INDEX_HTML_FILE_PATH: string = join(__dirname, "..", "renderer", "index.html");
-      this.windowLogger.info(`Loading main window web contents from file at path: ${INDEX_HTML_FILE_PATH}.`);
+      this.windowLogger.info(`Loading main window web contents from file at path: "${INDEX_HTML_FILE_PATH}".`);
       void this.mainWindow.loadFile(INDEX_HTML_FILE_PATH);
     }
     // Log dev tools shortcut registration
@@ -225,15 +287,15 @@ export default class App {
   }
 
   private mainWindowOpenHandler(details: HandlerDetails): WindowOpenHandlerResponse {
-    this.windowLogger.info(`Running main window open handler for external URL: ${details.url}.`);
+    this.windowLogger.info(`Running main window open handler for external URL: "${details.url}".`);
     shell
       .openExternal(details.url)
       .then(() => {
-        this.windowLogger.info(`Opened external URL: ${details.url}`);
+        this.windowLogger.info(`Opened external URL: "${details.url}"`);
       })
       .catch((err: unknown) => {
         const errorMessage = err instanceof Error ? err.message : String(err);
-        this.windowLogger.error(`Could not open external URL (${details.url}): ${errorMessage}.`);
+        this.windowLogger.error(`Could not open external URL ("${details.url}"): ${errorMessage}.`);
       });
     return { action: "deny" };
   }
@@ -272,21 +334,22 @@ export default class App {
     this.appLogger.debug("Unregistering all global shortcuts.");
     globalShortcut.unregisterAll();
     this.appLogger.debug("Unregistered all global shortcuts.");
-    this.appLogger.debug("Checking for active user storage.");
+    this.configManager?.write(this.config);
+    this.appLogger.debug("Checking for active user account manager.");
     if (this.userAccountManager !== null) {
       this.appLogger.debug(`Found active user account manager of type "${this.userAccountManager.config.type}". Closing.`);
       this.userAccountManager.close();
-      this.appLogger.debug("Closed user storage.");
+      this.appLogger.debug("Closed user account manager.");
     }
-    this.appLogger.debug("Pre-quit steps done. Appending end log separator to log file.");
-    appendFileSync(App.LOG_FILE_PATH, `---------- End : ${new Date().toISOString()} ----------\n\n`, "utf-8");
+    this.appLogger.silly("Pre-quit steps done. Appending end log separator to log file.");
+    appendFileSync(this.LOG_FILE_PATH, `---------- End   : ${new Date().toISOString()} ----------\n\n`, "utf-8");
   }
 
   private onIPCMainNewUserAccountManager(): void {
     this.userAccountManagerLogger.info("New user account manager command received by main.");
     const USER_ACCOUNT_MANAGER_CONFIG: UserAccountManagerConfig = {
       type: UserAccountManagerType.SQLite,
-      dbDirPath: join(app.getAppPath(), "data"),
+      dbDirPath: resolve(join(app.getAppPath(), "data")),
       dbFileName: "users.sqlite"
     };
     try {

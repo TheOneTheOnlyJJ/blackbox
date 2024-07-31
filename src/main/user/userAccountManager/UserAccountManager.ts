@@ -2,18 +2,18 @@ import { LogFunctions } from "electron-log";
 import { IUser, UserId } from "../IUser";
 import { UserAccountManagerType } from "./UserAccountManagerType";
 
-export interface UserAccountManagerBaseConfig {
+export interface BaseUserAccountManagerConfig {
   type: UserAccountManagerType;
 }
 
-export abstract class UserAccountManager<T extends UserAccountManagerBaseConfig> {
+export abstract class UserAccountManager<T extends BaseUserAccountManagerConfig> {
   public readonly config: T;
   protected readonly logger: LogFunctions;
 
   constructor(config: T, logger: LogFunctions) {
     this.config = config;
     this.logger = logger;
-    this.logger.info(`Initialising user account manager of type "${this.config.type}".`);
+    this.logger.info(`Initialising User Account Manager of type "${this.config.type}".`);
   }
 
   isConfigValid(): boolean {
