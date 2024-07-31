@@ -25,7 +25,7 @@ export class App {
 
   private readonly LOG_FILE_DIR_PATH: string = resolve(join(app.getAppPath(), "logs"));
   private readonly LOG_FILE_NAME = "BlackBoxLogs.log";
-  private readonly LOG_FILE_PATH: string = join(this.LOG_FILE_DIR_PATH, this.LOG_FILE_NAME);
+  private readonly LOG_FILE_PATH: string = resolve(join(this.LOG_FILE_DIR_PATH, this.LOG_FILE_NAME));
 
   private readonly CONFIG_FILE_DIR_PATH: string = resolve(join(app.getAppPath(), "config"));
   private readonly CONFIG_FILE_NAME: string = "BlackBoxConfig.json";

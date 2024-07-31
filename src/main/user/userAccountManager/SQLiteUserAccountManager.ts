@@ -21,12 +21,10 @@ export interface SQLiteUserAccountManagerConfig extends BaseUserAccountManagerCo
 export class SQLiteUserAccountManager extends UserAccountManager<SQLiteUserAccountManagerConfig> {
   private db: Database;
 
-  constructor(config: SQLiteUserAccountManagerConfig, logger: LogFunctions) {
+  public constructor(config: SQLiteUserAccountManagerConfig, logger: LogFunctions) {
     super(config, logger);
     // Validate config
-    if (this.isConfigValid()) {
-      this.logger.debug("Valid config.");
-    } else {
+    if (!this.isConfigValid()) {
       throw new Error("Invalid config passed to User Account Manager constructor");
     }
     // Create db and directories as required
@@ -58,31 +56,37 @@ export class SQLiteUserAccountManager extends UserAccountManager<SQLiteUserAccou
     this.logger.info("SQLite User Account Manager ready.");
   }
 
-  isConfigValid(): boolean {
-    return (
+  public isConfigValid(): boolean {
+    const isValid: boolean =
       super.isConfigValid() &&
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       this.config.type === UserAccountManagerType.SQLite &&
       typeof this.config.dbDirPath === "string" &&
       this.config.dbDirPath.length > 0 &&
       typeof this.config.dbFileName === "string" &&
-      this.config.dbFileName.length > 0
-    );
+      this.config.dbFileName.length > 0;
+    if (isValid) {
+      this.logger.debug("Valid config.");
+      return true;
+    } else {
+      this.logger.debug("Invalid config.");
+      return false;
+    }
   }
 
-  addUser(user: IUser): boolean {
+  public addUser(user: IUser): boolean {
     return true;
   }
 
-  deleteUser(userId: UserId): boolean {
+  public deleteUser(userId: UserId): boolean {
     return true;
   }
 
-  deleteUsers(userIds: UserId[]): boolean {
+  public deleteUsers(userIds: UserId[]): boolean {
     return true;
   }
 
-  getUser(userId: UserId): IUser {
+  public getUser(userId: UserId): IUser {
     return {
       id: "",
       username: "test",
@@ -90,7 +94,7 @@ export class SQLiteUserAccountManager extends UserAccountManager<SQLiteUserAccou
     };
   }
 
-  getUsers(userIds: UserId[]): IUser[] {
+  public getUsers(userIds: UserId[]): IUser[] {
     return [
       {
         id: "",
@@ -100,7 +104,7 @@ export class SQLiteUserAccountManager extends UserAccountManager<SQLiteUserAccou
     ];
   }
 
-  getAllUsers(): IUser[] {
+  public getAllUsers(): IUser[] {
     return [
       {
         id: "",
@@ -110,19 +114,19 @@ export class SQLiteUserAccountManager extends UserAccountManager<SQLiteUserAccou
     ];
   }
 
-  getUserCount(): number {
+  public getUserCount(): number {
     return 0;
   }
 
-  isIdValid(id: UserId): boolean {
+  public isIdValid(id: UserId): boolean {
     return false;
   }
 
-  isLocal(): boolean {
+  public isLocal(): boolean {
     return true;
   }
 
-  close(): boolean {
+  public close(): boolean {
     this.logger.info(`Closing "${this.config.type}" User Account Manager.`);
     this.db.close();
     return true;

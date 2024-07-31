@@ -4,14 +4,14 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 export class ConfigManager<T extends object> {
-  readonly logger: LogFunctions;
-  readonly defaultConfig: T;
-  readonly configDir: string;
-  readonly configFileName: string;
-  readonly configFilePath: string;
-  readonly validate: ValidateFunction<T>;
+  private readonly logger: LogFunctions;
+  private readonly defaultConfig: T;
+  private readonly configDir: string;
+  private readonly configFileName: string;
+  private readonly configFilePath: string;
+  private readonly validate: ValidateFunction<T>;
 
-  constructor(configSchema: JSONSchemaType<T>, defaultConfig: T, configDir: string, configFileName: string, logger: LogFunctions) {
+  public constructor(configSchema: JSONSchemaType<T>, defaultConfig: T, configDir: string, configFileName: string, logger: LogFunctions) {
     this.logger = logger;
     this.logger.info(`Initialising Config Manager.`);
     this.logger.silly(`Config schema: ${JSON.stringify(configSchema, null, 2)}.`);
