@@ -5,6 +5,7 @@ import { LogFunctions } from "electron-log";
 import { existsSync, mkdirSync } from "node:fs";
 import { UserAccountManagerType } from "./UserAccountManagerType";
 import { join } from "node:path";
+import { JSONSchemaType } from "ajv";
 
 type SQLiteJournalMode = string;
 
@@ -19,34 +20,48 @@ export interface SQLiteUserAccountManagerConfig extends BaseUserAccountManagerCo
 }
 
 export class SQLiteUserAccountManager extends UserAccountManager<SQLiteUserAccountManagerConfig> {
-  private db: Database;
+  private readonly db: Database;
+  public static readonly CONFIG_SCHEMA: JSONSchemaType<SQLiteUserAccountManagerConfig> = {
+    $schema: "http://json-schema.org/draft-07/schema#",
+    type: "object",
+    properties: {
+      type: {
+        type: "string",
+        enum: [UserAccountManagerType.SQLite]
+      },
+      dbDirPath: {
+        type: "string",
+        minLength: 1
+      },
+      dbFileName: {
+        type: "string",
+        minLength: 1
+      }
+    },
+    required: ["type", "dbDirPath", "dbFileName"],
+    additionalProperties: false
+  };
 
   public constructor(config: SQLiteUserAccountManagerConfig, logger: LogFunctions) {
-    super(config, logger);
-    // Validate config
-    if (!this.isConfigValid()) {
-      throw new Error("Invalid config passed to User Account Manager constructor");
-    }
+    super(config, SQLiteUserAccountManager.CONFIG_SCHEMA, logger);
     // Create db and directories as required
-    const DB_DIR_PATH: string = config.dbDirPath;
-    if (existsSync(DB_DIR_PATH)) {
-      this.logger.debug(`Found database directory at path: "${DB_DIR_PATH}". Looking for SQLite file.`);
+    if (existsSync(this.config.dbDirPath)) {
+      this.logger.debug(`Found database directory at path: "${this.config.dbDirPath}". Looking for SQLite file.`);
     } else {
-      this.logger.debug(`Could not find database directory path: "${DB_DIR_PATH}". Creating required directories.`);
-      mkdirSync(DB_DIR_PATH, { recursive: true });
-      this.logger.debug(`Database directory path created: "${DB_DIR_PATH}".`);
+      this.logger.debug(`Could not find database directory path: "${this.config.dbDirPath}". Creating required directories.`);
+      mkdirSync(this.config.dbDirPath, { recursive: true });
+      this.logger.debug(`Database directory path created: "${this.config.dbDirPath}".`);
     }
-    const DB_FILE_NAME: string = config.dbFileName;
-    const DB_FILE_PATH: string = join(DB_DIR_PATH, DB_FILE_NAME);
+    const DB_FILE_PATH: string = join(this.config.dbDirPath, this.config.dbFileName);
     if (existsSync(DB_FILE_PATH)) {
-      this.logger.debug(`Found SQLite file "${DB_FILE_NAME}" at path: "${DB_FILE_PATH}". Opening.`);
+      this.logger.debug(`Found SQLite file "${this.config.dbFileName}" at path: "${DB_FILE_PATH}". Opening.`);
     } else {
-      this.logger.debug(`Could not find SQLite file "${DB_FILE_NAME}" at path: "${DB_FILE_PATH}". Creating new.`);
+      this.logger.debug(`Could not find SQLite file "${this.config.dbFileName}" at path: "${DB_FILE_PATH}". Creating new.`);
     }
     this.logger.silly("Running SQLite database constructor.");
     this.db = new DatabaseConstructor(DB_FILE_PATH);
     this.logger.silly("SQLite database constructor completed.");
-    // Get SQLite version
+    // Log SQLite version
     this.logger.info(`Using SQLite version: ${(this.db.prepare("SELECT sqlite_version() AS version").get() as SQLiteVersion).version}.`);
     // Configuration
     this.logger.debug("Setting journal mode to WAL.");
@@ -54,24 +69,6 @@ export class SQLiteUserAccountManager extends UserAccountManager<SQLiteUserAccou
     this.logger.silly(`Journal mode: ${this.db.pragma("journal_mode", { simple: true }) as SQLiteJournalMode}.`);
     this.initialiseUsersTable();
     this.logger.info("SQLite User Account Manager ready.");
-  }
-
-  public isConfigValid(): boolean {
-    const isValid: boolean =
-      super.isConfigValid() &&
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      this.config.type === UserAccountManagerType.SQLite &&
-      typeof this.config.dbDirPath === "string" &&
-      this.config.dbDirPath.length > 0 &&
-      typeof this.config.dbFileName === "string" &&
-      this.config.dbFileName.length > 0;
-    if (isValid) {
-      this.logger.debug("Valid config.");
-      return true;
-    } else {
-      this.logger.debug("Invalid config.");
-      return false;
-    }
   }
 
   public addUser(user: IUser): boolean {

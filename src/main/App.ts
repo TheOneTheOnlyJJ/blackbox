@@ -23,11 +23,11 @@ export class App {
 
   private readonly ICON_FILE_PATH: string = resolve(join(app.getAppPath(), "resources", "icon.png"));
 
-  private readonly LOG_FILE_DIR_PATH: string = resolve(join(app.getAppPath(), "logs"));
+  private readonly LOGS_DIR_PATH: string = resolve(join(app.getAppPath(), "logs"));
   private readonly LOG_FILE_NAME = "BlackBoxLogs.log";
-  private readonly LOG_FILE_PATH: string = resolve(join(this.LOG_FILE_DIR_PATH, this.LOG_FILE_NAME));
+  private readonly LOG_FILE_PATH: string = resolve(join(this.LOGS_DIR_PATH, this.LOG_FILE_NAME));
 
-  private readonly CONFIG_FILE_DIR_PATH: string = resolve(join(app.getAppPath(), "config"));
+  private readonly CONFIG_DIR_PATH: string = resolve(join(app.getAppPath(), "config"));
   private readonly CONFIG_FILE_NAME: string = "BlackBoxConfig.json";
 
   private configManager: null | ConfigManager<AppConfig> = null;
@@ -69,14 +69,14 @@ export class App {
     }
   };
 
-  private config: AppConfig = this.DEFAULT_CONFIG;
+  private config: AppConfig;
 
   private readonly MAIN_WINDOW_CONSTRUCTOR_OPTIONS: BrowserWindowConstructorOptions = {
     show: false,
     autoHideMenuBar: true,
     icon: nativeImage.createFromPath(this.ICON_FILE_PATH),
     webPreferences: {
-      preload: join(__dirname, "..", "preload", "preload.js"),
+      preload: resolve(join(__dirname, "..", "preload", "preload.js")),
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
@@ -103,7 +103,7 @@ export class App {
     this.bootstrapLogger = log.scope("main-bootstrap");
     this.windowLogger = log.scope("main-browser-window");
     this.appLogger = log.scope("main-electron-app");
-    this.configLoaderLogger = log.scope("main-config-loader");
+    this.configLoaderLogger = log.scope("main-app-config-loader");
     this.userAccountManagerLogger = log.scope("main-user-account-manager");
     // These are here to make sure I'm not insane
     this.bootstrapLogger.info("Running App constructor.");
@@ -112,14 +112,12 @@ export class App {
     } else {
       this.bootstrapLogger.debug("Electron-log was already initialised."); // This should never run if the App class is a proper singleton
     }
-    this.bootstrapLogger.info(`Using log file at path: "${log.transports.file.getFile().path}".`);
     if (wasLogFilePathCreatedNow !== null) {
       if (wasLogFilePathCreatedNow) {
         this.bootstrapLogger.debug("Log file directory path created.");
       } else {
         this.bootstrapLogger.debug("Log file directory path already existed.");
       }
-      this.bootstrapLogger.silly(`Log file directory path: "${this.LOG_FILE_DIR_PATH}".`);
     }
     if (wasLogFileCreatedNow !== null) {
       if (wasLogFileCreatedNow) {
@@ -127,22 +125,26 @@ export class App {
       } else {
         this.bootstrapLogger.debug("Log file already existed.");
       }
-      this.bootstrapLogger.silly(`Log file: "${this.LOG_FILE_PATH}".`);
     }
-    // Initialise config manager & read config
+    this.bootstrapLogger.info(`Using log file at path: "${log.transports.file.getFile().path}".`);
+    // Initialise config manager
     try {
-      this.configManager = new ConfigManager<AppConfig>(
-        this.CONFIG_SCHEMA,
-        this.DEFAULT_CONFIG,
-        this.CONFIG_FILE_DIR_PATH,
-        this.CONFIG_FILE_NAME,
-        this.configLoaderLogger
-      );
-      this.config = this.configManager.read();
+      this.configManager = new ConfigManager<AppConfig>(this.CONFIG_SCHEMA, this.DEFAULT_CONFIG, this.configLoaderLogger);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : String(err);
-      this.windowLogger.error(`Could not initialise Config Manager & read config: ${errorMessage}!`);
-      app.exit();
+      this.windowLogger.error(`Could not initialise Config Manager: ${errorMessage}!`);
+    }
+    // Read config
+    try {
+      if (this.configManager !== null) {
+        this.config = this.configManager.readJSON(this.CONFIG_DIR_PATH, this.CONFIG_FILE_NAME);
+      } else {
+        this.config = this.DEFAULT_CONFIG;
+      }
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      this.windowLogger.error(`Could not read config: ${errorMessage}! Using default config.`);
+      this.config = this.DEFAULT_CONFIG;
     }
   }
 
@@ -172,10 +174,10 @@ export class App {
     log.initialize();
     // Create path to log file if required
     let wasLogFileDirPathCreatedNow: boolean;
-    if (existsSync(this.LOG_FILE_DIR_PATH)) {
+    if (existsSync(this.LOGS_DIR_PATH)) {
       wasLogFileDirPathCreatedNow = false;
     } else {
-      mkdirSync(this.LOG_FILE_DIR_PATH, { recursive: true });
+      mkdirSync(this.LOGS_DIR_PATH, { recursive: true });
       wasLogFileDirPathCreatedNow = true;
     }
     // Determine log file existence
@@ -334,12 +336,14 @@ export class App {
     this.appLogger.debug("Unregistering all global shortcuts.");
     globalShortcut.unregisterAll();
     this.appLogger.debug("Unregistered all global shortcuts.");
-    this.configManager?.write(this.config);
-    this.appLogger.debug("Checking for active user account manager.");
+    this.configManager?.writeJSON(this.config, this.CONFIG_DIR_PATH, this.CONFIG_FILE_NAME);
+    this.appLogger.debug("Checking for initialised User Account Manager.");
     if (this.userAccountManager !== null) {
-      this.appLogger.debug(`Found active user account manager of type "${this.userAccountManager.config.type}". Closing.`);
+      this.appLogger.debug(`Found initialised "${this.userAccountManager.config.type}" User Account Manager.`);
       this.userAccountManager.close();
       this.appLogger.debug("Closed user account manager.");
+    } else {
+      this.appLogger.debug("No initialised User Account Manager.");
     }
     this.appLogger.silly("Pre-quit steps done. Appending end log separator to log file.");
     appendFileSync(this.LOG_FILE_PATH, `---------- End   : ${new Date().toISOString()} ----------\n\n`, "utf-8");
