@@ -13,7 +13,7 @@ export class ConfigManager<T extends object> {
     this.defaultConfig = defaultConfig;
     this.logger.info(`Initialising Config Manager.`);
     this.logger.silly(`Config schema: ${JSON.stringify(configSchema, null, 2)}.`);
-    this.logger.silly(`Default config: ${this.defaultConfig === null ? "null" : JSON.stringify(this.defaultConfig, null, 2)}.`);
+    this.logger.silly(`Default config: ${this.defaultConfig === null ? '"null"' : JSON.stringify(this.defaultConfig, null, 2)}.`);
     this.validate = new Ajv().compile(configSchema);
     if (this.defaultConfig !== null) {
       if (!this.isConfigValid(this.defaultConfig)) {
