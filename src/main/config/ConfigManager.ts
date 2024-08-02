@@ -16,6 +16,7 @@ export class ConfigManager<T extends object> {
     this.logger.silly(`Default config: ${this.defaultConfig === null ? '"null"' : JSON.stringify(this.defaultConfig, null, 2)}.`);
     this.validate = new Ajv().compile(configSchema);
     if (this.defaultConfig !== null) {
+      this.logger.silly(`Validating default config.`);
       if (!this.isConfigValid(this.defaultConfig)) {
         throw new Error("Given default config does not conform to the schema");
       }
@@ -24,7 +25,6 @@ export class ConfigManager<T extends object> {
   }
 
   public isConfigValid(config: T): boolean {
-    this.logger.debug(`Validating config: ${JSON.stringify(config, null, 2)}.`);
     if (this.validate(config)) {
       this.logger.debug("Valid config.");
       return true;
@@ -47,7 +47,8 @@ export class ConfigManager<T extends object> {
         const READ_CONFIG_DATA = readFileSync(CONFIG_FILE_PATH, "utf-8");
         this.logger.silly("Read data from config file. Parsing as JSON.");
         const JSON_CONFIG_DATA: T = JSON.parse(READ_CONFIG_DATA) as T;
-        this.logger.silly(`Parsed read data as JSON.`);
+        this.logger.silly("Parsed read data as JSON.");
+        this.logger.silly("Validating read JSON.");
         if (this.isConfigValid(JSON_CONFIG_DATA)) {
           this.logger.debug("Returning read config.");
           return JSON_CONFIG_DATA;
@@ -60,8 +61,8 @@ export class ConfigManager<T extends object> {
           }
         }
       } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : String(err);
-        this.logger.error(`Could not read config file: "${CONFIG_FILE_PATH}". Error: ${errorMessage}.`);
+        const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+        this.logger.error(`Could not read config file: "${CONFIG_FILE_PATH}". Error: ${ERROR_MESSAGE}.`);
         if (this.defaultConfig !== null) {
           this.logger.debug("Returning default config.");
           return this.defaultConfig;
@@ -81,8 +82,10 @@ export class ConfigManager<T extends object> {
 
   public writeJSON(config: T, configDir: string, configFileName: string): boolean {
     const CONFIG_FILE_PATH: string = resolve(join(configDir, configFileName));
-    this.logger.info(`Attempting to write config file at path: "${CONFIG_FILE_PATH}".`);
+    this.logger.info(`Attempting to write config to file at path: "${CONFIG_FILE_PATH}".`);
+    this.logger.silly(`Config: ${JSON.stringify(config, null, 2)}.`);
     // Do not write invalid config
+    this.logger.silly("Validating config to write.");
     if (!this.isConfigValid(config)) {
       this.logger.debug("Not writing invalid config to file.");
       return false;
@@ -100,8 +103,8 @@ export class ConfigManager<T extends object> {
       this.logger.silly("Stringifying config.");
       writeFileSync(CONFIG_FILE_PATH, JSON.stringify(config, null, 2), "utf-8");
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : String(err);
-      this.logger.error(`Not writing config to file. Error: ${errorMessage}.`);
+      const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Not writing config to file. Error: ${ERROR_MESSAGE}.`);
       return false;
     }
     this.logger.debug(`Config written to file at path: "${CONFIG_FILE_PATH}".`);

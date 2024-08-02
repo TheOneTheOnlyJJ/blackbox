@@ -1,14 +1,14 @@
 import { LogFunctions } from "electron-log";
 import { IUser, UserId } from "../IUser";
-import { UserAccountManagerType } from "./UserAccountManagerType";
+import { AccountManagerType } from "./AccountManagerType";
 import { ConfigManager } from "../../config/ConfigManager";
 import { JSONSchemaType } from "ajv";
 
-export interface BaseUserAccountManagerConfig {
-  type: UserAccountManagerType;
+export interface BaseAccountManagerConfig {
+  type: AccountManagerType;
 }
 
-export abstract class UserAccountManager<T extends BaseUserAccountManagerConfig> {
+export abstract class AccountManager<T extends BaseAccountManagerConfig> {
   protected readonly logger: LogFunctions;
   public readonly config: T;
   protected readonly configManager: ConfigManager<T>;
@@ -19,12 +19,14 @@ export abstract class UserAccountManager<T extends BaseUserAccountManagerConfig>
     this.logger.info(`Initialising "${this.config.type}" User Account Manager.`);
     this.logger.silly(`Config: ${JSON.stringify(this.config, null, 2)}.`);
     this.configManager = new ConfigManager<T>(configSchema, null, this.logger);
+    this.logger.silly("Validating config.");
     if (!this.configManager.isConfigValid(this.config)) {
       throw new Error(`Could not initialise "${this.config.type}" User Account Manager with invalid config`);
     }
   }
 
   public isConfigValid(config: T): boolean {
+    this.logger.silly("Validating config.");
     return this.configManager.isConfigValid(config);
   }
 

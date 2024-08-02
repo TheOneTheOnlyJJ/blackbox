@@ -1,9 +1,9 @@
 import { IUser, UserId } from "../IUser";
-import { UserAccountManager, BaseUserAccountManagerConfig } from "./UserAccountManager";
+import { AccountManager, BaseAccountManagerConfig } from "./AccountManager";
 import DatabaseConstructor, { Database } from "better-sqlite3";
 import { LogFunctions } from "electron-log";
 import { existsSync, mkdirSync } from "node:fs";
-import { UserAccountManagerType } from "./UserAccountManagerType";
+import { AccountManagerType } from "./AccountManagerType";
 import { join } from "node:path";
 import { JSONSchemaType } from "ajv";
 
@@ -13,21 +13,21 @@ interface SQLiteVersion {
   version: string;
 }
 
-export interface SQLiteUserAccountManagerConfig extends BaseUserAccountManagerConfig {
-  type: UserAccountManagerType.SQLite;
+export interface SQLiteAccountManagerConfig extends BaseAccountManagerConfig {
+  type: AccountManagerType.SQLite;
   dbDirPath: string;
   dbFileName: string;
 }
 
-export class SQLiteUserAccountManager extends UserAccountManager<SQLiteUserAccountManagerConfig> {
+export class SQLiteAccountManager extends AccountManager<SQLiteAccountManagerConfig> {
   private readonly db: Database;
-  public static readonly CONFIG_SCHEMA: JSONSchemaType<SQLiteUserAccountManagerConfig> = {
+  public static readonly CONFIG_SCHEMA: JSONSchemaType<SQLiteAccountManagerConfig> = {
     $schema: "http://json-schema.org/draft-07/schema#",
     type: "object",
     properties: {
       type: {
         type: "string",
-        enum: [UserAccountManagerType.SQLite]
+        enum: [AccountManagerType.SQLite]
       },
       dbDirPath: {
         type: "string",
@@ -42,8 +42,8 @@ export class SQLiteUserAccountManager extends UserAccountManager<SQLiteUserAccou
     additionalProperties: false
   };
 
-  public constructor(config: SQLiteUserAccountManagerConfig, logger: LogFunctions) {
-    super(config, SQLiteUserAccountManager.CONFIG_SCHEMA, logger);
+  public constructor(config: SQLiteAccountManagerConfig, logger: LogFunctions) {
+    super(config, SQLiteAccountManager.CONFIG_SCHEMA, logger);
     // Create db and directories as required
     if (existsSync(this.config.dbDirPath)) {
       this.logger.debug(`Found database directory at path: "${this.config.dbDirPath}". Looking for SQLite file.`);
@@ -68,7 +68,7 @@ export class SQLiteUserAccountManager extends UserAccountManager<SQLiteUserAccou
     this.db.pragma("journal_mode = WAL");
     this.logger.silly(`Journal mode: ${this.db.pragma("journal_mode", { simple: true }) as SQLiteJournalMode}.`);
     this.initialiseUsersTable();
-    this.logger.info("SQLite User Account Manager ready.");
+    this.logger.info('"SQLite" User Account Manager ready.');
   }
 
   public addUser(user: IUser): boolean {
