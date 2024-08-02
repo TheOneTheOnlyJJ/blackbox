@@ -96,7 +96,7 @@ export class App {
   };
 
   private updateWindowPositionConfigTimer: null | NodeJS.Timeout = null;
-  private UPDATE_WINDOW_POSITION_CONFIG_DELAY_MS = 500;
+  private readonly UPDATE_WINDOW_POSITION_CONFIG_DELAY_MS = 500;
 
   // Private constructor to prevent direct instantiation
   private constructor() {
