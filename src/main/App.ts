@@ -31,11 +31,11 @@ export class App {
   private window: null | BrowserWindow = null;
   private accountManager: null | AccountManager<AccountManagerConfig> = null;
 
-  private bootstrapLogger: LogFunctions = log.scope("main-bootstrap");
-  private windowLogger: LogFunctions = log.scope("main-window");
-  private appLogger: LogFunctions = log.scope("main-app");
-  private configLoaderLogger: LogFunctions = log.scope("main-config-loader");
-  private accountManagerLogger: LogFunctions = log.scope("main-account-manager");
+  private readonly bootstrapLogger: LogFunctions = log.scope("main-bootstrap");
+  private readonly windowLogger: LogFunctions = log.scope("main-window");
+  private readonly appLogger: LogFunctions = log.scope("main-app");
+  private readonly configLoaderLogger: LogFunctions = log.scope("main-config-loader");
+  private readonly accountManagerLogger: LogFunctions = log.scope("main-account-manager");
 
   private readonly CONFIG_SCHEMA: JSONSchemaType<AppConfig> = {
     $schema: "http://json-schema.org/draft-07/schema#",
