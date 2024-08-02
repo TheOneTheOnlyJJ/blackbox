@@ -18,24 +18,24 @@ export interface AppConfig {
 export class App {
   private static instance: null | App = null;
 
+  // Resources
   private readonly ICON_FILE_PATH: string = resolve(join(app.getAppPath(), "resources", "icon.png"));
+  private readonly INDEX_HTML_FILE_PATH: string = resolve(join(__dirname, "..", "renderer", "index.html"));
 
+  // Logging
   private readonly LOGS_DIR_PATH: string = resolve(join(app.getAppPath(), "logs"));
   private readonly LOG_FILE_NAME = "BlackBoxLogs.log";
   private readonly LOG_FILE_PATH: string = resolve(join(this.LOGS_DIR_PATH, this.LOG_FILE_NAME));
-
-  private readonly CONFIG_DIR_PATH: string = resolve(join(app.getAppPath(), "config"));
-  private readonly CONFIG_FILE_NAME: string = "BlackBoxConfig.json";
-
-  private configManager: ConfigManager<AppConfig>;
-  private window: null | BrowserWindow = null;
-  private accountManager: null | AccountManager<AccountManagerConfig> = null;
 
   private readonly bootstrapLogger: LogFunctions = log.scope("main-bootstrap");
   private readonly windowLogger: LogFunctions = log.scope("main-window");
   private readonly appLogger: LogFunctions = log.scope("main-app");
   private readonly configLoaderLogger: LogFunctions = log.scope("main-config-loader");
   private readonly accountManagerLogger: LogFunctions = log.scope("main-account-manager");
+
+  // Config
+  private readonly CONFIG_DIR_PATH: string = resolve(join(app.getAppPath(), "config"));
+  private readonly CONFIG_FILE_NAME: string = "BlackBoxConfig.json";
 
   private readonly CONFIG_SCHEMA: JSONSchemaType<AppConfig> = {
     $schema: "http://json-schema.org/draft-07/schema#",
@@ -81,9 +81,14 @@ export class App {
     }
   };
 
+  private configManager: ConfigManager<AppConfig>;
   private config: AppConfig = this.DEFAULT_CONFIG;
 
-  private readonly MAIN_WINDOW_CONSTRUCTOR_OPTIONS: BrowserWindowConstructorOptions = {
+  // User account manager
+  private accountManager: null | AccountManager<AccountManagerConfig> = null;
+
+  // Window
+  private readonly WINDOW_CONSTRUCTOR_OPTIONS: BrowserWindowConstructorOptions = {
     show: false,
     icon: nativeImage.createFromPath(this.ICON_FILE_PATH),
     webPreferences: {
@@ -95,6 +100,9 @@ export class App {
     }
   };
 
+  private window: null | BrowserWindow = null;
+
+  // Timers
   private updateWindowPositionConfigTimer: null | NodeJS.Timeout = null;
   private readonly UPDATE_WINDOW_POSITION_CONFIG_DELAY_MS = 500;
 
@@ -165,14 +173,14 @@ export class App {
     }
     // Initialise window
     if (this.config.window.position === "fullscreen" || this.config.window.position === "maximized") {
-      this.window = new BrowserWindow(this.MAIN_WINDOW_CONSTRUCTOR_OPTIONS);
+      this.window = new BrowserWindow(this.WINDOW_CONSTRUCTOR_OPTIONS);
       if (this.config.window.position === "fullscreen") {
         this.window.setFullScreen(true);
       } else {
         this.window.maximize();
       }
     } else {
-      this.window = new BrowserWindow({ ...this.MAIN_WINDOW_CONSTRUCTOR_OPTIONS, ...this.config.window.position });
+      this.window = new BrowserWindow({ ...this.WINDOW_CONSTRUCTOR_OPTIONS, ...this.config.window.position });
     }
     this.window.setMenuBarVisibility(false);
     this.windowLogger.debug("Created window.");
@@ -202,9 +210,8 @@ export class App {
         this.developerToolsGlobalShortcutCallback();
       });
     } else {
-      const INDEX_HTML_FILE_PATH: string = join(__dirname, "..", "renderer", "index.html");
-      this.windowLogger.info(`Loading window web contents from file at path: "${INDEX_HTML_FILE_PATH}".`);
-      void this.window.loadFile(INDEX_HTML_FILE_PATH);
+      this.windowLogger.info(`Loading window web contents from file at path: "${this.INDEX_HTML_FILE_PATH}".`);
+      void this.window.loadFile(this.INDEX_HTML_FILE_PATH);
     }
     // Log dev tools shortcut registration
     // TODO: Investigate this
