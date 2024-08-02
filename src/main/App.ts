@@ -102,8 +102,8 @@ export class App {
 
   private window: null | BrowserWindow = null;
 
-  // Timers
-  private updateWindowPositionConfigTimer: null | NodeJS.Timeout = null;
+  // Timeouts
+  private updateWindowPositionConfigTimeout: null | NodeJS.Timeout = null;
   private readonly UPDATE_WINDOW_POSITION_CONFIG_DELAY_MS = 500;
 
   // Private constructor to prevent direct instantiation
@@ -264,10 +264,10 @@ export class App {
 
   private onWindowBoundsChanged(): void {
     // Debounce updates to config
-    if (this.updateWindowPositionConfigTimer !== null) {
-      clearTimeout(this.updateWindowPositionConfigTimer);
+    if (this.updateWindowPositionConfigTimeout !== null) {
+      clearTimeout(this.updateWindowPositionConfigTimeout);
     }
-    this.updateWindowPositionConfigTimer = setTimeout(() => {
+    this.updateWindowPositionConfigTimeout = setTimeout(() => {
       this.updateWindowPositionConfig();
     }, this.UPDATE_WINDOW_POSITION_CONFIG_DELAY_MS);
   }
