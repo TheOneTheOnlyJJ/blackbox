@@ -68,7 +68,7 @@ export class SQLiteAccountManager extends AccountManager<SQLiteAccountManagerCon
     this.db.pragma("journal_mode = WAL");
     this.logger.silly(`Journal mode: ${this.db.pragma("journal_mode", { simple: true }) as SQLiteJournalMode}.`);
     this.initialiseUsersTable();
-    this.logger.info('"SQLite" User Account Manager ready.');
+    this.logger.info('"SQLite" Account Manager ready.');
   }
 
   public addUser(user: IUser): boolean {
@@ -124,7 +124,7 @@ export class SQLiteAccountManager extends AccountManager<SQLiteAccountManagerCon
   }
 
   public close(): boolean {
-    this.logger.info(`Closing "${this.config.type}" User Account Manager.`);
+    this.logger.info(`Closing "${this.config.type}" Account Manager.`);
     this.db.close();
     return true;
   }

@@ -84,7 +84,7 @@ export class App {
   private configManager: ConfigManager<AppConfig>;
   private config: AppConfig = this.DEFAULT_CONFIG;
 
-  // User account manager
+  // Account manager
   private accountManager: null | AccountManager<AccountManagerConfig> = null;
 
   // Window
@@ -278,6 +278,7 @@ export class App {
     }
     if (this.window.isMinimized()) {
       // Ignore updates when window is minimized
+      this.windowLogger.debug("Window minimized. Config unchanged.");
       return;
     }
     this.windowLogger.debug("Updating window position config.");
@@ -349,7 +350,7 @@ export class App {
     });
     this.appLogger.debug("Registering IPC main event handlers.");
     ipcMain.on("new-user-account-manager", () => {
-      this.onIPCMainNewUserAccountManager();
+      this.onIPCMainNewAccountManager();
     });
   }
 
@@ -374,20 +375,20 @@ export class App {
     this.appLogger.debug("Unregistering all global shortcuts.");
     globalShortcut.unregisterAll();
     this.appLogger.debug("Unregistered all global shortcuts.");
-    this.appLogger.debug("Checking for initialised User Account Manager.");
+    this.appLogger.debug("Checking for initialised Account Manager.");
     if (this.accountManager !== null) {
-      this.appLogger.debug(`Found initialised "${this.accountManager.config.type}" User Account Manager.`);
+      this.appLogger.debug(`Found initialised "${this.accountManager.config.type}" Account Manager.`);
       this.accountManager.close();
       this.appLogger.debug("Closed user account manager.");
     } else {
-      this.appLogger.debug("No initialised User Account Manager.");
+      this.appLogger.debug("No initialised Account Manager.");
     }
     this.appLogger.silly("Pre-quit steps done. Appending end log separator to log file.");
     appendFileSync(this.LOG_FILE_PATH, `---------- End   : ${new Date().toISOString()} ----------\n\n`, "utf-8");
   }
 
-  private onIPCMainNewUserAccountManager(): void {
-    this.accountManagerLogger.info("New user account manager command received by main.");
+  private onIPCMainNewAccountManager(): void {
+    this.accountManagerLogger.info("New Account Manager command received by main.");
     const USER_ACCOUNT_MANAGER_CONFIG: AccountManagerConfig = {
       type: AccountManagerType.SQLite,
       dbDirPath: resolve(join(app.getAppPath(), "data")),

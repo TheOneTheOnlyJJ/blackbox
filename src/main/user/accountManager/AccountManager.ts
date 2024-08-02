@@ -16,17 +16,16 @@ export abstract class AccountManager<T extends BaseAccountManagerConfig> {
   public constructor(config: T, configSchema: JSONSchemaType<T>, logger: LogFunctions) {
     this.logger = logger;
     this.config = config;
-    this.logger.info(`Initialising "${this.config.type}" User Account Manager.`);
+    this.logger.info(`Initialising "${this.config.type}" Account Manager.`);
     this.logger.silly(`Config: ${JSON.stringify(this.config, null, 2)}.`);
     this.configManager = new ConfigManager<T>(configSchema, null, this.logger);
-    this.logger.silly("Validating config.");
-    if (!this.configManager.isConfigValid(this.config)) {
-      throw new Error(`Could not initialise "${this.config.type}" User Account Manager with invalid config`);
+    if (!this.isConfigValid(this.config)) {
+      throw new Error(`Could not initialise "${this.config.type}" Account Manager with invalid config`);
     }
   }
 
   public isConfigValid(config: T): boolean {
-    this.logger.silly("Validating config.");
+    this.logger.silly(`Validating "${this.config.type}" Account Manager config.`);
     return this.configManager.isConfigValid(config);
   }
 
