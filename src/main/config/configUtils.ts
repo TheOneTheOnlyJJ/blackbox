@@ -3,7 +3,10 @@ import { LogFunctions } from "electron-log";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
-const AJV = new Ajv();
+const AJV = new Ajv({
+  allErrors: true,
+  strict: true
+});
 
 export function createJSONValidateFunction<T>(configSchema: JSONSchemaType<T>): ValidateFunction<T> {
   return AJV.compile(configSchema);
@@ -37,15 +40,15 @@ export function readConfigJSON<T>(configFilePath: string, validate: ValidateFunc
         logger.debug("Returning read config.");
         return JSON_CONFIG_DATA;
       } else {
-        throw new Error("Invalid read config & no default config");
+        throw new Error("Read invalid config");
       }
     } catch (err: unknown) {
       const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
       logger.error(`Could not read config file: "${configFilePath}". Error: ${ERROR_MESSAGE}.`);
-      throw new Error("Could not read config & no default config");
+      throw new Error("Could not read config");
     }
   } else {
-    throw new Error("Could not find config file & no default config");
+    throw new Error("Could not find config file");
   }
 }
 

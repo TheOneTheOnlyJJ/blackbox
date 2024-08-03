@@ -1,4 +1,4 @@
-import { app, globalShortcut, BrowserWindow, ipcMain, Rectangle } from "electron/main";
+import { app, globalShortcut, BrowserWindow, ipcMain, Rectangle, screen } from "electron/main";
 import { BrowserWindowConstructorOptions, HandlerDetails, nativeImage, shell, WindowOpenHandlerResponse } from "electron/common";
 import { AccountManager } from "./user/accountManager/AccountManager";
 import { accountManagerFactory, AccountManagerConfig } from "./user/accountManager/accountManagerFactory";
@@ -9,10 +9,11 @@ import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 import { createJSONValidateFunction, readConfigJSON, writeConfigJSON } from "./config/configUtils";
 import { JSONSchemaType } from "ajv/dist/types/json-schema";
 import { ValidateFunction } from "ajv";
+import { adjustWindowBounds, WindowPosition } from "./window/windowUtils";
 
 export interface AppConfig {
   window: {
-    position: Rectangle | "fullscreen" | "maximized";
+    position: Rectangle | WindowPosition.FullScreen | WindowPosition.Maximized;
   };
 }
 
@@ -47,7 +48,7 @@ export class App {
         properties: {
           position: {
             anyOf: [
-              { type: "string", enum: ["fullscreen", "maximized"] },
+              { type: "string", enum: [WindowPosition.FullScreen, WindowPosition.Maximized] },
               {
                 // Electron Rectangle schema
                 type: "object",
@@ -125,6 +126,14 @@ export class App {
     // Add start log separator (also create file if missing)
     appendFileSync(this.LOG_FILE_PATH, `---------- Start : ${new Date().toISOString()} ----------\n`, "utf-8");
     this.bootstrapLogger.info(`Using log file at path: "${log.transports.file.getFile().path}".`);
+    // Read app config
+    try {
+      this.config = readConfigJSON<AppConfig>(this.CONFIG_FILE_PATH, this.CONFIG_VALIDATE_FUNCTION, this.appLogger);
+    } catch {
+      this.appLogger.warn("Using default app config.");
+      this.config = this.DEFAULT_CONFIG;
+    }
+    this.appLogger.debug(`Using app config: ${JSON.stringify(this.config, null, 2)}.`);
     this.bootstrapLogger.debug("App constructor done.");
   }
 
@@ -153,17 +162,26 @@ export class App {
   private createWindow(): void {
     this.windowLogger.info("Creating window.");
     // Read window config
+    // This should allow config file edits on macOS to take effect when activating app
     try {
-      this.config.window = readConfigJSON<AppConfig>(this.CONFIG_FILE_PATH, this.CONFIG_VALIDATE_FUNCTION, this.appLogger).window;
-    } catch (err: unknown) {
-      const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-      this.windowLogger.error(`Could not read window config: ${ERROR_MESSAGE}! Using default window config.`);
+      this.config.window = readConfigJSON<AppConfig>(this.CONFIG_FILE_PATH, this.CONFIG_VALIDATE_FUNCTION, this.windowLogger).window;
+    } catch {
+      this.windowLogger.warn("Using default window config.");
       this.config.window = this.DEFAULT_CONFIG.window;
     }
+    this.windowLogger.debug(`Using window config: ${JSON.stringify(this.config.window, null, 2)}.`);
+    // Adjust bounds if the window positions are a Rectangle
+    if (this.config.window.position !== WindowPosition.FullScreen && this.config.window.position !== WindowPosition.Maximized) {
+      this.windowLogger.debug("Adjusting window position bounds to make sure it fits in the primary display's screen work area.");
+      const PRIMARY_DISPLAY_BOUNDS: Rectangle = screen.getPrimaryDisplay().workArea;
+      this.windowLogger.debug(`Primary display work area bounds: ${JSON.stringify(PRIMARY_DISPLAY_BOUNDS, null, 2)}.`);
+      this.config.window.position = adjustWindowBounds(PRIMARY_DISPLAY_BOUNDS, this.config.window.position, this.windowLogger);
+      this.windowLogger.debug(`Adjusted window positions: ${JSON.stringify(this.config.window.position, null, 2)}.`);
+    }
     // Initialise window
-    if (this.config.window.position === "fullscreen" || this.config.window.position === "maximized") {
+    if (this.config.window.position === WindowPosition.FullScreen || this.config.window.position === WindowPosition.Maximized) {
       this.window = new BrowserWindow(this.WINDOW_CONSTRUCTOR_OPTIONS);
-      if (this.config.window.position === "fullscreen") {
+      if (this.config.window.position === WindowPosition.FullScreen) {
         this.window.setFullScreen(true);
       } else {
         this.window.maximize();
@@ -226,7 +244,7 @@ export class App {
       return;
     }
     this.windowLogger.info("Window closed.");
-    writeConfigJSON(this.config, this.CONFIG_DIR_PATH, this.CONFIG_FILE_NAME, this.CONFIG_VALIDATE_FUNCTION, this.appLogger);
+    writeConfigJSON(this.config, this.CONFIG_DIR_PATH, this.CONFIG_FILE_NAME, this.CONFIG_VALIDATE_FUNCTION, this.windowLogger);
     this.windowLogger.debug("Removing all listeners from window.");
     this.window.removeAllListeners();
     this.windowLogger.debug('Setting window to "null".');
@@ -282,9 +300,9 @@ export class App {
     }
     this.windowLogger.debug("Updating window position config.");
     if (this.window.isFullScreen()) {
-      this.config.window.position = "fullscreen";
+      this.config.window.position = WindowPosition.FullScreen;
     } else if (this.window.isMaximized()) {
-      this.config.window.position = "maximized";
+      this.config.window.position = WindowPosition.Maximized;
     } else {
       this.config.window = {
         position: this.window.getBounds()
