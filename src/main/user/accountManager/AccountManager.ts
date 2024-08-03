@@ -1,8 +1,8 @@
 import { LogFunctions } from "electron-log";
 import { IUser, UserId } from "../IUser";
 import { AccountManagerType } from "./AccountManagerType";
-import { ConfigManager } from "../../config/ConfigManager";
-import { JSONSchemaType } from "ajv";
+import { createJSONValidateFunction, isConfigValid } from "../../config/configUtils";
+import { JSONSchemaType, ValidateFunction } from "ajv";
 
 export interface BaseAccountManagerConfig {
   type: AccountManagerType;
@@ -11,26 +11,18 @@ export interface BaseAccountManagerConfig {
 export abstract class AccountManager<T extends BaseAccountManagerConfig> {
   protected readonly logger: LogFunctions;
   public readonly config: T;
-  protected readonly configManager: ConfigManager<T>;
+  private readonly CONFIG_VALIDATE_FUNCTION: ValidateFunction<T>;
 
   public constructor(config: T, configSchema: JSONSchemaType<T>, logger: LogFunctions) {
     this.logger = logger;
     this.config = config;
     this.logger.info(`Initialising "${this.config.type}" Account Manager.`);
     this.logger.silly(`Config: ${JSON.stringify(this.config, null, 2)}.`);
-    this.configManager = new ConfigManager<T>(configSchema, null, this.logger);
-    if (!this.isConfigValid(this.config)) {
-      throw new Error(`Could not initialise "${this.config.type}" Account Manager with invalid config`);
-    }
-  }
-
-  public isConfigValid(config: T): boolean {
+    this.CONFIG_VALIDATE_FUNCTION = createJSONValidateFunction<T>(configSchema);
     this.logger.silly(`Validating "${this.config.type}" Account Manager config.`);
-    return this.configManager.isConfigValid(config);
-  }
-
-  public writeConfigJSON(configDir: string, configFileName: string): boolean {
-    return this.configManager.writeJSON(this.config, configDir, configFileName);
+    if (!isConfigValid<T>(this.config, this.CONFIG_VALIDATE_FUNCTION, this.logger)) {
+      throw new Error(`Could not initialise "${this.config.type}" Account Manager`);
+    }
   }
 
   public abstract isLocal(): boolean;

@@ -6,8 +6,9 @@ import { join, resolve } from "node:path";
 import log, { LogFunctions } from "electron-log";
 import { AccountManagerType } from "./user/accountManager/AccountManagerType";
 import { appendFileSync, existsSync, mkdirSync } from "node:fs";
-import { ConfigManager } from "./config/ConfigManager";
+import { createJSONValidateFunction, readConfigJSON, writeConfigJSON } from "./config/configUtils";
 import { JSONSchemaType } from "ajv/dist/types/json-schema";
+import { ValidateFunction } from "ajv";
 
 export interface AppConfig {
   window: {
@@ -30,12 +31,12 @@ export class App {
   private readonly bootstrapLogger: LogFunctions = log.scope("main-bootstrap");
   private readonly windowLogger: LogFunctions = log.scope("main-window");
   private readonly appLogger: LogFunctions = log.scope("main-app");
-  private readonly configLoaderLogger: LogFunctions = log.scope("main-config-loader");
   private readonly accountManagerLogger: LogFunctions = log.scope("main-account-manager");
 
   // Config
   private readonly CONFIG_DIR_PATH: string = resolve(join(app.getAppPath(), "config"));
   private readonly CONFIG_FILE_NAME: string = "BlackBoxConfig.json";
+  private readonly CONFIG_FILE_PATH: string = resolve(join(this.CONFIG_DIR_PATH, this.CONFIG_FILE_NAME));
 
   private readonly CONFIG_SCHEMA: JSONSchemaType<AppConfig> = {
     $schema: "http://json-schema.org/draft-07/schema#",
@@ -81,7 +82,7 @@ export class App {
     }
   };
 
-  private configManager: ConfigManager<AppConfig>;
+  private readonly CONFIG_VALIDATE_FUNCTION: ValidateFunction<AppConfig> = createJSONValidateFunction<AppConfig>(this.CONFIG_SCHEMA);
   private config: AppConfig = this.DEFAULT_CONFIG;
 
   // Account manager
@@ -123,20 +124,8 @@ export class App {
     }
     // Add start log separator (also create file if missing)
     appendFileSync(this.LOG_FILE_PATH, `---------- Start : ${new Date().toISOString()} ----------\n`, "utf-8");
-    // Log something to make sure it works
-    this.bootstrapLogger.info("Running App constructor.");
     this.bootstrapLogger.info(`Using log file at path: "${log.transports.file.getFile().path}".`);
-    // Initialise config manager
-    try {
-      this.configManager = new ConfigManager<AppConfig>(this.CONFIG_SCHEMA, this.DEFAULT_CONFIG, this.configLoaderLogger);
-    } catch (err: unknown) {
-      const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-      this.windowLogger.error(`Could not initialise Config Manager: ${ERROR_MESSAGE}!`);
-      app.quit();
-      // Stop TypeScript from bitching
-      // Property 'configManager' has no initializer and is not definitely assigned in the constructor.ts(2564)
-      process.exit();
-    }
+    this.bootstrapLogger.debug("App constructor done.");
   }
 
   public run(): void {
@@ -163,13 +152,13 @@ export class App {
 
   private createWindow(): void {
     this.windowLogger.info("Creating window.");
-    // Read config
+    // Read window config
     try {
-      this.config = this.configManager.readJSON(this.CONFIG_DIR_PATH, this.CONFIG_FILE_NAME);
+      this.config.window = readConfigJSON<AppConfig>(this.CONFIG_FILE_PATH, this.CONFIG_VALIDATE_FUNCTION, this.appLogger).window;
     } catch (err: unknown) {
       const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-      this.windowLogger.error(`Could not read config: ${ERROR_MESSAGE}! Using default config.`);
-      this.config = this.DEFAULT_CONFIG;
+      this.windowLogger.error(`Could not read window config: ${ERROR_MESSAGE}! Using default window config.`);
+      this.config.window = this.DEFAULT_CONFIG.window;
     }
     // Initialise window
     if (this.config.window.position === "fullscreen" || this.config.window.position === "maximized") {
@@ -232,13 +221,21 @@ export class App {
   }
 
   private onceWindowClosed(): void {
+    if (this.window === null) {
+      this.windowLogger.debug('Window is null on "closed". No-op.');
+      return;
+    }
     this.windowLogger.info("Window closed.");
-    this.configManager.writeJSON(this.config, this.CONFIG_DIR_PATH, this.CONFIG_FILE_NAME);
+    writeConfigJSON(this.config, this.CONFIG_DIR_PATH, this.CONFIG_FILE_NAME, this.CONFIG_VALIDATE_FUNCTION, this.appLogger);
+    this.windowLogger.debug("Removing all listeners from window.");
+    this.window.removeAllListeners();
+    this.windowLogger.debug('Setting window to "null".');
     this.window = null;
   }
 
   private onceWindowReadyToShow(): void {
     if (this.window === null) {
+      this.windowLogger.debug('Window is null on "ready-to-show". No-op.');
       return;
     }
     this.windowLogger.info("Showing window.");
@@ -253,12 +250,12 @@ export class App {
   }
 
   private onWindowMove(): void {
-    // This event fires so often while the window is moving that it requires debouncing
+    // Move event fires so often while the window is moving that it requires debouncing
     this.onWindowBoundsChanged();
   }
 
   private onWindowResize(): void {
-    // This event fires so often while the window is resizing that it requires debouncing
+    // Resize event fires so often while the window is resizing that it requires debouncing
     this.onWindowBoundsChanged();
   }
 
@@ -273,7 +270,9 @@ export class App {
   }
 
   private updateWindowPositionConfig(): void {
+    this.windowLogger.debug("Attempting to update window position config.");
     if (this.window === null) {
+      this.windowLogger.debug("Window is null. No-op.");
       return;
     }
     if (this.window.isMinimized()) {
@@ -319,12 +318,12 @@ export class App {
 
   private developerToolsGlobalShortcutCallback(): void {
     this.windowLogger.info("Developer tools shortcut pressed.");
-    if (this.window !== null) {
-      this.windowLogger.debug("Opening developer tools.");
-      this.window.webContents.openDevTools({ mode: "detach" });
-    } else {
+    if (this.window === null) {
       this.windowLogger.debug("Window is null. No-op.");
+      return;
     }
+    this.windowLogger.debug("Opening developer tools.");
+    this.window.webContents.openDevTools({ mode: "detach" });
   }
 
   private windowOpenHandler(details: HandlerDetails): WindowOpenHandlerResponse {
@@ -388,6 +387,7 @@ export class App {
   }
 
   private onIPCMainNewAccountManager(): void {
+    // Window may be null when IPC traffic is intercepted
     this.accountManagerLogger.info("New Account Manager command received by main.");
     const USER_ACCOUNT_MANAGER_CONFIG: AccountManagerConfig = {
       type: AccountManagerType.SQLite,
