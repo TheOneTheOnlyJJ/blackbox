@@ -6,7 +6,7 @@ import reactPlugin from "eslint-plugin-react";
 export default tseslint.config(
   {
     // Include everything in src
-    files: ["./src/**/*.{js,jsx,ts,tsx}"]
+    files: ["./src/**/*.{js,cjs,mjs,jsx,ts,tsx}"]
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
