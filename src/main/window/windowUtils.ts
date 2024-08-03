@@ -37,7 +37,7 @@ export function adjustWindowBounds(screenBounds: Rectangle, windowBounds: Rectan
   }
   // Ensure no rightwards overflow
   if (windowBounds.x + windowBounds.width > screenBounds.x + screenBounds.width) {
-    logger.debug("Right window border extends beyond right screen edge. Subtracting difference.");
+    logger.debug("Right window border extends beyond right screen edge. Setting to right screen edge.");
     newX = screenBounds.x + screenBounds.width - newWidth;
   } else {
     logger.debug("Right window border inside screen area. No change.");
@@ -52,7 +52,7 @@ export function adjustWindowBounds(screenBounds: Rectangle, windowBounds: Rectan
   }
   // Ensure no downwards overflow
   if (windowBounds.y + windowBounds.height > screenBounds.y + screenBounds.height) {
-    logger.debug("Bottom window border extends beyond bottom screen edge. Subtracting difference.");
+    logger.debug("Bottom window border extends beyond bottom screen edge. Setting to bottom screen edge.");
     newY = screenBounds.y + screenBounds.height - newHeight;
   } else {
     logger.debug("Bottom window border inside screen area. No change.");
