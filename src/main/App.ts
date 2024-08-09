@@ -366,9 +366,7 @@ export class App {
       this.onAppActivate();
     });
     this.appLogger.debug("Registering IPC main event handlers.");
-    ipcMain.on("new-user-account-manager", () => {
-      this.onIPCMainNewAccountManager();
-    });
+    this.registerIPCMainEventHandlers();
   }
 
   private onAppActivate(): void {
@@ -404,6 +402,12 @@ export class App {
     appendFileSync(this.LOG_FILE_PATH, `---------- End   : ${new Date().toISOString()} ----------\n\n`, "utf-8");
   }
 
+  private registerIPCMainEventHandlers() {
+    ipcMain.on("new-user-account-manager", () => {
+      this.onIPCMainNewAccountManager();
+    });
+  }
+
   private onIPCMainNewAccountManager(): void {
     // Window may be null when IPC traffic is intercepted
     this.accountManagerLogger.info("New Account Manager command received by main.");
@@ -413,13 +417,19 @@ export class App {
       dbFileName: "users.sqlite"
     };
     try {
+      // If an account manager already exists, close it gracefully
+      if (this.accountManager !== null) {
+        this.accountManagerLogger.debug("Found existing Account Manager. Closing.");
+        this.accountManager.close();
+        this.accountManagerLogger.debug("Closed existing Account Manager. Creating the new one.");
+      }
       this.accountManager = accountManagerFactory(USER_ACCOUNT_MANAGER_CONFIG, this.accountManagerLogger);
       this.window?.webContents.send("created-user-account-manager");
     } catch (err: unknown) {
       this.accountManager = null;
       const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
       this.appLogger.error(
-        `Error: ${ERROR_MESSAGE}!\nCould not create user account manager with given config: ${JSON.stringify(USER_ACCOUNT_MANAGER_CONFIG, null, 2)}.`
+        `Error: ${ERROR_MESSAGE}!\nCould not create Account Manager with given config: ${JSON.stringify(USER_ACCOUNT_MANAGER_CONFIG, null, 2)}.`
       );
       this.window?.webContents.send("failed-creating-user-account-manager");
     }

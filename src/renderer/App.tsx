@@ -1,27 +1,26 @@
-import { FC, useEffect, useState } from "react";
+import { FC, useEffect } from "react";
 import { useLoggerContext } from "./components/LoggerContext";
+import { HashRouter as Router, Routes, Route } from "react-router-dom";
+import HomePage from "./pages/HomePage";
+import { CssBaseline } from "@mui/material";
+import RegisterPage from "./pages/RegisterPage";
 
 const App: FC = () => {
   const { appLogger } = useLoggerContext();
-  const [msg, setMsg] = useState<string>("");
 
   useEffect(() => {
-    appLogger.info("Emitting new user account manager request to main process.");
-    window.api.newUserAccountManager();
-    window.api.onCreatedUserAccountManager(() => {
-      setMsg("SUCCESS");
-    });
-    window.api.onFailedCreatingUserAccountManager(() => {
-      setMsg("FAILED");
-    });
+    appLogger.info("Rendering App component.");
   }, []);
 
   return (
     <>
-      <div>Hello, Electron with React and TypeScript!</div>
-      <p>
-        User account manager creation status : <strong>{msg}</strong>
-      </p>
+      <CssBaseline />
+      <Router>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/register" element={<RegisterPage />} />
+        </Routes>
+      </Router>
     </>
   );
 };
