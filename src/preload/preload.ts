@@ -1,9 +1,14 @@
 import { contextBridge, ipcRenderer } from "electron";
+import type { AccountManagerConfig } from "../main/user/accountManager/accountManagerFactory";
+import { IPCChannel } from "../main/utils/IPCUtils";
 
-contextBridge.exposeInMainWorld("api", {
-  newUserAccountManager: () => {
-    ipcRenderer.send("new-user-account-manager");
+// Expose the APIs in the renderer
+contextBridge.exposeInMainWorld("userStorageAPI", {
+  getDefaultConfig: () => {
+    return ipcRenderer.invoke(IPCChannel.userStorageGetDefaultConfig) as Promise<AccountManagerConfig>;
   },
-  onCreatedUserAccountManager: (callback: () => void) => ipcRenderer.on("created-user-account-manager", callback),
-  onFailedCreatingUserAccountManager: (callback: () => void) => ipcRenderer.on("failed-creating-user-account-manager", callback)
+  new: (config: AccountManagerConfig) => {
+    return ipcRenderer.invoke(IPCChannel.UserStorageNew, config) as Promise<boolean>;
+  }
 });
+// Exposing these APIs to the global Window interface is done in the preload.d.ts file

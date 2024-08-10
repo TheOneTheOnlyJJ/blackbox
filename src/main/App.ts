@@ -1,4 +1,4 @@
-import { app, globalShortcut, BrowserWindow, ipcMain, Rectangle, screen } from "electron/main";
+import { app, globalShortcut, BrowserWindow, ipcMain, Rectangle, screen, IpcMainInvokeEvent } from "electron/main";
 import { BrowserWindowConstructorOptions, HandlerDetails, nativeImage, shell, WindowOpenHandlerResponse } from "electron/common";
 import { AccountManager } from "./user/accountManager/AccountManager";
 import { accountManagerFactory, AccountManagerConfig } from "./user/accountManager/accountManagerFactory";
@@ -6,10 +6,11 @@ import { join, resolve } from "node:path";
 import log, { LogFunctions } from "electron-log";
 import { AccountManagerType } from "./user/accountManager/AccountManagerType";
 import { appendFileSync, existsSync, mkdirSync } from "node:fs";
-import { createJSONValidateFunction, readConfigJSON, writeConfigJSON } from "./config/configUtils";
+import { createJSONValidateFunction, readConfigJSON, writeConfigJSON } from "./utils/configUtils";
 import { JSONSchemaType } from "ajv/dist/types/json-schema";
 import { ValidateFunction } from "ajv";
-import { adjustWindowBounds, WindowPosition } from "./window/windowUtils";
+import { adjustWindowBounds, WindowPosition } from "./utils/windowUtils";
+import { IPCChannel } from "./utils/IPCUtils";
 
 export interface AppConfig {
   window: {
@@ -88,6 +89,12 @@ export class App {
 
   // Account manager
   private accountManager: null | AccountManager<AccountManagerConfig> = null;
+
+  private readonly DEFAULT_USER_ACCOUNT_MANAGER_CONFIG: AccountManagerConfig = {
+    type: AccountManagerType.SQLite,
+    dbDirPath: resolve(join(app.getAppPath(), "data")),
+    dbFileName: "users.sqlite"
+  };
 
   // Window
   private readonly WINDOW_CONSTRUCTOR_OPTIONS: BrowserWindowConstructorOptions = {
@@ -403,19 +410,21 @@ export class App {
   }
 
   private registerIPCMainEventHandlers() {
-    ipcMain.on("new-user-account-manager", () => {
-      this.onIPCMainNewAccountManager();
+    this.registerUserStorageIPCHandlers();
+  }
+
+  private registerUserStorageIPCHandlers(): void {
+    ipcMain.handle(IPCChannel.userStorageGetDefaultConfig, () => {
+      return this.DEFAULT_USER_ACCOUNT_MANAGER_CONFIG;
+    });
+    ipcMain.handle(IPCChannel.UserStorageNew, (_: IpcMainInvokeEvent, config: AccountManagerConfig) => {
+      return this.handleUserStorageNew(config);
     });
   }
 
-  private onIPCMainNewAccountManager(): void {
+  private handleUserStorageNew(config: AccountManagerConfig): boolean {
     // Window may be null when IPC traffic is intercepted
     this.accountManagerLogger.info("New Account Manager command received by main.");
-    const USER_ACCOUNT_MANAGER_CONFIG: AccountManagerConfig = {
-      type: AccountManagerType.SQLite,
-      dbDirPath: resolve(join(app.getAppPath(), "data")),
-      dbFileName: "users.sqlite"
-    };
     try {
       // If an account manager already exists, close it gracefully
       if (this.accountManager !== null) {
@@ -423,15 +432,19 @@ export class App {
         this.accountManager.close();
         this.accountManagerLogger.debug("Closed existing Account Manager. Creating the new one.");
       }
-      this.accountManager = accountManagerFactory(USER_ACCOUNT_MANAGER_CONFIG, this.accountManagerLogger);
-      this.window?.webContents.send("created-user-account-manager");
+      this.accountManager = accountManagerFactory(config, this.accountManagerLogger);
+      return true;
     } catch (err: unknown) {
       this.accountManager = null;
       const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
       this.appLogger.error(
-        `Error: ${ERROR_MESSAGE}!\nCould not create Account Manager with given config: ${JSON.stringify(USER_ACCOUNT_MANAGER_CONFIG, null, 2)}.`
+        `Error: ${ERROR_MESSAGE}!\nCould not create Account Manager with given config: ${JSON.stringify(
+          this.DEFAULT_USER_ACCOUNT_MANAGER_CONFIG,
+          null,
+          2
+        )}.`
       );
-      this.window?.webContents.send("failed-creating-user-account-manager");
+      return false;
     }
   }
 }

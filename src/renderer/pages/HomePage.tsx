@@ -10,17 +10,30 @@ const BACKGROUND_COLOR_1 = "black";
 const BACKGROUND_COLOR_2 = "white";
 
 const HomePage: FC = () => {
-  const [msg, setMsg] = useState<string>("");
+  const [msg, setMsg] = useState<string>("Getting default user storage...");
+  const [accountManagerConfig, setAccountManagerConfig] = useState<object>();
 
   useEffect(() => {
-    appLogger.info("Emitting new user account manager request to main process.");
-    window.api.newUserAccountManager();
-    window.api.onCreatedUserAccountManager(() => {
-      setMsg("Using local SQLite Account Manager");
-    });
-    window.api.onFailedCreatingUserAccountManager(() => {
-      setMsg("Could not initialise local SQLite Account Manager");
-    });
+    appLogger.info("Requesting user storage default config from main process.");
+    window.userStorageAPI
+      .getDefaultConfig()
+      .then(
+        (value: object) => {
+          setAccountManagerConfig(value);
+          const type = (value as { type?: string }).type;
+          if (type) {
+            setMsg(`Using default user storage config: ${type}`);
+          } else {
+            setMsg(`Could not get default user storage type...`);
+          }
+        },
+        (reason: unknown) => {
+          setMsg(`Could not get default user storage config: ${String(reason)}`);
+        }
+      )
+      .catch(() => {
+        setMsg(`Could not get default user storage config.`);
+      });
   }, []);
 
   return (

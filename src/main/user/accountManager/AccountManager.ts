@@ -1,7 +1,7 @@
 import { LogFunctions } from "electron-log";
 import { IUser, UserId } from "../IUser";
 import { AccountManagerType } from "./AccountManagerType";
-import { createJSONValidateFunction, isConfigValid } from "../../config/configUtils";
+import { createJSONValidateFunction, isConfigValid } from "../../utils/configUtils";
 import { JSONSchemaType, ValidateFunction } from "ajv";
 
 export interface BaseAccountManagerConfig {
