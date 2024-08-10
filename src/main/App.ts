@@ -268,12 +268,12 @@ export class App {
   }
 
   private onWindowMove(): void {
-    // Move event fires so often while the window is moving that it requires debouncing
+    // Move events fire very often while the window is moving; Debouncing is required
     this.onWindowBoundsChanged();
   }
 
   private onWindowResize(): void {
-    // Resize event fires so often while the window is resizing that it requires debouncing
+    // Resize events fire very often while the window is resizing; Debouncing is required
     this.onWindowBoundsChanged();
   }
 
@@ -288,7 +288,7 @@ export class App {
   }
 
   private updateWindowPositionConfig(): void {
-    this.windowLogger.debug("Attempting to update window position config.");
+    this.windowLogger.debug("Updating window position config.");
     if (this.window === null) {
       this.windowLogger.debug("Window is null. No-op.");
       return;

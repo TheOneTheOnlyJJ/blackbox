@@ -1,15 +1,15 @@
 /* eslint-disable react/no-unescaped-entities */
-import { Box, Button, Paper, TextField, Typography } from "@mui/material";
+import { Box, Button, IconButton, Paper, Stack, TextField, Typography } from "@mui/material";
+import ManageAccountsOutlinedIcon from "@mui/icons-material/ManageAccountsOutlined";
 import { FC, useEffect, useState } from "react";
 import "@fontsource/saira-stencil-one";
-import { useLoggerContext } from "../components/LoggerContext";
+import { appLogger } from "../loggers";
 import { Link } from "react-router-dom";
 
 const BACKGROUND_COLOR_1 = "black";
 const BACKGROUND_COLOR_2 = "white";
 
 const HomePage: FC = () => {
-  const { appLogger } = useLoggerContext();
   const [msg, setMsg] = useState<string>("");
 
   useEffect(() => {
@@ -66,6 +66,29 @@ const HomePage: FC = () => {
         >
           Login
         </Typography>
+        <Stack
+          direction="row"
+          sx={{
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+        >
+          <Typography
+            variant="body2"
+            sx={{
+              textAlign: "center"
+            }}
+          >
+            {msg}
+          </Typography>
+          <IconButton
+            onClick={() => {
+              alert("Click'd!");
+            }}
+          >
+            <ManageAccountsOutlinedIcon />
+          </IconButton>
+        </Stack>
         <TextField
           variant="standard"
           label="Username"

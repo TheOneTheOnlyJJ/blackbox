@@ -1,13 +1,9 @@
 import { FC, useEffect } from "react";
-import { useLoggerContext } from "./components/LoggerContext";
-import { HashRouter as Router, Routes, Route } from "react-router-dom";
-import HomePage from "./pages/HomePage";
+import { appLogger } from "./loggers";
 import { CssBaseline } from "@mui/material";
-import RegisterPage from "./pages/RegisterPage";
+import { Outlet } from "react-router-dom";
 
 const App: FC = () => {
-  const { appLogger } = useLoggerContext();
-
   useEffect(() => {
     appLogger.info("Rendering App component.");
   }, []);
@@ -15,12 +11,7 @@ const App: FC = () => {
   return (
     <>
       <CssBaseline />
-      <Router>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/register" element={<RegisterPage />} />
-        </Routes>
-      </Router>
+      <Outlet />
     </>
   );
 };
