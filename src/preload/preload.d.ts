@@ -1,8 +1,4 @@
-// Declare API interfaces
-interface IUserStorageAPI {
-  getDefaultConfig: () => Promise<AccountManagerConfig>;
-  new: (config: AccountManagerConfig) => Promise<boolean>;
-}
+import { IUserStorageAPI } from "src/shared/IPC/types";
 
 declare global {
   interface Window {

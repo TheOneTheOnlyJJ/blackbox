@@ -27,7 +27,7 @@ export function isConfigValid<T>(config: T, validate: ValidateFunction<T>, logge
 }
 
 export function readConfigJSON<T>(configFilePath: string, validate: ValidateFunction<T>, logger: LogFunctions): T {
-  logger.info(`Attempting to read config file at path: "${configFilePath}".`);
+  logger.info(`Reading config file at path: "${configFilePath}".`);
   if (existsSync(configFilePath)) {
     logger.debug("Found config file. Trying to open.");
     try {
@@ -37,7 +37,7 @@ export function readConfigJSON<T>(configFilePath: string, validate: ValidateFunc
       const JSON_CONFIG_DATA: T = JSON.parse(READ_CONFIG_DATA) as T;
       logger.silly("Validating read JSON.");
       if (isConfigValid<T>(JSON_CONFIG_DATA, validate, logger)) {
-        logger.debug("Returning read config.");
+        logger.silly("Returning read config.");
         return JSON_CONFIG_DATA;
       } else {
         throw new Error("Read invalid config");
@@ -60,7 +60,7 @@ export function writeConfigJSON<T>(
   logger: LogFunctions
 ): boolean {
   const CONFIG_FILE_PATH: string = resolve(join(configDir, configFileName));
-  logger.info(`Attempting to write config to file at path: "${CONFIG_FILE_PATH}".`);
+  logger.info(`Writing config to file at path: "${CONFIG_FILE_PATH}".`);
   logger.silly(`Config: ${JSON.stringify(config, null, 2)}.`);
   // Do not write invalid config
   logger.silly("Validating config to write.");

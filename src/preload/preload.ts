@@ -1,14 +1,17 @@
 import { contextBridge, ipcRenderer } from "electron";
-import type { AccountManagerConfig } from "../main/user/accountManager/accountManagerFactory";
+import type { UserStorageConfig } from "../shared/user/storage/types";
 import { IPCChannel } from "../main/utils/IPCUtils";
+import { IUserStorageAPI } from "../shared/IPC/APIs/types";
 
-// Expose the APIs in the renderer
-contextBridge.exposeInMainWorld("userStorageAPI", {
+const USER_STORAGE_API: IUserStorageAPI = {
   getDefaultConfig: () => {
-    return ipcRenderer.invoke(IPCChannel.userStorageGetDefaultConfig) as Promise<AccountManagerConfig>;
+    return ipcRenderer.invoke(IPCChannel.userStorageGetDefaultConfig) as Promise<UserStorageConfig>;
   },
-  new: (config: AccountManagerConfig) => {
+  new: (config: UserStorageConfig) => {
     return ipcRenderer.invoke(IPCChannel.UserStorageNew, config) as Promise<boolean>;
   }
-});
+};
+
+// Expose the APIs in the renderer
+contextBridge.exposeInMainWorld("userStorageAPI", USER_STORAGE_API);
 // Exposing these APIs to the global Window interface is done in the preload.d.ts file

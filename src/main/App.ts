@@ -1,10 +1,10 @@
 import { app, globalShortcut, BrowserWindow, ipcMain, Rectangle, screen, IpcMainInvokeEvent } from "electron/main";
 import { BrowserWindowConstructorOptions, HandlerDetails, nativeImage, shell, WindowOpenHandlerResponse } from "electron/common";
-import { AccountManager } from "./user/accountManager/AccountManager";
-import { accountManagerFactory, AccountManagerConfig } from "./user/accountManager/accountManagerFactory";
+import { UserStorage } from "./user/storage/UserStorage";
+import { userStorageFactory } from "./user/storage/userStorageFactory";
 import { join, resolve } from "node:path";
 import log, { LogFunctions } from "electron-log";
-import { AccountManagerType } from "./user/accountManager/AccountManagerType";
+import { UserStorageType, UserStorageConfig } from "../shared/user/storage/types";
 import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 import { createJSONValidateFunction, readConfigJSON, writeConfigJSON } from "./utils/configUtils";
 import { JSONSchemaType } from "ajv/dist/types/json-schema";
@@ -33,7 +33,7 @@ export class App {
   private readonly bootstrapLogger: LogFunctions = log.scope("main-bootstrap");
   private readonly windowLogger: LogFunctions = log.scope("main-window");
   private readonly appLogger: LogFunctions = log.scope("main-app");
-  private readonly accountManagerLogger: LogFunctions = log.scope("main-account-manager");
+  private readonly userStorageLogger: LogFunctions = log.scope("main-user-storage");
 
   // Config
   private readonly CONFIG_DIR_PATH: string = resolve(join(app.getAppPath(), "config"));
@@ -87,11 +87,11 @@ export class App {
   private readonly CONFIG_VALIDATE_FUNCTION: ValidateFunction<AppConfig> = createJSONValidateFunction<AppConfig>(this.CONFIG_SCHEMA);
   private config: AppConfig = this.DEFAULT_CONFIG;
 
-  // Account manager
-  private accountManager: null | AccountManager<AccountManagerConfig> = null;
+  // user storage
+  private userStorage: null | UserStorage<UserStorageConfig> = null;
 
-  private readonly DEFAULT_USER_ACCOUNT_MANAGER_CONFIG: AccountManagerConfig = {
-    type: AccountManagerType.SQLite,
+  private readonly DEFAULT_USER_ACCOUNT_MANAGER_CONFIG: UserStorageConfig = {
+    type: UserStorageType.SQLite,
     dbDirPath: resolve(join(app.getAppPath(), "data")),
     dbFileName: "users.sqlite"
   };
@@ -179,7 +179,7 @@ export class App {
     this.windowLogger.debug(`Using window config: ${JSON.stringify(this.config.window, null, 2)}.`);
     // Adjust bounds if the window positions are a Rectangle
     if (this.config.window.position !== WindowPosition.FullScreen && this.config.window.position !== WindowPosition.Maximized) {
-      this.windowLogger.debug("Adjusting window position bounds to make sure it fits in the primary display's screen work area.");
+      this.windowLogger.debug("Adjusting window bounds.");
       const PRIMARY_DISPLAY_BOUNDS: Rectangle = screen.getPrimaryDisplay().workArea;
       this.windowLogger.debug(`Primary display work area bounds: ${JSON.stringify(PRIMARY_DISPLAY_BOUNDS, null, 2)}.`);
       this.config.window.position = adjustWindowBounds(PRIMARY_DISPLAY_BOUNDS, this.config.window.position, this.windowLogger);
@@ -397,13 +397,13 @@ export class App {
     this.appLogger.debug("Unregistering all global shortcuts.");
     globalShortcut.unregisterAll();
     this.appLogger.debug("Unregistered all global shortcuts.");
-    this.appLogger.debug("Checking for initialised Account Manager.");
-    if (this.accountManager !== null) {
-      this.appLogger.debug(`Found initialised "${this.accountManager.config.type}" Account Manager.`);
-      this.accountManager.close();
-      this.appLogger.debug("Closed user account manager.");
+    this.appLogger.debug("Checking for initialised user storage.");
+    if (this.userStorage !== null) {
+      this.appLogger.debug(`Found initialised "${this.userStorage.config.type}" user storage.`);
+      this.userStorage.close();
+      this.appLogger.debug("Closed user storage.");
     } else {
-      this.appLogger.debug("No initialised Account Manager.");
+      this.appLogger.debug("No initialised user storage.");
     }
     this.appLogger.silly("Pre-quit steps done. Appending end log separator to log file.");
     appendFileSync(this.LOG_FILE_PATH, `---------- End   : ${new Date().toISOString()} ----------\n\n`, "utf-8");
@@ -417,28 +417,32 @@ export class App {
     ipcMain.handle(IPCChannel.userStorageGetDefaultConfig, () => {
       return this.DEFAULT_USER_ACCOUNT_MANAGER_CONFIG;
     });
-    ipcMain.handle(IPCChannel.UserStorageNew, (_: IpcMainInvokeEvent, config: AccountManagerConfig) => {
+    ipcMain.handle(IPCChannel.UserStorageNew, (_: IpcMainInvokeEvent, config: UserStorageConfig) => {
       return this.handleUserStorageNew(config);
     });
   }
 
-  private handleUserStorageNew(config: AccountManagerConfig): boolean {
+  private handleUserStorageNew(config: UserStorageConfig): boolean {
     // Window may be null when IPC traffic is intercepted
-    this.accountManagerLogger.info("New Account Manager command received by main.");
+    this.userStorageLogger.info("New user storage command received by main.");
     try {
-      // If an account manager already exists, close it gracefully
-      if (this.accountManager !== null) {
-        this.accountManagerLogger.debug("Found existing Account Manager. Closing.");
-        this.accountManager.close();
-        this.accountManagerLogger.debug("Closed existing Account Manager. Creating the new one.");
+      // If a user storage is initialised, close it gracefully
+      if (this.userStorage !== null) {
+        this.userStorageLogger.debug("Found existing user storage. Closing.");
+        this.userStorage.close();
+        this.userStorageLogger.debug("Closed existing user storage.");
+      } else {
+        this.userStorageLogger.debug("No existing user storage found.");
       }
-      this.accountManager = accountManagerFactory(config, this.accountManagerLogger);
+      this.userStorageLogger.debug("Running user storage factory.");
+      this.userStorageLogger.silly(`With config: ${JSON.stringify(config, null, 2)}.`);
+      this.userStorage = userStorageFactory(config, this.userStorageLogger);
       return true;
     } catch (err: unknown) {
-      this.accountManager = null;
+      this.userStorage = null;
       const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
       this.appLogger.error(
-        `Error: ${ERROR_MESSAGE}!\nCould not create Account Manager with given config: ${JSON.stringify(
+        `Error: ${ERROR_MESSAGE}!\nCould not create user storage with given config: ${JSON.stringify(
           this.DEFAULT_USER_ACCOUNT_MANAGER_CONFIG,
           null,
           2

@@ -5,12 +5,13 @@ import { FC, useEffect, useState } from "react";
 import "@fontsource/saira-stencil-one";
 import { appLogger } from "../loggers";
 import { Link } from "react-router-dom";
+import { UserStorageConfig } from "src/shared/user/storage/types";
 
 const BACKGROUND_COLOR_1 = "black";
 const BACKGROUND_COLOR_2 = "white";
 
 const HomePage: FC = () => {
-  const [msg, setMsg] = useState<string>("Getting default user storage...");
+  const [msg, setMsg] = useState<string>();
   const [accountManagerConfig, setAccountManagerConfig] = useState<object>();
 
   useEffect(() => {
@@ -18,14 +19,11 @@ const HomePage: FC = () => {
     window.userStorageAPI
       .getDefaultConfig()
       .then(
-        (value: object) => {
+        (value: UserStorageConfig) => {
           setAccountManagerConfig(value);
-          const type = (value as { type?: string }).type;
-          if (type) {
-            setMsg(`Using default user storage config: ${type}`);
-          } else {
-            setMsg(`Could not get default user storage type...`);
-          }
+          setMsg(`Using default user storage config: ${value.type}`);
+          appLogger.debug("Requesting new user storage with the default config from the main process.");
+          void window.userStorageAPI.new(value);
         },
         (reason: unknown) => {
           setMsg(`Could not get default user storage config: ${String(reason)}`);

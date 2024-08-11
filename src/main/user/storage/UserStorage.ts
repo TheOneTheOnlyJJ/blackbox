@@ -1,14 +1,10 @@
 import { LogFunctions } from "electron-log";
 import { IUser, UserId } from "../IUser";
-import { AccountManagerType } from "./AccountManagerType";
+import { BaseUserStorageConfig } from "../../../shared/user/storage/types";
 import { createJSONValidateFunction, isConfigValid } from "../../utils/configUtils";
 import { JSONSchemaType, ValidateFunction } from "ajv";
 
-export interface BaseAccountManagerConfig {
-  type: AccountManagerType;
-}
-
-export abstract class AccountManager<T extends BaseAccountManagerConfig> {
+export abstract class UserStorage<T extends BaseUserStorageConfig> {
   protected readonly logger: LogFunctions;
   public readonly config: T;
   private readonly CONFIG_VALIDATE_FUNCTION: ValidateFunction<T>;
@@ -16,12 +12,12 @@ export abstract class AccountManager<T extends BaseAccountManagerConfig> {
   public constructor(config: T, configSchema: JSONSchemaType<T>, logger: LogFunctions) {
     this.logger = logger;
     this.config = config;
-    this.logger.info(`Initialising "${this.config.type}" Account Manager.`);
+    this.logger.info(`Initialising "${this.config.type}" user storage.`);
     this.logger.silly(`Config: ${JSON.stringify(this.config, null, 2)}.`);
     this.CONFIG_VALIDATE_FUNCTION = createJSONValidateFunction<T>(configSchema);
-    this.logger.silly(`Validating "${this.config.type}" Account Manager config.`);
+    this.logger.silly(`Validating "${this.config.type}" user storage config.`);
     if (!isConfigValid<T>(this.config, this.CONFIG_VALIDATE_FUNCTION, this.logger)) {
-      throw new Error(`Could not initialise "${this.config.type}" Account Manager`);
+      throw new Error(`Could not initialise "${this.config.type}" user storage`);
     }
   }
 
