@@ -9,6 +9,9 @@ const USER_STORAGE_API: IUserStorageAPI = {
   },
   new: (config: UserStorageConfig) => {
     return ipcRenderer.invoke(IPCChannel.UserStorageNew, config) as Promise<boolean>;
+  },
+  close: () => {
+    return ipcRenderer.invoke(IPCChannel.UserStorageClose) as Promise<boolean | null>;
   }
 };
 

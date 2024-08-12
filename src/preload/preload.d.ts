@@ -1,4 +1,4 @@
-import { IUserStorageAPI } from "src/shared/IPC/types";
+import { IUserStorageAPI } from "src/shared/IPC/APIs/types";
 
 declare global {
   interface Window {

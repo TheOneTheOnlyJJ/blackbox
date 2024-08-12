@@ -1,4 +1,5 @@
 export enum IPCChannel {
   userStorageGetDefaultConfig = "userStorage:getDefaultConfig",
-  UserStorageNew = "userStorage:new"
+  UserStorageNew = "userStorage:new",
+  UserStorageClose = "userStorage:close"
 }

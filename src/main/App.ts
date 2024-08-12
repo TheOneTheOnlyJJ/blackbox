@@ -31,8 +31,9 @@ export class App {
   private readonly LOG_FILE_PATH: string = resolve(join(this.LOGS_DIR_PATH, this.LOG_FILE_NAME));
 
   private readonly bootstrapLogger: LogFunctions = log.scope("main-bootstrap");
-  private readonly windowLogger: LogFunctions = log.scope("main-window");
   private readonly appLogger: LogFunctions = log.scope("main-app");
+  private readonly windowLogger: LogFunctions = log.scope("main-window");
+  private readonly IPCLogger: LogFunctions = log.scope("main-ipc");
   private readonly userStorageLogger: LogFunctions = log.scope("main-user-storage");
 
   // Config
@@ -90,7 +91,7 @@ export class App {
   // user storage
   private userStorage: null | UserStorage<UserStorageConfig> = null;
 
-  private readonly DEFAULT_USER_ACCOUNT_MANAGER_CONFIG: UserStorageConfig = {
+  private readonly DEFAULT_USER_STORAGE_CONFIG: UserStorageConfig = {
     type: UserStorageType.SQLite,
     dbDirPath: resolve(join(app.getAppPath(), "data")),
     dbFileName: "users.sqlite"
@@ -297,15 +298,14 @@ export class App {
   private updateWindowPositionConfig(): void {
     this.windowLogger.debug("Updating window position config.");
     if (this.window === null) {
-      this.windowLogger.debug("Window is null. No-op.");
+      this.windowLogger.silly("Window is null. No-op.");
       return;
     }
     if (this.window.isMinimized()) {
       // Ignore updates when window is minimized
-      this.windowLogger.debug("Window minimized. Config unchanged.");
+      this.windowLogger.silly("Window minimized. Config unchanged.");
       return;
     }
-    this.windowLogger.debug("Updating window position config.");
     if (this.window.isFullScreen()) {
       this.config.window.position = WindowPosition.FullScreen;
     } else if (this.window.isMaximized()) {
@@ -397,7 +397,6 @@ export class App {
     this.appLogger.debug("Unregistering all global shortcuts.");
     globalShortcut.unregisterAll();
     this.appLogger.debug("Unregistered all global shortcuts.");
-    this.appLogger.debug("Checking for initialised user storage.");
     if (this.userStorage !== null) {
       this.appLogger.debug(`Found initialised "${this.userStorage.config.type}" user storage.`);
       this.userStorage.close();
@@ -414,17 +413,26 @@ export class App {
   }
 
   private registerUserStorageIPCHandlers(): void {
+    this.IPCLogger.debug("Registering user storage IPC handlers.");
     ipcMain.handle(IPCChannel.userStorageGetDefaultConfig, () => {
-      return this.DEFAULT_USER_ACCOUNT_MANAGER_CONFIG;
+      return this.handleUserStorageGetDefaultConfig();
     });
     ipcMain.handle(IPCChannel.UserStorageNew, (_: IpcMainInvokeEvent, config: UserStorageConfig) => {
       return this.handleUserStorageNew(config);
     });
+    ipcMain.handle(IPCChannel.UserStorageClose, () => {
+      return this.handleUserStorageClose();
+    });
+    this.IPCLogger.debug("Registered user storage IPC handlers.");
+  }
+
+  private handleUserStorageGetDefaultConfig(): UserStorageConfig {
+    this.IPCLogger.debug("Received get default user storage config request.");
+    return this.DEFAULT_USER_STORAGE_CONFIG;
   }
 
   private handleUserStorageNew(config: UserStorageConfig): boolean {
-    // Window may be null when IPC traffic is intercepted
-    this.userStorageLogger.info("New user storage command received by main.");
+    this.IPCLogger.debug("Received new user storage request.");
     try {
       // If a user storage is initialised, close it gracefully
       if (this.userStorage !== null) {
@@ -442,13 +450,22 @@ export class App {
       this.userStorage = null;
       const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
       this.appLogger.error(
-        `Error: ${ERROR_MESSAGE}!\nCould not create user storage with given config: ${JSON.stringify(
-          this.DEFAULT_USER_ACCOUNT_MANAGER_CONFIG,
-          null,
-          2
-        )}.`
+        `Error: ${ERROR_MESSAGE}!\nCould not create user storage with given config: ${JSON.stringify(this.DEFAULT_USER_STORAGE_CONFIG, null, 2)}.`
       );
       return false;
     }
+  }
+
+  private handleUserStorageClose(): boolean | null {
+    this.IPCLogger.debug("Received close user storage request.");
+    if (this.userStorage === null) {
+      this.IPCLogger.debug('No user storage initialised. Returning "null".');
+      return null;
+    }
+    this.IPCLogger.debug("Closing user storage.");
+    const CLOSE_RESULT: boolean = this.userStorage.close();
+    this.IPCLogger.debug(`Closed user storage. Returning ${CLOSE_RESULT.toString()}.`);
+    this.userStorage = null;
+    return CLOSE_RESULT;
   }
 }

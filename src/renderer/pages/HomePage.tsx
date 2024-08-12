@@ -1,39 +1,16 @@
 /* eslint-disable react/no-unescaped-entities */
 import { Box, Button, IconButton, Paper, Stack, TextField, Typography } from "@mui/material";
 import ManageAccountsOutlinedIcon from "@mui/icons-material/ManageAccountsOutlined";
-import { FC, useEffect, useState } from "react";
+import { FC } from "react";
 import "@fontsource/saira-stencil-one";
-import { appLogger } from "../loggers";
 import { Link } from "react-router-dom";
-import { UserStorageConfig } from "src/shared/user/storage/types";
+import { useAppContext } from "../appContext";
 
 const BACKGROUND_COLOR_1 = "black";
 const BACKGROUND_COLOR_2 = "white";
 
 const HomePage: FC = () => {
-  const [msg, setMsg] = useState<string>();
-  const [accountManagerConfig, setAccountManagerConfig] = useState<object>();
-
-  useEffect(() => {
-    appLogger.info("Requesting user storage default config from main process.");
-    window.userStorageAPI
-      .getDefaultConfig()
-      .then(
-        (value: UserStorageConfig) => {
-          setAccountManagerConfig(value);
-          setMsg(`Using default user storage config: ${value.type}`);
-          appLogger.debug("Requesting new user storage with the default config from the main process.");
-          void window.userStorageAPI.new(value);
-        },
-        (reason: unknown) => {
-          setMsg(`Could not get default user storage config: ${String(reason)}`);
-        }
-      )
-      .catch(() => {
-        setMsg(`Could not get default user storage config.`);
-      });
-  }, []);
-
+  const appContext = useAppContext();
   return (
     <Box
       sx={{
@@ -90,7 +67,7 @@ const HomePage: FC = () => {
               textAlign: "center"
             }}
           >
-            {msg}
+            {appContext.userStorageConfig !== null ? `Using ${appContext.userStorageConfig.type} user storage` : "No user storage initialised"}
           </Typography>
           <IconButton
             onClick={() => {
