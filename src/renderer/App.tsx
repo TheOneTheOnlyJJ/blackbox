@@ -10,23 +10,23 @@ const App: FC = () => {
 
   useEffect(() => {
     appLogger.info("Rendering App component.");
-    IPCLogger.debug("Requesting user storage default config.");
+    IPCLogger.debug("Requesting user storage config.");
     window.userStorageAPI
-      .getDefaultConfig()
+      .getConfig()
       .then(
         (value: UserStorageConfig) => {
           setUserStorageConfig(value);
-          IPCLogger.debug("Received user storage default config.");
-          IPCLogger.silly(`Default config: ${JSON.stringify(value, null, 2)}.`);
-          IPCLogger.debug("Requesting new user storage with the default config.");
-          void window.userStorageAPI.new(value);
+          IPCLogger.debug("Received user storage config.");
+          IPCLogger.silly(`Config: ${JSON.stringify(value, null, 2)}.`);
+          IPCLogger.debug("Requesting user storage initialisation.");
+          void window.userStorageAPI.initialise();
         },
         (reason: unknown) => {
-          IPCLogger.warn(`Could not get default user storage config: ${String(reason)}.`);
+          IPCLogger.warn(`Could not get user storage config: ${String(reason)}.`);
         }
       )
       .catch(() => {
-        IPCLogger.error(`Could not get default user storage config.`);
+        IPCLogger.error(`Could not get user storage config.`);
       });
   }, []);
 

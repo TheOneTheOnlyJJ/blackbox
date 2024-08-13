@@ -97,7 +97,6 @@ export class SQLiteUserStorage extends UserStorage<SQLiteUserStorageConfig> {
   }
 
   public close(): boolean {
-    this.logger.info('Closing "SQLite" user storage.');
     this.db.close();
     return true;
   }

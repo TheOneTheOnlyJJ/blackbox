@@ -21,6 +21,10 @@ export abstract class UserStorage<T extends BaseUserStorageConfig> {
     }
   }
 
+  public getConfig(): T {
+    return this.config;
+  }
+
   public abstract isLocal(): boolean;
   public abstract addUser(user: IUser): boolean;
   public abstract deleteUser(userId: UserId): boolean;

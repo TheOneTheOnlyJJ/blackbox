@@ -26,19 +26,12 @@ const RegisterPage: FC = () => {
           window.userStorageAPI
             .close()
             .then(
-              (closeResult: boolean | null) => {
-                if (closeResult === null) {
-                  IPCLogger.debug("User storage was not initialised.");
-                  setUserStorageClosingStatus("User storage was not initialised.");
+              (closeResult: boolean) => {
+                if (closeResult) {
+                  setUserStorageClosingStatus("Closed user storage.");
+                  appContext.setUserStorageConfig(null);
                 } else {
-                  if (closeResult) {
-                    IPCLogger.debug("Closed user storage.");
-                    setUserStorageClosingStatus("Closed user storage.");
-                    appContext.setUserStorageConfig(null);
-                  } else {
-                    IPCLogger.debug("Could not close user storage.");
-                    setUserStorageClosingStatus("Could not close user storage.");
-                  }
+                  setUserStorageClosingStatus("Could not close user storage.");
                 }
               },
               (reason: unknown) => {

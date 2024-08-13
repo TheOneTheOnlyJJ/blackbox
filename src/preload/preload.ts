@@ -1,17 +1,17 @@
 import { contextBridge, ipcRenderer } from "electron";
 import type { UserStorageConfig } from "../shared/user/storage/types";
-import { IPCChannel } from "../main/utils/IPCUtils";
+import { UserAccountManagerIPCChannel } from "../main/utils/IPCChannels";
 import { IUserStorageAPI } from "../shared/IPC/APIs/types";
 
 const USER_STORAGE_API: IUserStorageAPI = {
-  getDefaultConfig: () => {
-    return ipcRenderer.invoke(IPCChannel.userStorageGetDefaultConfig) as Promise<UserStorageConfig>;
+  getConfig: () => {
+    return ipcRenderer.invoke(UserAccountManagerIPCChannel.getStorageConfig) as Promise<UserStorageConfig>;
   },
-  new: (config: UserStorageConfig) => {
-    return ipcRenderer.invoke(IPCChannel.UserStorageNew, config) as Promise<boolean>;
+  initialise: () => {
+    return ipcRenderer.invoke(UserAccountManagerIPCChannel.initialiseStorage) as Promise<boolean>;
   },
   close: () => {
-    return ipcRenderer.invoke(IPCChannel.UserStorageClose) as Promise<boolean | null>;
+    return ipcRenderer.invoke(UserAccountManagerIPCChannel.closeStorage) as Promise<boolean>;
   }
 };
 

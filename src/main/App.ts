@@ -1,7 +1,5 @@
-import { app, globalShortcut, BrowserWindow, ipcMain, Rectangle, screen, IpcMainInvokeEvent } from "electron/main";
+import { app, globalShortcut, BrowserWindow, ipcMain, Rectangle, screen } from "electron/main";
 import { BrowserWindowConstructorOptions, HandlerDetails, nativeImage, shell, WindowOpenHandlerResponse } from "electron/common";
-import { UserStorage } from "./user/storage/UserStorage";
-import { userStorageFactory } from "./user/storage/userStorageFactory";
 import { join, resolve } from "node:path";
 import log, { LogFunctions } from "electron-log";
 import { UserStorageType, UserStorageConfig } from "../shared/user/storage/types";
@@ -10,7 +8,8 @@ import { createJSONValidateFunction, readConfigJSON, writeConfigJSON } from "./u
 import { JSONSchemaType } from "ajv/dist/types/json-schema";
 import { ValidateFunction } from "ajv";
 import { adjustWindowBounds, WindowPosition } from "./utils/windowUtils";
-import { IPCChannel } from "./utils/IPCUtils";
+import { UserAccountManagerIPCChannel } from "./utils/IPCChannels";
+import { UserAccountManager } from "./user/UserAccountManager";
 
 export interface AppConfig {
   window: {
@@ -34,7 +33,7 @@ export class App {
   private readonly appLogger: LogFunctions = log.scope("main-app");
   private readonly windowLogger: LogFunctions = log.scope("main-window");
   private readonly IPCLogger: LogFunctions = log.scope("main-ipc");
-  private readonly userStorageLogger: LogFunctions = log.scope("main-user-storage");
+  private readonly userAccountManagerLogger: LogFunctions = log.scope("main-user-account-manager");
 
   // Config
   private readonly CONFIG_DIR_PATH: string = resolve(join(app.getAppPath(), "config"));
@@ -88,10 +87,10 @@ export class App {
   private readonly CONFIG_VALIDATE_FUNCTION: ValidateFunction<AppConfig> = createJSONValidateFunction<AppConfig>(this.CONFIG_SCHEMA);
   private config: AppConfig = this.DEFAULT_CONFIG;
 
-  // user storage
-  private userStorage: null | UserStorage<UserStorageConfig> = null;
+  // User account manager
+  private userAccountManager: UserAccountManager = UserAccountManager.getInstance(this.userAccountManagerLogger);
 
-  private readonly DEFAULT_USER_STORAGE_CONFIG: UserStorageConfig = {
+  private readonly USER_STORAGE_CONFIG: UserStorageConfig = {
     type: UserStorageType.SQLite,
     dbDirPath: resolve(join(app.getAppPath(), "data")),
     dbFileName: "users.sqlite"
@@ -157,7 +156,6 @@ export class App {
     app.once("will-quit", () => {
       this.onceAppWillQuit();
     });
-    this.bootstrapLogger.debug("Registered app event handlers.");
   }
 
   public static getInstance(): App {
@@ -255,7 +253,7 @@ export class App {
     writeConfigJSON(this.config, this.CONFIG_DIR_PATH, this.CONFIG_FILE_NAME, this.CONFIG_VALIDATE_FUNCTION, this.windowLogger);
     this.windowLogger.debug("Removing all listeners from window.");
     this.window.removeAllListeners();
-    this.windowLogger.debug('Setting window to "null".');
+    this.windowLogger.debug("Nullifying window.");
     this.window = null;
   }
 
@@ -396,76 +394,55 @@ export class App {
     this.appLogger.info("App will quit.");
     this.appLogger.debug("Unregistering all global shortcuts.");
     globalShortcut.unregisterAll();
-    this.appLogger.debug("Unregistered all global shortcuts.");
-    if (this.userStorage !== null) {
-      this.appLogger.debug(`Found initialised "${this.userStorage.config.type}" user storage.`);
-      this.userStorage.close();
-      this.appLogger.debug("Closed user storage.");
+    if (this.userAccountManager.isStorageInitialised()) {
+      this.userAccountManager.closeStorage();
     } else {
       this.appLogger.debug("No initialised user storage.");
     }
-    this.appLogger.silly("Pre-quit steps done. Appending end log separator to log file.");
+    this.appLogger.silly("Pre-quit steps done.");
     appendFileSync(this.LOG_FILE_PATH, `---------- End   : ${new Date().toISOString()} ----------\n\n`, "utf-8");
   }
 
   private registerIPCMainEventHandlers() {
-    this.registerUserStorageIPCHandlers();
+    this.registerUserAccountManagerIPCHandlers();
   }
 
-  private registerUserStorageIPCHandlers(): void {
-    this.IPCLogger.debug("Registering user storage IPC handlers.");
-    ipcMain.handle(IPCChannel.userStorageGetDefaultConfig, () => {
-      return this.handleUserStorageGetDefaultConfig();
+  private registerUserAccountManagerIPCHandlers(): void {
+    this.IPCLogger.debug("Registering user account manager IPC handlers.");
+    ipcMain.handle(UserAccountManagerIPCChannel.getStorageConfig, () => {
+      return this.handleUserAccountManagerGetStorageConfig();
     });
-    ipcMain.handle(IPCChannel.UserStorageNew, (_: IpcMainInvokeEvent, config: UserStorageConfig) => {
-      return this.handleUserStorageNew(config);
+    ipcMain.handle(UserAccountManagerIPCChannel.initialiseStorage, () => {
+      return this.handleUserAccountManagerInitialiseStorage();
     });
-    ipcMain.handle(IPCChannel.UserStorageClose, () => {
-      return this.handleUserStorageClose();
+    ipcMain.handle(UserAccountManagerIPCChannel.closeStorage, () => {
+      return this.handleUserAccountManagerCloseStorage();
     });
-    this.IPCLogger.debug("Registered user storage IPC handlers.");
   }
 
-  private handleUserStorageGetDefaultConfig(): UserStorageConfig {
-    this.IPCLogger.debug("Received get default user storage config request.");
-    return this.DEFAULT_USER_STORAGE_CONFIG;
+  private handleUserAccountManagerGetStorageConfig(): UserStorageConfig {
+    this.IPCLogger.debug("Received user storage config request.");
+    return this.USER_STORAGE_CONFIG;
   }
 
-  private handleUserStorageNew(config: UserStorageConfig): boolean {
-    this.IPCLogger.debug("Received new user storage request.");
+  private handleUserAccountManagerInitialiseStorage(): boolean {
+    this.IPCLogger.debug("Received user storage initialisation request.");
+    if (this.userAccountManager.isStorageInitialised()) {
+      this.userAccountManagerLogger.debug("User storage already initialised.");
+      return false;
+    }
     try {
-      // If a user storage is initialised, close it gracefully
-      if (this.userStorage !== null) {
-        this.userStorageLogger.debug("Found existing user storage. Closing.");
-        this.userStorage.close();
-        this.userStorageLogger.debug("Closed existing user storage.");
-      } else {
-        this.userStorageLogger.debug("No existing user storage found.");
-      }
-      this.userStorageLogger.debug("Running user storage factory.");
-      this.userStorageLogger.silly(`With config: ${JSON.stringify(config, null, 2)}.`);
-      this.userStorage = userStorageFactory(config, this.userStorageLogger);
+      this.userAccountManager.initialiseStorage(this.USER_STORAGE_CONFIG);
       return true;
     } catch (err: unknown) {
-      this.userStorage = null;
       const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-      this.appLogger.error(
-        `Error: ${ERROR_MESSAGE}!\nCould not create user storage with given config: ${JSON.stringify(this.DEFAULT_USER_STORAGE_CONFIG, null, 2)}.`
-      );
+      this.userAccountManagerLogger.error(`Could not initialise user storage: ${ERROR_MESSAGE}!`);
       return false;
     }
   }
 
-  private handleUserStorageClose(): boolean | null {
-    this.IPCLogger.debug("Received close user storage request.");
-    if (this.userStorage === null) {
-      this.IPCLogger.debug('No user storage initialised. Returning "null".');
-      return null;
-    }
-    this.IPCLogger.debug("Closing user storage.");
-    const CLOSE_RESULT: boolean = this.userStorage.close();
-    this.IPCLogger.debug(`Closed user storage. Returning ${CLOSE_RESULT.toString()}.`);
-    this.userStorage = null;
-    return CLOSE_RESULT;
+  private handleUserAccountManagerCloseStorage(): boolean | null {
+    this.IPCLogger.debug("Received user storage closure request.");
+    return this.userAccountManager.closeStorage();
   }
 }
