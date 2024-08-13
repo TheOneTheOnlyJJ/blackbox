@@ -408,7 +408,7 @@ export class App {
   }
 
   private registerUserAccountManagerIPCHandlers(): void {
-    this.IPCLogger.debug("Registering user account manager IPC handlers.");
+    this.appLogger.debug("Registering user account manager IPC handlers.");
     ipcMain.handle(UserAccountManagerIPCChannel.getStorageConfig, () => {
       return this.handleUserAccountManagerGetStorageConfig();
     });
