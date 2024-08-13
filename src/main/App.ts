@@ -441,7 +441,7 @@ export class App {
     }
   }
 
-  private handleUserAccountManagerCloseStorage(): boolean | null {
+  private handleUserAccountManagerCloseStorage(): boolean {
     this.IPCLogger.debug("Received user storage closure request.");
     return this.userAccountManager.closeStorage();
   }
