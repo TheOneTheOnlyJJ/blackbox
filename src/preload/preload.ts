@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
-import { UserAccountManagerIPCChannel } from "../main/utils/IPCChannels";
+import { UserAccountManagerIPCChannel } from "../main/IPCChannels";
 import { IUserAPI } from "../shared/IPC/APIs/types";
 
 const USER_STORAGE_API: IUserAPI = {

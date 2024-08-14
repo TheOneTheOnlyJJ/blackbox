@@ -3,14 +3,15 @@ import { BrowserWindowConstructorOptions, HandlerDetails, nativeImage, shell, Wi
 import { join, resolve } from "node:path";
 import log, { LogFunctions } from "electron-log";
 import { appendFileSync, existsSync, mkdirSync } from "node:fs";
-import { createJSONValidateFunction, readConfigJSON, writeConfigJSON } from "./utils/configUtils";
+import { createJSONValidateFunction, readConfigJSON, writeConfigJSON } from "./utils/config/utils";
 import { JSONSchemaType } from "ajv/dist/types/json-schema";
 import { ValidateFunction } from "ajv";
-import { adjustWindowBounds, WindowPosition } from "./utils/windowUtils";
-import { UserAccountManagerIPCChannel } from "./utils/IPCChannels";
+import { UserAccountManagerIPCChannel } from "./IPCChannels";
 import { UserAccountManager } from "./user/UserAccountManager";
 import { UserStorageConfig } from "./user/storage/utils";
 import { UserStorageType } from "./user/storage/UserStorageType";
+import { WindowPosition } from "./utils/window/WindowPosition";
+import { adjustWindowBounds } from "./utils/window/adjustWindowBounds";
 
 export interface AppConfig {
   window: {

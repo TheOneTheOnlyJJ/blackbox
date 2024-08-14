@@ -1,11 +1,6 @@
 import { LogFunctions } from "electron-log";
 import { Rectangle } from "electron/main";
 
-export enum WindowPosition {
-  FullScreen = "fullscreen",
-  Maximized = "maximized"
-}
-
 export function adjustWindowBounds(screenBounds: Rectangle, windowBounds: Rectangle, logger: LogFunctions): Rectangle {
   let newWidth: number;
   let newHeight: number;

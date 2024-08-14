@@ -1,6 +1,6 @@
 import { LogFunctions } from "electron-log";
 import { IUser, UserId } from "../IUser";
-import { createJSONValidateFunction, isConfigValid } from "../../utils/configUtils";
+import { createJSONValidateFunction, isConfigValid } from "../../utils/config/utils";
 import { JSONSchemaType, ValidateFunction } from "ajv";
 import { UserStorageType } from "./UserStorageType";
 
