@@ -1,7 +1,8 @@
 import { LogFunctions } from "electron-log";
-import { UserStorageConfig } from "../../shared/user/storage/types";
 import { UserStorage } from "./storage/UserStorage";
+import { UserStorageConfig } from "./storage/utils";
 import { userStorageFactory } from "./storage/userStorageFactory";
+import { UserStorageType } from "./storage/UserStorageType";
 
 export class UserAccountManager {
   private static instance: null | UserAccountManager = null;
@@ -24,12 +25,18 @@ export class UserAccountManager {
     this.userStorage = null;
   }
 
+  public getStorageType(): UserStorageType {
+    if (this.userStorage === null) {
+      throw new Error("Cannot get user storage type for uninitialised user storage! Initialise a storage to be able to access its type");
+    }
+    return this.userStorage.config.type;
+  }
+
   public isStorageInitialised(): boolean {
     return this.userStorage !== null;
   }
 
   public initialiseStorage(storageConfig: UserStorageConfig): void {
-    this.logger.info("Initialising user storage.");
     if (this.userStorage !== null) {
       throw new Error("Cannot initialise a new user storage when one already exists! Close exisitng storage before initialising a new one");
     }
@@ -46,10 +53,8 @@ export class UserAccountManager {
     if (this.userStorage === null) {
       throw new Error("Cannot close uninitialised user storage! To close the user storage, it must be initialised");
     }
-    this.logger.info(`Closing "${this.userStorage.config.type}" user storage.`);
-    const CLOSE_RESULT: boolean = this.userStorage.close();
+    const IS_USER_STORAGE_CLOSED: boolean = this.userStorage.close();
     this.userStorage = null;
-    this.logger.debug(CLOSE_RESULT ? "Closed user storage." : "Could not close user storage.");
-    return CLOSE_RESULT;
+    return IS_USER_STORAGE_CLOSED;
   }
 }

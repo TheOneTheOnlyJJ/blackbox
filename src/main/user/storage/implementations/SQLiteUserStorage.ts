@@ -1,10 +1,17 @@
-import { IUser, UserId } from "../IUser";
-import { UserStorage } from "./UserStorage";
+import { IUser, UserId } from "../../IUser";
+import { BaseUserStorageConfig, UserStorage } from "../UserStorage";
 import DatabaseConstructor, { Database } from "better-sqlite3";
 import { LogFunctions } from "electron-log";
 import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { SQLiteUserStorageConfig, SQLITE_USER_STORAGE_CONFIG_SCHEMA } from "../../../shared/user/storage/types";
+import { JSONSchemaType } from "ajv";
+import { UserStorageType } from "../UserStorageType";
+
+export interface SQLiteUserStorageConfig extends BaseUserStorageConfig {
+  type: UserStorageType.SQLite;
+  dbDirPath: string;
+  dbFileName: string;
+}
 
 type SQLiteJournalMode = string;
 
@@ -13,10 +20,31 @@ interface SQLiteVersion {
 }
 
 export class SQLiteUserStorage extends UserStorage<SQLiteUserStorageConfig> {
+  public static readonly CONFIG_SCHEMA: JSONSchemaType<SQLiteUserStorageConfig> = {
+    $schema: "http://json-schema.org/draft-07/schema#",
+    type: "object",
+    properties: {
+      type: {
+        type: "string",
+        enum: [UserStorageType.SQLite]
+      },
+      dbDirPath: {
+        type: "string",
+        minLength: 1
+      },
+      dbFileName: {
+        type: "string",
+        minLength: 1
+      }
+    },
+    required: ["type", "dbDirPath", "dbFileName"],
+    additionalProperties: false
+  };
+
   private readonly db: Database;
 
   public constructor(config: SQLiteUserStorageConfig, logger: LogFunctions) {
-    super(config, SQLITE_USER_STORAGE_CONFIG_SCHEMA, logger);
+    super(config, SQLiteUserStorage.CONFIG_SCHEMA, logger);
     // Create db and directories as required
     if (existsSync(this.config.dbDirPath)) {
       this.logger.debug(`Found database directory at path: "${this.config.dbDirPath}". Looking for SQLite file.`);

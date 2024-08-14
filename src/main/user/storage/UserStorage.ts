@@ -1,8 +1,13 @@
 import { LogFunctions } from "electron-log";
 import { IUser, UserId } from "../IUser";
-import { BaseUserStorageConfig } from "../../../shared/user/storage/types";
 import { createJSONValidateFunction, isConfigValid } from "../../utils/configUtils";
 import { JSONSchemaType, ValidateFunction } from "ajv";
+import { UserStorageType } from "./UserStorageType";
+
+// Every user storage must have at least the type in its config (should be further narrowed down to its own in the specific config)
+export interface BaseUserStorageConfig {
+  type: UserStorageType;
+}
 
 export abstract class UserStorage<T extends BaseUserStorageConfig> {
   protected readonly logger: LogFunctions;

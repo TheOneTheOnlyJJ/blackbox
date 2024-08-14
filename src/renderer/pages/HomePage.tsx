@@ -1,6 +1,5 @@
 /* eslint-disable react/no-unescaped-entities */
-import { Box, Button, IconButton, Paper, Stack, TextField, Typography } from "@mui/material";
-import ManageAccountsOutlinedIcon from "@mui/icons-material/ManageAccountsOutlined";
+import { Box, Button, Paper, TextField, Typography } from "@mui/material";
 import { FC } from "react";
 import "@fontsource/saira-stencil-one";
 import { Link } from "react-router-dom";
@@ -54,35 +53,13 @@ const HomePage: FC = () => {
         >
           Login
         </Typography>
-        <Stack
-          direction="row"
-          sx={{
-            alignItems: "center",
-            justifyContent: "center"
-          }}
-        >
-          <Typography
-            variant="body2"
-            sx={{
-              textAlign: "center"
-            }}
-          >
-            {appContext.userStorageConfig !== null ? `Using ${appContext.userStorageConfig.type} user storage` : "No user storage initialised"}
-          </Typography>
-          <IconButton
-            onClick={() => {
-              alert("Click'd!");
-            }}
-          >
-            <ManageAccountsOutlinedIcon />
-          </IconButton>
-        </Stack>
         <TextField
           variant="standard"
           label="Username"
           sx={{
             paddingBottom: "1vw"
           }}
+          disabled={!appContext.isUserStorageInitialised}
         />
         <TextField
           variant="standard"
@@ -90,8 +67,9 @@ const HomePage: FC = () => {
           sx={{
             paddingBottom: "1vw"
           }}
+          disabled={!appContext.isUserStorageInitialised}
         />
-        <Button size="large" variant="contained">
+        <Button size="large" variant="contained" disabled={!appContext.isUserStorageInitialised}>
           Login
         </Button>
         <Typography

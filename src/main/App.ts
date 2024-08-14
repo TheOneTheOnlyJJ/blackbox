@@ -2,7 +2,6 @@ import { app, globalShortcut, BrowserWindow, ipcMain, Rectangle, screen } from "
 import { BrowserWindowConstructorOptions, HandlerDetails, nativeImage, shell, WindowOpenHandlerResponse } from "electron/common";
 import { join, resolve } from "node:path";
 import log, { LogFunctions } from "electron-log";
-import { UserStorageType, UserStorageConfig } from "../shared/user/storage/types";
 import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 import { createJSONValidateFunction, readConfigJSON, writeConfigJSON } from "./utils/configUtils";
 import { JSONSchemaType } from "ajv/dist/types/json-schema";
@@ -10,6 +9,8 @@ import { ValidateFunction } from "ajv";
 import { adjustWindowBounds, WindowPosition } from "./utils/windowUtils";
 import { UserAccountManagerIPCChannel } from "./utils/IPCChannels";
 import { UserAccountManager } from "./user/UserAccountManager";
+import { UserStorageConfig } from "./user/storage/utils";
+import { UserStorageType } from "./user/storage/UserStorageType";
 
 export interface AppConfig {
   window: {
@@ -365,13 +366,14 @@ export class App {
 
   private onceAppReady(): void {
     this.appLogger.info("App ready.");
+    this.initialiseUserStorage();
     this.createWindow();
     this.appLogger.debug("Registering app activate event handler.");
     app.on("activate", () => {
       this.onAppActivate();
     });
-    this.appLogger.debug("Registering IPC main event handlers.");
-    this.registerIPCMainEventHandlers();
+    this.appLogger.debug("Registering IPC main handlers.");
+    this.registerIPCMainHandlers();
   }
 
   private onAppActivate(): void {
@@ -395,7 +397,9 @@ export class App {
     this.appLogger.debug("Unregistering all global shortcuts.");
     globalShortcut.unregisterAll();
     if (this.userAccountManager.isStorageInitialised()) {
-      this.userAccountManager.closeStorage();
+      this.appLogger.info(`Closing "${this.userAccountManager.getStorageType()}" user storage.`);
+      const IS_USER_STORAGE_CLOSED: boolean = this.userAccountManager.closeStorage();
+      this.appLogger.debug(IS_USER_STORAGE_CLOSED ? "Closed user storage." : "Could not close user storage.");
     } else {
       this.appLogger.debug("No initialised user storage.");
     }
@@ -403,30 +407,8 @@ export class App {
     appendFileSync(this.LOG_FILE_PATH, `---------- End   : ${new Date().toISOString()} ----------\n\n`, "utf-8");
   }
 
-  private registerIPCMainEventHandlers() {
-    this.registerUserAccountManagerIPCHandlers();
-  }
-
-  private registerUserAccountManagerIPCHandlers(): void {
-    this.appLogger.debug("Registering user account manager IPC handlers.");
-    ipcMain.handle(UserAccountManagerIPCChannel.getStorageConfig, () => {
-      return this.handleUserAccountManagerGetStorageConfig();
-    });
-    ipcMain.handle(UserAccountManagerIPCChannel.initialiseStorage, () => {
-      return this.handleUserAccountManagerInitialiseStorage();
-    });
-    ipcMain.handle(UserAccountManagerIPCChannel.closeStorage, () => {
-      return this.handleUserAccountManagerCloseStorage();
-    });
-  }
-
-  private handleUserAccountManagerGetStorageConfig(): UserStorageConfig {
-    this.IPCLogger.debug("Received user storage config request.");
-    return this.USER_STORAGE_CONFIG;
-  }
-
-  private handleUserAccountManagerInitialiseStorage(): boolean {
-    this.IPCLogger.debug("Received user storage initialisation request.");
+  private initialiseUserStorage(): boolean {
+    this.userAccountManagerLogger.debug("Initialising user storage.");
     if (this.userAccountManager.isStorageInitialised()) {
       this.userAccountManagerLogger.debug("User storage already initialised.");
       return false;
@@ -441,8 +423,19 @@ export class App {
     }
   }
 
-  private handleUserAccountManagerCloseStorage(): boolean {
-    this.IPCLogger.debug("Received user storage closure request.");
-    return this.userAccountManager.closeStorage();
+  private registerIPCMainHandlers() {
+    this.registerUserAccountManagerIPCHandlers();
+  }
+
+  private registerUserAccountManagerIPCHandlers(): void {
+    this.appLogger.debug("Registering user account manager IPC handlers.");
+    ipcMain.handle(UserAccountManagerIPCChannel.isStorageInitialised, () => {
+      return this.handleUserAccountManagerIsStorageInitialised();
+    });
+  }
+
+  private handleUserAccountManagerIsStorageInitialised(): boolean {
+    this.IPCLogger.debug("Received user storage initialisation status request.");
+    return this.userAccountManager.isStorageInitialised();
   }
 }
