@@ -3,7 +3,7 @@ import { BrowserWindowConstructorOptions, HandlerDetails, nativeImage, shell, Wi
 import { join, resolve } from "node:path";
 import log, { LogFunctions } from "electron-log";
 import { appendFileSync, existsSync, mkdirSync } from "node:fs";
-import { createJSONValidateFunction, readConfigJSON, writeConfigJSON } from "./utils/config/utils";
+import { createJSONValidateFunction, readConfigJSON, writeConfigJSON } from "./config/config";
 import { JSONSchemaType } from "ajv/dist/types/json-schema";
 import { ValidateFunction } from "ajv";
 import { UserAccountManagerIPCChannel } from "./IPCChannels";

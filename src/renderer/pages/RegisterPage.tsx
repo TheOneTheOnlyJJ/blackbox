@@ -1,10 +1,10 @@
 import { Box, Button, Typography } from "@mui/material";
 import { FC } from "react";
 import { Link } from "react-router-dom";
-import { useAppContext } from "../appContext";
+import { useRootContext } from "../root/RootContext";
 
 const RegisterPage: FC = () => {
-  const appContext = useAppContext();
+  const appContext = useRootContext();
   return (
     <Box>
       <Typography>Register Page</Typography>

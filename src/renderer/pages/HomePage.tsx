@@ -3,13 +3,13 @@ import { Box, Button, Paper, TextField, Typography } from "@mui/material";
 import { FC } from "react";
 import "@fontsource/saira-stencil-one";
 import { Link } from "react-router-dom";
-import { useAppContext } from "../appContext";
+import { useRootContext } from "../root/RootContext";
 
 const BACKGROUND_COLOR_1 = "black";
 const BACKGROUND_COLOR_2 = "white";
 
 const HomePage: FC = () => {
-  const appContext = useAppContext();
+  const appContext = useRootContext();
   return (
     <Box
       sx={{
