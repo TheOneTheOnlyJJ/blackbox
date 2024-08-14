@@ -7,11 +7,11 @@ import { createJSONValidateFunction, readConfigJSON, writeConfigJSON } from "./c
 import { JSONSchemaType } from "ajv/dist/types/json-schema";
 import { ValidateFunction } from "ajv";
 import { UserAccountManagerIPCChannel } from "./IPCChannels";
-import { UserAccountManager } from "./user/UserAccountManager";
+import { UserAccountManager, UserStorageChangeCallback } from "./user/UserAccountManager";
 import { UserStorageConfig } from "./user/storage/utils";
 import { UserStorageType } from "./user/storage/UserStorageType";
-import { WindowPosition } from "./utils/window/WindowPosition";
-import { adjustWindowBounds } from "./utils/window/adjustWindowBounds";
+import { WindowPosition } from "./window/WindowPosition";
+import { adjustWindowBounds } from "./window/adjustWindowBounds";
 
 export interface AppConfig {
   window: {
@@ -90,7 +90,16 @@ export class App {
   private config: AppConfig = this.DEFAULT_CONFIG;
 
   // User account manager
-  private userAccountManager: UserAccountManager = UserAccountManager.getInstance(this.userAccountManagerLogger);
+  private userStorageChangeCallback: UserStorageChangeCallback = (isAvailable: boolean) => {
+    this.IPCLogger.debug(`Sending user storage availability after change to window. Storage available: ${isAvailable.toString()}.`);
+    if (this.window === null) {
+      this.IPCLogger.debug("Window null. No-op.");
+      return;
+    }
+    this.window.webContents.send(UserAccountManagerIPCChannel.onStorageAvailabilityChanged, isAvailable);
+  };
+
+  private userAccountManager: UserAccountManager = UserAccountManager.getInstance(this.userStorageChangeCallback, this.userAccountManagerLogger);
 
   private readonly USER_STORAGE_CONFIG: UserStorageConfig = {
     type: UserStorageType.SQLite,
@@ -273,6 +282,22 @@ export class App {
     this.window.on("resize", () => {
       this.onWindowResize();
     });
+
+    // TEMPORARY
+    setInterval(() => {
+      if (this.userAccountManager.isStorageAvailable()) {
+        this.appLogger.warn("CLOSING USER STORAGE");
+        this.userAccountManager.closeStorage();
+      }
+    }, 10_000);
+    setTimeout(() => {
+      setInterval(() => {
+        if (!this.userAccountManager.isStorageAvailable()) {
+          this.appLogger.warn("OPENING USER STORAGE");
+          this.userAccountManager.initialiseStorage(this.USER_STORAGE_CONFIG);
+        }
+      }, 10_000);
+    }, 5_000);
   }
 
   private onWindowMove(): void {
@@ -397,7 +422,7 @@ export class App {
     this.appLogger.info("App will quit.");
     this.appLogger.debug("Unregistering all global shortcuts.");
     globalShortcut.unregisterAll();
-    if (this.userAccountManager.isStorageInitialised()) {
+    if (this.userAccountManager.isStorageAvailable()) {
       this.appLogger.info(`Closing "${this.userAccountManager.getStorageType()}" user storage.`);
       const IS_USER_STORAGE_CLOSED: boolean = this.userAccountManager.closeStorage();
       this.appLogger.debug(IS_USER_STORAGE_CLOSED ? "Closed user storage." : "Could not close user storage.");
@@ -410,7 +435,7 @@ export class App {
 
   private initialiseUserStorage(): boolean {
     this.userAccountManagerLogger.debug("Initialising user storage.");
-    if (this.userAccountManager.isStorageInitialised()) {
+    if (this.userAccountManager.isStorageAvailable()) {
       this.userAccountManagerLogger.debug("User storage already initialised.");
       return false;
     }
@@ -430,13 +455,13 @@ export class App {
 
   private registerUserAccountManagerIPCHandlers(): void {
     this.appLogger.debug("Registering user account manager IPC handlers.");
-    ipcMain.handle(UserAccountManagerIPCChannel.isStorageInitialised, () => {
-      return this.handleUserAccountManagerIsStorageInitialised();
+    ipcMain.handle(UserAccountManagerIPCChannel.isStorageAvailable, () => {
+      return this.handleUserAccountManagerIsStorageAvailable();
     });
   }
 
-  private handleUserAccountManagerIsStorageInitialised(): boolean {
-    this.IPCLogger.debug("Received user storage initialisation status request.");
-    return this.userAccountManager.isStorageInitialised();
+  private handleUserAccountManagerIsStorageAvailable(): boolean {
+    this.IPCLogger.debug("Received user storage availability status request.");
+    return this.userAccountManager.isStorageAvailable();
   }
 }

@@ -1,10 +1,15 @@
-import { contextBridge, ipcRenderer } from "electron";
+import { contextBridge, ipcRenderer, IpcRendererEvent } from "electron";
 import { UserAccountManagerIPCChannel } from "../main/IPCChannels";
 import { IUserAPI } from "../shared/IPC/APIs/types";
 
 const USER_STORAGE_API: IUserAPI = {
-  isStorageInitialised: () => {
-    return ipcRenderer.invoke(UserAccountManagerIPCChannel.isStorageInitialised) as Promise<boolean>;
+  isStorageAvailable: () => {
+    return ipcRenderer.invoke(UserAccountManagerIPCChannel.isStorageAvailable) as Promise<boolean>;
+  },
+  onStorageAvailabilityChanged: (callback: (isAvailable: boolean) => void) => {
+    ipcRenderer.on(UserAccountManagerIPCChannel.onStorageAvailabilityChanged, (_: IpcRendererEvent, isAvailable: boolean) => {
+      callback(isAvailable);
+    });
   }
 };
 

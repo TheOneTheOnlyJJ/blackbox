@@ -5,25 +5,31 @@ import { Outlet } from "react-router-dom";
 import { RootContext as RootContext } from "./RootContext";
 
 const Root: FC = () => {
-  const [isUserStorageInitialised, setIsUserStorageInitialised] = useState<boolean>(false);
+  const [isUserStorageAvailable, setIsUserStorageAvailable] = useState<boolean>(false);
 
   useEffect(() => {
     appLogger.info("Rendering App component.");
-    IPCLogger.debug("Requesting user storage config.");
+    IPCLogger.debug("Requesting user storage availability status.");
     window.userAPI
-      .isStorageInitialised()
+      .isStorageAvailable()
       .then(
         (value: boolean) => {
-          setIsUserStorageInitialised(value);
-          IPCLogger.debug("Received user storage initialisation status.");
+          setIsUserStorageAvailable(value);
+          IPCLogger.debug("Received user storage availability status.");
         },
         (reason: unknown) => {
-          IPCLogger.warn(`Could not get user storage initialisation status: ${String(reason)}.`);
+          IPCLogger.warn(`Could not get user storage availability status: ${String(reason)}.`);
         }
       )
       .catch(() => {
-        IPCLogger.error(`Could not get user storage initialisation status.`);
+        IPCLogger.error(`Could not get user storage availability status.`);
       });
+    // Monitor changes to user storage availability
+    window.userAPI.onStorageAvailabilityChanged((isAvailable: boolean) => {
+      IPCLogger.debug("Received user storage availability status change event.");
+      appLogger.silly(`User storage available: ${isAvailable.toString()}.`);
+      setIsUserStorageAvailable(isAvailable);
+    });
   }, []);
 
   return (
@@ -32,7 +38,7 @@ const Root: FC = () => {
       <Outlet
         context={
           {
-            isUserStorageInitialised: isUserStorageInitialised
+            isUserStorageAvailable: isUserStorageAvailable
           } satisfies RootContext
         }
       />

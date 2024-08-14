@@ -4,25 +4,30 @@ import { UserStorageConfig } from "./storage/utils";
 import { userStorageFactory } from "./storage/userStorageFactory";
 import { UserStorageType } from "./storage/UserStorageType";
 
+export type UserStorageChangeCallback = (isAvailable: boolean) => void;
+
 export class UserAccountManager {
   private static instance: null | UserAccountManager = null;
 
   private readonly logger: LogFunctions;
   private userStorage: UserStorage<UserStorageConfig> | null;
+  // This is needed to let the renderer know if the user storage is available when it changes
+  private userStorageChangeCallback: UserStorageChangeCallback;
 
-  public static getInstance(logger: LogFunctions): UserAccountManager {
+  public static getInstance(userStorageChangeCallback: UserStorageChangeCallback, logger: LogFunctions): UserAccountManager {
     if (UserAccountManager.instance === null) {
       logger.debug("Creating User Account Manager instance.");
-      UserAccountManager.instance = new UserAccountManager(logger);
+      UserAccountManager.instance = new UserAccountManager(userStorageChangeCallback, logger);
     } else {
       logger.debug("User Account Manager instance already exists.");
     }
     return UserAccountManager.instance;
   }
 
-  private constructor(logger: LogFunctions) {
+  private constructor(userStorageChangeCallback: UserStorageChangeCallback, logger: LogFunctions) {
     this.logger = logger;
     this.userStorage = null;
+    this.userStorageChangeCallback = userStorageChangeCallback;
   }
 
   public getStorageType(): UserStorageType {
@@ -32,7 +37,7 @@ export class UserAccountManager {
     return this.userStorage.config.type;
   }
 
-  public isStorageInitialised(): boolean {
+  public isStorageAvailable(): boolean {
     return this.userStorage !== null;
   }
 
@@ -46,6 +51,8 @@ export class UserAccountManager {
       // Make sure the storage is left uninitialised on error
       this.userStorage = null;
       throw err;
+    } finally {
+      this.userStorageChangeCallback(this.isStorageAvailable());
     }
   }
 
@@ -55,6 +62,7 @@ export class UserAccountManager {
     }
     const IS_USER_STORAGE_CLOSED: boolean = this.userStorage.close();
     this.userStorage = null;
+    this.userStorageChangeCallback(false);
     return IS_USER_STORAGE_CLOSED;
   }
 }

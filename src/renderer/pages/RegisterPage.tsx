@@ -8,7 +8,7 @@ const RegisterPage: FC = () => {
   return (
     <Box>
       <Typography>Register Page</Typography>
-      <Button variant="contained" disabled={!appContext.isUserStorageInitialised}>
+      <Button variant="contained" disabled={!appContext.isUserStorageAvailable}>
         Register
       </Button>
       <Link to="/">Back to home</Link>

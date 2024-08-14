@@ -1,3 +1,4 @@
 export enum UserAccountManagerIPCChannel {
-  isStorageInitialised = "userAccountManager:isStorageInitialised"
+  isStorageAvailable = "userAccountManager:isStorageAvailable",
+  onStorageAvailabilityChanged = "userAccountManager:onStorageAvailabilityChanged"
 }

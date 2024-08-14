@@ -1,7 +1,7 @@
 import { useOutletContext } from "react-router-dom";
 
 export interface RootContext {
-  isUserStorageInitialised: boolean;
+  isUserStorageAvailable: boolean;
 }
 
 export const useRootContext = (): RootContext => {

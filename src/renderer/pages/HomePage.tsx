@@ -59,7 +59,7 @@ const HomePage: FC = () => {
           sx={{
             paddingBottom: "1vw"
           }}
-          disabled={!appContext.isUserStorageInitialised}
+          disabled={!appContext.isUserStorageAvailable}
         />
         <TextField
           variant="standard"
@@ -67,9 +67,9 @@ const HomePage: FC = () => {
           sx={{
             paddingBottom: "1vw"
           }}
-          disabled={!appContext.isUserStorageInitialised}
+          disabled={!appContext.isUserStorageAvailable}
         />
-        <Button size="large" variant="contained" disabled={!appContext.isUserStorageInitialised}>
+        <Button size="large" variant="contained" disabled={!appContext.isUserStorageAvailable}>
           Login
         </Button>
         <Typography
