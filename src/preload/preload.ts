@@ -10,6 +10,9 @@ const USER_STORAGE_API: IUserAPI = {
     ipcRenderer.on(UserAccountManagerIPCChannel.onStorageAvailabilityChanged, (_: IpcRendererEvent, isAvailable: boolean) => {
       callback(isAvailable);
     });
+  },
+  isUsernameAvailable: (username: string) => {
+    return ipcRenderer.sendSync(UserAccountManagerIPCChannel.isUsernameAvailable, username) as boolean;
   }
 };
 

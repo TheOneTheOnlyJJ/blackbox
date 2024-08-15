@@ -4,7 +4,6 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 const AJV = new Ajv({
-  allErrors: true,
   strict: true
 });
 

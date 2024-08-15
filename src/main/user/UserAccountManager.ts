@@ -32,7 +32,7 @@ export class UserAccountManager {
 
   public getStorageType(): UserStorageType {
     if (this.userStorage === null) {
-      throw new Error("Cannot get user storage type for uninitialised user storage! Initialise a storage to be able to access its type");
+      throw new Error("Cannot get user storage type for unopened user storage! Open a storage to be able to access its type");
     }
     return this.userStorage.config.type;
   }
@@ -41,9 +41,9 @@ export class UserAccountManager {
     return this.userStorage !== null;
   }
 
-  public initialiseStorage(storageConfig: UserStorageConfig): void {
+  public openStorage(storageConfig: UserStorageConfig): void {
     if (this.userStorage !== null) {
-      throw new Error("Cannot initialise a new user storage when one already exists! Close exisitng storage before initialising a new one");
+      throw new Error("Cannot open a new user storage when one already exists! Close exisitng storage before opening a new one");
     }
     try {
       this.userStorage = userStorageFactory(storageConfig, this.logger);
@@ -58,11 +58,18 @@ export class UserAccountManager {
 
   public closeStorage(): boolean {
     if (this.userStorage === null) {
-      throw new Error("Cannot close uninitialised user storage! To close the user storage, it must be initialised");
+      throw new Error("Cannot close inexistent user storage! To close the user storage, it must be opened");
     }
     const IS_USER_STORAGE_CLOSED: boolean = this.userStorage.close();
     this.userStorage = null;
     this.userStorageChangeCallback(false);
     return IS_USER_STORAGE_CLOSED;
+  }
+
+  public isUsernameAvailable(username: string) {
+    if (this.userStorage === null) {
+      throw new Error("Cannot check username availability with inexistent user storage! Open one before checking!");
+    }
+    return this.userStorage.isUsernameAvailable(username);
   }
 }

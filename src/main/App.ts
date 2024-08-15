@@ -12,6 +12,7 @@ import { UserStorageConfig } from "./user/storage/utils";
 import { UserStorageType } from "./user/storage/UserStorageType";
 import { WindowPosition } from "./window/WindowPosition";
 import { adjustWindowBounds } from "./window/adjustWindowBounds";
+import { IpcMainEvent } from "electron";
 
 export interface AppConfig {
   window: {
@@ -93,7 +94,7 @@ export class App {
   private userStorageChangeCallback: UserStorageChangeCallback = (isAvailable: boolean) => {
     this.IPCLogger.debug(`Sending user storage availability after change to window. Storage available: ${isAvailable.toString()}.`);
     if (this.window === null) {
-      this.IPCLogger.debug("Window null. No-op.");
+      this.IPCLogger.debug('Window is "null". No-op.');
       return;
     }
     this.window.webContents.send(UserAccountManagerIPCChannel.onStorageAvailabilityChanged, isAvailable);
@@ -284,20 +285,20 @@ export class App {
     });
 
     // TEMPORARY
-    setInterval(() => {
-      if (this.userAccountManager.isStorageAvailable()) {
-        this.appLogger.warn("CLOSING USER STORAGE");
-        this.userAccountManager.closeStorage();
-      }
-    }, 10_000);
-    setTimeout(() => {
-      setInterval(() => {
-        if (!this.userAccountManager.isStorageAvailable()) {
-          this.appLogger.warn("OPENING USER STORAGE");
-          this.userAccountManager.initialiseStorage(this.USER_STORAGE_CONFIG);
-        }
-      }, 10_000);
-    }, 5_000);
+    // setInterval(() => {
+    //   if (this.userAccountManager.isStorageAvailable()) {
+    //     this.appLogger.warn("CLOSING USER STORAGE");
+    //     this.userAccountManager.closeStorage();
+    //   }
+    // }, 10_000);
+    // setTimeout(() => {
+    //   setInterval(() => {
+    //     if (!this.userAccountManager.isStorageAvailable()) {
+    //       this.appLogger.warn("OPENING USER STORAGE");
+    //       this.userAccountManager.initialiseStorage(this.USER_STORAGE_CONFIG);
+    //     }
+    //   }, 10_000);
+    // }, 5_000);
   }
 
   private onWindowMove(): void {
@@ -392,7 +393,7 @@ export class App {
 
   private onceAppReady(): void {
     this.appLogger.info("App ready.");
-    this.initialiseUserStorage();
+    this.openUserStorage();
     this.createWindow();
     this.appLogger.debug("Registering app activate event handler.");
     app.on("activate", () => {
@@ -433,35 +434,47 @@ export class App {
     appendFileSync(this.LOG_FILE_PATH, `---------- End   : ${new Date().toISOString()} ----------\n\n`, "utf-8");
   }
 
-  private initialiseUserStorage(): boolean {
-    this.userAccountManagerLogger.debug("Initialising user storage.");
+  private openUserStorage(): boolean {
+    this.userAccountManagerLogger.debug("Opening user storage.");
     if (this.userAccountManager.isStorageAvailable()) {
-      this.userAccountManagerLogger.debug("User storage already initialised.");
+      this.userAccountManagerLogger.debug("User storage already opened.");
       return false;
     }
     try {
-      this.userAccountManager.initialiseStorage(this.USER_STORAGE_CONFIG);
+      this.userAccountManager.openStorage(this.USER_STORAGE_CONFIG);
       return true;
     } catch (err: unknown) {
       const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-      this.userAccountManagerLogger.error(`Could not initialise user storage: ${ERROR_MESSAGE}!`);
+      this.userAccountManagerLogger.error(`Could not open user storage: ${ERROR_MESSAGE}!`);
       return false;
     }
   }
 
   private registerIPCMainHandlers() {
-    this.registerUserAccountManagerIPCHandlers();
+    this.registerUserAPIIPCHandlers();
   }
 
-  private registerUserAccountManagerIPCHandlers(): void {
-    this.appLogger.debug("Registering user account manager IPC handlers.");
+  private registerUserAPIIPCHandlers(): void {
+    this.appLogger.debug("Registering user API IPC handlers.");
     ipcMain.handle(UserAccountManagerIPCChannel.isStorageAvailable, () => {
-      return this.handleUserAccountManagerIsStorageAvailable();
+      return this.handleUserAPIIsStorageAvailable();
+    });
+    ipcMain.on(UserAccountManagerIPCChannel.isUsernameAvailable, (event: IpcMainEvent, username: string) => {
+      event.returnValue = this.onUserAPIIsUsernameAvailable(username);
     });
   }
 
-  private handleUserAccountManagerIsStorageAvailable(): boolean {
-    this.IPCLogger.debug("Received user storage availability status request.");
+  private handleUserAPIIsStorageAvailable(): boolean {
+    this.IPCLogger.debug("Received user API storage availability status request.");
     return this.userAccountManager.isStorageAvailable();
+  }
+
+  private onUserAPIIsUsernameAvailable(username: string) {
+    this.IPCLogger.debug("Received user API username availability status request.");
+    if (!this.userAccountManager.isStorageAvailable()) {
+      this.appLogger.warn("User storage not initialised. Cannot determine username availability.");
+      return false;
+    }
+    return this.userAccountManager.isUsernameAvailable(username);
   }
 }

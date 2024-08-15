@@ -1,15 +1,17 @@
 /* eslint-disable react/no-unescaped-entities */
-import { Box, Button, Paper, TextField, Typography } from "@mui/material";
-import { FC } from "react";
+import { Box, Button, IconButton, InputAdornment, Paper, TextField, Typography } from "@mui/material";
+import { FC, useState } from "react";
 import "@fontsource/saira-stencil-one";
 import { Link } from "react-router-dom";
 import { useRootContext } from "../root/RootContext";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 const BACKGROUND_COLOR_1 = "black";
 const BACKGROUND_COLOR_2 = "white";
 
-const HomePage: FC = () => {
+const LoginPage: FC = () => {
   const appContext = useRootContext();
+  const [doShowPassword, setDoShowPassword] = useState<boolean>(false);
   return (
     <Box
       sx={{
@@ -59,15 +61,28 @@ const HomePage: FC = () => {
           sx={{
             paddingBottom: "1vw"
           }}
-          disabled={!appContext.isUserStorageAvailable}
         />
         <TextField
           variant="standard"
           label="Password"
+          type={doShowPassword ? "text" : "password"}
           sx={{
             paddingBottom: "1vw"
           }}
-          disabled={!appContext.isUserStorageAvailable}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label="toggle password visibility"
+                  onClick={() => {
+                    setDoShowPassword((prevShowPassword) => !prevShowPassword);
+                  }}
+                >
+                  {doShowPassword ? <Visibility /> : <VisibilityOff />}
+                </IconButton>
+              </InputAdornment>
+            )
+          }}
         />
         <Button size="large" variant="contained" disabled={!appContext.isUserStorageAvailable}>
           Login
@@ -85,4 +100,4 @@ const HomePage: FC = () => {
   );
 };
 
-export default HomePage;
+export default LoginPage;

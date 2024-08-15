@@ -10,12 +10,13 @@ const Root: FC = () => {
   useEffect(() => {
     appLogger.info("Rendering App component.");
     IPCLogger.debug("Requesting user storage availability status.");
+    // Get initial user storage availability status
     window.userAPI
       .isStorageAvailable()
       .then(
-        (value: boolean) => {
-          setIsUserStorageAvailable(value);
-          IPCLogger.debug("Received user storage availability status.");
+        (isAvailable: boolean) => {
+          IPCLogger.debug(`Received user storage availability status. Storage available: ${isAvailable.toString()}.`);
+          setIsUserStorageAvailable(isAvailable);
         },
         (reason: unknown) => {
           IPCLogger.warn(`Could not get user storage availability status: ${String(reason)}.`);
@@ -24,10 +25,9 @@ const Root: FC = () => {
       .catch(() => {
         IPCLogger.error(`Could not get user storage availability status.`);
       });
-    // Monitor changes to user storage availability
+    // Monitor changes to user storage availability status
     window.userAPI.onStorageAvailabilityChanged((isAvailable: boolean) => {
-      IPCLogger.debug("Received user storage availability status change event.");
-      appLogger.silly(`User storage available: ${isAvailable.toString()}.`);
+      IPCLogger.debug(`Received user storage availability status change event. Storage available: ${isAvailable.toString()}.`);
       setIsUserStorageAvailable(isAvailable);
     });
   }, []);

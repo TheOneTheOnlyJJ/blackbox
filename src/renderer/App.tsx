@@ -1,7 +1,7 @@
 import { FC } from "react";
 import { createHashRouter, RouterProvider } from "react-router-dom";
 import Root from "./root/Root";
-import HomePage from "./pages/HomePage";
+import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 
 const APP_ROUTER = createHashRouter([
@@ -11,7 +11,7 @@ const APP_ROUTER = createHashRouter([
     children: [
       {
         index: true,
-        element: <HomePage />
+        element: <LoginPage />
       },
       {
         path: "register",

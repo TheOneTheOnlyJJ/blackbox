@@ -72,6 +72,18 @@ export class SQLiteUserStorage extends UserStorage<SQLiteUserStorageConfig> {
     this.logger.info('"SQLite" user storage ready.');
   }
 
+  public isUsernameAvailable(username: string): boolean {
+    // TODO: Implement this properly
+    this.logger.debug(`Checking username availability for username: "${username}".`);
+    const TAKEN_USERNAMES = ["test", "admin", "jurj"];
+    if (TAKEN_USERNAMES.includes(username)) {
+      this.logger.debug("Username unavailable.");
+      return false;
+    }
+    this.logger.debug("Username available.");
+    return true;
+  }
+
   public addUser(user: IUser): boolean {
     return true;
   }
