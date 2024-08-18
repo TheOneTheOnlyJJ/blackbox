@@ -6,13 +6,19 @@ import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 import { createJSONValidateFunction, readConfigJSON, writeConfigJSON } from "./config/config";
 import { JSONSchemaType } from "ajv/dist/types/json-schema";
 import { ValidateFunction } from "ajv";
-import { UserAccountManagerIPCChannel } from "./IPCChannels";
-import { UserAccountManager, UserStorageChangeCallback } from "./user/UserAccountManager";
+import { IPCEncryptionIPCChannel, UserAccountManagerIPCChannel } from "./IPCChannels";
+import { UserAccountManager } from "./user/UserAccountManager";
 import { UserStorageConfig } from "./user/storage/utils";
 import { UserStorageType } from "./user/storage/UserStorageType";
 import { WindowPosition } from "./window/WindowPosition";
 import { adjustWindowBounds } from "./window/adjustWindowBounds";
 import { IpcMainEvent } from "electron";
+import { IUserAPI } from "../shared/IPC/APIs/IUserAPI";
+import { MainProcessIPCAPIHandlers } from "./IPC/MainProcessAPIHandlers";
+import { INewUserRawData, USER_REGISTER_DATA_JSON_SCHEMA } from "../shared/user/accountSchemas";
+import { randomUUID, randomBytes, scryptSync, generateKeyPairSync } from "node:crypto";
+import { IIPCEncryptionAPI } from "../shared/IPC/APIs/IIPCEncryptionAPI";
+import { INewUserCompleteData } from "./user/INewUserCompleteData";
 
 export interface AppConfig {
   window: {
@@ -36,6 +42,8 @@ export class App {
   private readonly appLogger: LogFunctions = log.scope("main-app");
   private readonly windowLogger: LogFunctions = log.scope("main-window");
   private readonly IPCLogger: LogFunctions = log.scope("main-ipc");
+  private readonly IPCUserAPILogger: LogFunctions = log.scope("main-ipc-user-api");
+  private readonly IPCEncryptionAPILogger: LogFunctions = log.scope("main-ipc-encryption-api");
   private readonly userAccountManagerLogger: LogFunctions = log.scope("main-user-account-manager");
 
   // Config
@@ -90,23 +98,9 @@ export class App {
   private readonly CONFIG_VALIDATE_FUNCTION: ValidateFunction<AppConfig> = createJSONValidateFunction<AppConfig>(this.CONFIG_SCHEMA);
   private config: AppConfig = this.DEFAULT_CONFIG;
 
-  // User account manager
-  private userStorageChangeCallback: UserStorageChangeCallback = (isAvailable: boolean) => {
-    this.IPCLogger.debug(`Sending user storage availability after change to window. Storage available: ${isAvailable.toString()}.`);
-    if (this.window === null) {
-      this.IPCLogger.debug('Window is "null". No-op.');
-      return;
-    }
-    this.window.webContents.send(UserAccountManagerIPCChannel.onStorageAvailabilityChanged, isAvailable);
-  };
-
-  private userAccountManager: UserAccountManager = UserAccountManager.getInstance(this.userStorageChangeCallback, this.userAccountManagerLogger);
-
-  private readonly USER_STORAGE_CONFIG: UserStorageConfig = {
-    type: UserStorageType.SQLite,
-    dbDirPath: resolve(join(app.getAppPath(), "data")),
-    dbFileName: "users.sqlite"
-  };
+  // Will get initialised in class constructor
+  private readonly publicIPCEncryptionKey: string;
+  private readonly privateIPCEncryptionKey: string;
 
   // Window
   private readonly WINDOW_CONSTRUCTOR_OPTIONS: BrowserWindowConstructorOptions = {
@@ -122,6 +116,84 @@ export class App {
   };
 
   private window: null | BrowserWindow = null;
+
+  // IPC API handlers
+  private readonly IPC_ENCRYPTION_API_HANDLERS: MainProcessIPCAPIHandlers<IIPCEncryptionAPI> = {
+    handleGetPublicKey: (): string => {
+      this.IPCEncryptionAPILogger.debug("Received public encryption key request.");
+      return this.publicIPCEncryptionKey;
+    }
+  };
+
+  private readonly USER_API_HANDLERS: MainProcessIPCAPIHandlers<IUserAPI> = {
+    handleIsStorageAvailable: (): boolean => {
+      this.IPCUserAPILogger.debug("Received user storage availability status request.");
+      const IS_STORAGE_AVAILABLE: boolean = this.userAccountManager.isStorageAvailable();
+      this.IPCUserAPILogger.debug(`Sending ${IS_STORAGE_AVAILABLE.toString()}.`);
+      return IS_STORAGE_AVAILABLE;
+    },
+    handleOnStorageAvailabilityChange: (isAvailable: boolean): void => {
+      this.IPCUserAPILogger.debug(`Sending user storage availability after change to window. Storage available: ${isAvailable.toString()}.`);
+      if (this.window === null) {
+        this.IPCUserAPILogger.debug('Window is "null". No-op.');
+        return;
+      }
+      this.window.webContents.send(UserAccountManagerIPCChannel.onStorageAvailabilityChange, isAvailable);
+    },
+    handleIsUsernameAvailable: (username: string): boolean => {
+      this.IPCUserAPILogger.debug("Received username availability status request.");
+      if (!this.userAccountManager.isStorageAvailable()) {
+        this.IPCUserAPILogger.error("User storage not available. Cannot determine username availability.");
+        return false;
+      }
+      return this.userAccountManager.isUsernameAvailable(username);
+    },
+    handleRegister: (userData: INewUserRawData): boolean => {
+      this.IPCUserAPILogger.debug(`Received user registration request.`);
+      if (!this.NEW_USER_RAW_DATA_VALIDATOR(userData)) {
+        this.IPCUserAPILogger.error(`Invalid user registration raw data!`);
+        this.NEW_USER_RAW_DATA_VALIDATOR.errors?.map((error) => {
+          this.IPCUserAPILogger.error(`Path: "${error.instancePath.length > 0 ? error.instancePath : "-"}", Message: "${error.message ?? "-"}".`);
+        });
+        return false;
+      } else {
+        this.IPCUserAPILogger.debug("Valid user registration raw data.");
+      }
+      if (!this.userAccountManager.isStorageAvailable()) {
+        this.IPCUserAPILogger.error("User storage not available. Cannot register user.");
+        return false;
+      }
+      // TODO: Encrypt while in IPC transit
+      this.IPCUserAPILogger.debug("Starting preparation of new user data.");
+      this.IPCUserAPILogger.silly(`Data to be processed: ${JSON.stringify(userData, null, 2)}.`);
+      const START: [number, number] = process.hrtime();
+      const PASSWORD_SALT = randomBytes(16);
+      const NEW_USER: INewUserCompleteData = {
+        id: randomUUID({ disableEntropyCache: true }),
+        username: userData.username,
+        passwordHash: scryptSync(userData.password, PASSWORD_SALT, 64).toString("hex"),
+        passwordSalt: PASSWORD_SALT.toString("hex")
+      };
+      const END: [number, number] = process.hrtime(START);
+      this.IPCUserAPILogger.debug(`Done preparation of new user data. Time taken: ${END[0].toString()} seconds & ${END[1].toString()} nanoseconds.`);
+      return this.userAccountManager.registerUser(NEW_USER);
+    }
+  };
+
+  // User account manager
+  private userAccountManager: UserAccountManager = new UserAccountManager(
+    this.USER_API_HANDLERS.handleOnStorageAvailabilityChange,
+    this.userAccountManagerLogger
+  );
+
+  private readonly USER_STORAGE_CONFIG: UserStorageConfig = {
+    type: UserStorageType.SQLite,
+    dbDirPath: resolve(join(app.getAppPath(), "data")),
+    dbFileName: "users.sqlite"
+  };
+
+  private readonly NEW_USER_RAW_DATA_VALIDATOR: ValidateFunction<INewUserRawData> =
+    createJSONValidateFunction<INewUserRawData>(USER_REGISTER_DATA_JSON_SCHEMA);
 
   // Timeouts
   private updateWindowPositionConfigTimeout: null | NodeJS.Timeout = null;
@@ -147,12 +219,27 @@ export class App {
     this.bootstrapLogger.info(`Using log file at path: "${log.transports.file.getFile().path}".`);
     // Read app config
     try {
-      this.config = readConfigJSON<AppConfig>(this.CONFIG_FILE_PATH, this.CONFIG_VALIDATE_FUNCTION, this.appLogger);
+      this.config = readConfigJSON<AppConfig>(this.CONFIG_FILE_PATH, this.CONFIG_VALIDATE_FUNCTION, this.bootstrapLogger);
     } catch {
-      this.appLogger.warn("Using default app config.");
+      this.bootstrapLogger.warn("Using default app config.");
       this.config = this.DEFAULT_CONFIG;
     }
-    this.appLogger.debug(`Using app config: ${JSON.stringify(this.config, null, 2)}.`);
+    this.bootstrapLogger.debug(`Using app config: ${JSON.stringify(this.config, null, 2)}.`);
+    // Generate IPC encryption keys
+    const { publicKey, privateKey } = generateKeyPairSync("rsa", {
+      modulusLength: 4096, // Key size (in bits), a larger size is more secure but slower
+      publicKeyEncoding: {
+        type: "spki", // Standard for public key encoding
+        format: "pem" // Format of the public key
+      },
+      privateKeyEncoding: {
+        type: "pkcs8", // Standard for private key encoding
+        format: "pem" // Format of the private key
+      }
+    });
+    this.publicIPCEncryptionKey = publicKey;
+    this.privateIPCEncryptionKey = privateKey;
+    this.bootstrapLogger.debug(`Generated IPC Encryption API keys. Public key:\n${this.publicIPCEncryptionKey}.`);
     this.bootstrapLogger.debug("App constructor done.");
   }
 
@@ -450,31 +537,29 @@ export class App {
     }
   }
 
-  private registerIPCMainHandlers() {
+  private registerIPCMainHandlers(): void {
+    this.IPCLogger.debug("Registering IPC API handlers.");
+    this.registerIPCEncryptionAPIIPCHandlers();
     this.registerUserAPIIPCHandlers();
   }
 
+  private registerIPCEncryptionAPIIPCHandlers(): void {
+    this.IPCLogger.debug("Registering IPC Encryption API IPC handlers.");
+    ipcMain.on(IPCEncryptionIPCChannel.getPublicKey, (event: IpcMainEvent) => {
+      event.returnValue = this.IPC_ENCRYPTION_API_HANDLERS.handleGetPublicKey();
+    });
+  }
+
   private registerUserAPIIPCHandlers(): void {
-    this.appLogger.debug("Registering user API IPC handlers.");
-    ipcMain.handle(UserAccountManagerIPCChannel.isStorageAvailable, () => {
-      return this.handleUserAPIIsStorageAvailable();
+    this.IPCLogger.debug("Registering User API IPC handlers.");
+    ipcMain.on(UserAccountManagerIPCChannel.isStorageAvailable, (event: IpcMainEvent) => {
+      event.returnValue = this.USER_API_HANDLERS.handleIsStorageAvailable();
     });
     ipcMain.on(UserAccountManagerIPCChannel.isUsernameAvailable, (event: IpcMainEvent, username: string) => {
-      event.returnValue = this.onUserAPIIsUsernameAvailable(username);
+      event.returnValue = this.USER_API_HANDLERS.handleIsUsernameAvailable(username);
     });
-  }
-
-  private handleUserAPIIsStorageAvailable(): boolean {
-    this.IPCLogger.debug("Received user API storage availability status request.");
-    return this.userAccountManager.isStorageAvailable();
-  }
-
-  private onUserAPIIsUsernameAvailable(username: string) {
-    this.IPCLogger.debug("Received user API username availability status request.");
-    if (!this.userAccountManager.isStorageAvailable()) {
-      this.appLogger.warn("User storage not initialised. Cannot determine username availability.");
-      return false;
-    }
-    return this.userAccountManager.isUsernameAvailable(username);
+    ipcMain.on(UserAccountManagerIPCChannel.register, (event: IpcMainEvent, userData: INewUserRawData) => {
+      event.returnValue = this.USER_API_HANDLERS.handleRegister(userData);
+    });
   }
 }

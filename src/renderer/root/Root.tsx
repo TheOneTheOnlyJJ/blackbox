@@ -5,28 +5,18 @@ import { Outlet } from "react-router-dom";
 import { RootContext as RootContext } from "./RootContext";
 
 const Root: FC = () => {
+  const [publicIPCEncryptionKey, setPublicIPCEncryptionKey] = useState<string | null>(null);
   const [isUserStorageAvailable, setIsUserStorageAvailable] = useState<boolean>(false);
 
   useEffect(() => {
     appLogger.info("Rendering App component.");
     IPCLogger.debug("Requesting user storage availability status.");
+    // Get IPC public encryption key
+    setPublicIPCEncryptionKey(window.IPCEncryptionAPI.getPublicKey());
     // Get initial user storage availability status
-    window.userAPI
-      .isStorageAvailable()
-      .then(
-        (isAvailable: boolean) => {
-          IPCLogger.debug(`Received user storage availability status. Storage available: ${isAvailable.toString()}.`);
-          setIsUserStorageAvailable(isAvailable);
-        },
-        (reason: unknown) => {
-          IPCLogger.warn(`Could not get user storage availability status: ${String(reason)}.`);
-        }
-      )
-      .catch(() => {
-        IPCLogger.error(`Could not get user storage availability status.`);
-      });
+    setIsUserStorageAvailable(window.userAPI.isStorageAvailable());
     // Monitor changes to user storage availability status
-    window.userAPI.onStorageAvailabilityChanged((isAvailable: boolean) => {
+    window.userAPI.onStorageAvailabilityChange((isAvailable: boolean) => {
       IPCLogger.debug(`Received user storage availability status change event. Storage available: ${isAvailable.toString()}.`);
       setIsUserStorageAvailable(isAvailable);
     });
@@ -38,6 +28,7 @@ const Root: FC = () => {
       <Outlet
         context={
           {
+            publicIPCEncryptionKey: publicIPCEncryptionKey,
             isUserStorageAvailable: isUserStorageAvailable
           } satisfies RootContext
         }

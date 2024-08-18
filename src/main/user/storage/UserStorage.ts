@@ -32,7 +32,7 @@ export abstract class UserStorage<T extends BaseUserStorageConfig> {
 
   public abstract isLocal(): boolean;
   public abstract isUsernameAvailable(username: string): boolean;
-  public abstract addUser(user: IUser): boolean;
+  public abstract addUser(userData: IUser): boolean;
   public abstract deleteUser(userId: UserId): boolean;
   public abstract deleteUsers(userIds: UserId[]): boolean;
   public abstract getUser(userId: UserId): IUser;

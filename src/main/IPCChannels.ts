@@ -1,5 +1,10 @@
+export enum IPCEncryptionIPCChannel {
+  getPublicKey = "IPCEncryption:getPublicKey"
+}
+
 export enum UserAccountManagerIPCChannel {
   isStorageAvailable = "userAccountManager:isStorageAvailable",
-  onStorageAvailabilityChanged = "userAccountManager:onStorageAvailabilityChanged",
-  isUsernameAvailable = "userAccountManager:isUsernameAvailable"
+  onStorageAvailabilityChange = "userAccountManager:onStorageAvailabilityChange",
+  isUsernameAvailable = "userAccountManager:isUsernameAvailable",
+  register = "userAccountManager:register"
 }

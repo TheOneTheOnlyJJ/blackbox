@@ -3,7 +3,7 @@ import { Box, Button, Paper, Typography } from "@mui/material";
 import { FC, FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { useRootContext } from "../root/RootContext";
-import { IUserRegisterFormData, USER_REGISTER_FORM_JSON_SCHEMA } from "../../shared/user/accountSchemas";
+import { INewUserFormData, INewUserRawData, USER_REGISTER_FORM_DATA_JSON_SCHEMA } from "../../shared/user/accountSchemas";
 import { Theme } from "@rjsf/mui";
 import { customizeValidator } from "@rjsf/validator-ajv8";
 import { withTheme, IChangeEvent } from "@rjsf/core";
@@ -11,9 +11,9 @@ import { CustomValidator, ErrorTransformer, FormValidation, RJSFSchema, RJSFVali
 import { appLogger } from "../utils/loggers";
 import RJSFPasswordWidget from "../components/RJSFPasswordWidget";
 
-const MUIForm = withTheme<IUserRegisterFormData>(Theme);
+const MUIForm = withTheme<INewUserFormData>(Theme);
 
-const UI_SCHEMA: UiSchema<IUserRegisterFormData> = {
+const UI_SCHEMA: UiSchema<INewUserFormData> = {
   password: {
     "ui:widget": RJSFPasswordWidget
   },
@@ -22,12 +22,12 @@ const UI_SCHEMA: UiSchema<IUserRegisterFormData> = {
   }
 };
 
-const FORM_VALIDATOR = customizeValidator<IUserRegisterFormData>();
+const FORM_VALIDATOR = customizeValidator<INewUserFormData>();
 
-const customValidate: CustomValidator<IUserRegisterFormData> = (
-  formData: IUserRegisterFormData | undefined,
-  errors: FormValidation<IUserRegisterFormData>,
-  _: UiSchema<IUserRegisterFormData> | undefined
+const customValidate: CustomValidator<INewUserFormData> = (
+  formData: INewUserFormData | undefined,
+  errors: FormValidation<INewUserFormData>,
+  _: UiSchema<INewUserFormData> | undefined
 ) => {
   // Skip if no form data
   if (formData === undefined || errors.username === undefined || errors.confirmPassword === undefined) {
@@ -42,7 +42,7 @@ const customValidate: CustomValidator<IUserRegisterFormData> = (
   return errors;
 };
 
-const transformErrors: ErrorTransformer<IUserRegisterFormData> = (errors: RJSFValidationError[], _: UiSchema<IUserRegisterFormData> | undefined) => {
+const transformErrors: ErrorTransformer<INewUserFormData> = (errors: RJSFValidationError[], _: UiSchema<INewUserFormData> | undefined) => {
   return errors.map((error: RJSFValidationError) => {
     // Capitalize first letter
     if (error.message !== undefined) {
@@ -53,13 +53,25 @@ const transformErrors: ErrorTransformer<IUserRegisterFormData> = (errors: RJSFVa
   });
 };
 
-const onSubmit: (data: IChangeEvent<IUserRegisterFormData>, event: FormEvent) => void = (data: IChangeEvent<IUserRegisterFormData>, _: FormEvent) => {
+const onSubmit: (data: IChangeEvent<INewUserFormData>, event: FormEvent) => void = (data: IChangeEvent<INewUserFormData>, _: FormEvent) => {
   appLogger.debug("Submitted user registration form.");
   if (data.formData === undefined) {
     appLogger.debug("Undefined form data. No-op.");
     return;
   }
+  // Delete this
   appLogger.silly(`Data submitted: ${JSON.stringify(data.formData, null, 2)}.`);
+  // TODO: Encrypt with IPC encryption key
+  const RAW_DATA: INewUserRawData = {
+    username: data.formData.username,
+    password: data.formData.password
+  };
+  if (window.userAPI.register(RAW_DATA)) {
+    appLogger.info(`Registered new user ${RAW_DATA.username}!`);
+  } else {
+    appLogger.info(`Could not register new user ${RAW_DATA.username}!`);
+  }
+  // TODO: Add confirmation screen
 };
 
 const RegisterPage: FC = () => {
@@ -91,7 +103,7 @@ const RegisterPage: FC = () => {
       >
         <Typography variant="h4">Register</Typography>
         <MUIForm
-          schema={USER_REGISTER_FORM_JSON_SCHEMA as RJSFSchema}
+          schema={USER_REGISTER_FORM_DATA_JSON_SCHEMA as RJSFSchema}
           uiSchema={UI_SCHEMA}
           validator={FORM_VALIDATOR}
           showErrorList={false}

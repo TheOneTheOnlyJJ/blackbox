@@ -75,8 +75,9 @@ export class SQLiteUserStorage extends UserStorage<SQLiteUserStorageConfig> {
   public isUsernameAvailable(username: string): boolean {
     // TODO: Implement this properly
     this.logger.debug(`Checking username availability for username: "${username}".`);
-    const TAKEN_USERNAMES = ["test", "admin", "jurj"];
-    if (TAKEN_USERNAMES.includes(username)) {
+    const IS_USERNAME_AVAILABLE_SQL = "SELECT COUNT(*) AS count FROM users WHERE username = ?";
+    const RESULT = this.db.prepare(IS_USERNAME_AVAILABLE_SQL).get(username) as { count: number };
+    if (RESULT.count > 0) {
       this.logger.debug("Username unavailable.");
       return false;
     }
@@ -84,8 +85,21 @@ export class SQLiteUserStorage extends UserStorage<SQLiteUserStorageConfig> {
     return true;
   }
 
-  public addUser(user: IUser): boolean {
-    return true;
+  public addUser(userData: IUser): boolean {
+    this.logger.debug(`Adding new user.`);
+    this.logger.silly(`User data: ${JSON.stringify(userData, null, 2)}.`);
+    const INSERT_NEW_USER_SQL = "INSERT INTO users (id, username, password, password_salt) VALUES (@id, @username, @passwordHash, @passwordSalt)";
+    try {
+      const INFO: DatabaseConstructor.RunResult = this.db.prepare(INSERT_NEW_USER_SQL).run(userData);
+      this.logger.info(
+        `User added successfully! Number of changes: ${INFO.changes.toString()}. Last inserted row ID: ${INFO.lastInsertRowid.toString()}.`
+      );
+      return true;
+    } catch (err: unknown) {
+      const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Could not add user! ${ERROR_MESSAGE}!`);
+      return false;
+    }
   }
 
   public deleteUser(userId: UserId): boolean {
@@ -100,7 +114,8 @@ export class SQLiteUserStorage extends UserStorage<SQLiteUserStorageConfig> {
     return {
       id: "",
       username: "test",
-      password: "test"
+      passwordHash: "test",
+      passwordSalt: "salted password"
     };
   }
 
@@ -109,7 +124,8 @@ export class SQLiteUserStorage extends UserStorage<SQLiteUserStorageConfig> {
       {
         id: "",
         username: "test",
-        password: "test"
+        passwordHash: "test",
+        passwordSalt: "salted pass"
       }
     ];
   }
@@ -119,7 +135,8 @@ export class SQLiteUserStorage extends UserStorage<SQLiteUserStorageConfig> {
       {
         id: "",
         username: "test",
-        password: "test"
+        passwordHash: "test",
+        passwordSalt: "salted caramel yummy"
       }
     ];
   }
@@ -153,7 +170,8 @@ export class SQLiteUserStorage extends UserStorage<SQLiteUserStorageConfig> {
       CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY,
         username TEXT NOT NULL UNIQUE,
-        password TEXT NOT NULL
+        password TEXT NOT NULL,
+        password_salt TEXT NOT NULL
       )
       `;
       this.db.prepare(CREATE_USERS_TABLE_SQL).run();

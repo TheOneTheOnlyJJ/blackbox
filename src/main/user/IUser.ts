@@ -1,7 +1,5 @@
-export type UserId = string;
+import { UserId } from "./UserId";
 
 export interface IUser {
   id: UserId;
-  username: string;
-  password: string;
 }
