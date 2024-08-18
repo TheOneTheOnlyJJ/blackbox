@@ -14,7 +14,7 @@ import { WindowPosition } from "./window/WindowPosition";
 import { adjustWindowBounds } from "./window/adjustWindowBounds";
 import { IpcMainEvent } from "electron";
 import { IUserAPI } from "../shared/IPC/APIs/IUserAPI";
-import { MainProcessIPCAPIHandlers } from "./IPC/MainProcessAPIHandlers";
+import { MainProcessIPCAPIHandlers } from "./IPC/MainProcessIPCAPIHandlers";
 import { INewUserRawData, USER_REGISTER_DATA_JSON_SCHEMA } from "../shared/user/accountSchemas";
 import { randomUUID, randomBytes, scryptSync, generateKeyPairSync } from "node:crypto";
 import { IIPCEncryptionAPI } from "../shared/IPC/APIs/IIPCEncryptionAPI";
