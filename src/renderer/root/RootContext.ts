@@ -1,7 +1,7 @@
 import { useOutletContext } from "react-router-dom";
 
 export interface RootContext {
-  publicIPCEncryptionKey: string | null;
+  mainProcessPublicRSAKey: string;
   isUserStorageAvailable: boolean;
 }
 

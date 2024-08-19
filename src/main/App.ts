@@ -15,10 +15,10 @@ import { adjustWindowBounds } from "./window/adjustWindowBounds";
 import { IpcMainEvent } from "electron";
 import { IUserAPI } from "../shared/IPC/APIs/IUserAPI";
 import { MainProcessIPCAPIHandlers } from "./IPC/MainProcessIPCAPIHandlers";
-import { INewUserRawData, USER_REGISTER_DATA_JSON_SCHEMA } from "../shared/user/accountSchemas";
-import { randomUUID, randomBytes, scryptSync, generateKeyPairSync } from "node:crypto";
+import { IBaseNewUserData } from "../shared/user/IBaseNewUserData";
+import { generateKeyPairSync } from "node:crypto";
 import { IIPCEncryptionAPI } from "../shared/IPC/APIs/IIPCEncryptionAPI";
-import { INewUserCompleteData } from "./user/INewUserCompleteData";
+import { ISecuredNewUserData } from "./user/ISecuredNewUserData";
 
 export interface AppConfig {
   window: {
@@ -98,9 +98,9 @@ export class App {
   private readonly CONFIG_VALIDATE_FUNCTION: ValidateFunction<AppConfig> = createJSONValidateFunction<AppConfig>(this.CONFIG_SCHEMA);
   private config: AppConfig = this.DEFAULT_CONFIG;
 
-  // Will get initialised in class constructor
-  private readonly publicIPCEncryptionKey: string;
-  private readonly privateIPCEncryptionKey: string;
+  // Will get initialised in the class constructor
+  private readonly mainProcessPublicRSAKey: string;
+  private readonly mainProcessPrivateRSAKey: string;
 
   // Window
   private readonly WINDOW_CONSTRUCTOR_OPTIONS: BrowserWindowConstructorOptions = {
@@ -119,9 +119,9 @@ export class App {
 
   // IPC API handlers
   private readonly IPC_ENCRYPTION_API_HANDLERS: MainProcessIPCAPIHandlers<IIPCEncryptionAPI> = {
-    handleGetPublicKey: (): string => {
-      this.IPCEncryptionAPILogger.debug("Received public encryption key request.");
-      return this.publicIPCEncryptionKey;
+    handleGetMainProcessPublicRSAKey: (): string => {
+      this.IPCEncryptionAPILogger.debug("Received main process public RSA key request.");
+      return this.mainProcessPublicRSAKey;
     }
   };
 
@@ -148,35 +148,28 @@ export class App {
       }
       return this.userAccountManager.isUsernameAvailable(username);
     },
-    handleRegister: (userData: INewUserRawData): boolean => {
-      this.IPCUserAPILogger.debug(`Received user registration request.`);
-      if (!this.NEW_USER_RAW_DATA_VALIDATOR(userData)) {
-        this.IPCUserAPILogger.error(`Invalid user registration raw data!`);
-        this.NEW_USER_RAW_DATA_VALIDATOR.errors?.map((error) => {
-          this.IPCUserAPILogger.error(`Path: "${error.instancePath.length > 0 ? error.instancePath : "-"}", Message: "${error.message ?? "-"}".`);
-        });
-        return false;
-      } else {
-        this.IPCUserAPILogger.debug("Valid user registration raw data.");
-      }
+    handleRegister: (userData: IBaseNewUserData): boolean => {
+      this.IPCUserAPILogger.debug(`Received new user registration request.`);
       if (!this.userAccountManager.isStorageAvailable()) {
-        this.IPCUserAPILogger.error("User storage not available. Cannot register user.");
+        this.IPCUserAPILogger.error("User storage not available. Cannot register new user.");
+        return false;
+      }
+      if (!this.userAccountManager.isBaseNewUserDataValid(userData)) {
+        this.IPCUserAPILogger.error("Invalid new user base data. Cannot register new user.");
         return false;
       }
       // TODO: Encrypt while in IPC transit
-      this.IPCUserAPILogger.debug("Starting preparation of new user data.");
-      this.IPCUserAPILogger.silly(`Data to be processed: ${JSON.stringify(userData, null, 2)}.`);
-      const START: [number, number] = process.hrtime();
-      const PASSWORD_SALT = randomBytes(16);
-      const NEW_USER: INewUserCompleteData = {
-        id: randomUUID({ disableEntropyCache: true }),
-        username: userData.username,
-        passwordHash: scryptSync(userData.password, PASSWORD_SALT, 64).toString("hex"),
-        passwordSalt: PASSWORD_SALT.toString("hex")
-      };
-      const END: [number, number] = process.hrtime(START);
-      this.IPCUserAPILogger.debug(`Done preparation of new user data. Time taken: ${END[0].toString()} seconds & ${END[1].toString()} nanoseconds.`);
-      return this.userAccountManager.registerUser(NEW_USER);
+      // DELETE THIS
+      this.IPCUserAPILogger.silly(`Data to be secured: ${JSON.stringify(userData, null, 2)}.`);
+      try {
+        const SECURED_USER_DATA: ISecuredNewUserData = this.userAccountManager.secureBaseNewUserData(userData);
+        this.IPCUserAPILogger.silly(`Secured user data: ${JSON.stringify(SECURED_USER_DATA, null, 2)}.`);
+        return this.userAccountManager.registerUser(SECURED_USER_DATA);
+      } catch (err: unknown) {
+        const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+        this.IPCUserAPILogger.error(`Could not register new user! ${ERROR_MESSAGE}!`);
+        return false;
+      }
     }
   };
 
@@ -191,9 +184,6 @@ export class App {
     dbDirPath: resolve(join(app.getAppPath(), "data")),
     dbFileName: "users.sqlite"
   };
-
-  private readonly NEW_USER_RAW_DATA_VALIDATOR: ValidateFunction<INewUserRawData> =
-    createJSONValidateFunction<INewUserRawData>(USER_REGISTER_DATA_JSON_SCHEMA);
 
   // Timeouts
   private updateWindowPositionConfigTimeout: null | NodeJS.Timeout = null;
@@ -226,20 +216,20 @@ export class App {
     }
     this.bootstrapLogger.debug(`Using app config: ${JSON.stringify(this.config, null, 2)}.`);
     // Generate IPC encryption keys
+    this.bootstrapLogger.debug(`Generating main process RSA encryption keys.`);
     const { publicKey, privateKey } = generateKeyPairSync("rsa", {
-      modulusLength: 4096, // Key size (in bits), a larger size is more secure but slower
+      modulusLength: 4096,
       publicKeyEncoding: {
-        type: "spki", // Standard for public key encoding
-        format: "pem" // Format of the public key
+        type: "spki",
+        format: "pem"
       },
       privateKeyEncoding: {
-        type: "pkcs8", // Standard for private key encoding
-        format: "pem" // Format of the private key
+        type: "pkcs8",
+        format: "pem"
       }
     });
-    this.publicIPCEncryptionKey = publicKey;
-    this.privateIPCEncryptionKey = privateKey;
-    this.bootstrapLogger.debug(`Generated IPC Encryption API keys. Public key:\n${this.publicIPCEncryptionKey}.`);
+    this.mainProcessPublicRSAKey = publicKey;
+    this.mainProcessPrivateRSAKey = privateKey;
     this.bootstrapLogger.debug("App constructor done.");
   }
 
@@ -545,8 +535,8 @@ export class App {
 
   private registerIPCEncryptionAPIIPCHandlers(): void {
     this.IPCLogger.debug("Registering IPC Encryption API IPC handlers.");
-    ipcMain.on(IPCEncryptionIPCChannel.getPublicKey, (event: IpcMainEvent) => {
-      event.returnValue = this.IPC_ENCRYPTION_API_HANDLERS.handleGetPublicKey();
+    ipcMain.on(IPCEncryptionIPCChannel.getMainProcessPublicRSAKey, (event: IpcMainEvent) => {
+      event.returnValue = this.IPC_ENCRYPTION_API_HANDLERS.handleGetMainProcessPublicRSAKey();
     });
   }
 
@@ -558,7 +548,7 @@ export class App {
     ipcMain.on(UserAccountManagerIPCChannel.isUsernameAvailable, (event: IpcMainEvent, username: string) => {
       event.returnValue = this.USER_API_HANDLERS.handleIsUsernameAvailable(username);
     });
-    ipcMain.on(UserAccountManagerIPCChannel.register, (event: IpcMainEvent, userData: INewUserRawData) => {
+    ipcMain.on(UserAccountManagerIPCChannel.register, (event: IpcMainEvent, userData: IBaseNewUserData) => {
       event.returnValue = this.USER_API_HANDLERS.handleRegister(userData);
     });
   }

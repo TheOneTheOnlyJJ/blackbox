@@ -1,8 +1,8 @@
 import { LogFunctions } from "electron-log";
-import { IUser, UserId } from "../IUser";
 import { createJSONValidateFunction, isConfigValid } from "../../config/config";
 import { JSONSchemaType, ValidateFunction } from "ajv";
 import { UserStorageType } from "./UserStorageType";
+import { ISecuredNewUserData } from "../ISecuredNewUserData";
 
 // Every user storage must have at least the type in its config (should be further narrowed down to its own in the specific config)
 export interface BaseUserStorageConfig {
@@ -30,15 +30,15 @@ export abstract class UserStorage<T extends BaseUserStorageConfig> {
     return this.config;
   }
 
-  public abstract isLocal(): boolean;
+  // public abstract isLocal(): boolean;
   public abstract isUsernameAvailable(username: string): boolean;
-  public abstract addUser(userData: IUser): boolean;
-  public abstract deleteUser(userId: UserId): boolean;
-  public abstract deleteUsers(userIds: UserId[]): boolean;
-  public abstract getUser(userId: UserId): IUser;
-  public abstract getUsers(userIds: UserId[]): IUser[];
-  public abstract getAllUsers(): IUser[];
+  public abstract addUser(userData: ISecuredNewUserData): boolean;
+  // public abstract deleteUser(userId: UserId): boolean;
+  // public abstract deleteUsers(userIds: UserId[]): boolean;
+  // public abstract getUser(userId: UserId): IUser;
+  // public abstract getUsers(userIds: UserId[]): IUser[];
+  // public abstract getAllUsers(): IUser[];
   public abstract getUserCount(): number;
-  public abstract isIdValid(id: UserId): boolean;
+  // public abstract isIdValid(id: UserId): boolean;
   public abstract close(): boolean;
 }

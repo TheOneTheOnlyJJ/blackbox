@@ -1,3 +1,3 @@
 export interface IIPCEncryptionAPI {
-  getPublicKey: () => string;
+  getMainProcessPublicRSAKey: () => string;
 }

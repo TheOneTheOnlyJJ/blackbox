@@ -3,6 +3,7 @@ import { createHashRouter, RouterProvider } from "react-router-dom";
 import Root from "./root/Root";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import { CssBaseline } from "@mui/material";
 
 const APP_ROUTER = createHashRouter([
   {
@@ -22,5 +23,10 @@ const APP_ROUTER = createHashRouter([
 ]);
 
 export const App: FC = () => {
-  return <RouterProvider router={APP_ROUTER} />;
+  return (
+    <>
+      <CssBaseline />
+      <RouterProvider router={APP_ROUTER} />
+    </>
+  );
 };

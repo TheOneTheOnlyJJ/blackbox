@@ -1,4 +1,3 @@
-import { IUser, UserId } from "../../IUser";
 import { BaseUserStorageConfig, UserStorage } from "../UserStorage";
 import DatabaseConstructor, { Database } from "better-sqlite3";
 import { LogFunctions } from "electron-log";
@@ -6,6 +5,7 @@ import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { JSONSchemaType } from "ajv";
 import { UserStorageType } from "../UserStorageType";
+import { ISecuredNewUserData } from "../../ISecuredNewUserData";
 
 export interface SQLiteUserStorageConfig extends BaseUserStorageConfig {
   type: UserStorageType.SQLite;
@@ -85,10 +85,10 @@ export class SQLiteUserStorage extends UserStorage<SQLiteUserStorageConfig> {
     return true;
   }
 
-  public addUser(userData: IUser): boolean {
-    this.logger.debug(`Adding new user.`);
-    this.logger.silly(`User data: ${JSON.stringify(userData, null, 2)}.`);
-    const INSERT_NEW_USER_SQL = "INSERT INTO users (id, username, password, password_salt) VALUES (@id, @username, @passwordHash, @passwordSalt)";
+  public addUser(userData: ISecuredNewUserData): boolean {
+    this.logger.debug(`Adding new user: ${userData.username}.`);
+    const INSERT_NEW_USER_SQL =
+      "INSERT INTO users (id, username, password_hash, password_salt) VALUES (@id, @username, @passwordHash, @passwordSalt)";
     try {
       const INFO: DatabaseConstructor.RunResult = this.db.prepare(INSERT_NEW_USER_SQL).run(userData);
       this.logger.info(
@@ -102,55 +102,12 @@ export class SQLiteUserStorage extends UserStorage<SQLiteUserStorageConfig> {
     }
   }
 
-  public deleteUser(userId: UserId): boolean {
-    return true;
-  }
-
-  public deleteUsers(userIds: UserId[]): boolean {
-    return true;
-  }
-
-  public getUser(userId: UserId): IUser {
-    return {
-      id: "",
-      username: "test",
-      passwordHash: "test",
-      passwordSalt: "salted password"
-    };
-  }
-
-  public getUsers(userIds: UserId[]): IUser[] {
-    return [
-      {
-        id: "",
-        username: "test",
-        passwordHash: "test",
-        passwordSalt: "salted pass"
-      }
-    ];
-  }
-
-  public getAllUsers(): IUser[] {
-    return [
-      {
-        id: "",
-        username: "test",
-        passwordHash: "test",
-        passwordSalt: "salted caramel yummy"
-      }
-    ];
-  }
-
   public getUserCount(): number {
-    return 0;
-  }
-
-  public isIdValid(id: UserId): boolean {
-    return false;
-  }
-
-  public isLocal(): boolean {
-    return true;
+    this.logger.debug("Getting user count.");
+    const USER_COUNT_SQL = "SELECT COUNT(*) AS count FROM users";
+    const RESULT = this.db.prepare(USER_COUNT_SQL).get() as { count: number };
+    this.logger.debug(`Found ${RESULT.count.toString()} users.`); // TODO: Use inflection
+    return RESULT.count;
   }
 
   public close(): boolean {
@@ -170,7 +127,7 @@ export class SQLiteUserStorage extends UserStorage<SQLiteUserStorageConfig> {
       CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY,
         username TEXT NOT NULL UNIQUE,
-        password TEXT NOT NULL,
+        password_hash TEXT NOT NULL,
         password_salt TEXT NOT NULL
       )
       `;

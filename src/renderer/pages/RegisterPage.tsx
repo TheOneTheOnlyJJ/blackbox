@@ -3,7 +3,8 @@ import { Box, Button, Paper, Typography } from "@mui/material";
 import { FC, FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { useRootContext } from "../root/RootContext";
-import { INewUserFormData, INewUserRawData, USER_REGISTER_FORM_DATA_JSON_SCHEMA } from "../../shared/user/accountSchemas";
+import { IBaseNewUserData } from "../../shared/user/IBaseNewUserData";
+import { IFormNewUserData, FORM_NEW_USER_DATA_JSON_SCHEMA } from "../../shared/user/IFormNewUserData";
 import { Theme } from "@rjsf/mui";
 import { customizeValidator } from "@rjsf/validator-ajv8";
 import { withTheme, IChangeEvent } from "@rjsf/core";
@@ -11,9 +12,9 @@ import { CustomValidator, ErrorTransformer, FormValidation, RJSFSchema, RJSFVali
 import { appLogger } from "../utils/loggers";
 import RJSFPasswordWidget from "../components/RJSFPasswordWidget";
 
-const MUIForm = withTheme<INewUserFormData>(Theme);
+const MUIForm = withTheme<IFormNewUserData>(Theme);
 
-const UI_SCHEMA: UiSchema<INewUserFormData> = {
+const UI_SCHEMA: UiSchema<IFormNewUserData> = {
   password: {
     "ui:widget": RJSFPasswordWidget
   },
@@ -22,12 +23,12 @@ const UI_SCHEMA: UiSchema<INewUserFormData> = {
   }
 };
 
-const FORM_VALIDATOR = customizeValidator<INewUserFormData>();
+const FORM_VALIDATOR = customizeValidator<IFormNewUserData>();
 
-const customValidate: CustomValidator<INewUserFormData> = (
-  formData: INewUserFormData | undefined,
-  errors: FormValidation<INewUserFormData>,
-  _: UiSchema<INewUserFormData> | undefined
+const customValidate: CustomValidator<IFormNewUserData> = (
+  formData: IFormNewUserData | undefined,
+  errors: FormValidation<IFormNewUserData>,
+  _: UiSchema<IFormNewUserData> | undefined
 ) => {
   // Skip if no form data
   if (formData === undefined || errors.username === undefined || errors.confirmPassword === undefined) {
@@ -42,7 +43,7 @@ const customValidate: CustomValidator<INewUserFormData> = (
   return errors;
 };
 
-const transformErrors: ErrorTransformer<INewUserFormData> = (errors: RJSFValidationError[], _: UiSchema<INewUserFormData> | undefined) => {
+const transformErrors: ErrorTransformer<IFormNewUserData> = (errors: RJSFValidationError[], _: UiSchema<IFormNewUserData> | undefined) => {
   return errors.map((error: RJSFValidationError) => {
     // Capitalize first letter
     if (error.message !== undefined) {
@@ -53,7 +54,7 @@ const transformErrors: ErrorTransformer<INewUserFormData> = (errors: RJSFValidat
   });
 };
 
-const onSubmit: (data: IChangeEvent<INewUserFormData>, event: FormEvent) => void = (data: IChangeEvent<INewUserFormData>, _: FormEvent) => {
+const onSubmit: (data: IChangeEvent<IFormNewUserData>, event: FormEvent) => void = (data: IChangeEvent<IFormNewUserData>, _: FormEvent) => {
   appLogger.debug("Submitted user registration form.");
   if (data.formData === undefined) {
     appLogger.debug("Undefined form data. No-op.");
@@ -62,7 +63,7 @@ const onSubmit: (data: IChangeEvent<INewUserFormData>, event: FormEvent) => void
   // Delete this
   appLogger.silly(`Data submitted: ${JSON.stringify(data.formData, null, 2)}.`);
   // TODO: Encrypt with IPC encryption key
-  const RAW_DATA: INewUserRawData = {
+  const RAW_DATA: IBaseNewUserData = {
     username: data.formData.username,
     password: data.formData.password
   };
@@ -102,8 +103,11 @@ const RegisterPage: FC = () => {
         }}
       >
         <Typography variant="h4">Register</Typography>
+        {
+          // TODO: Password fields should turn red on validation errors. Check that
+        }
         <MUIForm
-          schema={USER_REGISTER_FORM_DATA_JSON_SCHEMA as RJSFSchema}
+          schema={FORM_NEW_USER_DATA_JSON_SCHEMA as RJSFSchema}
           uiSchema={UI_SCHEMA}
           validator={FORM_VALIDATOR}
           showErrorList={false}

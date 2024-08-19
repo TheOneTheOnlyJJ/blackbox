@@ -1,12 +1,12 @@
 import { contextBridge, ipcRenderer, IpcRendererEvent } from "electron";
 import { IPCEncryptionIPCChannel, UserAccountManagerIPCChannel } from "../main/IPCChannels";
 import { IUserAPI } from "../shared/IPC/APIs/IUserAPI";
-import { INewUserRawData } from "../shared/user/accountSchemas";
+import { IBaseNewUserData } from "../shared/user/IBaseNewUserData";
 import { IIPCEncryptionAPI } from "../shared/IPC/APIs/IIPCEncryptionAPI";
 
 const IPC_ENCRYPTION_API: IIPCEncryptionAPI = {
-  getPublicKey: (): string => {
-    return ipcRenderer.sendSync(IPCEncryptionIPCChannel.getPublicKey) as string;
+  getMainProcessPublicRSAKey: (): string => {
+    return ipcRenderer.sendSync(IPCEncryptionIPCChannel.getMainProcessPublicRSAKey) as string;
   }
 };
 
@@ -22,7 +22,7 @@ const USER_STORAGE_API: IUserAPI = {
   isUsernameAvailable: (username: string) => {
     return ipcRenderer.sendSync(UserAccountManagerIPCChannel.isUsernameAvailable, username) as boolean;
   },
-  register: (userData: INewUserRawData) => {
+  register: (userData: IBaseNewUserData) => {
     return ipcRenderer.sendSync(UserAccountManagerIPCChannel.register, userData) as boolean;
   }
 };
