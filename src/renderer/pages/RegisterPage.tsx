@@ -43,7 +43,10 @@ const customValidate: CustomValidator<IFormNewUserData> = (
   return errors;
 };
 
-const transformErrors: ErrorTransformer<IFormNewUserData> = (errors: RJSFValidationError[], _: UiSchema<IFormNewUserData> | undefined) => {
+const transformErrors: ErrorTransformer<IFormNewUserData> = (
+  errors: RJSFValidationError[],
+  _: UiSchema<IFormNewUserData> | undefined
+): RJSFValidationError[] => {
   return errors.map((error: RJSFValidationError) => {
     // Capitalize first letter
     if (error.message !== undefined) {
@@ -54,7 +57,7 @@ const transformErrors: ErrorTransformer<IFormNewUserData> = (errors: RJSFValidat
   });
 };
 
-const onSubmit: (data: IChangeEvent<IFormNewUserData>, event: FormEvent) => void = (data: IChangeEvent<IFormNewUserData>, _: FormEvent) => {
+const onSubmit = (data: IChangeEvent<IFormNewUserData>, _: FormEvent): void => {
   appLogger.debug("Submitted user registration form.");
   if (data.formData === undefined) {
     appLogger.debug("Undefined form data. No-op.");
@@ -68,9 +71,9 @@ const onSubmit: (data: IChangeEvent<IFormNewUserData>, event: FormEvent) => void
     password: data.formData.password
   };
   if (window.userAPI.register(RAW_DATA)) {
-    appLogger.info(`Registered new user ${RAW_DATA.username}!`);
+    appLogger.info(`Registered new user ${RAW_DATA.username}.`);
   } else {
-    appLogger.info(`Could not register new user ${RAW_DATA.username}!`);
+    appLogger.info(`Could not register new user ${RAW_DATA.username}.`);
   }
   // TODO: Add confirmation screen
 };

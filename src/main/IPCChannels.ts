@@ -1,5 +1,6 @@
 export enum IPCEncryptionIPCChannel {
-  getMainProcessPublicRSAKey = "IPCEncryption:getMainProcessPublicRSAKey"
+  getMainProcessPublicRSAKeyPEM = "IPCEncryption:getMainProcessPublicRSAKeyPEM",
+  sendRendererProcessWrappedAESKey = "IPCEncryption:sendRendererProcessWrappedAESKey"
 }
 
 export enum UserAccountManagerIPCChannel {

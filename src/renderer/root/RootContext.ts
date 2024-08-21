@@ -1,7 +1,7 @@
 import { useOutletContext } from "react-router-dom";
 
 export interface RootContext {
-  mainProcessPublicRSAKey: string;
+  rendererProcessAESKey: CryptoKey | null;
   isUserStorageAvailable: boolean;
 }
 

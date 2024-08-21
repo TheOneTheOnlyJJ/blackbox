@@ -103,7 +103,7 @@ export class UserAccountManager {
 
   public registerUser(userData: ISecuredNewUserData): boolean {
     if (this.userStorage === null) {
-      throw new Error("Cannot register user with ");
+      throw new Error("Cannot register a new user without an open user storage");
     }
     return this.userStorage.addUser(userData);
   }

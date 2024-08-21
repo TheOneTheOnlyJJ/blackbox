@@ -1,4 +1,4 @@
-import { app, globalShortcut, BrowserWindow, ipcMain, Rectangle, screen } from "electron/main";
+import { app, globalShortcut, BrowserWindow, ipcMain, Rectangle, screen, IpcMainInvokeEvent } from "electron/main";
 import { BrowserWindowConstructorOptions, HandlerDetails, nativeImage, shell, WindowOpenHandlerResponse } from "electron/common";
 import { join, resolve } from "node:path";
 import log, { LogFunctions } from "electron-log";
@@ -16,9 +16,11 @@ import { IpcMainEvent } from "electron";
 import { IUserAPI } from "../shared/IPC/APIs/IUserAPI";
 import { MainProcessIPCAPIHandlers } from "./IPC/MainProcessIPCAPIHandlers";
 import { IBaseNewUserData } from "../shared/user/IBaseNewUserData";
-import { generateKeyPairSync } from "node:crypto";
+import { generateKeyPairSync, webcrypto } from "node:crypto";
 import { IIPCEncryptionAPI } from "../shared/IPC/APIs/IIPCEncryptionAPI";
 import { ISecuredNewUserData } from "./user/ISecuredNewUserData";
+import { testAESKey } from "./encryption/testAESKey";
+import { insertLineBreaks } from "../shared/utils/insertNewLines";
 
 export interface AppConfig {
   window: {
@@ -99,8 +101,11 @@ export class App {
   private config: AppConfig = this.DEFAULT_CONFIG;
 
   // Will get initialised in the class constructor
-  private readonly mainProcessPublicRSAKey: string;
-  private readonly mainProcessPrivateRSAKey: string;
+  private readonly MAIN_PROCESS_PUBLIC_RSA_KEY_PEM: string;
+  private readonly MAIN_PROCESS_PRIVATE_RSA_KEY_DER: Buffer;
+
+  // Renderer process will send this over when it is ready
+  private rendererProcessAESKey: Buffer | null = null;
 
   // Window
   private readonly WINDOW_CONSTRUCTOR_OPTIONS: BrowserWindowConstructorOptions = {
@@ -119,9 +124,47 @@ export class App {
 
   // IPC API handlers
   private readonly IPC_ENCRYPTION_API_HANDLERS: MainProcessIPCAPIHandlers<IIPCEncryptionAPI> = {
-    handleGetMainProcessPublicRSAKey: (): string => {
+    handleGetMainProcessPublicRSAKeyPEM: (): string => {
       this.IPCEncryptionAPILogger.debug("Received main process public RSA key request.");
-      return this.mainProcessPublicRSAKey;
+      return this.MAIN_PROCESS_PUBLIC_RSA_KEY_PEM;
+    },
+    handleSendRendererProcessWrappedAESKey: async (rendererProcessWrappedAESKey: ArrayBuffer): Promise<boolean> => {
+      this.IPCEncryptionAPILogger.debug("Received renderer process AES key.");
+      this.IPCEncryptionAPILogger.silly(
+        `RSA-wrapped AES key received:\n${insertLineBreaks(Buffer.from(rendererProcessWrappedAESKey).toString("base64"))}\n.`
+      );
+      try {
+        // Import the main process private RSA key...
+        const MAIN_PROCESS_PRIVATE_RSA_KEY: CryptoKey = await webcrypto.subtle.importKey(
+          "pkcs8",
+          this.MAIN_PROCESS_PRIVATE_RSA_KEY_DER,
+          { name: "RSA-OAEP", hash: "SHA-256" },
+          true,
+          ["unwrapKey"]
+        );
+        // ...and use it to unwrap the renderer process wrapped AES key...
+        const RENDERER_PROCESS_UNWRAPPED_AES_KEY: CryptoKey = await webcrypto.subtle.unwrapKey(
+          "raw",
+          rendererProcessWrappedAESKey,
+          MAIN_PROCESS_PRIVATE_RSA_KEY,
+          { name: "RSA-OAEP" },
+          { name: "AES-GCM", length: 256 },
+          true,
+          ["encrypt", "decrypt"]
+        );
+        // ...then extract it to its corresponding variable...
+        this.rendererProcessAESKey = Buffer.from(await webcrypto.subtle.exportKey("raw", RENDERER_PROCESS_UNWRAPPED_AES_KEY));
+        // ...and check its validity
+        const IS_RENDERER_PROCESS_AES_KEY_VALID: boolean = testAESKey(this.rendererProcessAESKey, this.IPCEncryptionAPILogger);
+
+        // Return the result of the async operation
+        this.IPCEncryptionAPILogger.debug(`AES key validity: ${IS_RENDERER_PROCESS_AES_KEY_VALID.toString()}.`);
+        return IS_RENDERER_PROCESS_AES_KEY_VALID;
+      } catch (err: unknown) {
+        const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+        this.IPCEncryptionAPILogger.error(`Failed to unwrap or validate AES key: ${ERROR_MESSAGE}.`);
+        return false;
+      }
     }
   };
 
@@ -219,17 +262,12 @@ export class App {
     this.bootstrapLogger.debug(`Generating main process RSA encryption keys.`);
     const { publicKey, privateKey } = generateKeyPairSync("rsa", {
       modulusLength: 4096,
-      publicKeyEncoding: {
-        type: "spki",
-        format: "pem"
-      },
-      privateKeyEncoding: {
-        type: "pkcs8",
-        format: "pem"
-      }
+      publicKeyEncoding: { type: "spki", format: "pem" },
+      privateKeyEncoding: { type: "pkcs8", format: "der" }
     });
-    this.mainProcessPublicRSAKey = publicKey;
-    this.mainProcessPrivateRSAKey = privateKey;
+    this.MAIN_PROCESS_PUBLIC_RSA_KEY_PEM = publicKey;
+    this.MAIN_PROCESS_PRIVATE_RSA_KEY_DER = privateKey;
+    this.bootstrapLogger.debug(`Generated main process public RSA key:\n${this.MAIN_PROCESS_PUBLIC_RSA_KEY_PEM}.`);
     this.bootstrapLogger.debug("App constructor done.");
   }
 
@@ -458,9 +496,15 @@ export class App {
     this.windowLogger.info(`Running window open handler for external URL: "${details.url}".`);
     shell
       .openExternal(details.url)
-      .then(() => {
-        this.windowLogger.info(`Opened external URL: "${details.url}"`);
-      })
+      .then(
+        () => {
+          this.windowLogger.info(`Opened external URL: "${details.url}".`);
+        },
+        (reason: unknown) => {
+          const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
+          this.windowLogger.error(`Could not open external URL ("${details.url}"). Reason: ${REASON_MESSAGE}.`);
+        }
+      )
       .catch((err: unknown) => {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
         this.windowLogger.error(`Could not open external URL ("${details.url}"): ${ERROR_MESSAGE}.`);
@@ -535,8 +579,11 @@ export class App {
 
   private registerIPCEncryptionAPIIPCHandlers(): void {
     this.IPCLogger.debug("Registering IPC Encryption API IPC handlers.");
-    ipcMain.on(IPCEncryptionIPCChannel.getMainProcessPublicRSAKey, (event: IpcMainEvent) => {
-      event.returnValue = this.IPC_ENCRYPTION_API_HANDLERS.handleGetMainProcessPublicRSAKey();
+    ipcMain.on(IPCEncryptionIPCChannel.getMainProcessPublicRSAKeyPEM, (event: IpcMainEvent) => {
+      event.returnValue = this.IPC_ENCRYPTION_API_HANDLERS.handleGetMainProcessPublicRSAKeyPEM();
+    });
+    ipcMain.handle(IPCEncryptionIPCChannel.sendRendererProcessWrappedAESKey, (_: IpcMainInvokeEvent, rendererProcessWrappedAESKey: ArrayBuffer) => {
+      return this.IPC_ENCRYPTION_API_HANDLERS.handleSendRendererProcessWrappedAESKey(rendererProcessWrappedAESKey);
     });
   }
 

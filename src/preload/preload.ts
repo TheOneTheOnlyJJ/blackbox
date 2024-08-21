@@ -5,8 +5,11 @@ import { IBaseNewUserData } from "../shared/user/IBaseNewUserData";
 import { IIPCEncryptionAPI } from "../shared/IPC/APIs/IIPCEncryptionAPI";
 
 const IPC_ENCRYPTION_API: IIPCEncryptionAPI = {
-  getMainProcessPublicRSAKey: (): string => {
-    return ipcRenderer.sendSync(IPCEncryptionIPCChannel.getMainProcessPublicRSAKey) as string;
+  getMainProcessPublicRSAKeyPEM: (): string => {
+    return ipcRenderer.sendSync(IPCEncryptionIPCChannel.getMainProcessPublicRSAKeyPEM) as string;
+  },
+  sendRendererProcessWrappedAESKey: (rendererProcessWrappedAESKey: ArrayBuffer): Promise<boolean> => {
+    return ipcRenderer.invoke(IPCEncryptionIPCChannel.sendRendererProcessWrappedAESKey, rendererProcessWrappedAESKey) as Promise<boolean>;
   }
 };
 
