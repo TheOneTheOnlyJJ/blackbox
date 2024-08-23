@@ -10,7 +10,6 @@ export function userStorageFactory(config: UserStorageConfig, logger: LogFunctio
     case UserStorageType.SQLite:
       return new SQLiteUserStorage(config, logger);
     default:
-      // This is here as a last-resort option, but ESlint bitches about it
       // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
       throw new Error(`Invalid user storage type received: ${config.type}`);
   }

@@ -21,6 +21,7 @@ import { IIPCEncryptionAPI } from "../shared/IPC/APIs/IIPCEncryptionAPI";
 import { ISecuredNewUserData } from "./user/ISecuredNewUserData";
 import { testAESKey } from "./encryption/testAESKey";
 import { insertLineBreaks } from "../shared/utils/insertNewLines";
+import { bufferToArrayBuffer } from "./typeConversions/bufferToArrayBuffer";
 
 export interface AppConfig {
   window: {
@@ -101,7 +102,7 @@ export class App {
   private config: AppConfig = this.DEFAULT_CONFIG;
 
   // Will get initialised in the class constructor
-  private readonly MAIN_PROCESS_PUBLIC_RSA_KEY_PEM: string;
+  private readonly MAIN_PROCESS_PUBLIC_RSA_KEY_DER: Buffer;
   private readonly MAIN_PROCESS_PRIVATE_RSA_KEY_DER: Buffer;
 
   // Renderer process will send this over when it is ready
@@ -124,9 +125,9 @@ export class App {
 
   // IPC API handlers
   private readonly IPC_ENCRYPTION_API_HANDLERS: MainProcessIPCAPIHandlers<IIPCEncryptionAPI> = {
-    handleGetMainProcessPublicRSAKeyPEM: (): string => {
+    handleGetMainProcessPublicRSAKeyDER: (): ArrayBuffer => {
       this.IPCEncryptionAPILogger.debug("Received main process public RSA key request.");
-      return this.MAIN_PROCESS_PUBLIC_RSA_KEY_PEM;
+      return bufferToArrayBuffer(this.MAIN_PROCESS_PUBLIC_RSA_KEY_DER);
     },
     handleSendRendererProcessWrappedAESKey: async (rendererProcessWrappedAESKey: ArrayBuffer): Promise<boolean> => {
       this.IPCEncryptionAPILogger.debug("Received renderer process AES key.");
@@ -262,12 +263,14 @@ export class App {
     this.bootstrapLogger.debug(`Generating main process RSA encryption keys.`);
     const { publicKey, privateKey } = generateKeyPairSync("rsa", {
       modulusLength: 4096,
-      publicKeyEncoding: { type: "spki", format: "pem" },
+      publicKeyEncoding: { type: "spki", format: "der" },
       privateKeyEncoding: { type: "pkcs8", format: "der" }
     });
-    this.MAIN_PROCESS_PUBLIC_RSA_KEY_PEM = publicKey;
+    this.MAIN_PROCESS_PUBLIC_RSA_KEY_DER = publicKey;
     this.MAIN_PROCESS_PRIVATE_RSA_KEY_DER = privateKey;
-    this.bootstrapLogger.debug(`Generated main process public RSA key:\n${this.MAIN_PROCESS_PUBLIC_RSA_KEY_PEM}.`);
+    this.bootstrapLogger.debug(
+      `Generated main process public RSA key:\n${insertLineBreaks(Buffer.from(this.MAIN_PROCESS_PUBLIC_RSA_KEY_DER).toString("base64"))}.`
+    );
     this.bootstrapLogger.debug("App constructor done.");
   }
 
@@ -579,8 +582,8 @@ export class App {
 
   private registerIPCEncryptionAPIIPCHandlers(): void {
     this.IPCLogger.debug("Registering IPC Encryption API IPC handlers.");
-    ipcMain.on(IPCEncryptionIPCChannel.getMainProcessPublicRSAKeyPEM, (event: IpcMainEvent) => {
-      event.returnValue = this.IPC_ENCRYPTION_API_HANDLERS.handleGetMainProcessPublicRSAKeyPEM();
+    ipcMain.on(IPCEncryptionIPCChannel.getMainProcessPublicRSAKeyDER, (event: IpcMainEvent) => {
+      event.returnValue = this.IPC_ENCRYPTION_API_HANDLERS.handleGetMainProcessPublicRSAKeyDER();
     });
     ipcMain.handle(IPCEncryptionIPCChannel.sendRendererProcessWrappedAESKey, (_: IpcMainInvokeEvent, rendererProcessWrappedAESKey: ArrayBuffer) => {
       return this.IPC_ENCRYPTION_API_HANDLERS.handleSendRendererProcessWrappedAESKey(rendererProcessWrappedAESKey);

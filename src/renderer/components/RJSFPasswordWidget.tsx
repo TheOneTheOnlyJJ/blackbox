@@ -1,10 +1,10 @@
 import { Visibility, VisibilityOff } from "@mui/icons-material";
-import { IconButton, InputAdornment, TextField } from "@mui/material";
+import { IconButton, InputAdornment, TextField, useTheme } from "@mui/material";
 import { WidgetProps } from "@rjsf/utils";
-import { FocusEvent, ChangeEvent, FC, useState } from "react";
+import { FocusEvent, ChangeEvent, FC, useState, useMemo } from "react";
 
 const PasswordWidget: FC<WidgetProps> = (props: WidgetProps) => {
-  const { id, required, disabled, readonly, options, onChange, onBlur, onFocus } = props;
+  const { id, required, disabled, readonly, options, rawErrors, onChange, onBlur, onFocus } = props;
   const _onChange = ({ target: { value } }: ChangeEvent<HTMLInputElement>) => {
     onChange(value === "" ? options.emptyValue : value);
   };
@@ -15,6 +15,16 @@ const PasswordWidget: FC<WidgetProps> = (props: WidgetProps) => {
     onFocus(id, target.value);
   };
   const [doShowPassword, setDoShowPassword] = useState<boolean>(false);
+
+  const hasError: boolean = useMemo(() => {
+    return rawErrors !== undefined && rawErrors.length > 0;
+  }, [rawErrors]);
+
+  const theme = useTheme();
+
+  const iconColor: string = useMemo(() => {
+    return hasError ? theme.palette.error.main : theme.palette.text.primary;
+  }, [theme, hasError]);
 
   return (
     <TextField
@@ -29,6 +39,7 @@ const PasswordWidget: FC<WidgetProps> = (props: WidgetProps) => {
       onFocus={_onFocus}
       variant="outlined"
       fullWidth
+      error={hasError}
       InputProps={{
         readOnly: readonly,
         endAdornment: (
@@ -39,7 +50,7 @@ const PasswordWidget: FC<WidgetProps> = (props: WidgetProps) => {
                 setDoShowPassword((prevShowPassword) => !prevShowPassword);
               }}
             >
-              {doShowPassword ? <Visibility /> : <VisibilityOff />}
+              {doShowPassword ? <Visibility style={{ color: iconColor }} /> : <VisibilityOff style={{ color: iconColor }} />}
             </IconButton>
           </InputAdornment>
         )

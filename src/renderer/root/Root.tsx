@@ -2,7 +2,6 @@ import { FC, useCallback, useEffect, useState } from "react";
 import { appLogger, IPCLogger } from "../utils/loggers";
 import { Outlet } from "react-router-dom";
 import { RootContext } from "./RootContext";
-import { stringToArrayBuffer } from "../utils/stringToArrayBuffer";
 import { arrayBufferToBase64 } from "../utils/arrayBufferToBase64";
 import { insertLineBreaks } from "../../shared/utils/insertNewLines";
 
@@ -14,21 +13,11 @@ const Root: FC = () => {
   const [rendererProcessAESKey, setRendererProcessAESKey] = useState<CryptoKey | null>(null);
 
   const generateRendererProcessAESEncryptionKey = useCallback(async () => {
-    appLogger.debug("Generating renderer process AES encryption key and sending it to the main process.");
     appLogger.debug("Getting main process public RSA key.");
-    const MAIN_PROCESS_PUBLIC_RSA_KEY_PEM: string = window.IPCEncryptionAPI.getMainProcessPublicRSAKeyPEM();
-    appLogger.debug(`Got main process public RSA key:\n${MAIN_PROCESS_PUBLIC_RSA_KEY_PEM}.`);
+    const MAIN_PROCESS_PUBLIC_RSA_KEY_DER: ArrayBuffer = window.IPCEncryptionAPI.getMainProcessPublicRSAKeyDER();
+    appLogger.debug(`Got main process public RSA key:\n${insertLineBreaks(arrayBufferToBase64(MAIN_PROCESS_PUBLIC_RSA_KEY_DER))}.`);
 
-    // Obtain main process public RSA key in ArrayBuffer format...
-    const PEM_HEADER = "-----BEGIN PUBLIC KEY-----";
-    const PEM_FOOTER = "-----END PUBLIC KEY-----";
-    const MAIN_PROCESS_PUBLIC_RSA_KEY_PEM_CONTENTS = MAIN_PROCESS_PUBLIC_RSA_KEY_PEM.replace(PEM_HEADER, "")
-      .replace(PEM_FOOTER, "")
-      .replace(/\s+/g, ""); // Remove all whitespace/newlines
-    const MAIN_PROCESS_PUBLIC_RSA_KEY_DER_BASE_64: string = window.atob(MAIN_PROCESS_PUBLIC_RSA_KEY_PEM_CONTENTS);
-    const MAIN_PROCESS_PUBLIC_RSA_KEY_DER: ArrayBuffer = stringToArrayBuffer(MAIN_PROCESS_PUBLIC_RSA_KEY_DER_BASE_64);
-    appLogger.debug("Reformatted main process public RSA key from PEM to DER.");
-    // ...and import it in the WebCryptoAPI CryptoKey format
+    // Import the main process public RSA key in the WebCryptoAPI CryptoKey format
     const MAIN_PROCESS_PUBLIC_RSA_KEY: CryptoKey = await window.crypto.subtle.importKey(
       "spki",
       MAIN_PROCESS_PUBLIC_RSA_KEY_DER,

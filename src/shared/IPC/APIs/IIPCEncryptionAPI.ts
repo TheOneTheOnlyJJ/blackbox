@@ -1,4 +1,4 @@
 export interface IIPCEncryptionAPI {
-  getMainProcessPublicRSAKeyPEM: () => string;
+  getMainProcessPublicRSAKeyDER: () => ArrayBuffer;
   sendRendererProcessWrappedAESKey: (rendererProcessWrappedAESKey: ArrayBuffer) => Promise<boolean>;
 }
