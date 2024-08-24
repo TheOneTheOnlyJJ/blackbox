@@ -5,7 +5,7 @@ import { userStorageFactory } from "./storage/userStorageFactory";
 import { UserStorageType } from "./storage/UserStorageType";
 import { IBaseNewUserData, BASE_NEW_USER_DATA_JSON_SCHEMA } from "../../shared/user/IBaseNewUserData";
 import { ValidateFunction } from "ajv";
-import { createJSONValidateFunction } from "../config/config";
+import { createJSONValidateFunction } from "../utils/config/config";
 import { randomBytes, randomUUID, scryptSync } from "node:crypto";
 import { ISecuredNewUserData } from "./ISecuredNewUserData";
 

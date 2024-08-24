@@ -86,7 +86,7 @@ export class SQLiteUserStorage extends UserStorage<SQLiteUserStorageConfig> {
   }
 
   public addUser(userData: ISecuredNewUserData): boolean {
-    this.logger.debug(`Adding new user: ${userData.username}.`);
+    this.logger.debug(`Adding new user: "${userData.username}".`);
     const INSERT_NEW_USER_SQL =
       "INSERT INTO users (id, username, password_hash, password_salt) VALUES (@id, @username, @passwordHash, @passwordSalt)";
     try {

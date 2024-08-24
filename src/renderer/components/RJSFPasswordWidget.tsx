@@ -23,7 +23,7 @@ const PasswordWidget: FC<WidgetProps> = (props: WidgetProps) => {
   const theme = useTheme();
 
   const iconColor: string = useMemo(() => {
-    return hasError ? theme.palette.error.main : theme.palette.text.primary;
+    return hasError ? theme.palette.error.main : theme.palette.text.secondary;
   }, [theme, hasError]);
 
   return (

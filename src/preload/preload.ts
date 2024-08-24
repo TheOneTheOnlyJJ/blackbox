@@ -1,8 +1,8 @@
 import { contextBridge, ipcRenderer, IpcRendererEvent } from "electron";
-import { IPCEncryptionIPCChannel, UserAccountManagerIPCChannel } from "../main/IPCChannels";
+import { IPCEncryptionIPCChannel, UserAccountManagerIPCChannel } from "../main/utils/IPC/IPCChannels";
 import { IUserAPI } from "../shared/IPC/APIs/IUserAPI";
-import { IBaseNewUserData } from "../shared/user/IBaseNewUserData";
 import { IIPCEncryptionAPI } from "../shared/IPC/APIs/IIPCEncryptionAPI";
+import { IEncryptedData } from "../shared/utils/IEncryptedData";
 
 const IPC_ENCRYPTION_API: IIPCEncryptionAPI = {
   getMainProcessPublicRSAKeyDER: (): ArrayBuffer => {
@@ -14,19 +14,19 @@ const IPC_ENCRYPTION_API: IIPCEncryptionAPI = {
 };
 
 const USER_STORAGE_API: IUserAPI = {
-  isStorageAvailable: () => {
+  isStorageAvailable: (): boolean => {
     return ipcRenderer.sendSync(UserAccountManagerIPCChannel.isStorageAvailable) as boolean;
   },
-  onStorageAvailabilityChange: (callback: (isAvailable: boolean) => void) => {
+  onStorageAvailabilityChange: (callback: (isAvailable: boolean) => void): void => {
     ipcRenderer.on(UserAccountManagerIPCChannel.onStorageAvailabilityChange, (_: IpcRendererEvent, isAvailable: boolean) => {
       callback(isAvailable);
     });
   },
-  isUsernameAvailable: (username: string) => {
+  isUsernameAvailable: (username: string): boolean => {
     return ipcRenderer.sendSync(UserAccountManagerIPCChannel.isUsernameAvailable, username) as boolean;
   },
-  register: (userData: IBaseNewUserData) => {
-    return ipcRenderer.sendSync(UserAccountManagerIPCChannel.register, userData) as boolean;
+  register: (encryptedBaseNewUserData: IEncryptedData): boolean => {
+    return ipcRenderer.sendSync(UserAccountManagerIPCChannel.register, encryptedBaseNewUserData) as boolean;
   }
 };
 

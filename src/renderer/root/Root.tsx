@@ -2,7 +2,7 @@ import { FC, useCallback, useEffect, useState } from "react";
 import { appLogger, IPCLogger } from "../utils/loggers";
 import { Outlet } from "react-router-dom";
 import { RootContext } from "./RootContext";
-import { arrayBufferToBase64 } from "../utils/arrayBufferToBase64";
+import { arrayBufferToBase64 } from "../utils/typeConversions/arrayBufferToBase64";
 import { insertLineBreaks } from "../../shared/utils/insertNewLines";
 
 const Root: FC = () => {

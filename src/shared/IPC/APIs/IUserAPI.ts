@@ -1,9 +1,9 @@
-import { IBaseNewUserData } from "../../user/IBaseNewUserData";
+import { IEncryptedBaseNewUserData } from "../../user/IEncryptedBaseNewUserData";
 
 // Declare API interfaces
 export interface IUserAPI {
   isStorageAvailable: () => boolean;
   onStorageAvailabilityChange: (callback: (isAvailable: boolean) => void) => void;
   isUsernameAvailable: (username: string) => boolean;
-  register: (userData: IBaseNewUserData) => boolean;
+  register: (encryptedBaseNewUserData: IEncryptedBaseNewUserData) => boolean;
 }

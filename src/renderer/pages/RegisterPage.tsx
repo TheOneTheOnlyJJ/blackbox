@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Box, Button, Paper, Typography } from "@mui/material";
-import { FC, FormEvent } from "react";
+import { FC, FormEvent, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useRootContext } from "../root/RootContext";
 import { IBaseNewUserData } from "../../shared/user/IBaseNewUserData";
@@ -11,6 +11,8 @@ import { withTheme, IChangeEvent } from "@rjsf/core";
 import { CustomValidator, ErrorTransformer, FormValidation, RJSFSchema, RJSFValidationError, UiSchema } from "@rjsf/utils";
 import { appLogger } from "../utils/loggers";
 import RJSFPasswordWidget from "../components/RJSFPasswordWidget";
+import { encrypt } from "../utils/encryption/encrypt";
+import { IEncryptedBaseNewUserData } from "../../shared/user/IEncryptedBaseNewUserData";
 
 const MUIForm = withTheme<IFormNewUserData>(Theme);
 
@@ -57,29 +59,48 @@ const transformErrors: ErrorTransformer<IFormNewUserData> = (
   });
 };
 
-const onSubmit = (data: IChangeEvent<IFormNewUserData>, _: FormEvent): void => {
-  appLogger.debug("Submitted user registration form.");
-  if (data.formData === undefined) {
-    appLogger.debug("Undefined form data. No-op.");
-    return;
-  }
-  // Delete this
-  appLogger.silly(`Data submitted: ${JSON.stringify(data.formData, null, 2)}.`);
-  // TODO: Encrypt with IPC encryption key
-  const RAW_DATA: IBaseNewUserData = {
-    username: data.formData.username,
-    password: data.formData.password
-  };
-  if (window.userAPI.register(RAW_DATA)) {
-    appLogger.info(`Registered new user ${RAW_DATA.username}.`);
-  } else {
-    appLogger.info(`Could not register new user ${RAW_DATA.username}.`);
-  }
-  // TODO: Add confirmation screen
-};
-
 const RegisterPage: FC = () => {
-  const appContext = useRootContext();
+  const rootContext = useRootContext();
+
+  const onSubmit = useCallback(
+    (data: IChangeEvent<IFormNewUserData>, _: FormEvent): void => {
+      appLogger.debug("Submitted user registration form.");
+      if (data.formData === undefined) {
+        appLogger.debug("Undefined form data. No-op.");
+        return;
+      }
+      if (rootContext.rendererProcessAESKey === null) {
+        appLogger.debug("Null AES encryption key. No-op.");
+        return;
+      }
+      const BASE_NEW_USER_DATA: IBaseNewUserData = {
+        username: data.formData.username,
+        password: data.formData.password
+      };
+      appLogger.debug(`Encrypting base new user data for new user "${BASE_NEW_USER_DATA.username}".`);
+      encrypt(JSON.stringify(BASE_NEW_USER_DATA), rootContext.rendererProcessAESKey)
+        .then(
+          (encryptedBaseNewUserData: IEncryptedBaseNewUserData) => {
+            if (window.userAPI.register(encryptedBaseNewUserData)) {
+              appLogger.info(`Registered new user "${BASE_NEW_USER_DATA.username}".`);
+            } else {
+              appLogger.info(`Could not register new user "${BASE_NEW_USER_DATA.username}".`);
+            }
+          },
+          (reason: unknown) => {
+            const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
+            appLogger.error(`Could not encrypt base new user data for new user "${BASE_NEW_USER_DATA.username}". Reason: ${REASON_MESSAGE}.`);
+          }
+        )
+        .catch((err: unknown) => {
+          const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+          appLogger.error(`Could not encrypt base new user data for new user "${BASE_NEW_USER_DATA.username}". ${ERROR_MESSAGE}.`);
+        });
+      // TODO: Add confirmation screen
+    },
+    [rootContext.rendererProcessAESKey]
+  );
+
   return (
     <Box
       sx={{
@@ -118,7 +139,7 @@ const RegisterPage: FC = () => {
           transformErrors={transformErrors}
           onSubmit={onSubmit}
         >
-          <Button type="submit" variant="contained" disabled={!appContext.isUserStorageAvailable} sx={{ marginTop: "1vw", marginBottom: "1vw" }}>
+          <Button type="submit" variant="contained" disabled={!rootContext.isUserStorageAvailable} sx={{ marginTop: "1vw", marginBottom: "1vw" }}>
             Register
           </Button>
         </MUIForm>

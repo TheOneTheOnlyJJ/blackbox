@@ -3,25 +3,27 @@ import { BrowserWindowConstructorOptions, HandlerDetails, nativeImage, shell, Wi
 import { join, resolve } from "node:path";
 import log, { LogFunctions } from "electron-log";
 import { appendFileSync, existsSync, mkdirSync } from "node:fs";
-import { createJSONValidateFunction, readConfigJSON, writeConfigJSON } from "./config/config";
+import { createJSONValidateFunction, readConfigJSON, writeConfigJSON } from "./utils/config/config";
 import { JSONSchemaType } from "ajv/dist/types/json-schema";
 import { ValidateFunction } from "ajv";
-import { IPCEncryptionIPCChannel, UserAccountManagerIPCChannel } from "./IPCChannels";
+import { IPCEncryptionIPCChannel, UserAccountManagerIPCChannel } from "./utils/IPC/IPCChannels";
 import { UserAccountManager } from "./user/UserAccountManager";
 import { UserStorageConfig } from "./user/storage/utils";
 import { UserStorageType } from "./user/storage/UserStorageType";
-import { WindowPosition } from "./window/WindowPosition";
-import { adjustWindowBounds } from "./window/adjustWindowBounds";
+import { WindowPosition } from "./utils/window/WindowPosition";
+import { adjustWindowBounds } from "./utils/window/adjustWindowBounds";
 import { IpcMainEvent } from "electron";
 import { IUserAPI } from "../shared/IPC/APIs/IUserAPI";
-import { MainProcessIPCAPIHandlers } from "./IPC/MainProcessIPCAPIHandlers";
-import { IBaseNewUserData } from "../shared/user/IBaseNewUserData";
+import { MainProcessIPCAPIHandlers } from "./utils/IPC/MainProcessIPCAPIHandlers";
+import { BASE_NEW_USER_DATA_JSON_SCHEMA, IBaseNewUserData } from "../shared/user/IBaseNewUserData";
 import { generateKeyPairSync, webcrypto } from "node:crypto";
 import { IIPCEncryptionAPI } from "../shared/IPC/APIs/IIPCEncryptionAPI";
 import { ISecuredNewUserData } from "./user/ISecuredNewUserData";
-import { testAESKey } from "./encryption/testAESKey";
+import { testAESKey } from "./utils/encryption/testAESKey";
 import { insertLineBreaks } from "../shared/utils/insertNewLines";
-import { bufferToArrayBuffer } from "./typeConversions/bufferToArrayBuffer";
+import { bufferToArrayBuffer } from "./utils/typeConversions/bufferToArrayBuffer";
+import { decryptJSON } from "./utils/encryption/decryptJSON";
+import { IEncryptedBaseNewUserData } from "../shared/user/IEncryptedBaseNewUserData";
 
 export interface AppConfig {
   window: {
@@ -192,26 +194,39 @@ export class App {
       }
       return this.userAccountManager.isUsernameAvailable(username);
     },
-    handleRegister: (userData: IBaseNewUserData): boolean => {
+    handleRegister: (encryptedBaseNewUserData: IEncryptedBaseNewUserData): boolean => {
       this.IPCUserAPILogger.debug(`Received new user registration request.`);
       if (!this.userAccountManager.isStorageAvailable()) {
         this.IPCUserAPILogger.error("User storage not available. Cannot register new user.");
         return false;
       }
-      if (!this.userAccountManager.isBaseNewUserDataValid(userData)) {
-        this.IPCUserAPILogger.error("Invalid new user base data. Cannot register new user.");
+      if (this.rendererProcessAESKey === null) {
+        this.IPCUserAPILogger.error("Renderer process AES key is null. Cannot register new user.");
         return false;
       }
-      // TODO: Encrypt while in IPC transit
-      // DELETE THIS
-      this.IPCUserAPILogger.silly(`Data to be secured: ${JSON.stringify(userData, null, 2)}.`);
       try {
-        const SECURED_USER_DATA: ISecuredNewUserData = this.userAccountManager.secureBaseNewUserData(userData);
-        this.IPCUserAPILogger.silly(`Secured user data: ${JSON.stringify(SECURED_USER_DATA, null, 2)}.`);
-        return this.userAccountManager.registerUser(SECURED_USER_DATA);
+        this.IPCUserAPILogger.debug("Decrypting base new user data.");
+        const BASE_NEW_USER_DATA: IBaseNewUserData = decryptJSON<IBaseNewUserData>(
+          encryptedBaseNewUserData,
+          this.BASE_NEW_USER_DATA_VALIDATE_FUNCTION,
+          this.rendererProcessAESKey
+        );
+        if (!this.userAccountManager.isBaseNewUserDataValid(BASE_NEW_USER_DATA)) {
+          this.IPCUserAPILogger.error("Invalid base new user data. Cannot register new user.");
+          return false;
+        }
+        try {
+          const SECURED_NEW_USER_DATA: ISecuredNewUserData = this.userAccountManager.secureBaseNewUserData(BASE_NEW_USER_DATA);
+          this.IPCUserAPILogger.silly(`Secured new user data: ${JSON.stringify(SECURED_NEW_USER_DATA, null, 2)}.`);
+          return this.userAccountManager.registerUser(SECURED_NEW_USER_DATA);
+        } catch (err: unknown) {
+          const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+          this.IPCUserAPILogger.error(`Could not register new user: ${ERROR_MESSAGE}!`);
+          return false;
+        }
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-        this.IPCUserAPILogger.error(`Could not register new user! ${ERROR_MESSAGE}!`);
+        this.IPCUserAPILogger.error(`Could not decrypt base new user data: ${ERROR_MESSAGE}!`);
         return false;
       }
     }
@@ -228,6 +243,10 @@ export class App {
     dbDirPath: resolve(join(app.getAppPath(), "data")),
     dbFileName: "users.sqlite"
   };
+
+  // Base new user data validator
+  private readonly BASE_NEW_USER_DATA_VALIDATE_FUNCTION: ValidateFunction<IBaseNewUserData> =
+    createJSONValidateFunction<IBaseNewUserData>(BASE_NEW_USER_DATA_JSON_SCHEMA);
 
   // Timeouts
   private updateWindowPositionConfigTimeout: null | NodeJS.Timeout = null;
@@ -598,8 +617,8 @@ export class App {
     ipcMain.on(UserAccountManagerIPCChannel.isUsernameAvailable, (event: IpcMainEvent, username: string) => {
       event.returnValue = this.USER_API_HANDLERS.handleIsUsernameAvailable(username);
     });
-    ipcMain.on(UserAccountManagerIPCChannel.register, (event: IpcMainEvent, userData: IBaseNewUserData) => {
-      event.returnValue = this.USER_API_HANDLERS.handleRegister(userData);
+    ipcMain.on(UserAccountManagerIPCChannel.register, (event: IpcMainEvent, encryptedBaseNewUserData: IEncryptedBaseNewUserData) => {
+      event.returnValue = this.USER_API_HANDLERS.handleRegister(encryptedBaseNewUserData);
     });
   }
 }
