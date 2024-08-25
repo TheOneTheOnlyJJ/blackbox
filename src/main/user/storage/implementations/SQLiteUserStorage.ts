@@ -106,7 +106,7 @@ export class SQLiteUserStorage extends UserStorage<SQLiteUserStorageConfig> {
     this.logger.debug("Getting user count.");
     const USER_COUNT_SQL = "SELECT COUNT(*) AS count FROM users";
     const RESULT = this.db.prepare(USER_COUNT_SQL).get() as { count: number };
-    this.logger.debug(`Found ${RESULT.count.toString()} users.`); // TODO: Use inflection
+    this.logger.debug(`User count: ${RESULT.count.toString()}.`);
     return RESULT.count;
   }
 

@@ -27,6 +27,9 @@ const USER_STORAGE_API: IUserAPI = {
   },
   register: (encryptedBaseNewUserData: IEncryptedData): boolean => {
     return ipcRenderer.sendSync(UserAccountManagerIPCChannel.register, encryptedBaseNewUserData) as boolean;
+  },
+  getUserCount: (): number => {
+    return ipcRenderer.sendSync(UserAccountManagerIPCChannel.getUserCount) as number;
   }
 };
 

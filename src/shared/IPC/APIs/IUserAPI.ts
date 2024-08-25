@@ -6,4 +6,5 @@ export interface IUserAPI {
   onStorageAvailabilityChange: (callback: (isAvailable: boolean) => void) => void;
   isUsernameAvailable: (username: string) => boolean;
   register: (encryptedBaseNewUserData: IEncryptedBaseNewUserData) => boolean;
+  getUserCount: () => number;
 }

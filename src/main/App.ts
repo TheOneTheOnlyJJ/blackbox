@@ -229,6 +229,13 @@ export class App {
         this.IPCUserAPILogger.error(`Could not decrypt base new user data: ${ERROR_MESSAGE}!`);
         return false;
       }
+    },
+    handleGetUserCount: (): number => {
+      if (!this.userAccountManager.isStorageAvailable()) {
+        this.IPCUserAPILogger.error("User storage not available. Cannot get user count.");
+        return -1;
+      }
+      return this.userAccountManager.getUserCount();
     }
   };
 
@@ -619,6 +626,9 @@ export class App {
     });
     ipcMain.on(UserAccountManagerIPCChannel.register, (event: IpcMainEvent, encryptedBaseNewUserData: IEncryptedBaseNewUserData) => {
       event.returnValue = this.USER_API_HANDLERS.handleRegister(encryptedBaseNewUserData);
+    });
+    ipcMain.on(UserAccountManagerIPCChannel.getUserCount, (event: IpcMainEvent) => {
+      event.returnValue = this.USER_API_HANDLERS.handleGetUserCount();
     });
   }
 }

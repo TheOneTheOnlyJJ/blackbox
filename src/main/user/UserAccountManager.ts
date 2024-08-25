@@ -107,4 +107,11 @@ export class UserAccountManager {
     }
     return this.userStorage.addUser(userData);
   }
+
+  public getUserCount(): number {
+    if (this.userStorage === null) {
+      throw new Error("Cannot get user count without an open user storage");
+    }
+    return this.userStorage.getUserCount();
+  }
 }

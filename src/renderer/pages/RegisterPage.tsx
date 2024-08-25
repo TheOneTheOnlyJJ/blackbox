@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Box, Button, Paper, Typography } from "@mui/material";
-import { FC, FormEvent, useCallback } from "react";
+import { FC, FormEvent, useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import { useRootContext } from "../root/RootContext";
 import { IBaseNewUserData } from "../../shared/user/IBaseNewUserData";
@@ -13,6 +13,7 @@ import { appLogger } from "../utils/loggers";
 import RJSFPasswordWidget from "../components/RJSFPasswordWidget";
 import { encrypt } from "../utils/encryption/encrypt";
 import { IEncryptedBaseNewUserData } from "../../shared/user/IEncryptedBaseNewUserData";
+import SuccessfulUserRegistrationDialog, { SuccessfulUserRegistrationDialogProps } from "../components/SuccessfulUserRegistrationDialog";
 
 const MUIForm = withTheme<IFormNewUserData>(Theme);
 
@@ -61,8 +62,12 @@ const transformErrors: ErrorTransformer<IFormNewUserData> = (
 
 const RegisterPage: FC = () => {
   const rootContext = useRootContext();
-
-  const onSubmit = useCallback(
+  const [successfulUserRegistrationDialogProps, setSuccessfulUserRegistrationDialogProps] = useState<SuccessfulUserRegistrationDialogProps>({
+    open: false,
+    username: "",
+    userCount: -1
+  });
+  const registerNewUser = useCallback(
     (data: IChangeEvent<IFormNewUserData>, _: FormEvent): void => {
       appLogger.debug("Submitted user registration form.");
       if (data.formData === undefined) {
@@ -73,6 +78,7 @@ const RegisterPage: FC = () => {
         appLogger.debug("Null AES encryption key. No-op.");
         return;
       }
+      // Extract base new user data from form
       const BASE_NEW_USER_DATA: IBaseNewUserData = {
         username: data.formData.username,
         password: data.formData.password
@@ -83,6 +89,11 @@ const RegisterPage: FC = () => {
           (encryptedBaseNewUserData: IEncryptedBaseNewUserData) => {
             if (window.userAPI.register(encryptedBaseNewUserData)) {
               appLogger.info(`Registered new user "${BASE_NEW_USER_DATA.username}".`);
+              setSuccessfulUserRegistrationDialogProps({
+                open: true,
+                username: BASE_NEW_USER_DATA.username,
+                userCount: window.userAPI.getUserCount()
+              });
             } else {
               appLogger.info(`Could not register new user "${BASE_NEW_USER_DATA.username}".`);
             }
@@ -137,7 +148,7 @@ const RegisterPage: FC = () => {
           showErrorList={false}
           customValidate={customValidate}
           transformErrors={transformErrors}
-          onSubmit={onSubmit}
+          onSubmit={registerNewUser}
         >
           <Button type="submit" variant="contained" disabled={!rootContext.isUserStorageAvailable} sx={{ marginTop: "1vw", marginBottom: "1vw" }}>
             Register
@@ -147,6 +158,7 @@ const RegisterPage: FC = () => {
           Back to Login
         </Link>
       </Paper>
+      <SuccessfulUserRegistrationDialog {...successfulUserRegistrationDialogProps} />
     </Box>
   );
 };
