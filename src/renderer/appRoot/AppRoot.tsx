@@ -1,18 +1,18 @@
 import { FC, useCallback, useEffect, useState } from "react";
 import { appLogger, IPCLogger } from "../utils/loggers";
 import { Outlet } from "react-router-dom";
-import { RootContext } from "./RootContext";
+import { AppRootContext } from "./AppRootContext";
 import { arrayBufferToBase64 } from "../utils/typeConversions/arrayBufferToBase64";
 import { insertLineBreaks } from "../../shared/utils/insertNewLines";
+import { ICurrentlyLoggedInUser } from "../../shared/user/ICurrentlyLoggedInUser";
 
-const Root: FC = () => {
+const AppRoot: FC = () => {
   // TODO: Add suspense "Waiting for secure connection" screen
-  // TODO: Optimize Material UI imports
-  // TODO: Actually encrypt sensitive traffic (user data)
-  const [isUserStorageAvailable, setIsUserStorageAvailable] = useState<boolean>(window.userAPI.isStorageAvailable());
   const [rendererProcessAESKey, setRendererProcessAESKey] = useState<CryptoKey | null>(null);
+  const [currentlyLoggedInUser, setCurrentlyLoggedInUser] = useState<ICurrentlyLoggedInUser | null>(null);
+  const [isUserStorageAvailable, setIsUserStorageAvailable] = useState<boolean>(window.userAPI.isStorageAvailable());
 
-  const generateRendererProcessAESEncryptionKey = useCallback(async () => {
+  const generateRendererProcessAESEncryptionKey = useCallback(async (): Promise<void> => {
     appLogger.debug("Getting main process public RSA key.");
     const MAIN_PROCESS_PUBLIC_RSA_KEY_DER: ArrayBuffer = window.IPCEncryptionAPI.getMainProcessPublicRSAKeyDER();
     appLogger.debug(`Got main process public RSA key:\n${insertLineBreaks(arrayBufferToBase64(MAIN_PROCESS_PUBLIC_RSA_KEY_DER))}.`);
@@ -64,25 +64,31 @@ const Root: FC = () => {
     }
   }, [setRendererProcessAESKey]);
 
-  useEffect(() => {
+  useEffect((): void => {
     appLogger.info("Rendering Root component.");
+    appLogger.debug("Generating renderer process AES key.");
     generateRendererProcessAESEncryptionKey()
       .then(
-        () => {
+        (): void => {
           appLogger.debug("Done generating renderer process AES key.");
         },
-        (reason: unknown) => {
+        (reason: unknown): void => {
           const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
           appLogger.error(`Failed to generate renderer process AES key: ${REASON_MESSAGE}.`);
         }
       )
-      .catch((err: unknown) => {
+      .catch((err: unknown): void => {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
         appLogger.error(`Failed to generate renderer process AES key: ${ERROR_MESSAGE}.`);
       });
     appLogger.debug(`User storage availability status: ${isUserStorageAvailable.toString()}.`);
+    // Monitor changes to currently logged in user
+    window.userAPI.onCurrentlyLoggedInUserChange((newLoggedInUser: ICurrentlyLoggedInUser | null): void => {
+      IPCLogger.debug(`Received new currently logged in user event. New currently logged in user: ${JSON.stringify(newLoggedInUser, null, 2)}.`);
+      setCurrentlyLoggedInUser(newLoggedInUser);
+    });
     // Monitor changes to user storage availability status
-    window.userAPI.onStorageAvailabilityChange((isAvailable: boolean) => {
+    window.userAPI.onUserStorageAvailabilityChange((isAvailable: boolean): void => {
       IPCLogger.debug(`Received user storage availability status change event. Storage available: ${isAvailable.toString()}.`);
       setIsUserStorageAvailable(isAvailable);
     });
@@ -93,11 +99,12 @@ const Root: FC = () => {
       context={
         {
           rendererProcessAESKey: rendererProcessAESKey,
+          currentlyLoggedInUser: currentlyLoggedInUser,
           isUserStorageAvailable: isUserStorageAvailable
-        } satisfies RootContext
+        } satisfies AppRootContext
       }
     />
   );
 };
 
-export default Root;
+export default AppRoot;

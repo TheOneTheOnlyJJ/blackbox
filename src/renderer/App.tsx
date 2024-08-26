@@ -1,14 +1,14 @@
 import { FC } from "react";
 import { createHashRouter, RouterProvider } from "react-router-dom";
-import Root from "./root/Root";
+import AppRoot from "./appRoot/AppRoot";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
-import { CssBaseline } from "@mui/material";
+import CssBaseline from "@mui/material/CssBaseline/CssBaseline";
 
 const APP_ROUTER = createHashRouter([
   {
     path: "/",
-    element: <Root />,
+    element: <AppRoot />,
     children: [
       {
         index: true,

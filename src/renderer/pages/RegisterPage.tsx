@@ -1,8 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { Box, Button, Paper, Typography } from "@mui/material";
-import { FC, FormEvent, useCallback, useState } from "react";
+import { FC, useCallback, useState } from "react";
 import { Link } from "react-router-dom";
-import { useRootContext } from "../root/RootContext";
+import { useAppRootContext } from "../appRoot/AppRootContext";
 import { IBaseNewUserData } from "../../shared/user/IBaseNewUserData";
 import { IFormNewUserData, FORM_NEW_USER_DATA_JSON_SCHEMA } from "../../shared/user/IFormNewUserData";
 import { Theme } from "@rjsf/mui";
@@ -14,6 +12,10 @@ import RJSFPasswordWidget from "../components/RJSFPasswordWidget";
 import { encrypt } from "../utils/encryption/encrypt";
 import { IEncryptedBaseNewUserData } from "../../shared/user/IEncryptedBaseNewUserData";
 import SuccessfulUserRegistrationDialog, { SuccessfulUserRegistrationDialogProps } from "../components/SuccessfulUserRegistrationDialog";
+import Box from "@mui/material/Box/Box";
+import Paper from "@mui/material/Paper/Paper";
+import Typography from "@mui/material/Typography/Typography";
+import Button from "@mui/material/Button/Button";
 
 const MUIForm = withTheme<IFormNewUserData>(Theme);
 
@@ -30,9 +32,8 @@ const FORM_VALIDATOR = customizeValidator<IFormNewUserData>();
 
 const customValidate: CustomValidator<IFormNewUserData> = (
   formData: IFormNewUserData | undefined,
-  errors: FormValidation<IFormNewUserData>,
-  _: UiSchema<IFormNewUserData> | undefined
-) => {
+  errors: FormValidation<IFormNewUserData>
+): FormValidation<IFormNewUserData> => {
   // Skip if no form data
   if (formData === undefined || errors.username === undefined || errors.confirmPassword === undefined) {
     return errors;
@@ -46,10 +47,7 @@ const customValidate: CustomValidator<IFormNewUserData> = (
   return errors;
 };
 
-const transformErrors: ErrorTransformer<IFormNewUserData> = (
-  errors: RJSFValidationError[],
-  _: UiSchema<IFormNewUserData> | undefined
-): RJSFValidationError[] => {
+const transformErrors: ErrorTransformer<IFormNewUserData> = (errors: RJSFValidationError[]): RJSFValidationError[] => {
   return errors.map((error: RJSFValidationError) => {
     // Capitalize first letter
     if (error.message !== undefined) {
@@ -61,20 +59,20 @@ const transformErrors: ErrorTransformer<IFormNewUserData> = (
 };
 
 const RegisterPage: FC = () => {
-  const rootContext = useRootContext();
+  const appRootContext = useAppRootContext();
   const [successfulUserRegistrationDialogProps, setSuccessfulUserRegistrationDialogProps] = useState<SuccessfulUserRegistrationDialogProps>({
     open: false,
     username: "",
     userCount: -1
   });
   const registerNewUser = useCallback(
-    (data: IChangeEvent<IFormNewUserData>, _: FormEvent): void => {
+    (data: IChangeEvent<IFormNewUserData>): void => {
       appLogger.debug("Submitted user registration form.");
       if (data.formData === undefined) {
         appLogger.debug("Undefined form data. No-op.");
         return;
       }
-      if (rootContext.rendererProcessAESKey === null) {
+      if (appRootContext.rendererProcessAESKey === null) {
         appLogger.debug("Null AES encryption key. No-op.");
         return;
       }
@@ -84,11 +82,12 @@ const RegisterPage: FC = () => {
         password: data.formData.password
       };
       appLogger.debug(`Encrypting base new user data for new user "${BASE_NEW_USER_DATA.username}".`);
-      encrypt(JSON.stringify(BASE_NEW_USER_DATA), rootContext.rendererProcessAESKey)
+      encrypt(JSON.stringify(BASE_NEW_USER_DATA), appRootContext.rendererProcessAESKey)
         .then(
-          (encryptedBaseNewUserData: IEncryptedBaseNewUserData) => {
+          (encryptedBaseNewUserData: IEncryptedBaseNewUserData): void => {
             if (window.userAPI.register(encryptedBaseNewUserData)) {
-              appLogger.info(`Registered new user "${BASE_NEW_USER_DATA.username}".`);
+              appLogger.info(`Registration successful for new user "${BASE_NEW_USER_DATA.username}".`);
+              appLogger.debug("Opening successful user registration dialog.");
               setSuccessfulUserRegistrationDialogProps({
                 open: true,
                 username: BASE_NEW_USER_DATA.username,
@@ -98,18 +97,17 @@ const RegisterPage: FC = () => {
               appLogger.info(`Could not register new user "${BASE_NEW_USER_DATA.username}".`);
             }
           },
-          (reason: unknown) => {
+          (reason: unknown): void => {
             const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
             appLogger.error(`Could not encrypt base new user data for new user "${BASE_NEW_USER_DATA.username}". Reason: ${REASON_MESSAGE}.`);
           }
         )
-        .catch((err: unknown) => {
+        .catch((err: unknown): void => {
           const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
           appLogger.error(`Could not encrypt base new user data for new user "${BASE_NEW_USER_DATA.username}". ${ERROR_MESSAGE}.`);
         });
-      // TODO: Add confirmation screen
     },
-    [rootContext.rendererProcessAESKey]
+    [appRootContext.rendererProcessAESKey]
   );
 
   return (
@@ -150,7 +148,7 @@ const RegisterPage: FC = () => {
           transformErrors={transformErrors}
           onSubmit={registerNewUser}
         >
-          <Button type="submit" variant="contained" disabled={!rootContext.isUserStorageAvailable} sx={{ marginTop: "1vw", marginBottom: "1vw" }}>
+          <Button type="submit" variant="contained" disabled={!appRootContext.isUserStorageAvailable} sx={{ marginTop: "1vw", marginBottom: "1vw" }}>
             Register
           </Button>
         </MUIForm>

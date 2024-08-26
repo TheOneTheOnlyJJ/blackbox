@@ -3,6 +3,7 @@ import { createJSONValidateFunction, isConfigValid } from "../../utils/config/co
 import { JSONSchemaType, ValidateFunction } from "ajv";
 import { UserStorageType } from "./UserStorageType";
 import { ISecuredNewUserData } from "../ISecuredNewUserData";
+import { UUID } from "node:crypto";
 
 // Every user storage must have at least the type in its config (should be further narrowed down to its own in the specific config)
 export interface BaseUserStorageConfig {
@@ -33,6 +34,8 @@ export abstract class UserStorage<T extends BaseUserStorageConfig> {
   // public abstract isLocal(): boolean;
   public abstract isUsernameAvailable(username: string): boolean;
   public abstract addUser(userData: ISecuredNewUserData): boolean;
+  public abstract getUserIdByUsername(username: string): UUID | null;
+  public abstract getPasswordDataByUserId(userId: UUID): [Buffer, Buffer] | null;
   // public abstract deleteUser(userId: UserId): boolean;
   // public abstract deleteUsers(userIds: UserId[]): boolean;
   // public abstract getUser(userId: UserId): IUser;

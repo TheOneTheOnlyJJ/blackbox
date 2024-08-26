@@ -24,6 +24,9 @@ import { insertLineBreaks } from "../shared/utils/insertNewLines";
 import { bufferToArrayBuffer } from "./utils/typeConversions/bufferToArrayBuffer";
 import { decryptJSON } from "./utils/encryption/decryptJSON";
 import { IEncryptedBaseNewUserData } from "../shared/user/IEncryptedBaseNewUserData";
+import { ICurrentlyLoggedInUser } from "../shared/user/ICurrentlyLoggedInUser";
+import { IUserLoginCredentials, USER_LOGIN_CREDENTIALS_JSON_SCHEMA } from "../shared/user/IUserLoginCredentials";
+import { IEncryptedUserLoginCredentials } from "../shared/user/IEncryptedUserLoginCredentials";
 
 export interface AppConfig {
   window: {
@@ -178,13 +181,13 @@ export class App {
       this.IPCUserAPILogger.debug(`Sending ${IS_STORAGE_AVAILABLE.toString()}.`);
       return IS_STORAGE_AVAILABLE;
     },
-    handleOnStorageAvailabilityChange: (isAvailable: boolean): void => {
-      this.IPCUserAPILogger.debug(`Sending user storage availability after change to window. Storage available: ${isAvailable.toString()}.`);
+    handleOnUserStorageAvailabilityChange: (isAvailable: boolean): void => {
+      this.IPCUserAPILogger.debug(`Sending to window user storage availability after change. Storage available: ${isAvailable.toString()}.`);
       if (this.window === null) {
         this.IPCUserAPILogger.debug('Window is "null". No-op.');
         return;
       }
-      this.window.webContents.send(UserAccountManagerIPCChannel.onStorageAvailabilityChange, isAvailable);
+      this.window.webContents.send(UserAccountManagerIPCChannel.onUserStorageAvailabilityChange, isAvailable);
     },
     handleIsUsernameAvailable: (username: string): boolean => {
       this.IPCUserAPILogger.debug("Received username availability status request.");
@@ -217,8 +220,8 @@ export class App {
         }
         try {
           const SECURED_NEW_USER_DATA: ISecuredNewUserData = this.userAccountManager.secureBaseNewUserData(BASE_NEW_USER_DATA);
-          this.IPCUserAPILogger.silly(`Secured new user data: ${JSON.stringify(SECURED_NEW_USER_DATA, null, 2)}.`);
-          return this.userAccountManager.registerUser(SECURED_NEW_USER_DATA);
+          this.IPCUserAPILogger.silly(`Secured new user data: ${JSON.stringify(SECURED_NEW_USER_DATA)}.`);
+          return this.userAccountManager.registerUser(SECURED_NEW_USER_DATA, true);
         } catch (err: unknown) {
           const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
           this.IPCUserAPILogger.error(`Could not register new user: ${ERROR_MESSAGE}!`);
@@ -231,17 +234,52 @@ export class App {
       }
     },
     handleGetUserCount: (): number => {
+      this.IPCUserAPILogger.debug("Received user count request.");
       if (!this.userAccountManager.isStorageAvailable()) {
         this.IPCUserAPILogger.error("User storage not available. Cannot get user count.");
         return -1;
       }
       return this.userAccountManager.getUserCount();
+    },
+    handleLogin: (encryptedLoginCredentials: IEncryptedUserLoginCredentials): boolean => {
+      this.IPCUserAPILogger.debug("Received user login request.");
+      if (!this.userAccountManager.isStorageAvailable()) {
+        this.IPCUserAPILogger.error("User storage not available. Cannot login user.");
+        return false;
+      }
+      if (this.rendererProcessAESKey === null) {
+        this.IPCUserAPILogger.error("Renderer process AES key is null. Cannot login user.");
+        return false;
+      }
+      if (this.userAccountManager.isAnyUserLoggedIn()) {
+        this.IPCUserAPILogger.error("A user is already logged in. Cannot login user.");
+        return false;
+      }
+      const DECRYPTED_USER_LOGIN_CREDENTIALS: IUserLoginCredentials = decryptJSON<IUserLoginCredentials>(
+        encryptedLoginCredentials,
+        this.USER_LOGIN_CREDENTIALS_VALIDATE_FUNCTION,
+        this.rendererProcessAESKey
+      );
+      return this.userAccountManager.loginUser(DECRYPTED_USER_LOGIN_CREDENTIALS);
+    },
+    handleOnCurrentlyLoggedInUserChange: (newLoggedInUser: ICurrentlyLoggedInUser | null): void => {
+      this.IPCUserAPILogger.debug(
+        `Sending to window currently logged in user after change. New logged in user: ${
+          newLoggedInUser === null ? "null" : JSON.stringify(newLoggedInUser, null, 2)
+        }.`
+      );
+      if (this.window === null) {
+        this.IPCUserAPILogger.debug('Window is "null". No-op.');
+        return;
+      }
+      this.window.webContents.send(UserAccountManagerIPCChannel.onCurrentlyLoggedInUserChange, newLoggedInUser);
     }
   };
 
   // User account manager
   private userAccountManager: UserAccountManager = new UserAccountManager(
-    this.USER_API_HANDLERS.handleOnStorageAvailabilityChange,
+    this.USER_API_HANDLERS.handleOnCurrentlyLoggedInUserChange,
+    this.USER_API_HANDLERS.handleOnUserStorageAvailabilityChange,
     this.userAccountManagerLogger
   );
 
@@ -254,6 +292,10 @@ export class App {
   // Base new user data validator
   private readonly BASE_NEW_USER_DATA_VALIDATE_FUNCTION: ValidateFunction<IBaseNewUserData> =
     createJSONValidateFunction<IBaseNewUserData>(BASE_NEW_USER_DATA_JSON_SCHEMA);
+
+  // User login credentials validator
+  private readonly USER_LOGIN_CREDENTIALS_VALIDATE_FUNCTION: ValidateFunction<IUserLoginCredentials> =
+    createJSONValidateFunction<IUserLoginCredentials>(USER_LOGIN_CREDENTIALS_JSON_SCHEMA);
 
   // Timeouts
   private updateWindowPositionConfigTimeout: null | NodeJS.Timeout = null;
@@ -295,7 +337,7 @@ export class App {
     this.MAIN_PROCESS_PUBLIC_RSA_KEY_DER = publicKey;
     this.MAIN_PROCESS_PRIVATE_RSA_KEY_DER = privateKey;
     this.bootstrapLogger.debug(
-      `Generated main process public RSA key:\n${insertLineBreaks(Buffer.from(this.MAIN_PROCESS_PUBLIC_RSA_KEY_DER).toString("base64"))}.`
+      `Generated main process public RSA key:\n${insertLineBreaks(Buffer.from(this.MAIN_PROCESS_PUBLIC_RSA_KEY_DER).toString("base64"))}\n.`
     );
     this.bootstrapLogger.debug("App constructor done.");
   }
@@ -526,15 +568,15 @@ export class App {
     shell
       .openExternal(details.url)
       .then(
-        () => {
+        (): void => {
           this.windowLogger.info(`Opened external URL: "${details.url}".`);
         },
-        (reason: unknown) => {
+        (reason: unknown): void => {
           const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
           this.windowLogger.error(`Could not open external URL ("${details.url}"). Reason: ${REASON_MESSAGE}.`);
         }
       )
-      .catch((err: unknown) => {
+      .catch((err: unknown): void => {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
         this.windowLogger.error(`Could not open external URL ("${details.url}"): ${ERROR_MESSAGE}.`);
       });
@@ -629,6 +671,9 @@ export class App {
     });
     ipcMain.on(UserAccountManagerIPCChannel.getUserCount, (event: IpcMainEvent) => {
       event.returnValue = this.USER_API_HANDLERS.handleGetUserCount();
+    });
+    ipcMain.on(UserAccountManagerIPCChannel.login, (event: IpcMainEvent, encryptedLoginCredentials: IEncryptedUserLoginCredentials) => {
+      event.returnValue = this.USER_API_HANDLERS.handleLogin(encryptedLoginCredentials);
     });
   }
 }

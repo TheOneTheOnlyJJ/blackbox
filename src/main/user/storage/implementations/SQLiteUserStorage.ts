@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { JSONSchemaType } from "ajv";
 import { UserStorageType } from "../UserStorageType";
 import { ISecuredNewUserData } from "../../ISecuredNewUserData";
+import { UUID } from "crypto";
 
 export interface SQLiteUserStorageConfig extends BaseUserStorageConfig {
   type: UserStorageType.SQLite;
@@ -75,8 +76,8 @@ export class SQLiteUserStorage extends UserStorage<SQLiteUserStorageConfig> {
   public isUsernameAvailable(username: string): boolean {
     // TODO: Implement this properly
     this.logger.debug(`Checking username availability for username: "${username}".`);
-    const IS_USERNAME_AVAILABLE_SQL = "SELECT COUNT(*) AS count FROM users WHERE username = ?";
-    const RESULT = this.db.prepare(IS_USERNAME_AVAILABLE_SQL).get(username) as { count: number };
+    const IS_USERNAME_AVAILABLE_SQL = "SELECT COUNT(*) AS count FROM users WHERE username = @username";
+    const RESULT = this.db.prepare(IS_USERNAME_AVAILABLE_SQL).get({ username: username }) as { count: number };
     if (RESULT.count > 0) {
       this.logger.debug("Username unavailable.");
       return false;
@@ -90,7 +91,12 @@ export class SQLiteUserStorage extends UserStorage<SQLiteUserStorageConfig> {
     const INSERT_NEW_USER_SQL =
       "INSERT INTO users (id, username, password_hash, password_salt) VALUES (@id, @username, @passwordHash, @passwordSalt)";
     try {
-      const INFO: DatabaseConstructor.RunResult = this.db.prepare(INSERT_NEW_USER_SQL).run(userData);
+      const INFO: DatabaseConstructor.RunResult = this.db.prepare(INSERT_NEW_USER_SQL).run({
+        id: userData.id,
+        username: userData.username,
+        passwordHash: userData.passwordHash,
+        passwordSalt: userData.passwordSalt
+      });
       this.logger.info(
         `User added successfully! Number of changes: ${INFO.changes.toString()}. Last inserted row ID: ${INFO.lastInsertRowid.toString()}.`
       );
@@ -100,6 +106,22 @@ export class SQLiteUserStorage extends UserStorage<SQLiteUserStorageConfig> {
       this.logger.error(`Could not add user! ${ERROR_MESSAGE}!`);
       return false;
     }
+  }
+
+  public getUserIdByUsername(username: string): UUID | null {
+    this.logger.debug(`Getting user ID by username for user: "${username}".`);
+    const GET_USER_ID_BY_USERNAME_SQL = "SELECT id FROM users WHERE username = @username LIMIT 1";
+    const RESULT = this.db.prepare(GET_USER_ID_BY_USERNAME_SQL).get({ username: username }) as { id: UUID } | undefined;
+    return RESULT === undefined ? null : RESULT.id;
+  }
+
+  public getPasswordDataByUserId(userId: UUID): [Buffer, Buffer] | null {
+    this.logger.debug(`Getting password salt for user with ID: "${userId}".`);
+    const GET_USER_PASSWORD_SALT_BY_USER_ID = "SELECT password_hash AS passwordHash, password_salt AS passwordSalt FROM users WHERE id = @id LIMIT 1";
+    const RESULT = this.db.prepare(GET_USER_PASSWORD_SALT_BY_USER_ID).get({ id: userId }) as
+      | { passwordHash: Buffer; passwordSalt: Buffer }
+      | undefined;
+    return RESULT === undefined ? null : [RESULT.passwordHash, RESULT.passwordSalt];
   }
 
   public getUserCount(): number {
@@ -127,8 +149,8 @@ export class SQLiteUserStorage extends UserStorage<SQLiteUserStorageConfig> {
       CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY,
         username TEXT NOT NULL UNIQUE,
-        password_hash TEXT NOT NULL,
-        password_salt TEXT NOT NULL
+        password_hash BLOB NOT NULL,
+        password_salt BLOB NOT NULL
       )
       `;
       this.db.prepare(CREATE_USERS_TABLE_SQL).run();

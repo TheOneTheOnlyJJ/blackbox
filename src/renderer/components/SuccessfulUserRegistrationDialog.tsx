@@ -1,9 +1,15 @@
-import { Alert, AlertTitle, Box, Button, DialogActions, DialogContent, Typography } from "@mui/material";
-import Dialog from "@mui/material/Dialog";
+import Dialog from "@mui/material/Dialog/Dialog";
 import CheckCircleOutlineOutlinedIcon from "@mui/icons-material/CheckCircleOutlineOutlined";
 import { FC, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ordinalize } from "inflection";
+import DialogContent from "@mui/material/DialogContent/DialogContent";
+import Box from "@mui/material/Box/Box";
+import Typography from "@mui/material/Typography/Typography";
+import Alert from "@mui/material/Alert/Alert";
+import AlertTitle from "@mui/material/AlertTitle/AlertTitle";
+import DialogActions from "@mui/material/DialogActions/DialogActions";
+import Button from "@mui/material/Button/Button";
 
 export interface SuccessfulUserRegistrationDialogProps {
   open: boolean;
@@ -13,17 +19,11 @@ export interface SuccessfulUserRegistrationDialogProps {
 
 const SuccessfulUserRegistrationDialog: FC<SuccessfulUserRegistrationDialogProps> = (props: SuccessfulUserRegistrationDialogProps) => {
   const navigate = useNavigate();
-  const handleDialogClose = useCallback(
-    (_: object, reason: "backdropClick" | "escapeKeyDown") => {
-      // This ensures backdrop clicks do not close the dialog
-      if (reason === "backdropClick") {
-        return;
-      }
-      navigate("/");
-    },
-    [navigate]
-  );
-  const handleButtonClose = useCallback(() => {
+  const handleDialogClose = useCallback((): void => {
+    // This ensures no backdrop click or escape keypress closes the dialog
+    return;
+  }, []);
+  const handleButtonClose = useCallback((): void => {
     navigate("/");
   }, [navigate]);
 
@@ -40,11 +40,11 @@ const SuccessfulUserRegistrationDialog: FC<SuccessfulUserRegistrationDialogProps
         >
           <CheckCircleOutlineOutlinedIcon color="success" sx={{ fontSize: 100 }} />
           <Typography variant="h5" sx={{ marginBottom: "1vw" }}>
-            Registration success
+            Registration successful
           </Typography>
           <Alert severity="success">
             <AlertTitle>Congratulations {props.username}!</AlertTitle>
-            You are the {ordinalize(props.userCount.toString())} registered BlackBox user!
+            You&apos;re the {ordinalize(props.userCount.toString())} registered BlackBox user!
           </Alert>
         </Box>
       </DialogContent>

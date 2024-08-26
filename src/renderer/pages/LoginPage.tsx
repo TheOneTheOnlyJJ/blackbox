@@ -1,16 +1,22 @@
-/* eslint-disable react/no-unescaped-entities */
-import { Box, Button, IconButton, InputAdornment, Paper, TextField, Typography } from "@mui/material";
 import { FC, useState } from "react";
 import "@fontsource/saira-stencil-one";
 import { Link } from "react-router-dom";
-import { useRootContext } from "../root/RootContext";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { useAppRootContext } from "../appRoot/AppRootContext";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import Box from "@mui/material/Box/Box";
+import Typography from "@mui/material/Typography/Typography";
+import Paper from "@mui/material/Paper/Paper";
+import TextField from "@mui/material/TextField/TextField";
+import InputAdornment from "@mui/material/InputAdornment/InputAdornment";
+import IconButton from "@mui/material/IconButton/IconButton";
+import Button from "@mui/material/Button/Button";
 
 const BACKGROUND_COLOR_1 = "black";
 const BACKGROUND_COLOR_2 = "white";
 
 const LoginPage: FC = () => {
-  const appContext = useRootContext();
+  const appRootContext = useAppRootContext();
   const [doShowPassword, setDoShowPassword] = useState<boolean>(false);
   return (
     <Box
@@ -74,17 +80,17 @@ const LoginPage: FC = () => {
               <InputAdornment position="end">
                 <IconButton
                   aria-label="toggle password visibility"
-                  onClick={() => {
+                  onClick={(): void => {
                     setDoShowPassword((prevShowPassword) => !prevShowPassword);
                   }}
                 >
-                  {doShowPassword ? <Visibility /> : <VisibilityOff />}
+                  {doShowPassword ? <VisibilityIcon /> : <VisibilityOffIcon />}
                 </IconButton>
               </InputAdornment>
             )
           }}
         />
-        <Button size="large" variant="contained" disabled={!appContext.isUserStorageAvailable}>
+        <Button size="large" variant="contained" disabled={!appRootContext.isUserStorageAvailable}>
           Login
         </Button>
         <Typography
@@ -93,7 +99,7 @@ const LoginPage: FC = () => {
             padding: "1vw"
           }}
         >
-          Don't have an account? <Link to="/register">Register</Link>
+          Don&apos;t have an account? <Link to="/register">Register</Link>
         </Typography>
       </Paper>
     </Box>

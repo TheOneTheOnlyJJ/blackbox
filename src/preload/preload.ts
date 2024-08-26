@@ -1,8 +1,10 @@
 import { contextBridge, ipcRenderer, IpcRendererEvent } from "electron";
 import { IPCEncryptionIPCChannel, UserAccountManagerIPCChannel } from "../main/utils/IPC/IPCChannels";
-import { IUserAPI } from "../shared/IPC/APIs/IUserAPI";
+import { CurrentlyLoggedInUserChangeCallback, IUserAPI, UserStorageAvailabilityChangeCallback } from "../shared/IPC/APIs/IUserAPI";
 import { IIPCEncryptionAPI } from "../shared/IPC/APIs/IIPCEncryptionAPI";
-import { IEncryptedData } from "../shared/utils/IEncryptedData";
+import { ICurrentlyLoggedInUser } from "../shared/user/ICurrentlyLoggedInUser";
+import { IEncryptedUserLoginCredentials } from "../shared/user/IEncryptedUserLoginCredentials";
+import { IEncryptedBaseNewUserData } from "../shared/user/IEncryptedBaseNewUserData";
 
 const IPC_ENCRYPTION_API: IIPCEncryptionAPI = {
   getMainProcessPublicRSAKeyDER: (): ArrayBuffer => {
@@ -17,19 +19,30 @@ const USER_STORAGE_API: IUserAPI = {
   isStorageAvailable: (): boolean => {
     return ipcRenderer.sendSync(UserAccountManagerIPCChannel.isStorageAvailable) as boolean;
   },
-  onStorageAvailabilityChange: (callback: (isAvailable: boolean) => void): void => {
-    ipcRenderer.on(UserAccountManagerIPCChannel.onStorageAvailabilityChange, (_: IpcRendererEvent, isAvailable: boolean) => {
+  onUserStorageAvailabilityChange: (callback: UserStorageAvailabilityChangeCallback): void => {
+    ipcRenderer.on(UserAccountManagerIPCChannel.onUserStorageAvailabilityChange, (_: IpcRendererEvent, isAvailable: boolean) => {
       callback(isAvailable);
     });
   },
   isUsernameAvailable: (username: string): boolean => {
     return ipcRenderer.sendSync(UserAccountManagerIPCChannel.isUsernameAvailable, username) as boolean;
   },
-  register: (encryptedBaseNewUserData: IEncryptedData): boolean => {
+  register: (encryptedBaseNewUserData: IEncryptedBaseNewUserData): boolean => {
     return ipcRenderer.sendSync(UserAccountManagerIPCChannel.register, encryptedBaseNewUserData) as boolean;
   },
   getUserCount: (): number => {
     return ipcRenderer.sendSync(UserAccountManagerIPCChannel.getUserCount) as number;
+  },
+  login: (encryptedLoginCredentials: IEncryptedUserLoginCredentials): boolean => {
+    return ipcRenderer.sendSync(UserAccountManagerIPCChannel.login, encryptedLoginCredentials) as boolean;
+  },
+  onCurrentlyLoggedInUserChange: (callback: CurrentlyLoggedInUserChangeCallback): void => {
+    ipcRenderer.on(
+      UserAccountManagerIPCChannel.onCurrentlyLoggedInUserChange,
+      (_: IpcRendererEvent, newLoggedInUser: ICurrentlyLoggedInUser | null) => {
+        callback(newLoggedInUser);
+      }
+    );
   }
 };
 

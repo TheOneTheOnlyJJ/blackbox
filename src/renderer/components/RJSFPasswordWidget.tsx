@@ -1,28 +1,32 @@
-import { Visibility, VisibilityOff } from "@mui/icons-material";
-import { IconButton, InputAdornment, TextField, useTheme } from "@mui/material";
+import IconButton from "@mui/material/IconButton/IconButton";
+import InputAdornment from "@mui/material/InputAdornment/InputAdornment";
+import useTheme from "@mui/material/styles/useTheme";
+import TextField from "@mui/material/TextField/TextField";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import { WidgetProps } from "@rjsf/utils";
 import { FocusEvent, ChangeEvent, FC, useState, useMemo } from "react";
 
 const PasswordWidget: FC<WidgetProps> = (props: WidgetProps) => {
   const { id, required, disabled, readonly, options, rawErrors, onChange, onBlur, onFocus } = props;
-  const _onChange = ({ target: { value } }: ChangeEvent<HTMLInputElement>) => {
+  const _onChange = ({ target: { value } }: ChangeEvent<HTMLInputElement>): void => {
     onChange(value === "" ? options.emptyValue : value);
   };
-  const _onBlur = ({ target }: FocusEvent<HTMLInputElement>) => {
+  const _onBlur = ({ target }: FocusEvent<HTMLInputElement>): void => {
     onBlur(id, target.value);
   };
-  const _onFocus = ({ target }: FocusEvent<HTMLInputElement>) => {
+  const _onFocus = ({ target }: FocusEvent<HTMLInputElement>): void => {
     onFocus(id, target.value);
   };
   const [doShowPassword, setDoShowPassword] = useState<boolean>(false);
 
-  const hasError: boolean = useMemo(() => {
+  const hasError: boolean = useMemo((): boolean => {
     return rawErrors !== undefined && rawErrors.length > 0;
   }, [rawErrors]);
 
   const theme = useTheme();
 
-  const iconColor: string = useMemo(() => {
+  const iconColor: string = useMemo((): string => {
     return hasError ? theme.palette.error.main : theme.palette.text.secondary;
   }, [theme, hasError]);
 
@@ -46,11 +50,11 @@ const PasswordWidget: FC<WidgetProps> = (props: WidgetProps) => {
           <InputAdornment position="end">
             <IconButton
               aria-label="toggle password visibility"
-              onClick={() => {
+              onClick={(): void => {
                 setDoShowPassword((prevShowPassword) => !prevShowPassword);
               }}
             >
-              {doShowPassword ? <Visibility style={{ color: iconColor }} /> : <VisibilityOff style={{ color: iconColor }} />}
+              {doShowPassword ? <VisibilityIcon style={{ color: iconColor }} /> : <VisibilityOffIcon style={{ color: iconColor }} />}
             </IconButton>
           </InputAdornment>
         )

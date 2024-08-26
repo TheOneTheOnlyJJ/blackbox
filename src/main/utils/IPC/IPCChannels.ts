@@ -5,8 +5,10 @@ export enum IPCEncryptionIPCChannel {
 
 export enum UserAccountManagerIPCChannel {
   isStorageAvailable = "userAccountManager:isStorageAvailable",
-  onStorageAvailabilityChange = "userAccountManager:onStorageAvailabilityChange",
+  onUserStorageAvailabilityChange = "userAccountManager:onUserStorageAvailabilityChange",
   isUsernameAvailable = "userAccountManager:isUsernameAvailable",
   register = "userAccountManager:register",
-  getUserCount = "userAccountManager:getUserCount"
+  getUserCount = "userAccountManager:getUserCount",
+  login = "userAccountManager:login",
+  onCurrentlyLoggedInUserChange = "userAccountManager:onCurrentlyLoggedInUserChange"
 }
