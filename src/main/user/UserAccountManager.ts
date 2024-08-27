@@ -116,21 +116,11 @@ export class UserAccountManager {
     return SECURED_USER_DATA;
   }
 
-  public registerUser(userData: ISecuredNewUserData, loginIfSuccessful: boolean): boolean {
+  public registerUser(userData: ISecuredNewUserData): boolean {
     if (this.userStorage === null) {
       throw new Error("Cannot register a new user without an open user storage");
     }
-    const HAS_REGISTERED_SUCCESSFULLY: boolean = this.userStorage.addUser(userData);
-    if (HAS_REGISTERED_SUCCESSFULLY && loginIfSuccessful) {
-      if (this.currentlyLoggedInUser !== null) {
-        this.logger.error("Cannot login newly registered user while a user is already logged in");
-        return HAS_REGISTERED_SUCCESSFULLY;
-      }
-      this.currentlyLoggedInUser = { id: userData.id, username: userData.username };
-      this.onCurrentlyLoggedInUserChangeCallback(this.currentlyLoggedInUser);
-      this.logger.info(`Logged in user: "${this.currentlyLoggedInUser.username}".`);
-    }
-    return HAS_REGISTERED_SUCCESSFULLY;
+    return this.userStorage.addUser(userData);
   }
 
   public getUserCount(): number {

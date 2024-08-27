@@ -1,6 +1,6 @@
 import { FC, useCallback, useEffect, useState } from "react";
 import { appLogger, IPCLogger } from "../utils/loggers";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation, Location } from "react-router-dom";
 import { AppRootContext } from "./AppRootContext";
 import { arrayBufferToBase64 } from "../utils/typeConversions/arrayBufferToBase64";
 import { insertLineBreaks } from "../../shared/utils/insertNewLines";
@@ -8,6 +8,7 @@ import { ICurrentlyLoggedInUser } from "../../shared/user/ICurrentlyLoggedInUser
 
 const AppRoot: FC = () => {
   // TODO: Add suspense "Waiting for secure connection" screen
+  const location: Location = useLocation();
   const [rendererProcessAESKey, setRendererProcessAESKey] = useState<CryptoKey | null>(null);
   const [currentlyLoggedInUser, setCurrentlyLoggedInUser] = useState<ICurrentlyLoggedInUser | null>(null);
   const [isUserStorageAvailable, setIsUserStorageAvailable] = useState<boolean>(window.userAPI.isStorageAvailable());
@@ -63,6 +64,11 @@ const AppRoot: FC = () => {
       appLogger.error("Main process could not validate renderer process AES key!");
     }
   }, [setRendererProcessAESKey]);
+
+  // Log every location change
+  useEffect((): void => {
+    appLogger.debug(`Navigated to: "${location.pathname}".`);
+  }, [location]);
 
   useEffect((): void => {
     appLogger.info("Rendering Root component.");

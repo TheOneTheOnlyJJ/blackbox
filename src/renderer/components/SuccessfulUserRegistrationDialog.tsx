@@ -10,11 +10,14 @@ import Alert from "@mui/material/Alert/Alert";
 import AlertTitle from "@mui/material/AlertTitle/AlertTitle";
 import DialogActions from "@mui/material/DialogActions/DialogActions";
 import Button from "@mui/material/Button/Button";
+import { IEncryptedUserLoginCredentials } from "../../shared/user/IEncryptedUserLoginCredentials";
+import { appLogger } from "../utils/loggers";
 
 export interface SuccessfulUserRegistrationDialogProps {
   open: boolean;
   username: string;
   userCount: number;
+  encryptedNewUserLoginCredentials: IEncryptedUserLoginCredentials | null;
 }
 
 const SuccessfulUserRegistrationDialog: FC<SuccessfulUserRegistrationDialogProps> = (props: SuccessfulUserRegistrationDialogProps) => {
@@ -23,9 +26,12 @@ const SuccessfulUserRegistrationDialog: FC<SuccessfulUserRegistrationDialogProps
     // This ensures no backdrop click or escape keypress closes the dialog
     return;
   }, []);
-  const handleButtonClose = useCallback((): void => {
+  const handleBackToLoginButtonClick = useCallback((): void => {
     navigate("/");
   }, [navigate]);
+  const handleToDashboardButtonClick = useCallback((): void => {
+    appLogger.debug("Clicked to dashboard button.");
+  }, []);
 
   return (
     <Dialog maxWidth="xl" open={props.open} onClose={handleDialogClose}>
@@ -53,9 +59,14 @@ const SuccessfulUserRegistrationDialog: FC<SuccessfulUserRegistrationDialogProps
           justifyContent: "center"
         }}
       >
-        <Button variant="contained" onClick={handleButtonClose}>
-          Close
+        <Button variant={props.encryptedNewUserLoginCredentials === null ? "contained" : "outlined"} onClick={handleBackToLoginButtonClick}>
+          Back to Login
         </Button>
+        {props.encryptedNewUserLoginCredentials !== null ? (
+          <Button variant="contained" onClick={handleToDashboardButtonClick}>
+            Start Exploring
+          </Button>
+        ) : null}
       </DialogActions>
     </Dialog>
   );

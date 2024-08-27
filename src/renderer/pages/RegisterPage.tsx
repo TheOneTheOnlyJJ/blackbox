@@ -16,6 +16,8 @@ import Box from "@mui/material/Box/Box";
 import Paper from "@mui/material/Paper/Paper";
 import Typography from "@mui/material/Typography/Typography";
 import Button from "@mui/material/Button/Button";
+import { IUserLoginCredentials } from "../../shared/user/IUserLoginCredentials";
+import { IEncryptedUserLoginCredentials } from "../../shared/user/IEncryptedUserLoginCredentials";
 
 const MUIForm = withTheme<IFormNewUserData>(Theme);
 
@@ -63,7 +65,8 @@ const RegisterPage: FC = () => {
   const [successfulUserRegistrationDialogProps, setSuccessfulUserRegistrationDialogProps] = useState<SuccessfulUserRegistrationDialogProps>({
     open: false,
     username: "",
-    userCount: -1
+    userCount: -1,
+    encryptedNewUserLoginCredentials: null
   });
   const registerNewUser = useCallback(
     (data: IChangeEvent<IFormNewUserData>): void => {
@@ -73,7 +76,7 @@ const RegisterPage: FC = () => {
         return;
       }
       if (appRootContext.rendererProcessAESKey === null) {
-        appLogger.debug("Null AES encryption key. No-op.");
+        appLogger.debug("Null AES encryption key. Cannot encrypt base new user data. No-op.");
         return;
       }
       // Extract base new user data from form
@@ -85,14 +88,48 @@ const RegisterPage: FC = () => {
       encrypt(JSON.stringify(BASE_NEW_USER_DATA), appRootContext.rendererProcessAESKey)
         .then(
           (encryptedBaseNewUserData: IEncryptedBaseNewUserData): void => {
+            appLogger.debug("Done encrypting base new user data.");
             if (window.userAPI.register(encryptedBaseNewUserData)) {
               appLogger.info(`Registration successful for new user "${BASE_NEW_USER_DATA.username}".`);
-              appLogger.debug("Opening successful user registration dialog.");
-              setSuccessfulUserRegistrationDialogProps({
-                open: true,
+              if (appRootContext.rendererProcessAESKey === null) {
+                appLogger.debug("Null AES encryption key. Cannot encrypt new user login credentials. No-op.");
+                return;
+              }
+              // Extract login credentials from base new user data
+              const NEW_USER_LOGIN_CREDENTIALS: IUserLoginCredentials = {
                 username: BASE_NEW_USER_DATA.username,
-                userCount: window.userAPI.getUserCount()
-              });
+                password: BASE_NEW_USER_DATA.password
+              };
+              let encryptedUserLoginCredentials: IEncryptedUserLoginCredentials | null = null;
+              appLogger.debug(`Encrypting new user login credentials for new user "${NEW_USER_LOGIN_CREDENTIALS.username}".`);
+              encrypt(JSON.stringify(NEW_USER_LOGIN_CREDENTIALS), appRootContext.rendererProcessAESKey)
+                .then(
+                  (encryptedNewUserLoginCredentials: IEncryptedUserLoginCredentials): void => {
+                    appLogger.debug("Done encrypting new user login credentials.");
+                    encryptedUserLoginCredentials = encryptedNewUserLoginCredentials;
+                  },
+                  (reason: unknown): void => {
+                    const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
+                    appLogger.error(
+                      `Could not encrypt new user login credentials for new user "${BASE_NEW_USER_DATA.username}". Reason: ${REASON_MESSAGE}.`
+                    );
+                    encryptedUserLoginCredentials = null;
+                  }
+                )
+                .catch((err: unknown): void => {
+                  const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+                  appLogger.error(`Could not encrypt new user login credentials for new user "${BASE_NEW_USER_DATA.username}". ${ERROR_MESSAGE}.`);
+                  encryptedUserLoginCredentials = null;
+                })
+                .finally((): void => {
+                  appLogger.debug("Opening successful user registration dialog.");
+                  setSuccessfulUserRegistrationDialogProps({
+                    open: true,
+                    username: BASE_NEW_USER_DATA.username,
+                    userCount: window.userAPI.getUserCount(),
+                    encryptedNewUserLoginCredentials: encryptedUserLoginCredentials
+                  });
+                });
             } else {
               appLogger.info(`Could not register new user "${BASE_NEW_USER_DATA.username}".`);
             }
@@ -107,7 +144,7 @@ const RegisterPage: FC = () => {
           appLogger.error(`Could not encrypt base new user data for new user "${BASE_NEW_USER_DATA.username}". ${ERROR_MESSAGE}.`);
         });
     },
-    [appRootContext.rendererProcessAESKey]
+    [appRootContext.rendererProcessAESKey, setSuccessfulUserRegistrationDialogProps]
   );
 
   return (
