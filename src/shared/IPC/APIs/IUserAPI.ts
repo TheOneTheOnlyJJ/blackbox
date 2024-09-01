@@ -1,17 +1,21 @@
-import { ICurrentlyLoggedInUser } from "../../user/ICurrentlyLoggedInUser";
-import { IEncryptedBaseNewUserData } from "../../user/IEncryptedBaseNewUserData";
-import { IEncryptedUserLoginCredentials } from "../../user/IEncryptedUserLoginCredentials";
+import { ICurrentlySignedInUser } from "../../user/ICurrentlySignedInUser";
+import { IEncryptedBaseNewUserData } from "../../user/encrypted/IEncryptedBaseNewUserData";
+import { IEncryptedUserSignInCredentials } from "../../user/encrypted/IEncryptedUserSignInCredentials";
+import { IPCAPIResponse } from "../IPCAPIResponse";
 
+// Utility types
 export type UserStorageAvailabilityChangeCallback = (isAvailable: boolean) => void;
-export type CurrentlyLoggedInUserChangeCallback = (newLoggedInUser: ICurrentlyLoggedInUser | null) => void;
+export type CurrentlySignedInUserChangeCallback = (newSignedInUser: ICurrentlySignedInUser | null) => void;
 
-// Declare API interfaces
+// API
 export interface IUserAPI {
-  isStorageAvailable: () => boolean;
-  onUserStorageAvailabilityChange: (callback: UserStorageAvailabilityChangeCallback) => void;
-  isUsernameAvailable: (username: string) => boolean;
-  register: (encryptedBaseNewUserData: IEncryptedBaseNewUserData) => boolean;
-  getUserCount: () => number;
-  login: (encryptedLoginCredentials: IEncryptedUserLoginCredentials) => boolean;
-  onCurrentlyLoggedInUserChange: (callback: CurrentlyLoggedInUserChangeCallback) => void;
+  signUp: (encryptedBaseNewUserData: IEncryptedBaseNewUserData) => IPCAPIResponse<boolean>;
+  signIn: (encryptedSignInCredentials: IEncryptedUserSignInCredentials) => IPCAPIResponse<boolean>;
+  signOut: () => IPCAPIResponse;
+  isStorageAvailable: () => IPCAPIResponse<boolean>;
+  isUsernameAvailable: (username: string) => IPCAPIResponse<boolean>;
+  getUserCount: () => IPCAPIResponse<number>;
+  getCurrentlySignedInUser: () => IPCAPIResponse<ICurrentlySignedInUser | null>;
+  onUserStorageAvailabilityChange: (callback: UserStorageAvailabilityChangeCallback) => () => void;
+  onCurrentlySignedInUserChange: (callback: CurrentlySignedInUserChangeCallback) => () => void;
 }

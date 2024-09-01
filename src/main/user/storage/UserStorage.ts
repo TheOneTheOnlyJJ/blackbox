@@ -12,7 +12,7 @@ export interface BaseUserStorageConfig {
 
 export abstract class UserStorage<T extends BaseUserStorageConfig> {
   protected readonly logger: LogFunctions;
-  public readonly config: T;
+  protected readonly config: T;
   private readonly CONFIG_VALIDATE_FUNCTION: ValidateFunction<T>;
 
   public constructor(config: T, configSchema: JSONSchemaType<T>, logger: LogFunctions) {

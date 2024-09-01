@@ -1,12 +1,21 @@
 import { ValidateFunction } from "ajv";
 import { IEncryptedData } from "../../../shared/utils/IEncryptedData";
 import { createDecipheriv, DecipherGCM } from "node:crypto";
+import { LogFunctions } from "electron-log";
 
 const DECODER: TextDecoder = new TextDecoder();
 // The tag is the last 16 bytes of the encrypted data
 const TAG_LENGTH = 16;
 
-export const decryptJSON = <T>(encryptedData: IEncryptedData, JSONValidator: ValidateFunction<T>, AESKey: Buffer): T => {
+export const decryptJSON = <T>(
+  encryptedData: IEncryptedData,
+  JSONValidator: ValidateFunction<T>,
+  AESKey: Buffer,
+  logger: LogFunctions,
+  dataTypeToLog: string
+): T => {
+  logger.debug(`Decrypting ${dataTypeToLog}.`);
+
   const IV: Buffer = Buffer.from(encryptedData.iv);
   const ENCRYPTED_DATA: Buffer = Buffer.from(encryptedData.data);
 

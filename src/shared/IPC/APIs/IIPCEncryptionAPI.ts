@@ -1,4 +1,6 @@
+import { IPCAPIResponse } from "../IPCAPIResponse";
+
 export interface IIPCEncryptionAPI {
-  getMainProcessPublicRSAKeyDER: () => ArrayBuffer;
-  sendRendererProcessWrappedAESKey: (rendererProcessWrappedAESKey: ArrayBuffer) => Promise<boolean>;
+  getMainProcessPublicRSAKeyDER: () => IPCAPIResponse<ArrayBuffer>;
+  sendRendererProcessWrappedAESKey: (rendererProcessWrappedAESKey: ArrayBuffer) => Promise<IPCAPIResponse>;
 }

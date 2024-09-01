@@ -6,7 +6,7 @@ import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 import { createJSONValidateFunction, readConfigJSON, writeConfigJSON } from "./utils/config/config";
 import { JSONSchemaType } from "ajv/dist/types/json-schema";
 import { ValidateFunction } from "ajv";
-import { IPCEncryptionIPCChannel, UserAccountManagerIPCChannel } from "./utils/IPC/IPCChannels";
+import { IPCEncryptionAPIIPCChannel, UserAPIIPCChannel } from "./utils/IPC/IPCChannels";
 import { UserAccountManager } from "./user/UserAccountManager";
 import { UserStorageConfig } from "./user/storage/utils";
 import { UserStorageType } from "./user/storage/UserStorageType";
@@ -23,10 +23,12 @@ import { testAESKey } from "./utils/encryption/testAESKey";
 import { insertLineBreaks } from "../shared/utils/insertNewLines";
 import { bufferToArrayBuffer } from "./utils/typeConversions/bufferToArrayBuffer";
 import { decryptJSON } from "./utils/encryption/decryptJSON";
-import { IEncryptedBaseNewUserData } from "../shared/user/IEncryptedBaseNewUserData";
-import { ICurrentlyLoggedInUser } from "../shared/user/ICurrentlyLoggedInUser";
-import { IUserLoginCredentials, USER_LOGIN_CREDENTIALS_JSON_SCHEMA } from "../shared/user/IUserLoginCredentials";
-import { IEncryptedUserLoginCredentials } from "../shared/user/IEncryptedUserLoginCredentials";
+import { IEncryptedBaseNewUserData } from "../shared/user/encrypted/IEncryptedBaseNewUserData";
+import { ICurrentlySignedInUser } from "../shared/user/ICurrentlySignedInUser";
+import { IUserSignInCredentials, USER_SIGN_IN_CREDENTIALS_JSON_SCHEMA } from "../shared/user/IUserSignInCredentials";
+import { IEncryptedUserSignInCredentials } from "../shared/user/encrypted/IEncryptedUserSignInCredentials";
+import { IPCAPIResponse } from "../shared/IPC/IPCAPIResponse";
+import { IPCAPIResponseStatus } from "../shared/IPC/IPCAPIResponseStatus";
 
 export interface AppConfig {
   window: {
@@ -53,6 +55,7 @@ export class App {
   private readonly IPCUserAPILogger: LogFunctions = log.scope("main-ipc-user-api");
   private readonly IPCEncryptionAPILogger: LogFunctions = log.scope("main-ipc-encryption-api");
   private readonly userAccountManagerLogger: LogFunctions = log.scope("main-user-account-manager");
+  private readonly userStorageLogger: LogFunctions = log.scope("main-user-storage");
 
   // Config
   private readonly CONFIG_DIR_PATH: string = resolve(join(app.getAppPath(), "config"));
@@ -130,11 +133,17 @@ export class App {
 
   // IPC API handlers
   private readonly IPC_ENCRYPTION_API_HANDLERS: MainProcessIPCAPIHandlers<IIPCEncryptionAPI> = {
-    handleGetMainProcessPublicRSAKeyDER: (): ArrayBuffer => {
+    handleGetMainProcessPublicRSAKeyDER: (): IPCAPIResponse<ArrayBuffer> => {
       this.IPCEncryptionAPILogger.debug("Received main process public RSA key request.");
-      return bufferToArrayBuffer(this.MAIN_PROCESS_PUBLIC_RSA_KEY_DER);
+      try {
+        return { status: IPCAPIResponseStatus.SUCCESS, data: bufferToArrayBuffer(this.MAIN_PROCESS_PUBLIC_RSA_KEY_DER) };
+      } catch (err: unknown) {
+        const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+        this.IPCUserAPILogger.error(`Could not get main process public RSA key (DER): ${ERROR_MESSAGE}!`);
+        return { status: IPCAPIResponseStatus.INTERNAL_ERROR, error: "An internal error occurred" };
+      }
     },
-    handleSendRendererProcessWrappedAESKey: async (rendererProcessWrappedAESKey: ArrayBuffer): Promise<boolean> => {
+    handleSendRendererProcessWrappedAESKey: async (rendererProcessWrappedAESKey: ArrayBuffer): Promise<IPCAPIResponse> => {
       this.IPCEncryptionAPILogger.debug("Received renderer process AES key.");
       this.IPCEncryptionAPILogger.silly(
         `RSA-wrapped AES key received:\n${insertLineBreaks(Buffer.from(rendererProcessWrappedAESKey).toString("base64"))}\n.`
@@ -161,126 +170,140 @@ export class App {
         // ...then extract it to its corresponding variable...
         this.rendererProcessAESKey = Buffer.from(await webcrypto.subtle.exportKey("raw", RENDERER_PROCESS_UNWRAPPED_AES_KEY));
         // ...and check its validity
-        const IS_RENDERER_PROCESS_AES_KEY_VALID: boolean = testAESKey(this.rendererProcessAESKey, this.IPCEncryptionAPILogger);
-
-        // Return the result of the async operation
-        this.IPCEncryptionAPILogger.debug(`AES key validity: ${IS_RENDERER_PROCESS_AES_KEY_VALID.toString()}.`);
-        return IS_RENDERER_PROCESS_AES_KEY_VALID;
+        if (!testAESKey(this.rendererProcessAESKey, this.IPCEncryptionAPILogger)) {
+          throw new Error("AES key failed test");
+        }
+        return { status: IPCAPIResponseStatus.SUCCESS };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-        this.IPCEncryptionAPILogger.error(`Failed to unwrap or validate AES key: ${ERROR_MESSAGE}.`);
-        return false;
+        this.IPCEncryptionAPILogger.error(`Failed to unwrap or validate AES key: ${ERROR_MESSAGE}!`);
+        return { status: IPCAPIResponseStatus.INTERNAL_ERROR, error: "Failed encryption key validation" };
       }
     }
   };
 
   private readonly USER_API_HANDLERS: MainProcessIPCAPIHandlers<IUserAPI> = {
-    handleIsStorageAvailable: (): boolean => {
-      this.IPCUserAPILogger.debug("Received user storage availability status request.");
-      const IS_STORAGE_AVAILABLE: boolean = this.userAccountManager.isStorageAvailable();
-      this.IPCUserAPILogger.debug(`Sending ${IS_STORAGE_AVAILABLE.toString()}.`);
-      return IS_STORAGE_AVAILABLE;
-    },
-    handleOnUserStorageAvailabilityChange: (isAvailable: boolean): void => {
-      this.IPCUserAPILogger.debug(`Sending to window user storage availability after change. Storage available: ${isAvailable.toString()}.`);
-      if (this.window === null) {
-        this.IPCUserAPILogger.debug('Window is "null". No-op.');
-        return;
-      }
-      this.window.webContents.send(UserAccountManagerIPCChannel.onUserStorageAvailabilityChange, isAvailable);
-    },
-    handleIsUsernameAvailable: (username: string): boolean => {
-      this.IPCUserAPILogger.debug("Received username availability status request.");
-      if (!this.userAccountManager.isStorageAvailable()) {
-        this.IPCUserAPILogger.error("User storage not available. Cannot determine username availability.");
-        return false;
-      }
-      return this.userAccountManager.isUsernameAvailable(username);
-    },
-    handleRegister: (encryptedBaseNewUserData: IEncryptedBaseNewUserData): boolean => {
-      this.IPCUserAPILogger.debug(`Received new user registration request.`);
-      if (!this.userAccountManager.isStorageAvailable()) {
-        this.IPCUserAPILogger.error("User storage not available. Cannot register new user.");
-        return false;
-      }
-      if (this.rendererProcessAESKey === null) {
-        this.IPCUserAPILogger.error("Renderer process AES key is null. Cannot register new user.");
-        return false;
-      }
+    handleSignUp: (encryptedBaseNewUserData: IEncryptedBaseNewUserData): IPCAPIResponse<boolean> => {
+      this.IPCUserAPILogger.debug(`Received sign up request.`);
       try {
-        this.IPCUserAPILogger.debug("Decrypting base new user data.");
+        if (this.rendererProcessAESKey === null) {
+          throw new Error("Null renderer process AES encryption key");
+        }
         const BASE_NEW_USER_DATA: IBaseNewUserData = decryptJSON<IBaseNewUserData>(
           encryptedBaseNewUserData,
           this.BASE_NEW_USER_DATA_VALIDATE_FUNCTION,
-          this.rendererProcessAESKey
+          this.rendererProcessAESKey,
+          this.IPCUserAPILogger,
+          "base new user data"
         );
-        if (!this.userAccountManager.isBaseNewUserDataValid(BASE_NEW_USER_DATA)) {
-          this.IPCUserAPILogger.error("Invalid base new user data. Cannot register new user.");
-          return false;
-        }
-        try {
-          const SECURED_NEW_USER_DATA: ISecuredNewUserData = this.userAccountManager.secureBaseNewUserData(BASE_NEW_USER_DATA);
-          this.IPCUserAPILogger.silly(`Secured new user data: ${JSON.stringify(SECURED_NEW_USER_DATA)}.`);
-          return this.userAccountManager.registerUser(SECURED_NEW_USER_DATA, true);
-        } catch (err: unknown) {
-          const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-          this.IPCUserAPILogger.error(`Could not register new user: ${ERROR_MESSAGE}!`);
-          return false;
-        }
+        const SECURED_NEW_USER_DATA: ISecuredNewUserData = this.userAccountManager.secureBaseNewUserData(BASE_NEW_USER_DATA);
+        return {
+          status: IPCAPIResponseStatus.SUCCESS,
+          data: this.userAccountManager.signUpUser(SECURED_NEW_USER_DATA)
+        };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-        this.IPCUserAPILogger.error(`Could not decrypt base new user data: ${ERROR_MESSAGE}!`);
-        return false;
+        this.IPCUserAPILogger.error(`Could not sign up user: ${ERROR_MESSAGE}!`);
+        return { status: IPCAPIResponseStatus.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
-    handleGetUserCount: (): number => {
+    handleSignIn: (encryptedUserSignInCredentials: IEncryptedUserSignInCredentials): IPCAPIResponse<boolean> => {
+      this.IPCUserAPILogger.debug("Received sign in request.");
+      try {
+        if (this.rendererProcessAESKey === null) {
+          throw new Error("Null renderer process AES key.");
+        }
+        const DECRYPTED_USER_SIGN_IN_CREDENTIALS: IUserSignInCredentials = decryptJSON<IUserSignInCredentials>(
+          encryptedUserSignInCredentials,
+          this.USER_SIGN_IN_CREDENTIALS_VALIDATE_FUNCTION,
+          this.rendererProcessAESKey,
+          this.IPCUserAPILogger,
+          "user sign in credentials"
+        );
+        return { status: IPCAPIResponseStatus.SUCCESS, data: this.userAccountManager.signInUser(DECRYPTED_USER_SIGN_IN_CREDENTIALS) };
+      } catch (err: unknown) {
+        const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+        this.IPCUserAPILogger.error(`Could not sign in user: ${ERROR_MESSAGE}!`);
+        return { status: IPCAPIResponseStatus.INTERNAL_ERROR, error: "An internal error occurred" };
+      }
+    },
+    handleSignOut: (): IPCAPIResponse => {
+      this.IPCUserAPILogger.debug("Received sign out request.");
+      try {
+        this.userAccountManager.signOutUser();
+        return { status: IPCAPIResponseStatus.SUCCESS };
+      } catch (err: unknown) {
+        const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+        this.IPCUserAPILogger.error(`Could not sign out user: ${ERROR_MESSAGE}!`);
+        return { status: IPCAPIResponseStatus.INTERNAL_ERROR, error: "An internal error occurred" };
+      }
+    },
+    handleIsStorageAvailable: (): IPCAPIResponse<boolean> => {
+      this.IPCUserAPILogger.debug("Received user storage availability status request.");
+      try {
+        const IS_STORAGE_AVAILABLE: boolean = this.userAccountManager.isUserStorageAvailable();
+        this.IPCUserAPILogger.debug(`User storage available: ${IS_STORAGE_AVAILABLE.toString()}.`);
+        return { status: IPCAPIResponseStatus.SUCCESS, data: IS_STORAGE_AVAILABLE };
+      } catch (err: unknown) {
+        const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+        this.IPCUserAPILogger.error(`Could not get user storage availability: ${ERROR_MESSAGE}!`);
+        return { status: IPCAPIResponseStatus.INTERNAL_ERROR, error: "An internal error occurred" };
+      }
+    },
+    handleIsUsernameAvailable: (username: string): IPCAPIResponse<boolean> => {
+      this.IPCUserAPILogger.debug("Received username availability status request.");
+      try {
+        return { status: IPCAPIResponseStatus.SUCCESS, data: this.userAccountManager.isUsernameAvailable(username) };
+      } catch (err: unknown) {
+        const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+        this.IPCUserAPILogger.error(`Could not get username availability: ${ERROR_MESSAGE}!`);
+        return { status: IPCAPIResponseStatus.INTERNAL_ERROR, error: "An internal error occurred" };
+      }
+    },
+    handleGetUserCount: (): IPCAPIResponse<number> => {
       this.IPCUserAPILogger.debug("Received user count request.");
-      if (!this.userAccountManager.isStorageAvailable()) {
-        this.IPCUserAPILogger.error("User storage not available. Cannot get user count.");
-        return -1;
+      try {
+        return { status: IPCAPIResponseStatus.SUCCESS, data: this.userAccountManager.getUserCount() };
+      } catch (err: unknown) {
+        const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+        this.IPCUserAPILogger.error(`Could not get user count: ${ERROR_MESSAGE}!`);
+        return { status: IPCAPIResponseStatus.INTERNAL_ERROR, error: "An internal error occurred" };
       }
-      return this.userAccountManager.getUserCount();
     },
-    handleLogin: (encryptedLoginCredentials: IEncryptedUserLoginCredentials): boolean => {
-      this.IPCUserAPILogger.debug("Received user login request.");
-      if (!this.userAccountManager.isStorageAvailable()) {
-        this.IPCUserAPILogger.error("User storage not available. Cannot login user.");
-        return false;
+    handleGetCurrentlySignedInUser: (): IPCAPIResponse<ICurrentlySignedInUser | null> => {
+      this.IPCUserAPILogger.debug("Received currently signed in user request.");
+      try {
+        return { status: IPCAPIResponseStatus.SUCCESS, data: this.userAccountManager.getCurrentlySignedInUser() };
+      } catch (err: unknown) {
+        const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+        this.IPCUserAPILogger.error(`Could not get currently signed in user: ${ERROR_MESSAGE}!`);
+        return { status: IPCAPIResponseStatus.INTERNAL_ERROR, error: "An internal error occurred" };
       }
-      if (this.rendererProcessAESKey === null) {
-        this.IPCUserAPILogger.error("Renderer process AES key is null. Cannot login user.");
-        return false;
-      }
-      if (this.userAccountManager.isAnyUserLoggedIn()) {
-        this.IPCUserAPILogger.error("A user is already logged in. Cannot login user.");
-        return false;
-      }
-      const DECRYPTED_USER_LOGIN_CREDENTIALS: IUserLoginCredentials = decryptJSON<IUserLoginCredentials>(
-        encryptedLoginCredentials,
-        this.USER_LOGIN_CREDENTIALS_VALIDATE_FUNCTION,
-        this.rendererProcessAESKey
-      );
-      return this.userAccountManager.loginUser(DECRYPTED_USER_LOGIN_CREDENTIALS);
     },
-    handleOnCurrentlyLoggedInUserChange: (newLoggedInUser: ICurrentlyLoggedInUser | null): void => {
-      this.IPCUserAPILogger.debug(
-        `Sending to window currently logged in user after change. New logged in user: ${
-          newLoggedInUser === null ? "null" : JSON.stringify(newLoggedInUser, null, 2)
-        }.`
-      );
+    sendUserStorageAvailabilityChange: (isAvailable: boolean): void => {
+      this.IPCUserAPILogger.debug(`Sending window user storage availability after change: ${isAvailable.toString()}.`);
       if (this.window === null) {
         this.IPCUserAPILogger.debug('Window is "null". No-op.');
         return;
       }
-      this.window.webContents.send(UserAccountManagerIPCChannel.onCurrentlyLoggedInUserChange, newLoggedInUser);
+      this.window.webContents.send(UserAPIIPCChannel.onUserStorageAvailabilityChange, isAvailable);
+    },
+    sendCurrentlySignedInUserChange: (newSignedInUser: ICurrentlySignedInUser | null): void => {
+      this.IPCUserAPILogger.debug(`Sending window currently signed in user after change: ${JSON.stringify(newSignedInUser, null, 2)}.`);
+      if (this.window === null) {
+        this.IPCUserAPILogger.debug('Window is "null". No-op.');
+        return;
+      }
+      this.window.webContents.send(UserAPIIPCChannel.onCurrentlySignedInUserChange, newSignedInUser);
     }
   };
 
   // User account manager
   private userAccountManager: UserAccountManager = new UserAccountManager(
-    this.USER_API_HANDLERS.handleOnCurrentlyLoggedInUserChange,
-    this.USER_API_HANDLERS.handleOnUserStorageAvailabilityChange,
-    this.userAccountManagerLogger
+    this.USER_API_HANDLERS.sendCurrentlySignedInUserChange,
+    this.USER_API_HANDLERS.sendUserStorageAvailabilityChange,
+    this.userAccountManagerLogger,
+    this.userStorageLogger
   );
 
   private readonly USER_STORAGE_CONFIG: UserStorageConfig = {
@@ -293,9 +316,9 @@ export class App {
   private readonly BASE_NEW_USER_DATA_VALIDATE_FUNCTION: ValidateFunction<IBaseNewUserData> =
     createJSONValidateFunction<IBaseNewUserData>(BASE_NEW_USER_DATA_JSON_SCHEMA);
 
-  // User login credentials validator
-  private readonly USER_LOGIN_CREDENTIALS_VALIDATE_FUNCTION: ValidateFunction<IUserLoginCredentials> =
-    createJSONValidateFunction<IUserLoginCredentials>(USER_LOGIN_CREDENTIALS_JSON_SCHEMA);
+  // User sign in credentials validator
+  private readonly USER_SIGN_IN_CREDENTIALS_VALIDATE_FUNCTION: ValidateFunction<IUserSignInCredentials> =
+    createJSONValidateFunction<IUserSignInCredentials>(USER_SIGN_IN_CREDENTIALS_JSON_SCHEMA);
 
   // Timeouts
   private updateWindowPositionConfigTimeout: null | NodeJS.Timeout = null;
@@ -615,9 +638,9 @@ export class App {
     this.appLogger.info("App will quit.");
     this.appLogger.debug("Unregistering all global shortcuts.");
     globalShortcut.unregisterAll();
-    if (this.userAccountManager.isStorageAvailable()) {
-      this.appLogger.info(`Closing "${this.userAccountManager.getStorageType()}" user storage.`);
-      const IS_USER_STORAGE_CLOSED: boolean = this.userAccountManager.closeStorage();
+    if (this.userAccountManager.isUserStorageAvailable()) {
+      this.appLogger.info(`Closing "${this.userAccountManager.getUserStorageType()}" user storage.`);
+      const IS_USER_STORAGE_CLOSED: boolean = this.userAccountManager.closeUserStorage();
       this.appLogger.debug(IS_USER_STORAGE_CLOSED ? "Closed user storage." : "Could not close user storage.");
     } else {
       this.appLogger.debug("No initialised user storage.");
@@ -628,12 +651,12 @@ export class App {
 
   private openUserStorage(): boolean {
     this.userAccountManagerLogger.debug("Opening user storage.");
-    if (this.userAccountManager.isStorageAvailable()) {
+    if (this.userAccountManager.isUserStorageAvailable()) {
       this.userAccountManagerLogger.debug("User storage already opened.");
       return false;
     }
     try {
-      this.userAccountManager.openStorage(this.USER_STORAGE_CONFIG);
+      this.userAccountManager.openUserStorage(this.USER_STORAGE_CONFIG);
       return true;
     } catch (err: unknown) {
       const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
@@ -650,30 +673,39 @@ export class App {
 
   private registerIPCEncryptionAPIIPCHandlers(): void {
     this.IPCLogger.debug("Registering IPC Encryption API IPC handlers.");
-    ipcMain.on(IPCEncryptionIPCChannel.getMainProcessPublicRSAKeyDER, (event: IpcMainEvent) => {
+    ipcMain.on(IPCEncryptionAPIIPCChannel.getMainProcessPublicRSAKeyDER, (event: IpcMainEvent): void => {
       event.returnValue = this.IPC_ENCRYPTION_API_HANDLERS.handleGetMainProcessPublicRSAKeyDER();
     });
-    ipcMain.handle(IPCEncryptionIPCChannel.sendRendererProcessWrappedAESKey, (_: IpcMainInvokeEvent, rendererProcessWrappedAESKey: ArrayBuffer) => {
-      return this.IPC_ENCRYPTION_API_HANDLERS.handleSendRendererProcessWrappedAESKey(rendererProcessWrappedAESKey);
-    });
+    ipcMain.handle(
+      IPCEncryptionAPIIPCChannel.sendRendererProcessWrappedAESKey,
+      (_: IpcMainInvokeEvent, rendererProcessWrappedAESKey: ArrayBuffer): IPCAPIResponse | Promise<IPCAPIResponse> => {
+        return this.IPC_ENCRYPTION_API_HANDLERS.handleSendRendererProcessWrappedAESKey(rendererProcessWrappedAESKey);
+      }
+    );
   }
 
   private registerUserAPIIPCHandlers(): void {
     this.IPCLogger.debug("Registering User API IPC handlers.");
-    ipcMain.on(UserAccountManagerIPCChannel.isStorageAvailable, (event: IpcMainEvent) => {
+    ipcMain.on(UserAPIIPCChannel.isStorageAvailable, (event: IpcMainEvent): void => {
       event.returnValue = this.USER_API_HANDLERS.handleIsStorageAvailable();
     });
-    ipcMain.on(UserAccountManagerIPCChannel.isUsernameAvailable, (event: IpcMainEvent, username: string) => {
+    ipcMain.on(UserAPIIPCChannel.isUsernameAvailable, (event: IpcMainEvent, username: string): void => {
       event.returnValue = this.USER_API_HANDLERS.handleIsUsernameAvailable(username);
     });
-    ipcMain.on(UserAccountManagerIPCChannel.register, (event: IpcMainEvent, encryptedBaseNewUserData: IEncryptedBaseNewUserData) => {
-      event.returnValue = this.USER_API_HANDLERS.handleRegister(encryptedBaseNewUserData);
+    ipcMain.on(UserAPIIPCChannel.signUp, (event: IpcMainEvent, encryptedBaseNewUserData: IEncryptedBaseNewUserData): void => {
+      event.returnValue = this.USER_API_HANDLERS.handleSignUp(encryptedBaseNewUserData);
     });
-    ipcMain.on(UserAccountManagerIPCChannel.getUserCount, (event: IpcMainEvent) => {
+    ipcMain.on(UserAPIIPCChannel.getUserCount, (event: IpcMainEvent): void => {
       event.returnValue = this.USER_API_HANDLERS.handleGetUserCount();
     });
-    ipcMain.on(UserAccountManagerIPCChannel.login, (event: IpcMainEvent, encryptedLoginCredentials: IEncryptedUserLoginCredentials) => {
-      event.returnValue = this.USER_API_HANDLERS.handleLogin(encryptedLoginCredentials);
+    ipcMain.on(UserAPIIPCChannel.signIn, (event: IpcMainEvent, encryptedUserSignInCredentials: IEncryptedUserSignInCredentials): void => {
+      event.returnValue = this.USER_API_HANDLERS.handleSignIn(encryptedUserSignInCredentials);
+    });
+    ipcMain.on(UserAPIIPCChannel.signOut, (event: IpcMainEvent): void => {
+      event.returnValue = this.USER_API_HANDLERS.handleSignOut();
+    });
+    ipcMain.on(UserAPIIPCChannel.getCurrentlySignedInUser, (event: IpcMainEvent): void => {
+      event.returnValue = this.USER_API_HANDLERS.handleGetCurrentlySignedInUser();
     });
   }
 }

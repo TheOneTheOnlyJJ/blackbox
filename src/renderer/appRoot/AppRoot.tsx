@@ -1,23 +1,33 @@
 import { FC, useCallback, useEffect, useState } from "react";
 import { appLogger, IPCLogger } from "../utils/loggers";
-import { Outlet, useLocation, Location } from "react-router-dom";
+import { Outlet, useLocation, Location, useNavigate, NavigateFunction } from "react-router-dom";
 import { AppRootContext } from "./AppRootContext";
 import { arrayBufferToBase64 } from "../utils/typeConversions/arrayBufferToBase64";
 import { insertLineBreaks } from "../../shared/utils/insertNewLines";
-import { ICurrentlyLoggedInUser } from "../../shared/user/ICurrentlyLoggedInUser";
+import { ICurrentlySignedInUser } from "../../shared/user/ICurrentlySignedInUser";
+import { IPCAPIResponse } from "../../shared/IPC/IPCAPIResponse";
+import { IPCAPIResponseStatus } from "../../shared/IPC/IPCAPIResponseStatus";
 
 const AppRoot: FC = () => {
-  // TODO: Add suspense "Waiting for secure connection" screen
+  // General
   const location: Location = useLocation();
+  const navigate: NavigateFunction = useNavigate();
+  // Encryption
   const [rendererProcessAESKey, setRendererProcessAESKey] = useState<CryptoKey | null>(null);
-  const [currentlyLoggedInUser, setCurrentlyLoggedInUser] = useState<ICurrentlyLoggedInUser | null>(null);
-  const [isUserStorageAvailable, setIsUserStorageAvailable] = useState<boolean>(window.userAPI.isStorageAvailable());
+  // User
+  const [isUserStorageAvailable, setIsUserStorageAvailable] = useState<boolean>(false);
+  const [currentlySignedInUser, setCurrentlySignedInUser] = useState<ICurrentlySignedInUser | null>(null);
 
   const generateRendererProcessAESEncryptionKey = useCallback(async (): Promise<void> => {
+    appLogger.debug("Generating renderer process AES key.");
     appLogger.debug("Getting main process public RSA key.");
-    const MAIN_PROCESS_PUBLIC_RSA_KEY_DER: ArrayBuffer = window.IPCEncryptionAPI.getMainProcessPublicRSAKeyDER();
+    const GET_MAIN_PROCESS_PUBLIC_RSA_KEY_DER_RESPONSE: IPCAPIResponse<ArrayBuffer> = window.IPCEncryptionAPI.getMainProcessPublicRSAKeyDER();
+    if (GET_MAIN_PROCESS_PUBLIC_RSA_KEY_DER_RESPONSE.status !== IPCAPIResponseStatus.SUCCESS) {
+      // TODO: RAISE ERROR DIALOG
+      return;
+    }
+    const MAIN_PROCESS_PUBLIC_RSA_KEY_DER: ArrayBuffer = GET_MAIN_PROCESS_PUBLIC_RSA_KEY_DER_RESPONSE.data;
     appLogger.debug(`Got main process public RSA key:\n${insertLineBreaks(arrayBufferToBase64(MAIN_PROCESS_PUBLIC_RSA_KEY_DER))}.`);
-
     // Import the main process public RSA key in the WebCryptoAPI CryptoKey format
     const MAIN_PROCESS_PUBLIC_RSA_KEY: CryptoKey = await window.crypto.subtle.importKey(
       "spki",
@@ -29,7 +39,6 @@ const AppRoot: FC = () => {
       false,
       ["encrypt", "wrapKey"]
     );
-
     // Generate the renderer process AES key...
     const RENDERER_PROCESS_AES_KEY: CryptoKey = await window.crypto.subtle.generateKey(
       {
@@ -41,9 +50,7 @@ const AppRoot: FC = () => {
     );
     // ...and set it as Root state
     setRendererProcessAESKey(RENDERER_PROCESS_AES_KEY);
-
     appLogger.debug("Renderer process AES key generated succesfully. Wrapping it with the main process public RSA key.");
-
     // Wrap the generated key with the main process' public RSA key...
     const WRAPPED_RENDERER_PROCESS_AES_KEY: ArrayBuffer = await window.crypto.subtle.wrapKey(
       "raw",
@@ -55,13 +62,8 @@ const AppRoot: FC = () => {
     );
     appLogger.silly(`RSA-wrapped AES key:\n${insertLineBreaks(arrayBufferToBase64(WRAPPED_RENDERER_PROCESS_AES_KEY))}\n.`);
     // ...and send it to the main process
-    const IS_WRAPPED_RENDERER_PROCESS_AES_KEY_VALID: boolean = await window.IPCEncryptionAPI.sendRendererProcessWrappedAESKey(
-      WRAPPED_RENDERER_PROCESS_AES_KEY
-    );
-    if (IS_WRAPPED_RENDERER_PROCESS_AES_KEY_VALID) {
-      appLogger.debug("Main process successfully validated renderer process AES key.");
-    } else {
-      appLogger.error("Main process could not validate renderer process AES key!");
+    if ((await window.IPCEncryptionAPI.sendRendererProcessWrappedAESKey(WRAPPED_RENDERER_PROCESS_AES_KEY)).status !== IPCAPIResponseStatus.SUCCESS) {
+      // TODO: RAISE ERROR DIALOG
     }
   }, [setRendererProcessAESKey]);
 
@@ -70,9 +72,23 @@ const AppRoot: FC = () => {
     appLogger.debug(`Navigated to: "${location.pathname}".`);
   }, [location]);
 
+  // Navigate on sign in and sign out
   useEffect((): void => {
+    appLogger.debug(`Currently signed in user state changed: ${JSON.stringify(currentlySignedInUser, null, 2)}.`);
+    if (currentlySignedInUser === null) {
+      navigate("/");
+    } else {
+      navigate(`users/${currentlySignedInUser.id}/dashboard`);
+    }
+  }, [currentlySignedInUser, navigate]);
+
+  // Log user storage availability changes
+  useEffect((): void => {
+    appLogger.debug(`Storage available: ${isUserStorageAvailable.toString()}.`);
+  }, [isUserStorageAvailable]);
+
+  useEffect((): (() => void) => {
     appLogger.info("Rendering Root component.");
-    appLogger.debug("Generating renderer process AES key.");
     generateRendererProcessAESEncryptionKey()
       .then(
         (): void => {
@@ -87,17 +103,39 @@ const AppRoot: FC = () => {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
         appLogger.error(`Failed to generate renderer process AES key: ${ERROR_MESSAGE}.`);
       });
-    appLogger.debug(`User storage availability status: ${isUserStorageAvailable.toString()}.`);
-    // Monitor changes to currently logged in user
-    window.userAPI.onCurrentlyLoggedInUserChange((newLoggedInUser: ICurrentlyLoggedInUser | null): void => {
-      IPCLogger.debug(`Received new currently logged in user event. New currently logged in user: ${JSON.stringify(newLoggedInUser, null, 2)}.`);
-      setCurrentlyLoggedInUser(newLoggedInUser);
-    });
+    const IS_USER_STORAGE_AVAILABLE_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.isStorageAvailable();
+    if (IS_USER_STORAGE_AVAILABLE_RESPONSE.status !== IPCAPIResponseStatus.SUCCESS) {
+      // TODO: RAISE ERROR DIALOG
+      setIsUserStorageAvailable(false);
+    } else {
+      setIsUserStorageAvailable(IS_USER_STORAGE_AVAILABLE_RESPONSE.data);
+    }
+    const GET_CURRENTLY_SIGNED_IN_USER_RESPONSE: IPCAPIResponse<ICurrentlySignedInUser | null> = window.userAPI.getCurrentlySignedInUser();
+    if (GET_CURRENTLY_SIGNED_IN_USER_RESPONSE.status !== IPCAPIResponseStatus.SUCCESS) {
+      // TODO: RAISE ERROR DIALOG
+      setCurrentlySignedInUser(null);
+    } else {
+      setCurrentlySignedInUser(GET_CURRENTLY_SIGNED_IN_USER_RESPONSE.data);
+    }
+    // Monitor changes to currently signed in user
+    const REMOVE_ON_CURRENTLY_SIGNED_IN_USER_CHANGE_LISTENER: () => void = window.userAPI.onCurrentlySignedInUserChange(
+      (newSignedInUser: ICurrentlySignedInUser | null): void => {
+        IPCLogger.debug("Received new currently signed in user event.");
+        setCurrentlySignedInUser(newSignedInUser);
+      }
+    );
     // Monitor changes to user storage availability status
-    window.userAPI.onUserStorageAvailabilityChange((isAvailable: boolean): void => {
-      IPCLogger.debug(`Received user storage availability status change event. Storage available: ${isAvailable.toString()}.`);
-      setIsUserStorageAvailable(isAvailable);
-    });
+    const REMOVE_ON_USER_STORAGE_AVAILABILITY_CHANGE_LISTENER: () => void = window.userAPI.onUserStorageAvailabilityChange(
+      (isAvailable: boolean): void => {
+        IPCLogger.debug("Received user storage availability status change event.");
+        setIsUserStorageAvailable(isAvailable);
+      }
+    );
+    return () => {
+      appLogger.debug("Removing app root event listeners.");
+      REMOVE_ON_CURRENTLY_SIGNED_IN_USER_CHANGE_LISTENER();
+      REMOVE_ON_USER_STORAGE_AVAILABILITY_CHANGE_LISTENER();
+    };
   }, []);
 
   return (
@@ -105,7 +143,7 @@ const AppRoot: FC = () => {
       context={
         {
           rendererProcessAESKey: rendererProcessAESKey,
-          currentlyLoggedInUser: currentlyLoggedInUser,
+          currentlySignedInUser: currentlySignedInUser,
           isUserStorageAvailable: isUserStorageAvailable
         } satisfies AppRootContext
       }

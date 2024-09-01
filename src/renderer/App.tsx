@@ -1,9 +1,10 @@
 import { FC } from "react";
+import CssBaseline from "@mui/material/CssBaseline/CssBaseline";
 import { createHashRouter, RouterProvider } from "react-router-dom";
 import AppRoot from "./appRoot/AppRoot";
-import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
-import CssBaseline from "@mui/material/CssBaseline/CssBaseline";
+import SignInPage from "./pages/SignInPage";
+import SignUpPage from "./pages/SignUpPage";
+import AccountDashboardPage from "./pages/AccountDashboardPage";
 
 const APP_ROUTER = createHashRouter([
   {
@@ -12,11 +13,15 @@ const APP_ROUTER = createHashRouter([
     children: [
       {
         index: true,
-        element: <LoginPage />
+        element: <SignInPage />
       },
       {
-        path: "register",
-        element: <RegisterPage />
+        path: "signup",
+        element: <SignUpPage />
+      },
+      {
+        path: "users/:userId/dashboard",
+        element: <AccountDashboardPage />
       }
     ]
   }

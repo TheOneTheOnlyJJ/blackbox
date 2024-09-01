@@ -1,14 +1,16 @@
-export enum IPCEncryptionIPCChannel {
-  getMainProcessPublicRSAKeyDER = "IPCEncryption:getMainProcessPublicRSAKeyDER",
-  sendRendererProcessWrappedAESKey = "IPCEncryption:sendRendererProcessWrappedAESKey"
+export enum IPCEncryptionAPIIPCChannel {
+  getMainProcessPublicRSAKeyDER = "IPCEncryptionAPI:getMainProcessPublicRSAKeyDER",
+  sendRendererProcessWrappedAESKey = "IPCEncryptionAPI:sendRendererProcessWrappedAESKey"
 }
 
-export enum UserAccountManagerIPCChannel {
-  isStorageAvailable = "userAccountManager:isStorageAvailable",
-  onUserStorageAvailabilityChange = "userAccountManager:onUserStorageAvailabilityChange",
-  isUsernameAvailable = "userAccountManager:isUsernameAvailable",
-  register = "userAccountManager:register",
-  getUserCount = "userAccountManager:getUserCount",
-  login = "userAccountManager:login",
-  onCurrentlyLoggedInUserChange = "userAccountManager:onCurrentlyLoggedInUserChange"
+export enum UserAPIIPCChannel {
+  isStorageAvailable = "userAPI:isStorageAvailable",
+  onUserStorageAvailabilityChange = "userAPI:onUserStorageAvailabilityChange",
+  isUsernameAvailable = "userAPI:isUsernameAvailable",
+  signUp = "userAPI:signUp",
+  getUserCount = "userAPI:getUserCount",
+  signIn = "userAPI:signIn",
+  signOut = "userAPI:signOut",
+  getCurrentlySignedInUser = "userAPI:getCurrentlySignedInUser",
+  onCurrentlySignedInUserChange = "userAPI:onCurrentlySignedInUserChange"
 }

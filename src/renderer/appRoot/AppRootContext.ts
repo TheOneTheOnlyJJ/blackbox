@@ -1,9 +1,9 @@
 import { useOutletContext } from "react-router-dom";
-import { ICurrentlyLoggedInUser } from "../../shared/user/ICurrentlyLoggedInUser";
+import { ICurrentlySignedInUser } from "../../shared/user/ICurrentlySignedInUser";
 
 export interface AppRootContext {
   rendererProcessAESKey: CryptoKey | null;
-  currentlyLoggedInUser: ICurrentlyLoggedInUser | null;
+  currentlySignedInUser: ICurrentlySignedInUser | null;
   isUserStorageAvailable: boolean;
 }
 
