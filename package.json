@@ -28,6 +28,7 @@
     "better-sqlite3": "^11.1.2",
     "electron-log": "^5.1.7",
     "inflection": "^3.0.0",
+    "notistack": "^3.0.1",
     "react-router-dom": "^6.26.0"
   },
   "devDependencies": {

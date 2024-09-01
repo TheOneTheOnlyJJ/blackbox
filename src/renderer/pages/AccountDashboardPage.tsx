@@ -7,6 +7,7 @@ import { NavigateFunction, useNavigate, useParams } from "react-router-dom";
 import { AppRootContext, useAppRootContext } from "../appRoot/AppRootContext";
 import { IPCAPIResponse } from "../../shared/IPC/IPCAPIResponse";
 import { IPCAPIResponseStatus } from "../../shared/IPC/IPCAPIResponseStatus";
+import { enqueueSnackbar } from "notistack";
 
 export interface AccountDashboardPageParams extends Record<string, string> {
   userId: string;
@@ -19,8 +20,10 @@ const AccountDashboardPage: FC = () => {
   const handleSignOutButtonClick = useCallback((): void => {
     appLogger.debug("Sign out button clicked!");
     const SIGN_OUT_RESPONSE: IPCAPIResponse = window.userAPI.signOut();
-    if (SIGN_OUT_RESPONSE.status !== IPCAPIResponseStatus.SUCCESS) {
-      // TODO: RIASE ERROR DIALOG
+    if (SIGN_OUT_RESPONSE.status === IPCAPIResponseStatus.SUCCESS) {
+      enqueueSnackbar({ message: "Signed out." });
+    } else {
+      enqueueSnackbar({ message: "Sign out error.", variant: "error" });
     }
   }, [navigate]);
 

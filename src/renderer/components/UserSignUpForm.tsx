@@ -16,6 +16,7 @@ import { IUserSignInCredentials } from "../../shared/user/IUserSignInCredentials
 import { IEncryptedUserSignInCredentials } from "../../shared/user/encrypted/IEncryptedUserSignInCredentials";
 import { IPCAPIResponse } from "../../shared/IPC/IPCAPIResponse";
 import { IPCAPIResponseStatus } from "../../shared/IPC/IPCAPIResponseStatus";
+import { enqueueSnackbar } from "notistack";
 
 const MUIForm = withTheme<IFormNewUserData>(Theme);
 
@@ -75,13 +76,13 @@ const UserSignUpForm: FC = () => {
     (data: IChangeEvent<IFormNewUserData>): void => {
       appLogger.debug("Submitted user sign up form.");
       if (data.formData === undefined) {
-        // TODO: RAISE ERROR DIALOG
         appLogger.error("Undefined sign up form data. No-op.");
+        enqueueSnackbar({ message: "Missing form data.", variant: "error" });
         return;
       }
       if (appRootContext.rendererProcessAESKey === null) {
-        // TODO: RAISE ERROR DIALOG
         appLogger.error("Null AES encryption key. Cannot encrypt base new user data. No-op.");
+        enqueueSnackbar({ message: "Missing encryption key.", variant: "error" });
         return;
       }
       // Extract base new user data from form
@@ -96,13 +97,14 @@ const UserSignUpForm: FC = () => {
             appLogger.debug("Done encrypting base new user data.");
             const SIGN_UP_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.signUp(encryptedBaseNewUserData);
             if (SIGN_UP_RESPONSE.status !== IPCAPIResponseStatus.SUCCESS) {
-              // TODO: RAISE ERROR DIALOG
+              enqueueSnackbar({ message: "Sign up error.", variant: "error" });
               return;
             }
             if (SIGN_UP_RESPONSE.data) {
               appLogger.info(`Sign up successful for new user "${BASE_NEW_USER_DATA.username}".`);
               if (appRootContext.rendererProcessAESKey === null) {
                 appLogger.debug("Null AES encryption key. Cannot encrypt new user sign in credentials. No-op.");
+                enqueueSnackbar({ message: "Missing encryption key.", variant: "error" });
                 return;
               }
               // Extract sign in credentials from base new user data
@@ -119,19 +121,19 @@ const UserSignUpForm: FC = () => {
                     encryptedUserSignInCredentials = encryptedNewUserSignInCredentials;
                   },
                   (reason: unknown): void => {
-                    // TODO: RAISE ERROR DIALOG
                     const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
                     appLogger.error(
                       `Could not encrypt new user sign in credentials for new user "${BASE_NEW_USER_DATA.username}". Reason: ${REASON_MESSAGE}.`
                     );
                     encryptedUserSignInCredentials = null;
+                    enqueueSnackbar({ message: "Credentials encryption error.", variant: "error" });
                   }
                 )
                 .catch((err: unknown): void => {
-                  // TODO: RAISE ERROR DIALOG
                   const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
                   appLogger.error(`Could not encrypt new user sign in credentials for new user "${BASE_NEW_USER_DATA.username}". ${ERROR_MESSAGE}.`);
                   encryptedUserSignInCredentials = null;
+                  enqueueSnackbar({ message: "Credentials encryption error.", variant: "error" });
                 })
                 .finally((): void => {
                   appLogger.debug("Opening successful user sign up dialog.");
@@ -146,22 +148,23 @@ const UserSignUpForm: FC = () => {
                     userCount: userCount,
                     encryptedNewUserSignInCredentials: encryptedUserSignInCredentials
                   });
+                  enqueueSnackbar({ message: "Signed up." });
                 });
             } else {
-              // TODO: RAISE ERROR SDIALOG
               appLogger.info(`Could not signup new user "${BASE_NEW_USER_DATA.username}".`);
+              enqueueSnackbar({ message: "Sign up error.", variant: "error" });
             }
           },
           (reason: unknown): void => {
-            // TODO: RAISE ERROR DIALOG
             const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
             appLogger.error(`Could not encrypt base new user data for new user "${BASE_NEW_USER_DATA.username}". Reason: ${REASON_MESSAGE}.`);
+            enqueueSnackbar({ message: "Account data encryption error.", variant: "error" });
           }
         )
         .catch((err: unknown): void => {
-          // TODO: RAISE ERROR DIALOG
           const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
           appLogger.error(`Could not encrypt base new user data for new user "${BASE_NEW_USER_DATA.username}". ${ERROR_MESSAGE}.`);
+          enqueueSnackbar({ message: "Account data encryption error.", variant: "error" });
         });
     },
     [appRootContext.rendererProcessAESKey, setSuccessfulUserSignUpDialogProps]

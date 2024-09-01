@@ -7,6 +7,12 @@ import { insertLineBreaks } from "../../shared/utils/insertNewLines";
 import { ICurrentlySignedInUser } from "../../shared/user/ICurrentlySignedInUser";
 import { IPCAPIResponse } from "../../shared/IPC/IPCAPIResponse";
 import { IPCAPIResponseStatus } from "../../shared/IPC/IPCAPIResponseStatus";
+import { SnackbarProvider } from "notistack";
+
+export interface IOpenNotificationSnackbarProps {
+  autoHideDuration?: number;
+  message: string;
+}
 
 const AppRoot: FC = () => {
   // General
@@ -139,15 +145,22 @@ const AppRoot: FC = () => {
   }, []);
 
   return (
-    <Outlet
-      context={
-        {
-          rendererProcessAESKey: rendererProcessAESKey,
-          currentlySignedInUser: currentlySignedInUser,
-          isUserStorageAvailable: isUserStorageAvailable
-        } satisfies AppRootContext
-      }
-    />
+    <>
+      <SnackbarProvider
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        maxSnack={1 /* Adhering to Material Design guidelines */}
+        autoHideDuration={5_000}
+      />
+      <Outlet
+        context={
+          {
+            rendererProcessAESKey: rendererProcessAESKey,
+            currentlySignedInUser: currentlySignedInUser,
+            isUserStorageAvailable: isUserStorageAvailable
+          } satisfies AppRootContext
+        }
+      />
+    </>
   );
 };
 

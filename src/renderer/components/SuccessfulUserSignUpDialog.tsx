@@ -14,6 +14,7 @@ import { IEncryptedUserSignInCredentials } from "../../shared/user/encrypted/IEn
 import { appLogger } from "../utils/loggers";
 import { IPCAPIResponse } from "../../shared/IPC/IPCAPIResponse";
 import { IPCAPIResponseStatus } from "../../shared/IPC/IPCAPIResponseStatus";
+import { enqueueSnackbar } from "notistack";
 
 export interface SuccessfulUserSignUpDialogProps {
   open: boolean;
@@ -37,16 +38,26 @@ const SuccessfulUserRegistrationDialog: FC<SuccessfulUserSignUpDialogProps> = (p
     appLogger.debug("Start exploring button clicked.");
     if (props.encryptedNewUserSignInCredentials === null) {
       appLogger.debug("Null encrypted new user sign in credentials. No-op.");
+      enqueueSnackbar({ message: "Missing encrypted sign in credentials.", variant: "error" });
       return;
     }
     appLogger.debug("Attempting sign in.");
-    const SIGN_IN_RESPONSE: IPCAPIResponse = window.userAPI.signIn(props.encryptedNewUserSignInCredentials);
+    const SIGN_IN_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.signIn(props.encryptedNewUserSignInCredentials);
+    // Automatic sign in should always work for a newly signed up account
     if (SIGN_IN_RESPONSE.status === IPCAPIResponseStatus.SUCCESS) {
-      appLogger.debug("Sign in successful.");
-      setSignInError(undefined);
+      if (SIGN_IN_RESPONSE.data) {
+        appLogger.debug("Sign in successful.");
+        setSignInError(undefined);
+        enqueueSnackbar({ message: "Signed in." });
+      } else {
+        appLogger.debug("Sign in unsuccessful.");
+        setSignInError("Automatic sign in unsuccessful");
+        enqueueSnackbar({ message: "Automatic sign in unsuccessful.", variant: "error" });
+      }
     } else {
-      appLogger.debug("Sign in unsuccessful.");
+      appLogger.debug("Sign in error.");
       setSignInError(SIGN_IN_RESPONSE.error);
+      enqueueSnackbar({ message: "Sign in error.", variant: "error" });
     }
   }, [props.encryptedNewUserSignInCredentials, setSignInError]);
 
@@ -63,7 +74,7 @@ const SuccessfulUserRegistrationDialog: FC<SuccessfulUserSignUpDialogProps> = (p
         >
           <CheckCircleOutlineOutlinedIcon color="success" sx={{ fontSize: 100 }} />
           <Typography variant="h5" sx={{ marginBottom: "1vw" }}>
-            Sign Up successful
+            Sign up successful
           </Typography>
           <Alert severity="success" sx={{ marginBottom: "1vw" }}>
             <AlertTitle>Congratulations {props.username}!</AlertTitle>

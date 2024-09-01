@@ -15,7 +15,8 @@ export default tseslint.config(
   reactPlugin.configs.flat.recommended,
   {
     rules: {
-      "react/react-in-jsx-scope": "off"
+      "react/react-in-jsx-scope": "off",
+      "react/prop-types": "off"
     },
     settings: {
       react: {

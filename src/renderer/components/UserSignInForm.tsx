@@ -14,6 +14,7 @@ import { appLogger } from "../utils/loggers";
 import { IPCAPIResponseStatus } from "../../shared/IPC/IPCAPIResponseStatus";
 import Alert from "@mui/material/Alert/Alert";
 import AlertTitle from "@mui/material/AlertTitle/AlertTitle";
+import { enqueueSnackbar } from "notistack";
 
 const MUIForm = withTheme<IUserSignInCredentials>(Theme);
 
@@ -42,13 +43,13 @@ const UserSignInForm: FC = () => {
   const handleSubmit = useCallback(
     (data: IChangeEvent<IUserSignInCredentials>): void => {
       if (data.formData === undefined) {
-        // TODO: RAISE ERROR DIALOG
         appLogger.error("Undefined sign in form data. No-op.");
+        enqueueSnackbar({ message: "Missing form data.", variant: "error" });
         return;
       }
       if (appRootContext.rendererProcessAESKey === null) {
-        // TODO: RAISE ERROR DIALOG
         appLogger.error("Null AES encryption key. Cannot encrypt sign in user credentials. No-op.");
+        enqueueSnackbar({ message: "Missing encryption key.", variant: "error" });
         return;
       }
       const USERNAME: string = data.formData.username;
@@ -58,20 +59,26 @@ const UserSignInForm: FC = () => {
             appLogger.debug("Done encrypting user sign in credentials.");
             const SIGN_IN_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.signIn(encryptedUserSignInCredentials);
             if (SIGN_IN_RESPONSE.status === IPCAPIResponseStatus.SUCCESS) {
-              setWasSignInSuccessful(SIGN_IN_RESPONSE.data);
+              if (SIGN_IN_RESPONSE.data) {
+                setWasSignInSuccessful(true);
+                enqueueSnackbar({ message: "Signed in." });
+              } else {
+                setWasSignInSuccessful(false);
+              }
+            } else {
+              enqueueSnackbar({ message: "Sign in error.", variant: "error" });
             }
-            // TODO: RAISE ERROR DIALOG
           },
           (reason: unknown): void => {
-            // TODO: RAISE ERROR DIALOG
             const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
             appLogger.error(`Could not encrypt user sign in credentials for user "${USERNAME}". Reason: ${REASON_MESSAGE}.`);
+            enqueueSnackbar({ message: "Credentials encryption error.", variant: "error" });
           }
         )
         .catch((err: unknown): void => {
-          // TODO: RAISE ERROR DIALOG
           const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
           appLogger.error(`Could not encrypt user sign in credentials for user "${USERNAME}". ${ERROR_MESSAGE}.`);
+          enqueueSnackbar({ message: "Credentials encryption error.", variant: "error" });
         });
     },
     [appRootContext.rendererProcessAESKey, setWasSignInSuccessful]
