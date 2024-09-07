@@ -82,7 +82,11 @@ const AppRoot: FC = () => {
   useEffect((): void => {
     appLogger.debug(`Currently signed in user state changed: ${JSON.stringify(currentlySignedInUser, null, 2)}.`);
     if (currentlySignedInUser === null) {
-      navigate("/");
+      if (location.pathname !== "/") {
+        navigate("/");
+      } else {
+        appLogger.debug('Already at "/". No need to navigate.');
+      }
     } else {
       navigate(`users/${currentlySignedInUser.id}/dashboard`);
     }
