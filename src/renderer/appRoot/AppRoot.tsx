@@ -102,7 +102,11 @@ const AppRoot: FC = () => {
     // Most important thing upon sign out is navigating outside the account environment
     appLogger.debug("Sign out and navigate invoked.");
     appLogger.debug('Performing optimistic navigation to "/".');
-    navigate("/");
+    if (location.pathname !== "/") {
+      navigate("/");
+    } else {
+      appLogger.debug('Already at "/". No need to navigate.');
+    }
     appLogger.debug("Signing out.");
     const SIGN_OUT_RESPONSE: IPCAPIResponse = window.userAPI.signOut();
     if (SIGN_OUT_RESPONSE.status === IPCAPIResponseStatus.SUCCESS) {
