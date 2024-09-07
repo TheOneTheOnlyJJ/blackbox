@@ -5,6 +5,7 @@ import AppRoot from "./appRoot/AppRoot";
 import SignInPage from "./pages/SignInPage";
 import SignUpPage from "./pages/SignUpPage";
 import AccountDashboardPage from "./pages/AccountDashboardPage";
+import ForbiddenPage from "./pages/ForbiddenPage";
 
 const APP_ROUTER = createHashRouter([
   {
@@ -22,6 +23,10 @@ const APP_ROUTER = createHashRouter([
       {
         path: "users/:userId/dashboard",
         element: <AccountDashboardPage />
+      },
+      {
+        path: "forbidden/:reason",
+        element: <ForbiddenPage />
       }
     ]
   }

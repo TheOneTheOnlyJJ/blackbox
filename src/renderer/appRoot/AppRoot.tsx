@@ -7,7 +7,7 @@ import { insertLineBreaks } from "../../shared/utils/insertNewLines";
 import { ICurrentlySignedInUser } from "../../shared/user/ICurrentlySignedInUser";
 import { IPCAPIResponse } from "../../shared/IPC/IPCAPIResponse";
 import { IPCAPIResponseStatus } from "../../shared/IPC/IPCAPIResponseStatus";
-import { SnackbarProvider } from "notistack";
+import { enqueueSnackbar, SnackbarProvider } from "notistack";
 
 export interface IOpenNotificationSnackbarProps {
   autoHideDuration?: number;
@@ -29,7 +29,7 @@ const AppRoot: FC = () => {
     appLogger.debug("Getting main process public RSA key.");
     const GET_MAIN_PROCESS_PUBLIC_RSA_KEY_DER_RESPONSE: IPCAPIResponse<ArrayBuffer> = window.IPCEncryptionAPI.getMainProcessPublicRSAKeyDER();
     if (GET_MAIN_PROCESS_PUBLIC_RSA_KEY_DER_RESPONSE.status !== IPCAPIResponseStatus.SUCCESS) {
-      // TODO: RAISE ERROR DIALOG
+      enqueueSnackbar({ message: "Error getting main process public RSA encryption key.", variant: "error" });
       return;
     }
     const MAIN_PROCESS_PUBLIC_RSA_KEY_DER: ArrayBuffer = GET_MAIN_PROCESS_PUBLIC_RSA_KEY_DER_RESPONSE.data;
@@ -69,7 +69,7 @@ const AppRoot: FC = () => {
     appLogger.silly(`RSA-wrapped AES key:\n${insertLineBreaks(arrayBufferToBase64(WRAPPED_RENDERER_PROCESS_AES_KEY))}\n.`);
     // ...and send it to the main process
     if ((await window.IPCEncryptionAPI.sendRendererProcessWrappedAESKey(WRAPPED_RENDERER_PROCESS_AES_KEY)).status !== IPCAPIResponseStatus.SUCCESS) {
-      // TODO: RAISE ERROR DIALOG
+      enqueueSnackbar({ message: "Error sending AES encryption ket to main process.", variant: "error" });
     }
   }, [setRendererProcessAESKey]);
 
@@ -78,7 +78,7 @@ const AppRoot: FC = () => {
     appLogger.debug(`Navigated to: "${location.pathname}".`);
   }, [location]);
 
-  // Navigate on sign in and sign out
+  // Navigate on sign in/out
   useEffect((): void => {
     appLogger.debug(`Currently signed in user state changed: ${JSON.stringify(currentlySignedInUser, null, 2)}.`);
     if (currentlySignedInUser === null) {
@@ -90,11 +90,30 @@ const AppRoot: FC = () => {
 
   // Log user storage availability changes
   useEffect((): void => {
-    appLogger.debug(`Storage available: ${isUserStorageAvailable.toString()}.`);
+    appLogger.debug(`User storage availability changed: ${isUserStorageAvailable.toString()}.`);
   }, [isUserStorageAvailable]);
+
+  // Sign out function with optimistic navigation, in case the main process does not respond
+  const signOutAndNavigate = useCallback((): void => {
+    // Most important thing upon sign out is navigating outside the account environment
+    appLogger.debug("Sign out and navigate invoked.");
+    appLogger.debug('Performing optimistic navigation to "/".');
+    navigate("/");
+    appLogger.debug("Signing out.");
+    const SIGN_OUT_RESPONSE: IPCAPIResponse = window.userAPI.signOut();
+    if (SIGN_OUT_RESPONSE.status === IPCAPIResponseStatus.SUCCESS) {
+      enqueueSnackbar({ message: "Signed out." });
+    } else {
+      enqueueSnackbar({ message: "Sign out error.", variant: "error" });
+    }
+  }, [navigate]);
 
   useEffect((): (() => void) => {
     appLogger.info("Rendering Root component.");
+    // DELETE
+    // setTimeout(() => {
+    //   setCurrentlySignedInUser(null);
+    // }, 1_000);
     generateRendererProcessAESEncryptionKey()
       .then(
         (): void => {
@@ -111,14 +130,14 @@ const AppRoot: FC = () => {
       });
     const IS_USER_STORAGE_AVAILABLE_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.isStorageAvailable();
     if (IS_USER_STORAGE_AVAILABLE_RESPONSE.status !== IPCAPIResponseStatus.SUCCESS) {
-      // TODO: RAISE ERROR DIALOG
+      enqueueSnackbar({ message: "Error getting user storage availability.", variant: "error" });
       setIsUserStorageAvailable(false);
     } else {
       setIsUserStorageAvailable(IS_USER_STORAGE_AVAILABLE_RESPONSE.data);
     }
     const GET_CURRENTLY_SIGNED_IN_USER_RESPONSE: IPCAPIResponse<ICurrentlySignedInUser | null> = window.userAPI.getCurrentlySignedInUser();
     if (GET_CURRENTLY_SIGNED_IN_USER_RESPONSE.status !== IPCAPIResponseStatus.SUCCESS) {
-      // TODO: RAISE ERROR DIALOG
+      enqueueSnackbar({ message: "Error getting currently signed in user.", variant: "error" });
       setCurrentlySignedInUser(null);
     } else {
       setCurrentlySignedInUser(GET_CURRENTLY_SIGNED_IN_USER_RESPONSE.data);
@@ -156,7 +175,8 @@ const AppRoot: FC = () => {
           {
             rendererProcessAESKey: rendererProcessAESKey,
             currentlySignedInUser: currentlySignedInUser,
-            isUserStorageAvailable: isUserStorageAvailable
+            isUserStorageAvailable: isUserStorageAvailable,
+            signOutAndNavigate: signOutAndNavigate
           } satisfies AppRootContext
         }
       />

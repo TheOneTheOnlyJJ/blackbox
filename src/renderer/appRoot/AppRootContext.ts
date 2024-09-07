@@ -5,6 +5,7 @@ export interface AppRootContext {
   rendererProcessAESKey: CryptoKey | null;
   currentlySignedInUser: ICurrentlySignedInUser | null;
   isUserStorageAvailable: boolean;
+  signOutAndNavigate: () => void;
 }
 
 export const useAppRootContext = (): AppRootContext => {
