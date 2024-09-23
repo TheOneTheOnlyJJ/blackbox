@@ -15,7 +15,7 @@ import { adjustWindowBounds } from "./utils/window/adjustWindowBounds";
 import { IpcMainEvent } from "electron";
 import { IUserAPI } from "../shared/IPC/APIs/IUserAPI";
 import { MainProcessIPCAPIHandlers } from "./utils/IPC/MainProcessIPCAPIHandlers";
-import { BASE_NEW_USER_DATA_JSON_SCHEMA, IBaseNewUserData } from "../shared/user/IBaseNewUserData";
+import { IBaseNewUserData } from "../shared/user/IBaseNewUserData";
 import { generateKeyPairSync, webcrypto } from "node:crypto";
 import { IIPCEncryptionAPI } from "../shared/IPC/APIs/IIPCEncryptionAPI";
 import { ISecuredNewUserData } from "./user/ISecuredNewUserData";
@@ -25,7 +25,7 @@ import { bufferToArrayBuffer } from "./utils/typeConversions/bufferToArrayBuffer
 import { decryptJSON } from "./utils/encryption/decryptJSON";
 import { IEncryptedBaseNewUserData } from "../shared/user/encrypted/IEncryptedBaseNewUserData";
 import { ICurrentlySignedInUser } from "../shared/user/ICurrentlySignedInUser";
-import { IUserSignInCredentials, USER_SIGN_IN_CREDENTIALS_JSON_SCHEMA } from "../shared/user/IUserSignInCredentials";
+import { IUserSignInCredentials } from "../shared/user/IUserSignInCredentials";
 import { IEncryptedUserSignInCredentials } from "../shared/user/encrypted/IEncryptedUserSignInCredentials";
 import { IPCAPIResponse } from "../shared/IPC/IPCAPIResponse";
 import { IPCAPIResponseStatus } from "../shared/IPC/IPCAPIResponseStatus";
@@ -191,7 +191,7 @@ export class App {
         }
         const BASE_NEW_USER_DATA: IBaseNewUserData = decryptJSON<IBaseNewUserData>(
           encryptedBaseNewUserData,
-          this.BASE_NEW_USER_DATA_VALIDATE_FUNCTION,
+          this.userAccountManager.BASE_NEW_USER_DATA_VALIDATE_FUNCTION,
           this.rendererProcessAESKey,
           this.IPCUserAPILogger,
           "base new user data"
@@ -215,7 +215,7 @@ export class App {
         }
         const DECRYPTED_USER_SIGN_IN_CREDENTIALS: IUserSignInCredentials = decryptJSON<IUserSignInCredentials>(
           encryptedUserSignInCredentials,
-          this.USER_SIGN_IN_CREDENTIALS_VALIDATE_FUNCTION,
+          this.userAccountManager.USER_SIGN_IN_CREDENTIALS_VALIDATE_FUNCTION,
           this.rendererProcessAESKey,
           this.IPCUserAPILogger,
           "user sign in credentials"
@@ -311,14 +311,6 @@ export class App {
     dbDirPath: resolve(join(app.getAppPath(), "data")),
     dbFileName: "users.sqlite"
   };
-
-  // Base new user data validator
-  private readonly BASE_NEW_USER_DATA_VALIDATE_FUNCTION: ValidateFunction<IBaseNewUserData> =
-    createJSONValidateFunction<IBaseNewUserData>(BASE_NEW_USER_DATA_JSON_SCHEMA);
-
-  // User sign in credentials validator
-  private readonly USER_SIGN_IN_CREDENTIALS_VALIDATE_FUNCTION: ValidateFunction<IUserSignInCredentials> =
-    createJSONValidateFunction<IUserSignInCredentials>(USER_SIGN_IN_CREDENTIALS_JSON_SCHEMA);
 
   // Timeouts
   private updateWindowPositionConfigTimeout: null | NodeJS.Timeout = null;

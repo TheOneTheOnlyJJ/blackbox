@@ -3,13 +3,15 @@ import { UserStorage } from "./storage/UserStorage";
 import { UserStorageConfig } from "./storage/utils";
 import { userStorageFactory } from "./storage/userStorageFactory";
 import { UserStorageType } from "./storage/UserStorageType";
-import { IBaseNewUserData } from "../../shared/user/IBaseNewUserData";
+import { BASE_NEW_USER_DATA_JSON_SCHEMA, IBaseNewUserData } from "../../shared/user/IBaseNewUserData";
 import { randomBytes, randomUUID, scryptSync, timingSafeEqual, UUID } from "node:crypto";
 import { ISecuredNewUserData } from "./ISecuredNewUserData";
 import { ICurrentlySignedInUser } from "../../shared/user/ICurrentlySignedInUser";
-import { IUserSignInCredentials } from "../../shared/user/IUserSignInCredentials";
+import { IUserSignInCredentials, USER_SIGN_IN_CREDENTIALS_JSON_SCHEMA } from "../../shared/user/IUserSignInCredentials";
 import { CurrentlySignedInUserChangeCallback, UserStorageAvailabilityChangeCallback } from "../../shared/IPC/APIs/IUserAPI";
 import { isDeepStrictEqual } from "node:util";
+import { createJSONValidateFunction } from "../utils/config/config";
+import { ValidateFunction } from "ajv";
 
 export class UserAccountManager {
   private readonly logger: LogFunctions;
@@ -23,6 +25,12 @@ export class UserAccountManager {
   private userStorage: UserStorage<UserStorageConfig> | null;
   // This is needed to let the renderer know if the user storage is available when it changes
   private onUserStorageAvailabilityChangeCallback: UserStorageAvailabilityChangeCallback;
+
+  // AJV Validate functions
+  public readonly BASE_NEW_USER_DATA_VALIDATE_FUNCTION: ValidateFunction<IBaseNewUserData> =
+    createJSONValidateFunction<IBaseNewUserData>(BASE_NEW_USER_DATA_JSON_SCHEMA);
+  public readonly USER_SIGN_IN_CREDENTIALS_VALIDATE_FUNCTION: ValidateFunction<IUserSignInCredentials> =
+    createJSONValidateFunction<IUserSignInCredentials>(USER_SIGN_IN_CREDENTIALS_JSON_SCHEMA);
 
   public constructor(
     onCurrentlySignedInUserChangeCallback: CurrentlySignedInUserChangeCallback,
