@@ -16,7 +16,7 @@ const AccountDashboardPage: FC = () => {
   const params: Readonly<Partial<AccountDashboardPageParams>> = useParams<AccountDashboardPageParams>();
   const handleSignOutButtonClick = useCallback((): void => {
     appLogger.debug("Sign out button clicked.");
-    appRootContext.signOutAndNavigate();
+    navigate("/signing-out");
   }, [navigate]);
 
   return appRootContext.currentlySignedInUser !== null ? (

@@ -1,18 +1,18 @@
 import { contextBridge, ipcRenderer, IpcRendererEvent } from "electron";
-import { IPCEncryptionAPIIPCChannel, UserAPIIPCChannel } from "../main/utils/IPC/IPCChannels";
+import { IPCTLSAPIIPCChannel, UserAPIIPCChannel } from "../main/utils/IPC/IPCChannels";
 import { CurrentlySignedInUserChangeCallback, IUserAPI, UserStorageAvailabilityChangeCallback } from "../shared/IPC/APIs/IUserAPI";
-import { IIPCEncryptionAPI } from "../shared/IPC/APIs/IIPCEncryptionAPI";
+import { IIPCTLSAPI } from "../shared/IPC/APIs/IIPCTLSAPI";
 import { ICurrentlySignedInUser } from "../shared/user/ICurrentlySignedInUser";
 import { IEncryptedUserSignInCredentials } from "../shared/user/encrypted/IEncryptedUserSignInCredentials";
 import { IEncryptedBaseNewUserData } from "../shared/user/encrypted/IEncryptedBaseNewUserData";
 import { IPCAPIResponse } from "../shared/IPC/IPCAPIResponse";
 
-const IPC_ENCRYPTION_API: IIPCEncryptionAPI = {
+const IPC_TLS_API: IIPCTLSAPI = {
   getMainProcessPublicRSAKeyDER: (): IPCAPIResponse<ArrayBuffer> => {
-    return ipcRenderer.sendSync(IPCEncryptionAPIIPCChannel.getMainProcessPublicRSAKeyDER) as IPCAPIResponse<ArrayBuffer>;
+    return ipcRenderer.sendSync(IPCTLSAPIIPCChannel.getMainProcessPublicRSAKeyDER) as IPCAPIResponse<ArrayBuffer>;
   },
   sendRendererProcessWrappedAESKey: (rendererProcessWrappedAESKey: ArrayBuffer): Promise<IPCAPIResponse> => {
-    return ipcRenderer.invoke(IPCEncryptionAPIIPCChannel.sendRendererProcessWrappedAESKey, rendererProcessWrappedAESKey) as Promise<IPCAPIResponse>;
+    return ipcRenderer.invoke(IPCTLSAPIIPCChannel.sendRendererProcessWrappedAESKey, rendererProcessWrappedAESKey) as Promise<IPCAPIResponse>;
   }
 };
 
@@ -59,6 +59,6 @@ const USER_STORAGE_API: IUserAPI = {
 };
 
 // Expose the APIs in the renderer
-contextBridge.exposeInMainWorld("IPCEncryptionAPI", IPC_ENCRYPTION_API);
+contextBridge.exposeInMainWorld("IPCTLSAPI", IPC_TLS_API);
 contextBridge.exposeInMainWorld("userAPI", USER_STORAGE_API);
 // Exposing these APIs to the global Window interface is done in the preload.d.ts file

@@ -1,6 +1,6 @@
-export enum IPCEncryptionAPIIPCChannel {
-  getMainProcessPublicRSAKeyDER = "IPCEncryptionAPI:getMainProcessPublicRSAKeyDER",
-  sendRendererProcessWrappedAESKey = "IPCEncryptionAPI:sendRendererProcessWrappedAESKey"
+export enum IPCTLSAPIIPCChannel {
+  getMainProcessPublicRSAKeyDER = "IPCTLSAPI:getMainProcessPublicRSAKeyDER",
+  sendRendererProcessWrappedAESKey = "IPCTLSAPI:sendRendererProcessWrappedAESKey"
 }
 
 export enum UserAPIIPCChannel {

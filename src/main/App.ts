@@ -6,7 +6,7 @@ import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 import { createJSONValidateFunction, readConfigJSON, writeConfigJSON } from "./utils/config/config";
 import { JSONSchemaType } from "ajv/dist/types/json-schema";
 import { ValidateFunction } from "ajv";
-import { IPCEncryptionAPIIPCChannel, UserAPIIPCChannel } from "./utils/IPC/IPCChannels";
+import { IPCTLSAPIIPCChannel, UserAPIIPCChannel } from "./utils/IPC/IPCChannels";
 import { UserAccountManager } from "./user/UserAccountManager";
 import { UserStorageConfig } from "./user/storage/utils";
 import { UserStorageType } from "./user/storage/UserStorageType";
@@ -17,7 +17,7 @@ import { IUserAPI } from "../shared/IPC/APIs/IUserAPI";
 import { MainProcessIPCAPIHandlers } from "./utils/IPC/MainProcessIPCAPIHandlers";
 import { IBaseNewUserData } from "../shared/user/IBaseNewUserData";
 import { generateKeyPairSync, webcrypto } from "node:crypto";
-import { IIPCEncryptionAPI } from "../shared/IPC/APIs/IIPCEncryptionAPI";
+import { IIPCTLSAPI } from "../shared/IPC/APIs/IIPCTLSAPI";
 import { ISecuredNewUserData } from "./user/ISecuredNewUserData";
 import { testAESKey } from "./utils/encryption/testAESKey";
 import { insertLineBreaks } from "../shared/utils/insertNewLines";
@@ -53,7 +53,7 @@ export class App {
   private readonly windowLogger: LogFunctions = log.scope("main-window");
   private readonly IPCLogger: LogFunctions = log.scope("main-ipc");
   private readonly IPCUserAPILogger: LogFunctions = log.scope("main-ipc-user-api");
-  private readonly IPCEncryptionAPILogger: LogFunctions = log.scope("main-ipc-encryption-api");
+  private readonly IPCTLSAPILogger: LogFunctions = log.scope("main-ipc-tls-api");
   private readonly userAccountManagerLogger: LogFunctions = log.scope("main-user-account-manager");
   private readonly userStorageLogger: LogFunctions = log.scope("main-user-storage");
 
@@ -132,9 +132,9 @@ export class App {
   private window: null | BrowserWindow = null;
 
   // IPC API handlers
-  private readonly IPC_ENCRYPTION_API_HANDLERS: MainProcessIPCAPIHandlers<IIPCEncryptionAPI> = {
+  private readonly IPC_TLS_API_HANDLERS: MainProcessIPCAPIHandlers<IIPCTLSAPI> = {
     handleGetMainProcessPublicRSAKeyDER: (): IPCAPIResponse<ArrayBuffer> => {
-      this.IPCEncryptionAPILogger.debug("Received main process public RSA key request.");
+      this.IPCTLSAPILogger.debug("Received main process public RSA key request.");
       try {
         return { status: IPCAPIResponseStatus.SUCCESS, data: bufferToArrayBuffer(this.MAIN_PROCESS_PUBLIC_RSA_KEY_DER) };
       } catch (err: unknown) {
@@ -144,8 +144,8 @@ export class App {
       }
     },
     handleSendRendererProcessWrappedAESKey: async (rendererProcessWrappedAESKey: ArrayBuffer): Promise<IPCAPIResponse> => {
-      this.IPCEncryptionAPILogger.debug("Received renderer process AES key.");
-      this.IPCEncryptionAPILogger.silly(
+      this.IPCTLSAPILogger.debug("Received renderer process AES key.");
+      this.IPCTLSAPILogger.silly(
         `RSA-wrapped AES key received:\n${insertLineBreaks(Buffer.from(rendererProcessWrappedAESKey).toString("base64"))}\n.`
       );
       try {
@@ -170,13 +170,13 @@ export class App {
         // ...then extract it to its corresponding variable...
         this.rendererProcessAESKey = Buffer.from(await webcrypto.subtle.exportKey("raw", RENDERER_PROCESS_UNWRAPPED_AES_KEY));
         // ...and check its validity
-        if (!testAESKey(this.rendererProcessAESKey, this.IPCEncryptionAPILogger)) {
+        if (!testAESKey(this.rendererProcessAESKey, this.IPCTLSAPILogger)) {
           throw new Error("AES key failed test");
         }
         return { status: IPCAPIResponseStatus.SUCCESS };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-        this.IPCEncryptionAPILogger.error(`Failed to unwrap or validate AES key: ${ERROR_MESSAGE}!`);
+        this.IPCTLSAPILogger.error(`Failed to unwrap or validate AES key: ${ERROR_MESSAGE}!`);
         return { status: IPCAPIResponseStatus.INTERNAL_ERROR, error: "Failed encryption key validation" };
       }
     }
@@ -659,19 +659,19 @@ export class App {
 
   private registerIPCMainHandlers(): void {
     this.IPCLogger.debug("Registering IPC API handlers.");
-    this.registerIPCEncryptionAPIIPCHandlers();
+    this.registerIPCTLSAPIIPCHandlers();
     this.registerUserAPIIPCHandlers();
   }
 
-  private registerIPCEncryptionAPIIPCHandlers(): void {
-    this.IPCLogger.debug("Registering IPC Encryption API IPC handlers.");
-    ipcMain.on(IPCEncryptionAPIIPCChannel.getMainProcessPublicRSAKeyDER, (event: IpcMainEvent): void => {
-      event.returnValue = this.IPC_ENCRYPTION_API_HANDLERS.handleGetMainProcessPublicRSAKeyDER();
+  private registerIPCTLSAPIIPCHandlers(): void {
+    this.IPCLogger.debug("Registering IPC TLS API IPC handlers.");
+    ipcMain.on(IPCTLSAPIIPCChannel.getMainProcessPublicRSAKeyDER, (event: IpcMainEvent): void => {
+      event.returnValue = this.IPC_TLS_API_HANDLERS.handleGetMainProcessPublicRSAKeyDER();
     });
     ipcMain.handle(
-      IPCEncryptionAPIIPCChannel.sendRendererProcessWrappedAESKey,
+      IPCTLSAPIIPCChannel.sendRendererProcessWrappedAESKey,
       (_: IpcMainInvokeEvent, rendererProcessWrappedAESKey: ArrayBuffer): IPCAPIResponse | Promise<IPCAPIResponse> => {
-        return this.IPC_ENCRYPTION_API_HANDLERS.handleSendRendererProcessWrappedAESKey(rendererProcessWrappedAESKey);
+        return this.IPC_TLS_API_HANDLERS.handleSendRendererProcessWrappedAESKey(rendererProcessWrappedAESKey);
       }
     );
   }

@@ -27,7 +27,7 @@ const AppRoot: FC = () => {
   const generateRendererProcessAESEncryptionKey = useCallback(async (): Promise<void> => {
     appLogger.debug("Generating renderer process AES key.");
     appLogger.debug("Getting main process public RSA key.");
-    const GET_MAIN_PROCESS_PUBLIC_RSA_KEY_DER_RESPONSE: IPCAPIResponse<ArrayBuffer> = window.IPCEncryptionAPI.getMainProcessPublicRSAKeyDER();
+    const GET_MAIN_PROCESS_PUBLIC_RSA_KEY_DER_RESPONSE: IPCAPIResponse<ArrayBuffer> = window.IPCTLSAPI.getMainProcessPublicRSAKeyDER();
     if (GET_MAIN_PROCESS_PUBLIC_RSA_KEY_DER_RESPONSE.status !== IPCAPIResponseStatus.SUCCESS) {
       enqueueSnackbar({ message: "Error getting main process public RSA encryption key.", variant: "error" });
       return;
@@ -68,7 +68,7 @@ const AppRoot: FC = () => {
     );
     appLogger.silly(`RSA-wrapped AES key:\n${insertLineBreaks(arrayBufferToBase64(WRAPPED_RENDERER_PROCESS_AES_KEY))}\n.`);
     // ...and send it to the main process
-    if ((await window.IPCEncryptionAPI.sendRendererProcessWrappedAESKey(WRAPPED_RENDERER_PROCESS_AES_KEY)).status !== IPCAPIResponseStatus.SUCCESS) {
+    if ((await window.IPCTLSAPI.sendRendererProcessWrappedAESKey(WRAPPED_RENDERER_PROCESS_AES_KEY)).status !== IPCAPIResponseStatus.SUCCESS) {
       enqueueSnackbar({ message: "Error sending AES encryption ket to main process.", variant: "error" });
     }
   }, [setRendererProcessAESKey]);
@@ -88,7 +88,7 @@ const AppRoot: FC = () => {
         appLogger.debug('Already at "/". No need to navigate.');
       }
     } else {
-      navigate(`users/${currentlySignedInUser.id}/dashboard`);
+      navigate(`dashboard/${currentlySignedInUser.id}`);
     }
   }, [currentlySignedInUser, navigate]);
 
@@ -96,25 +96,6 @@ const AppRoot: FC = () => {
   useEffect((): void => {
     appLogger.debug(`User storage availability changed: ${isUserStorageAvailable.toString()}.`);
   }, [isUserStorageAvailable]);
-
-  // Sign out function with optimistic navigation, in case the main process does not respond
-  const signOutAndNavigate = useCallback((): void => {
-    // Most important thing upon sign out is navigating outside the account environment
-    appLogger.debug("Sign out and navigate invoked.");
-    appLogger.debug('Performing optimistic navigation to "/".');
-    if (location.pathname !== "/") {
-      navigate("/");
-    } else {
-      appLogger.debug('Already at "/". No need to navigate.');
-    }
-    appLogger.debug("Signing out.");
-    const SIGN_OUT_RESPONSE: IPCAPIResponse = window.userAPI.signOut();
-    if (SIGN_OUT_RESPONSE.status === IPCAPIResponseStatus.SUCCESS) {
-      enqueueSnackbar({ message: "Signed out." });
-    } else {
-      enqueueSnackbar({ message: "Sign out error.", variant: "error" });
-    }
-  }, [navigate]);
 
   useEffect((): (() => void) => {
     appLogger.info("Rendering Root component.");
@@ -183,8 +164,7 @@ const AppRoot: FC = () => {
           {
             rendererProcessAESKey: rendererProcessAESKey,
             currentlySignedInUser: currentlySignedInUser,
-            isUserStorageAvailable: isUserStorageAvailable,
-            signOutAndNavigate: signOutAndNavigate
+            isUserStorageAvailable: isUserStorageAvailable
           } satisfies AppRootContext
         }
       />

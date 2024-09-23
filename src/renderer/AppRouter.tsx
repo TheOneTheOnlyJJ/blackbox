@@ -5,6 +5,7 @@ import SignInPage from "./pages/SignInPage";
 import SignUpPage from "./pages/SignUpPage";
 import AccountDashboardPage from "./pages/AccountDashboardPage";
 import ForbiddenPage from "./pages/ForbiddenPage";
+import SigningOutPage from "./pages/SigningOutPage";
 
 const APP_ROUTER = createHashRouter([
   {
@@ -20,7 +21,11 @@ const APP_ROUTER = createHashRouter([
         element: <SignUpPage />
       },
       {
-        path: "users/:userId/dashboard",
+        path: "signing-out",
+        element: <SigningOutPage />
+      },
+      {
+        path: "dashboard/:userId",
         element: <AccountDashboardPage />
       },
       {

@@ -1,9 +1,9 @@
-import { IIPCEncryptionAPI } from "../shared/IPC/APIs/IIPCEncryptionAPI";
+import { IIPCTLSAPI } from "../shared/IPC/APIs/IIPCTLSAPI";
 import { IUserAPI } from "../shared/IPC/APIs/IUserAPI";
 
 declare global {
   interface Window {
-    IPCEncryptionAPI: IIPCEncryptionAPI;
+    IPCTLSAPI: IIPCTLSAPI;
     userAPI: IUserAPI;
   }
 }
