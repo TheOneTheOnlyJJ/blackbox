@@ -486,20 +486,16 @@ export class App {
     });
 
     // TEMPORARY
-    // setInterval(() => {
-    //   if (this.userAccountManager.isStorageAvailable()) {
-    //     this.appLogger.warn("CLOSING USER STORAGE");
-    //     this.userAccountManager.closeStorage();
-    //   }
-    // }, 10_000);
-    // setTimeout(() => {
-    //   setInterval(() => {
-    //     if (!this.userAccountManager.isStorageAvailable()) {
-    //       this.appLogger.warn("OPENING USER STORAGE");
-    //       this.userAccountManager.initialiseStorage(this.USER_STORAGE_CONFIG);
-    //     }
-    //   }, 10_000);
-    // }, 5_000);
+    setInterval(() => {
+      this.appLogger.warn("SIGNING OUT");
+      this.userAccountManager.signOutUser();
+    }, 10_000);
+    setTimeout(() => {
+      setInterval(() => {
+        this.appLogger.warn("SIGNING IN");
+        this.userAccountManager.signInUser({ username: "testing", password: "testing" });
+      }, 10_000);
+    }, 5_000);
   }
 
   private onWindowMove(): void {

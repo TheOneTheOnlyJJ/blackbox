@@ -1,13 +1,14 @@
 import { FC, useCallback, useEffect, useState } from "react";
-import { appLogger, IPCLogger } from "../utils/loggers";
+import { appLogger, IPCLogger } from "../../../utils/loggers";
 import { Outlet, useLocation, Location, useNavigate, NavigateFunction } from "react-router-dom";
 import { AppRootContext } from "./AppRootContext";
-import { arrayBufferToBase64 } from "../utils/typeConversions/arrayBufferToBase64";
-import { insertLineBreaks } from "../../shared/utils/insertNewLines";
-import { ICurrentlySignedInUser } from "../../shared/user/ICurrentlySignedInUser";
-import { IPCAPIResponse } from "../../shared/IPC/IPCAPIResponse";
-import { IPCAPIResponseStatus } from "../../shared/IPC/IPCAPIResponseStatus";
+import { arrayBufferToBase64 } from "../../../utils/typeConversions/arrayBufferToBase64";
+import { insertLineBreaks } from "../../../../shared/utils/insertNewLines";
+import { ICurrentlySignedInUser } from "../../../../shared/user/ICurrentlySignedInUser";
+import { IPCAPIResponse } from "../../../../shared/IPC/IPCAPIResponse";
+import { IPCAPIResponseStatus } from "../../../../shared/IPC/IPCAPIResponseStatus";
 import { enqueueSnackbar, SnackbarProvider } from "notistack";
+import Box from "@mui/material/Box/Box";
 
 export interface IOpenNotificationSnackbarProps {
   autoHideDuration?: number;
@@ -88,7 +89,7 @@ const AppRoot: FC = () => {
         appLogger.debug('Already at "/". No need to navigate.');
       }
     } else {
-      navigate(`dashboard/${currentlySignedInUser.id}`);
+      navigate(`/users/${currentlySignedInUser.id}/dashboard`);
     }
   }, [currentlySignedInUser, navigate]);
 
@@ -153,7 +154,7 @@ const AppRoot: FC = () => {
   }, []);
 
   return (
-    <>
+    <Box sx={{ width: "100vw", height: "100vh" }}>
       <SnackbarProvider
         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
         maxSnack={1 /* Adhering to Material Design guidelines */}
@@ -168,7 +169,7 @@ const AppRoot: FC = () => {
           } satisfies AppRootContext
         }
       />
-    </>
+    </Box>
   );
 };
 

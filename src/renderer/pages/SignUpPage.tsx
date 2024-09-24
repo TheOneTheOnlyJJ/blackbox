@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import Box from "@mui/material/Box/Box";
 import Paper from "@mui/material/Paper/Paper";
 import Typography from "@mui/material/Typography/Typography";
-import UserSignUpForm from "../components/UserSignUpForm";
+import UserSignUpForm from "../components/forms/UserSignUpForm";
 
 const SignUpPage: FC = () => {
   return (
@@ -13,8 +13,8 @@ const SignUpPage: FC = () => {
         justifyContent: "center",
         alignItems: "center",
         flexDirection: "column",
-        width: "100vw",
-        height: "100vh",
+        width: "100%",
+        height: "100%",
         backgroundImage: "linear-gradient(to top, #a18cd1 0%, #fbc2eb 100%);"
       }}
     >

@@ -4,7 +4,7 @@ import Box from "@mui/material/Box/Box";
 import Typography from "@mui/material/Typography/Typography";
 import Paper from "@mui/material/Paper/Paper";
 import { FC } from "react";
-import UserSignInForm from "../components/UserSignInForm";
+import UserSignInForm from "../components/forms/UserSignInForm";
 
 const SignInPage: FC = () => {
   return (
@@ -14,8 +14,8 @@ const SignInPage: FC = () => {
         justifyContent: "center",
         alignItems: "center",
         flexDirection: "column",
-        width: "100vw",
-        height: "100vh",
+        width: "100%",
+        height: "100%",
         backgroundImage: `linear-gradient(-45deg, #FFC796 0%, #FF6B95 100%)`
       }}
     >

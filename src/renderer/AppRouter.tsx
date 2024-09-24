@@ -1,11 +1,12 @@
 import { FC } from "react";
 import { createHashRouter, RouterProvider } from "react-router-dom";
-import AppRoot from "./appRoot/AppRoot";
+import AppRoot from "./components/roots/appRoot/AppRoot";
 import SignInPage from "./pages/SignInPage";
 import SignUpPage from "./pages/SignUpPage";
 import AccountDashboardPage from "./pages/AccountDashboardPage";
 import ForbiddenPage from "./pages/ForbiddenPage";
 import SigningOutPage from "./pages/SigningOutPage";
+import SignedInRoot from "./components/roots/signedInRoot/SignedInRoot";
 
 const APP_ROUTER = createHashRouter([
   {
@@ -25,8 +26,14 @@ const APP_ROUTER = createHashRouter([
         element: <SigningOutPage />
       },
       {
-        path: "dashboard/:userId",
-        element: <AccountDashboardPage />
+        path: "users",
+        element: <SignedInRoot />,
+        children: [
+          {
+            path: ":userId/dashboard",
+            element: <AccountDashboardPage />
+          }
+        ]
       },
       {
         path: "forbidden/:reason",

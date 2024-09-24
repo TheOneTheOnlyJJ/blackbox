@@ -10,10 +10,10 @@ import Alert from "@mui/material/Alert/Alert";
 import AlertTitle from "@mui/material/AlertTitle/AlertTitle";
 import DialogActions from "@mui/material/DialogActions/DialogActions";
 import Button from "@mui/material/Button/Button";
-import { IEncryptedUserSignInCredentials } from "../../shared/user/encrypted/IEncryptedUserSignInCredentials";
-import { appLogger } from "../utils/loggers";
-import { IPCAPIResponse } from "../../shared/IPC/IPCAPIResponse";
-import { IPCAPIResponseStatus } from "../../shared/IPC/IPCAPIResponseStatus";
+import { IEncryptedUserSignInCredentials } from "../../../shared/user/encrypted/IEncryptedUserSignInCredentials";
+import { appLogger } from "../../utils/loggers";
+import { IPCAPIResponse } from "../../../shared/IPC/IPCAPIResponse";
+import { IPCAPIResponseStatus } from "../../../shared/IPC/IPCAPIResponseStatus";
 import { enqueueSnackbar } from "notistack";
 
 export interface SuccessfulUserSignUpDialogProps {

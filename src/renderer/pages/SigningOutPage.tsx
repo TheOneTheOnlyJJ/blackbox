@@ -27,8 +27,8 @@ const SigningOutPage: FC = () => {
         justifyContent: "center",
         alignItems: "center",
         flexDirection: "column",
-        width: "100vw",
-        height: "100vh",
+        width: "100%",
+        height: "100%",
         backgroundImage: `linear-gradient(-45deg, #FFC796 0%, #FF6B95 100%)`
       }}
     >
