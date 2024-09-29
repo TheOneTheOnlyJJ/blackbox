@@ -9,6 +9,33 @@ import IconButton from "@mui/material/IconButton/IconButton";
 import MenuIcon from "@mui/icons-material/Menu";
 import Box from "@mui/material/Box/Box";
 import { appLogger } from "../../../../renderer/utils/loggers";
+import Drawer from "@mui/material/Drawer/Drawer";
+import List from "@mui/material/List/List";
+import ListItem from "@mui/material/ListItem/ListItem";
+import ListItemButton from "@mui/material/ListItemButton/ListItemButton";
+import ListItemIcon from "@mui/material/ListItemIcon/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText/ListItemText";
+import { SvgIconComponent } from "@mui/icons-material";
+import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
+import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
+
+const DRAWER_WIDTH = 240;
+
+interface IDrawerItem {
+  name: string;
+  icon: SvgIconComponent;
+}
+
+const DRAWER_ITEMS: IDrawerItem[] = [
+  {
+    name: "Dashboard",
+    icon: DashboardOutlinedIcon
+  },
+  {
+    name: "Warehouse",
+    icon: Inventory2OutlinedIcon
+  }
+];
 
 const SignedInRoot: FC = () => {
   const appRootContext: AppRootContext = useAppRootContext();
@@ -50,9 +77,36 @@ const SignedInRoot: FC = () => {
           </Typography>
         </Toolbar>
       </AppBar>
+      <Drawer
+        variant="permanent"
+        sx={{
+          width: DRAWER_WIDTH,
+          [`& .MuiDrawer-paper`]: {
+            width: DRAWER_WIDTH,
+            top: appBarHeight // Ensure Drawer starts below AppBar
+          }
+        }}
+      >
+        <Toolbar />
+        <Box sx={{ overflow: "auto" }}>
+          <List>
+            {DRAWER_ITEMS.map((item: IDrawerItem) => (
+              <ListItem key={item.name} disablePadding>
+                <ListItemButton>
+                  <ListItemIcon>
+                    <item.icon />
+                  </ListItemIcon>
+                  <ListItemText primary={item.name} />
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+        </Box>
+      </Drawer>
       <Box
         sx={{
-          height: `calc(100vh - ${appBarHeight.toString()}px)` // Dynamic AppBar height
+          height: `calc(100vh - ${appBarHeight.toString()}px)`, // Dynamic AppBar height
+          marginLeft: `${DRAWER_WIDTH.toString()}px`
         }}
       >
         <Outlet

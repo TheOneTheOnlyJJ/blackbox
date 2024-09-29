@@ -486,16 +486,16 @@ export class App {
     });
 
     // TEMPORARY
-    setInterval(() => {
-      this.appLogger.warn("SIGNING OUT");
-      this.userAccountManager.signOutUser();
-    }, 10_000);
-    setTimeout(() => {
-      setInterval(() => {
-        this.appLogger.warn("SIGNING IN");
-        this.userAccountManager.signInUser({ username: "testing", password: "testing" });
-      }, 10_000);
-    }, 5_000);
+    // setInterval(() => {
+    //   this.appLogger.warn("SIGNING OUT");
+    //   this.userAccountManager.signOutUser();
+    // }, 10_000);
+    // setTimeout(() => {
+    //   setInterval(() => {
+    //     this.appLogger.warn("SIGNING IN");
+    //     this.userAccountManager.signInUser({ username: "testing", password: "testing" });
+    //   }, 10_000);
+    // }, 5_000);
   }
 
   private onWindowMove(): void {
