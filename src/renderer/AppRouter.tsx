@@ -7,6 +7,9 @@ import AccountDashboardPage from "./pages/AccountDashboardPage";
 import ForbiddenPage from "./pages/ForbiddenPage";
 import SigningOutPage from "./pages/SigningOutPage";
 import SignedInRoot from "./components/roots/signedInRoot/SignedInRoot";
+import StashPage from "./pages/StashPage";
+import ProfilePage from "./pages/ProfilePage";
+import SettingsPage from "./pages/SettingsPage";
 
 const APP_ROUTER = createHashRouter([
   {
@@ -26,12 +29,24 @@ const APP_ROUTER = createHashRouter([
         element: <SigningOutPage />
       },
       {
-        path: "users",
+        path: "users/:userId",
         element: <SignedInRoot />,
         children: [
           {
-            path: ":userId/dashboard",
+            path: "dashboard",
             element: <AccountDashboardPage />
+          },
+          {
+            path: "stash",
+            element: <StashPage />
+          },
+          {
+            path: "profile",
+            element: <ProfilePage />
+          },
+          {
+            path: "settings",
+            element: <SettingsPage />
           }
         ]
       },

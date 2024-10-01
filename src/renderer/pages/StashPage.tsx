@@ -1,19 +1,13 @@
 import Box from "@mui/material/Box/Box";
 import Typography from "@mui/material/Typography/Typography";
 import { FC, useEffect } from "react";
-import { useParams } from "react-router-dom";
 import { SignedInRootContext, useSignedInRootContext } from "../components/roots/signedInRoot/SignedInRootContext";
 
-export interface AccountDashboardPageParams extends Record<string, string> {
-  userId: string;
-}
-
-const AccountDashboardPage: FC = () => {
+const StashPage: FC = () => {
   const signedInRootContext: SignedInRootContext = useSignedInRootContext();
-  const params: Readonly<Partial<AccountDashboardPageParams>> = useParams<AccountDashboardPageParams>();
 
   useEffect(() => {
-    signedInRootContext.setAppBarTitle("Dashboard");
+    signedInRootContext.setAppBarTitle("Stash");
   }, []);
 
   return (
@@ -25,14 +19,12 @@ const AccountDashboardPage: FC = () => {
         flexDirection: "column",
         width: "100%",
         height: "100%",
-        background: "pink"
+        background: "lime"
       }}
     >
-      <Typography variant="h5">
-        Account Dashboard for user: {signedInRootContext.currentlySignedInUser.username} with ID: {params.userId}
-      </Typography>
+      <Typography variant="h5">Stash</Typography>
     </Box>
   );
 };
 
-export default AccountDashboardPage;
+export default StashPage;

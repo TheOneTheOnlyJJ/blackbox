@@ -1,41 +1,13 @@
-import Typography from "@mui/material/Typography/Typography";
-import { FC, MutableRefObject, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { FC, MutableRefObject, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { AppRootContext, useAppRootContext } from "../appRoot/AppRootContext";
-import AppBar from "@mui/material/AppBar/AppBar";
 import { SignedInRootContext } from "./SignedInRootContext";
-import Toolbar from "@mui/material/Toolbar/Toolbar";
-import IconButton from "@mui/material/IconButton/IconButton";
-import MenuIcon from "@mui/icons-material/Menu";
 import Box from "@mui/material/Box/Box";
 import { appLogger } from "../../../../renderer/utils/loggers";
-import Drawer from "@mui/material/Drawer/Drawer";
-import List from "@mui/material/List/List";
-import ListItem from "@mui/material/ListItem/ListItem";
-import ListItemButton from "@mui/material/ListItemButton/ListItemButton";
-import ListItemIcon from "@mui/material/ListItemIcon/ListItemIcon";
-import ListItemText from "@mui/material/ListItemText/ListItemText";
-import { SvgIconComponent } from "@mui/icons-material";
-import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
-import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
+import SignedInAppBar from "../../appBars/SignedInAppBar";
+import NavigationBar from "../../navigation/NavigationBar";
 
-const DRAWER_WIDTH = 240;
-
-interface IDrawerItem {
-  name: string;
-  icon: SvgIconComponent;
-}
-
-const DRAWER_ITEMS: IDrawerItem[] = [
-  {
-    name: "Dashboard",
-    icon: DashboardOutlinedIcon
-  },
-  {
-    name: "Warehouse",
-    icon: Inventory2OutlinedIcon
-  }
-];
+const NAVIGATION_WIDTH = 240;
 
 const SignedInRoot: FC = () => {
   const appRootContext: AppRootContext = useAppRootContext();
@@ -43,6 +15,11 @@ const SignedInRoot: FC = () => {
   const [appBarHeight, setAppBarHeight] = useState<number>(0);
   const [appBarTitle, setAppBarTitle] = useState<string>("");
   const [forbiddenMessage, setForbiddenMessage] = useState<string>("");
+  const updateAppBarHeight = useCallback(() => {
+    if (appBarRef.current) {
+      setAppBarHeight(appBarRef.current.clientHeight);
+    }
+  }, [appBarRef, setAppBarHeight]);
 
   useEffect(() => {
     appLogger.silly(`Updated App Bar height: ${appBarHeight.toString()}.`);
@@ -60,53 +37,34 @@ const SignedInRoot: FC = () => {
 
   // Measure the AppBar's height after it renders
   useLayoutEffect(() => {
-    if (appBarRef.current) {
-      setAppBarHeight(appBarRef.current.clientHeight);
-    }
-  }, []);
+    // Set initial height
+    updateAppBarHeight();
+    // Add event listener for window resize
+    window.addEventListener("resize", updateAppBarHeight);
+    // Cleanup event listener on component unmount
+    return () => {
+      window.removeEventListener("resize", updateAppBarHeight);
+    };
+  }, [updateAppBarHeight]);
 
   return appRootContext.currentlySignedInUser !== null ? (
     <>
-      <AppBar ref={appBarRef} position="static">
-        <Toolbar>
-          <IconButton size="large" edge="start" color="inherit" aria-label="menu" sx={{ mr: 2 }}>
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" component="div">
-            {appBarTitle}
-          </Typography>
-        </Toolbar>
-      </AppBar>
-      <Drawer
-        variant="permanent"
-        sx={{
-          width: DRAWER_WIDTH,
-          [`& .MuiDrawer-paper`]: {
-            width: DRAWER_WIDTH,
-            top: appBarHeight // Ensure Drawer starts below AppBar
-          }
-        }}
-      >
-        <Toolbar />
-        <Box sx={{ overflow: "auto" }}>
-          <List>
-            {DRAWER_ITEMS.map((item: IDrawerItem) => (
-              <ListItem key={item.name} disablePadding>
-                <ListItemButton>
-                  <ListItemIcon>
-                    <item.icon />
-                  </ListItemIcon>
-                  <ListItemText primary={item.name} />
-                </ListItemButton>
-              </ListItem>
-            ))}
-          </List>
-        </Box>
-      </Drawer>
+      <SignedInAppBar
+        ref={appBarRef}
+        title={appBarTitle}
+        userId={appRootContext.currentlySignedInUser.id}
+        username={appRootContext.currentlySignedInUser.username}
+      />
+      <NavigationBar userId={appRootContext.currentlySignedInUser.id} width={NAVIGATION_WIDTH} heightOffset={appBarHeight} />
       <Box
+        component="main"
+        position="fixed"
         sx={{
-          height: `calc(100vh - ${appBarHeight.toString()}px)`, // Dynamic AppBar height
-          marginLeft: `${DRAWER_WIDTH.toString()}px`
+          top: `${appBarHeight.toString()}px`, // Start right below the AppBar
+          left: `${NAVIGATION_WIDTH.toString()}px`, // Adjust for the navigation bar
+          right: 0, // Stretch to the right edge of the viewport
+          bottom: 0, // Stretch to the bottom of the viewport
+          overflow: "auto"
         }}
       >
         <Outlet
