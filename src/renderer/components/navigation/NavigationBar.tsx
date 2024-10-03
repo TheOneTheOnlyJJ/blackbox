@@ -5,12 +5,12 @@ import ListItem from "@mui/material/ListItem/ListItem";
 import ListItemButton from "@mui/material/ListItemButton/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText/ListItemText";
-import Toolbar from "@mui/material/Toolbar/Toolbar";
-import { FC } from "react";
+import { forwardRef } from "react";
 import { SvgIconComponent } from "@mui/icons-material";
 import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import { Link, useLocation } from "react-router-dom";
+import { SignedInRootContext, useSignedInRootContext } from "../roots/signedInRoot/SignedInRootContext";
 
 interface IDrawerItem {
   name: string;
@@ -32,12 +32,12 @@ const DRAWER_ITEMS: IDrawerItem[] = [
 ];
 
 export interface INavigationBarProps {
-  userId: string;
   width: number;
   heightOffset: number;
 }
 
-const NavigationBar: FC<INavigationBarProps> = (props: INavigationBarProps) => {
+const NavigationBar = forwardRef<HTMLDivElement, INavigationBarProps>(function NavigationBar(props: INavigationBarProps) {
+  const signedInRootContext: SignedInRootContext = useSignedInRootContext();
   const location = useLocation();
   return (
     <Drawer
@@ -51,15 +51,14 @@ const NavigationBar: FC<INavigationBarProps> = (props: INavigationBarProps) => {
         }
       }}
     >
-      <Toolbar />
       <Box sx={{ overflow: "auto" }}>
         <List>
           {DRAWER_ITEMS.map((item: IDrawerItem) => (
             <ListItem key={item.name} disablePadding>
               <ListItemButton
                 component={Link}
-                to={`/users/${props.userId}/${item.path}`}
-                selected={location.pathname === `/users/${props.userId}/${item.path}`}
+                to={`/users/${signedInRootContext.currentlySignedInUser.id}/${item.path}`}
+                selected={location.pathname === `/users/${signedInRootContext.currentlySignedInUser.id}/${item.path}`}
               >
                 <ListItemIcon>
                   <item.icon />
@@ -72,6 +71,6 @@ const NavigationBar: FC<INavigationBarProps> = (props: INavigationBarProps) => {
       </Box>
     </Drawer>
   );
-};
+});
 
 export default NavigationBar;

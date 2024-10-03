@@ -2,18 +2,22 @@ import Box from "@mui/material/Box/Box";
 import Typography from "@mui/material/Typography/Typography";
 import { FC, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { SignedInRootContext, useSignedInRootContext } from "../components/roots/signedInRoot/SignedInRootContext";
+import {
+  SignedInDashboardLayoutRootContext,
+  useSignedInDashboardLayoutRootContext
+} from "../components/roots/signedInDashboardLayoutRoot/SignedInDashboardLayoutRootContext";
 
 export interface AccountDashboardPageParams extends Record<string, string> {
   userId: string;
 }
 
 const AccountDashboardPage: FC = () => {
-  const signedInRootContext: SignedInRootContext = useSignedInRootContext();
+  const signedInDashboardLayoutRootContext: SignedInDashboardLayoutRootContext = useSignedInDashboardLayoutRootContext();
   const params: Readonly<Partial<AccountDashboardPageParams>> = useParams<AccountDashboardPageParams>();
 
   useEffect(() => {
-    signedInRootContext.setAppBarTitle("Dashboard");
+    signedInDashboardLayoutRootContext.setAppBarTitle("Dashboard");
+    signedInDashboardLayoutRootContext.setForbiddenLocationName("Dashboard");
   }, []);
 
   return (
@@ -29,7 +33,7 @@ const AccountDashboardPage: FC = () => {
       }}
     >
       <Typography variant="h5">
-        Account Dashboard for user: {signedInRootContext.currentlySignedInUser.username} with ID: {params.userId}
+        Account Dashboard for user: {signedInDashboardLayoutRootContext.currentlySignedInUser.username} with ID: {params.userId}
       </Typography>
     </Box>
   );

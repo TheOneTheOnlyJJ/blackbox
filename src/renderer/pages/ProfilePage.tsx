@@ -1,13 +1,17 @@
 import Box from "@mui/material/Box/Box";
 import Typography from "@mui/material/Typography/Typography";
 import { FC, useEffect } from "react";
-import { SignedInRootContext, useSignedInRootContext } from "../components/roots/signedInRoot/SignedInRootContext";
+import {
+  SignedInDashboardLayoutRootContext,
+  useSignedInDashboardLayoutRootContext
+} from "../components/roots/signedInDashboardLayoutRoot/SignedInDashboardLayoutRootContext";
 
 const ProfilePage: FC = () => {
-  const signedInRootContext: SignedInRootContext = useSignedInRootContext();
+  const signedInDashboardLayoutRootContext: SignedInDashboardLayoutRootContext = useSignedInDashboardLayoutRootContext();
 
   useEffect(() => {
-    signedInRootContext.setAppBarTitle("Profile");
+    signedInDashboardLayoutRootContext.setAppBarTitle("Profile");
+    signedInDashboardLayoutRootContext.setForbiddenLocationName("Profile");
   }, []);
 
   return (

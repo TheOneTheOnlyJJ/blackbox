@@ -10,6 +10,7 @@ import SignedInRoot from "./components/roots/signedInRoot/SignedInRoot";
 import StashPage from "./pages/StashPage";
 import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
+import SignedInDashboardLayoutRoot from "./components/roots/signedInDashboardLayoutRoot/SignedInDashboardLayoutRoot";
 
 const APP_ROUTER = createHashRouter([
   {
@@ -33,20 +34,25 @@ const APP_ROUTER = createHashRouter([
         element: <SignedInRoot />,
         children: [
           {
-            path: "dashboard",
-            element: <AccountDashboardPage />
-          },
-          {
-            path: "stash",
-            element: <StashPage />
-          },
-          {
-            path: "profile",
-            element: <ProfilePage />
-          },
-          {
-            path: "settings",
-            element: <SettingsPage />
+            element: <SignedInDashboardLayoutRoot />,
+            children: [
+              {
+                path: "dashboard",
+                element: <AccountDashboardPage />
+              },
+              {
+                path: "stash",
+                element: <StashPage />
+              },
+              {
+                path: "profile",
+                element: <ProfilePage />
+              },
+              {
+                path: "settings",
+                element: <SettingsPage />
+              }
+            ]
           }
         ]
       },

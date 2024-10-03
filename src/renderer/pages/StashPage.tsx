@@ -1,13 +1,17 @@
 import Box from "@mui/material/Box/Box";
 import Typography from "@mui/material/Typography/Typography";
 import { FC, useEffect } from "react";
-import { SignedInRootContext, useSignedInRootContext } from "../components/roots/signedInRoot/SignedInRootContext";
+import {
+  SignedInDashboardLayoutRootContext,
+  useSignedInDashboardLayoutRootContext
+} from "../components/roots/signedInDashboardLayoutRoot/SignedInDashboardLayoutRootContext";
 
 const StashPage: FC = () => {
-  const signedInRootContext: SignedInRootContext = useSignedInRootContext();
+  const signedInDashboardLayoutRootContext: SignedInDashboardLayoutRootContext = useSignedInDashboardLayoutRootContext();
 
   useEffect(() => {
-    signedInRootContext.setAppBarTitle("Stash");
+    signedInDashboardLayoutRootContext.setAppBarTitle("Stash");
+    signedInDashboardLayoutRootContext.setForbiddenLocationName("Stash");
   }, []);
 
   return (

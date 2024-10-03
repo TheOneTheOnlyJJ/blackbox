@@ -5,8 +5,7 @@ import { Dispatch, SetStateAction } from "react";
 
 export interface SignedInRootContext extends AppRootContext {
   currentlySignedInUser: ICurrentlySignedInUser;
-  appBarTitle: string;
-  setAppBarTitle: Dispatch<SetStateAction<string>>;
+  setForbiddenLocationName: Dispatch<SetStateAction<string>>;
 }
 
 export const useSignedInRootContext = (): SignedInRootContext => {

@@ -82,16 +82,19 @@ const AppRoot: FC = () => {
   // Navigate on sign in/out
   useEffect((): void => {
     appLogger.debug(`Currently signed in user state changed: ${JSON.stringify(currentlySignedInUser, null, 2)}.`);
+    let navigationPath: string;
     if (currentlySignedInUser === null) {
-      if (location.pathname !== "/") {
-        navigate("/");
-      } else {
-        appLogger.debug('Already at "/". No need to navigate.');
-      }
+      navigationPath = "/";
     } else {
-      navigate(`/users/${currentlySignedInUser.id}/dashboard`);
+      navigationPath = `/users/${currentlySignedInUser.id}/dashboard`;
     }
-  }, [currentlySignedInUser, navigate]);
+    // Wipe the history stack and navigate to the required path
+    appLogger.debug("Wiping window navigation history.");
+    window.history.replaceState({ idx: 0 }, "", navigationPath);
+    if (location.pathname !== navigationPath) {
+      navigate(navigationPath, { replace: true });
+    }
+  }, [currentlySignedInUser]);
 
   // Log user storage availability changes
   useEffect((): void => {
@@ -99,11 +102,7 @@ const AppRoot: FC = () => {
   }, [isUserStorageAvailable]);
 
   useEffect((): (() => void) => {
-    appLogger.info("Rendering Root component.");
-    // DELETE
-    // setTimeout(() => {
-    //   setCurrentlySignedInUser(null);
-    // }, 1_000);
+    appLogger.debug("Rendering App Root component.");
     generateRendererProcessAESEncryptionKey()
       .then(
         (): void => {
@@ -147,7 +146,7 @@ const AppRoot: FC = () => {
       }
     );
     return () => {
-      appLogger.debug("Removing app root event listeners.");
+      appLogger.debug("Removing App Root event listeners.");
       REMOVE_ON_CURRENTLY_SIGNED_IN_USER_CHANGE_LISTENER();
       REMOVE_ON_USER_STORAGE_AVAILABILITY_CHANGE_LISTENER();
     };
