@@ -1,4 +1,4 @@
-export enum WindowPosition {
+export enum WindowState {
   FullScreen = "fullscreen",
   Maximized = "maximized"
 }

@@ -1,8 +1,10 @@
 import { LogFunctions } from "electron-log";
-import { UserStorageConfig } from "./utils";
 import { UserStorage } from "./UserStorage";
-import { SQLiteUserStorage } from "./implementations/SQLiteUserStorage";
+import { SQLiteUserStorage, SQLiteUserStorageConfig } from "./implementations/SQLiteUserStorage";
 import { UserStorageType } from "./UserStorageType";
+
+// Union of all user storage concrete implementation configuration interfaces
+export type UserStorageConfig = SQLiteUserStorageConfig;
 
 export function userStorageFactory(config: UserStorageConfig, logger: LogFunctions): UserStorage<UserStorageConfig> {
   logger.debug(`Running user storage factory with config: ${JSON.stringify(config, null, 2)}.`);

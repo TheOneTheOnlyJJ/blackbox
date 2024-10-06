@@ -3,14 +3,11 @@ import { BrowserWindowConstructorOptions, HandlerDetails, nativeImage, shell, Wi
 import { join, resolve } from "node:path";
 import log, { LogFunctions } from "electron-log";
 import { appendFileSync, existsSync, mkdirSync } from "node:fs";
-import { createJSONValidateFunction, readConfigJSON, writeConfigJSON } from "./utils/config/config";
 import { JSONSchemaType } from "ajv/dist/types/json-schema";
-import { ValidateFunction } from "ajv";
 import { IPCTLSAPIIPCChannel, UserAPIIPCChannel } from "./utils/IPC/IPCChannels";
 import { UserAccountManager } from "./user/UserAccountManager";
-import { UserStorageConfig } from "./user/storage/utils";
 import { UserStorageType } from "./user/storage/UserStorageType";
-import { WindowPosition } from "./utils/window/WindowPosition";
+import { WindowState } from "./utils/window/WindowState";
 import { adjustWindowBounds } from "./utils/window/adjustWindowBounds";
 import { IpcMainEvent } from "electron";
 import { IUserAPI } from "../shared/IPC/APIs/IUserAPI";
@@ -29,11 +26,19 @@ import { IUserSignInCredentials } from "../shared/user/IUserSignInCredentials";
 import { IEncryptedUserSignInCredentials } from "../shared/user/encrypted/IEncryptedUserSignInCredentials";
 import { IPCAPIResponse } from "../shared/IPC/IPCAPIResponse";
 import { IPCAPIResponseStatus } from "../shared/IPC/IPCAPIResponseStatus";
+import { SettingsManager } from "./settings/SettingsManager";
+import { SettingsManagerConfig, settingsManagerFactory } from "./settings/settingsManagerFactory";
+import { SettingsManagerType } from "./settings/SettingsManagerType";
+import { UserStorageConfig } from "./user/storage/userStorageFactory";
 
-export interface AppConfig {
-  window: {
-    position: Rectangle | WindowPosition.FullScreen | WindowPosition.Maximized;
-  };
+type WindowPosition = Rectangle | WindowState.FullScreen | WindowState.Maximized;
+
+interface WindowSettings {
+  position: WindowPosition;
+}
+
+export interface AppSettings {
+  window: WindowSettings;
 }
 
 export class App {
@@ -51,6 +56,7 @@ export class App {
   private readonly bootstrapLogger: LogFunctions = log.scope("main-bootstrap");
   private readonly appLogger: LogFunctions = log.scope("main-app");
   private readonly windowLogger: LogFunctions = log.scope("main-window");
+  private readonly settingsLogger: LogFunctions = log.scope("main-settings");
   private readonly IPCLogger: LogFunctions = log.scope("main-ipc");
   private readonly IPCUserAPILogger: LogFunctions = log.scope("main-ipc-user-api");
   private readonly IPCTLSAPILogger: LogFunctions = log.scope("main-ipc-tls-api");
@@ -58,11 +64,11 @@ export class App {
   private readonly userStorageLogger: LogFunctions = log.scope("main-user-storage");
 
   // Config
-  private readonly CONFIG_DIR_PATH: string = resolve(join(app.getAppPath(), "config"));
-  private readonly CONFIG_FILE_NAME: string = "BlackBoxConfig.json";
-  private readonly CONFIG_FILE_PATH: string = resolve(join(this.CONFIG_DIR_PATH, this.CONFIG_FILE_NAME));
+  // private readonly CONFIG_DIR_PATH: string = resolve(join(app.getAppPath(), "config"));
+  // private readonly CONFIG_FILE_NAME: string = "BlackBoxConfig.json";
+  // private readonly CONFIG_FILE_PATH: string = resolve(join(this.CONFIG_DIR_PATH, this.CONFIG_FILE_NAME));
 
-  private readonly CONFIG_SCHEMA: JSONSchemaType<AppConfig> = {
+  public static readonly SETTINGS_SCHEMA: JSONSchemaType<AppSettings> = {
     $schema: "http://json-schema.org/draft-07/schema#",
     type: "object",
     properties: {
@@ -71,7 +77,7 @@ export class App {
         properties: {
           position: {
             anyOf: [
-              { type: "string", enum: [WindowPosition.FullScreen, WindowPosition.Maximized] },
+              { type: "string", enum: [WindowState.FullScreen, WindowState.Maximized] },
               {
                 // Electron Rectangle schema
                 type: "object",
@@ -95,7 +101,7 @@ export class App {
     additionalProperties: false
   };
 
-  private readonly DEFAULT_CONFIG: AppConfig = {
+  private readonly DEFAULT_SETTINGS: AppSettings = {
     window: {
       position: {
         x: 510,
@@ -106,8 +112,18 @@ export class App {
     }
   };
 
-  private readonly CONFIG_VALIDATE_FUNCTION: ValidateFunction<AppConfig> = createJSONValidateFunction<AppConfig>(this.CONFIG_SCHEMA);
-  private config: AppConfig = this.DEFAULT_CONFIG;
+  // private readonly CONFIG_VALIDATE_FUNCTION: ValidateFunction<AppSettings> = createJSONValidateFunction<AppSettings>(this.SETTINGS_SCHEMA);
+  // private config: AppSettings = this.DEFAULT_SETTINGS;
+  private readonly SETTINGS_MANAGER_CONFIG: SettingsManagerConfig = {
+    type: SettingsManagerType.LocalJSON,
+    fileDir: resolve(join(app.getAppPath(), "settings")),
+    fileName: "BlackBoxSettings.json"
+  };
+  private readonly settingsManager: SettingsManager<AppSettings, SettingsManagerConfig> = settingsManagerFactory<AppSettings>(
+    this.SETTINGS_MANAGER_CONFIG,
+    App.SETTINGS_SCHEMA,
+    this.settingsLogger
+  );
 
   // Will get initialised in the class constructor
   private readonly MAIN_PROCESS_PUBLIC_RSA_KEY_DER: Buffer;
@@ -336,12 +352,14 @@ export class App {
     this.bootstrapLogger.info(`Using log file at path: "${log.transports.file.getFile().path}".`);
     // Read app config
     try {
-      this.config = readConfigJSON<AppConfig>(this.CONFIG_FILE_PATH, this.CONFIG_VALIDATE_FUNCTION, this.bootstrapLogger);
-    } catch {
-      this.bootstrapLogger.warn("Using default app config.");
-      this.config = this.DEFAULT_CONFIG;
+      this.settingsManager.updateSettings(this.settingsManager.fetchSettings());
+    } catch (err: unknown) {
+      const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+      this.bootstrapLogger.error(`Could not get app settings: ${ERROR_MESSAGE}!`);
+      this.bootstrapLogger.warn("Using default app settings.");
+      this.settingsManager.updateSettings(this.DEFAULT_SETTINGS);
     }
-    this.bootstrapLogger.debug(`Using app config: ${JSON.stringify(this.config, null, 2)}.`);
+    this.bootstrapLogger.debug(`Using app settings: ${JSON.stringify(this.settingsManager.getSettings(), null, 2)}.`);
     // Generate IPC encryption keys
     this.bootstrapLogger.debug(`Generating main process RSA encryption keys.`);
     const { publicKey, privateKey } = generateKeyPairSync("rsa", {
@@ -382,31 +400,32 @@ export class App {
     this.windowLogger.info("Creating window.");
     // Read window config
     // This should allow config file edits on macOS to take effect when activating app
+    let lastWindowSettings: WindowSettings;
     try {
-      this.config.window = readConfigJSON<AppConfig>(this.CONFIG_FILE_PATH, this.CONFIG_VALIDATE_FUNCTION, this.windowLogger).window;
+      lastWindowSettings = this.settingsManager.fetchSettings().window;
     } catch {
       this.windowLogger.warn("Using default window config.");
-      this.config.window = this.DEFAULT_CONFIG.window;
+      lastWindowSettings = this.DEFAULT_SETTINGS.window;
     }
-    this.windowLogger.debug(`Using window config: ${JSON.stringify(this.config.window, null, 2)}.`);
+    this.windowLogger.debug(`Using window config: ${JSON.stringify(lastWindowSettings, null, 2)}.`);
     // Adjust bounds if the window positions are a Rectangle
-    if (this.config.window.position !== WindowPosition.FullScreen && this.config.window.position !== WindowPosition.Maximized) {
+    if (lastWindowSettings.position !== WindowState.FullScreen && lastWindowSettings.position !== WindowState.Maximized) {
       this.windowLogger.debug("Adjusting window bounds.");
       const PRIMARY_DISPLAY_BOUNDS: Rectangle = screen.getPrimaryDisplay().workArea;
       this.windowLogger.debug(`Primary display work area bounds: ${JSON.stringify(PRIMARY_DISPLAY_BOUNDS, null, 2)}.`);
-      this.config.window.position = adjustWindowBounds(PRIMARY_DISPLAY_BOUNDS, this.config.window.position, this.windowLogger);
-      this.windowLogger.debug(`Adjusted window positions: ${JSON.stringify(this.config.window.position, null, 2)}.`);
+      lastWindowSettings.position = adjustWindowBounds(PRIMARY_DISPLAY_BOUNDS, lastWindowSettings.position, this.windowLogger);
+      this.windowLogger.debug(`Adjusted window positions: ${JSON.stringify(lastWindowSettings.position, null, 2)}.`);
     }
     // Initialise window
-    if (this.config.window.position === WindowPosition.FullScreen || this.config.window.position === WindowPosition.Maximized) {
+    if (lastWindowSettings.position === WindowState.FullScreen || lastWindowSettings.position === WindowState.Maximized) {
       this.window = new BrowserWindow(this.WINDOW_CONSTRUCTOR_OPTIONS);
-      if (this.config.window.position === WindowPosition.FullScreen) {
+      if (lastWindowSettings.position === WindowState.FullScreen) {
         this.window.setFullScreen(true);
       } else {
         this.window.maximize();
       }
     } else {
-      this.window = new BrowserWindow({ ...this.WINDOW_CONSTRUCTOR_OPTIONS, ...this.config.window.position });
+      this.window = new BrowserWindow({ ...this.WINDOW_CONSTRUCTOR_OPTIONS, ...lastWindowSettings.position });
     }
     this.window.setMenuBarVisibility(false);
     this.windowLogger.debug("Created window.");
@@ -463,7 +482,7 @@ export class App {
       return;
     }
     this.windowLogger.info("Window closed.");
-    writeConfigJSON(this.config, this.CONFIG_DIR_PATH, this.CONFIG_FILE_NAME, this.CONFIG_VALIDATE_FUNCTION, this.windowLogger);
+    this.settingsManager.saveSettings();
     this.windowLogger.debug("Removing all listeners from window.");
     this.window.removeAllListeners();
     this.windowLogger.debug("Nullifying window.");
@@ -529,22 +548,25 @@ export class App {
       this.windowLogger.silly("Window minimized. Config unchanged.");
       return;
     }
+    let newWindowPosition: WindowPosition;
     if (this.window.isFullScreen()) {
-      this.config.window.position = WindowPosition.FullScreen;
+      newWindowPosition = WindowState.FullScreen;
     } else if (this.window.isMaximized()) {
-      this.config.window.position = WindowPosition.Maximized;
+      newWindowPosition = WindowState.Maximized;
     } else {
-      this.config.window = {
-        position: this.window.getBounds()
-      };
+      newWindowPosition = this.window.getBounds();
     }
     this.windowLogger.silly(
-      `Window position config after update: ${
-        typeof this.config.window.position === "string"
-          ? '"' + this.config.window.position + '"'
-          : JSON.stringify(this.config.window.position, null, 2)
+      `Window position after update: ${
+        typeof newWindowPosition === "string" ? `"${newWindowPosition}"` : JSON.stringify(newWindowPosition, null, 2)
       }.`
     );
+    // Update settings
+    let currentSettings: AppSettings | null = this.settingsManager.getSettings();
+    if (currentSettings === null) {
+      currentSettings = this.DEFAULT_SETTINGS;
+    }
+    this.settingsManager.updateSettings({ ...currentSettings, window: { ...currentSettings.window, position: newWindowPosition } });
   }
 
   private onceWindowWebContentsDidFinishLoad(): void {

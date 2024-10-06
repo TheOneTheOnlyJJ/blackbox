@@ -17,14 +17,14 @@ export abstract class UserStorage<T extends BaseUserStorageConfig> {
 
   public constructor(config: T, configSchema: JSONSchemaType<T>, logger: LogFunctions) {
     this.logger = logger;
-    this.config = config;
-    this.logger.info(`Initialising "${this.config.type}" user storage.`);
-    this.logger.silly(`Config: ${JSON.stringify(this.config, null, 2)}.`);
+    this.logger.info(`Initialising "${config.type}" user storage.`);
+    this.logger.silly(`Config: ${JSON.stringify(config, null, 2)}.`);
     this.CONFIG_VALIDATE_FUNCTION = createJSONValidateFunction<T>(configSchema);
-    this.logger.silly(`Validating "${this.config.type}" user storage config.`);
-    if (!isConfigValid<T>(this.config, this.CONFIG_VALIDATE_FUNCTION, this.logger)) {
-      throw new Error(`Could not initialise "${this.config.type}" user storage`);
+    this.logger.silly(`Validating "${config.type}" user storage config.`);
+    if (!isConfigValid<T>(config, this.CONFIG_VALIDATE_FUNCTION, this.logger)) {
+      throw new Error(`Could not initialise "${config.type}" user storage`);
     }
+    this.config = config;
   }
 
   public getConfig(): T {

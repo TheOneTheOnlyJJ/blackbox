@@ -1,7 +1,6 @@
 import { LogFunctions } from "electron-log";
 import { UserStorage } from "./storage/UserStorage";
-import { UserStorageConfig } from "./storage/utils";
-import { userStorageFactory } from "./storage/userStorageFactory";
+import { UserStorageConfig, userStorageFactory } from "./storage/userStorageFactory";
 import { UserStorageType } from "./storage/UserStorageType";
 import { BASE_NEW_USER_DATA_JSON_SCHEMA, IBaseNewUserData } from "../../shared/user/IBaseNewUserData";
 import { randomBytes, randomUUID, scryptSync, timingSafeEqual, UUID } from "node:crypto";
