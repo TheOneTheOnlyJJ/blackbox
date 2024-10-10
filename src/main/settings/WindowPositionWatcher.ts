@@ -39,10 +39,10 @@ export class WindowPositionWatcher {
     }
     this.updateWindowPositionTimeout = setTimeout(() => {
       const NEW_WINDOW_POSITION: WindowPosition = this.getNewWindowPosition(window);
-      onWindowPositionChange(NEW_WINDOW_POSITION);
       this.logger.silly(
         `New window position: ${typeof NEW_WINDOW_POSITION === "string" ? `"${NEW_WINDOW_POSITION}"` : JSON.stringify(NEW_WINDOW_POSITION, null, 2)}.`
       );
+      onWindowPositionChange(NEW_WINDOW_POSITION);
     }, this.UPDATE_WINDOW_POSITION_TIMEOUT_DELAY_MS);
   }
 
