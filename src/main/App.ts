@@ -30,6 +30,7 @@ import { SettingsManagerConfig, settingsManagerFactory } from "./settings/settin
 import { SettingsManagerType } from "./settings/SettingsManagerType";
 import { UserStorageConfig } from "./user/storage/userStorageFactory";
 import { WindowPosition, WindowPositionWatcher, WindowState } from "./settings/WindowPositionWatcher";
+import Ajv from "ajv";
 
 type WindowPositionSetting = Rectangle | WindowState.FullScreen | WindowState.Maximized;
 
@@ -146,6 +147,9 @@ export class App {
   private readonly MAIN_PROCESS_PRIVATE_RSA_KEY_DER: Buffer;
   // Renderer process will send this over when it is ready
   private rendererProcessAESKey: Buffer | null = null;
+
+  // JSON Schema validator
+  private readonly AJV: Ajv = new Ajv({ strict: true });
 
   // IPC API handlers
   private readonly IPC_TLS_API_HANDLERS: MainProcessIPCAPIHandlers<IIPCTLSAPI> = {
@@ -337,9 +341,15 @@ export class App {
       this.USER_API_HANDLERS.sendCurrentlySignedInUserChange,
       this.USER_API_HANDLERS.sendUserStorageAvailabilityChange,
       this.userAccountManagerLogger,
-      this.userStorageLogger
+      this.userStorageLogger,
+      this.AJV
     );
-    this.settingsManager = settingsManagerFactory<AppSettings>(this.SETTINGS_MANAGER_CONFIG, App.SETTINGS_SCHEMA, this.settingsManagerLogger);
+    this.settingsManager = settingsManagerFactory<AppSettings>(
+      this.SETTINGS_MANAGER_CONFIG,
+      App.SETTINGS_SCHEMA,
+      this.settingsManagerLogger,
+      this.AJV
+    );
     this.windowPositionWatcher = new WindowPositionWatcher(this.windowPositionWatcherLogger);
     // Read app settings
     try {

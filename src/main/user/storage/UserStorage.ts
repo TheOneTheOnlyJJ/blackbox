@@ -1,6 +1,5 @@
 import { LogFunctions } from "electron-log";
-import { createJSONValidateFunction, isConfigValid } from "../../utils/config/config";
-import { JSONSchemaType, ValidateFunction } from "ajv";
+import Ajv, { JSONSchemaType, ValidateFunction } from "ajv";
 import { UserStorageType } from "./UserStorageType";
 import { ISecuredNewUserData } from "../ISecuredNewUserData";
 import { UUID } from "node:crypto";
@@ -15,16 +14,29 @@ export abstract class UserStorage<T extends BaseUserStorageConfig> {
   protected readonly config: T;
   private readonly CONFIG_VALIDATE_FUNCTION: ValidateFunction<T>;
 
-  public constructor(config: T, configSchema: JSONSchemaType<T>, logger: LogFunctions) {
+  public constructor(config: T, configSchema: JSONSchemaType<T>, logger: LogFunctions, ajv: Ajv) {
     this.logger = logger;
     this.logger.info(`Initialising "${config.type}" user storage.`);
     this.logger.silly(`Config: ${JSON.stringify(config, null, 2)}.`);
-    this.CONFIG_VALIDATE_FUNCTION = createJSONValidateFunction<T>(configSchema);
+    this.CONFIG_VALIDATE_FUNCTION = ajv.compile<T>(configSchema);
+    this.config = config;
     this.logger.silly(`Validating "${config.type}" user storage config.`);
-    if (!isConfigValid<T>(config, this.CONFIG_VALIDATE_FUNCTION, this.logger)) {
+    if (!this.isConfigValid()) {
       throw new Error(`Could not initialise "${config.type}" user storage`);
     }
-    this.config = config;
+  }
+
+  public isConfigValid(): boolean {
+    if (this.CONFIG_VALIDATE_FUNCTION(this.config)) {
+      this.logger.debug("Valid config.");
+      return true;
+    }
+    this.logger.debug("Invalid config.");
+    this.logger.error("Validation errors:");
+    this.CONFIG_VALIDATE_FUNCTION.errors?.map((error) => {
+      this.logger.error(`Path: "${error.instancePath.length > 0 ? error.instancePath : "-"}", Message: "${error.message ?? "-"}".`);
+    });
+    return false;
   }
 
   public getConfig(): T {

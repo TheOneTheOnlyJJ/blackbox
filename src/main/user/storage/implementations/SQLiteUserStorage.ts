@@ -3,7 +3,7 @@ import DatabaseConstructor, { Database } from "better-sqlite3";
 import { LogFunctions } from "electron-log";
 import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { JSONSchemaType } from "ajv";
+import Ajv, { JSONSchemaType } from "ajv";
 import { UserStorageType } from "../UserStorageType";
 import { ISecuredNewUserData } from "../../ISecuredNewUserData";
 import { UUID } from "crypto";
@@ -44,8 +44,8 @@ export class SQLiteUserStorage extends UserStorage<SQLiteUserStorageConfig> {
 
   private readonly db: Database;
 
-  public constructor(config: SQLiteUserStorageConfig, logger: LogFunctions) {
-    super(config, SQLiteUserStorage.CONFIG_SCHEMA, logger);
+  public constructor(config: SQLiteUserStorageConfig, logger: LogFunctions, ajv: Ajv) {
+    super(config, SQLiteUserStorage.CONFIG_SCHEMA, logger, ajv);
     // Create db and directories as required
     if (existsSync(this.config.dbDirPath)) {
       this.logger.debug(`Found database directory at path: "${this.config.dbDirPath}". Looking for SQLite file.`);

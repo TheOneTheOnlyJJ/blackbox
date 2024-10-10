@@ -9,8 +9,7 @@ import { ICurrentlySignedInUser } from "../../shared/user/ICurrentlySignedInUser
 import { IUserSignInCredentials, USER_SIGN_IN_CREDENTIALS_JSON_SCHEMA } from "../../shared/user/IUserSignInCredentials";
 import { CurrentlySignedInUserChangeCallback, UserStorageAvailabilityChangeCallback } from "../../shared/IPC/APIs/IUserAPI";
 import { isDeepStrictEqual } from "node:util";
-import { createJSONValidateFunction } from "../utils/config/config";
-import { ValidateFunction } from "ajv";
+import Ajv, { ValidateFunction } from "ajv";
 
 export class UserAccountManager {
   private readonly logger: LogFunctions;
@@ -25,17 +24,18 @@ export class UserAccountManager {
   // This is needed to let the renderer know if the user storage is available when it changes
   private onUserStorageAvailabilityChangeCallback: UserStorageAvailabilityChangeCallback;
 
+  // AJV insatnce
+  private readonly AJV: Ajv;
   // AJV Validate functions
-  public readonly BASE_NEW_USER_DATA_VALIDATE_FUNCTION: ValidateFunction<IBaseNewUserData> =
-    createJSONValidateFunction<IBaseNewUserData>(BASE_NEW_USER_DATA_JSON_SCHEMA);
-  public readonly USER_SIGN_IN_CREDENTIALS_VALIDATE_FUNCTION: ValidateFunction<IUserSignInCredentials> =
-    createJSONValidateFunction<IUserSignInCredentials>(USER_SIGN_IN_CREDENTIALS_JSON_SCHEMA);
+  public readonly BASE_NEW_USER_DATA_VALIDATE_FUNCTION: ValidateFunction<IBaseNewUserData>;
+  public readonly USER_SIGN_IN_CREDENTIALS_VALIDATE_FUNCTION: ValidateFunction<IUserSignInCredentials>;
 
   public constructor(
     onCurrentlySignedInUserChangeCallback: CurrentlySignedInUserChangeCallback,
     onUserStorageAvailabilityChangeCallback: UserStorageAvailabilityChangeCallback,
     logger: LogFunctions,
-    userStorageLogger: LogFunctions
+    userStorageLogger: LogFunctions,
+    ajv: Ajv
   ) {
     this.logger = logger;
     this.logger.debug("Initialising new User Account Manager.");
@@ -44,6 +44,9 @@ export class UserAccountManager {
     this.onCurrentlySignedInUserChangeCallback = onCurrentlySignedInUserChangeCallback;
     this.userStorage = null;
     this.onUserStorageAvailabilityChangeCallback = onUserStorageAvailabilityChangeCallback;
+    this.AJV = ajv;
+    this.BASE_NEW_USER_DATA_VALIDATE_FUNCTION = this.AJV.compile<IBaseNewUserData>(BASE_NEW_USER_DATA_JSON_SCHEMA);
+    this.USER_SIGN_IN_CREDENTIALS_VALIDATE_FUNCTION = this.AJV.compile<IUserSignInCredentials>(USER_SIGN_IN_CREDENTIALS_JSON_SCHEMA);
   }
 
   public getUserStorageType(): UserStorageType {
@@ -70,7 +73,7 @@ export class UserAccountManager {
       this.closeUserStorage();
     }
     try {
-      this.userStorage = userStorageFactory(storageConfig, this.userStorageLogger);
+      this.userStorage = userStorageFactory(storageConfig, this.userStorageLogger, this.AJV);
     } catch (err: unknown) {
       const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
       this.logger.error(`Could not open user storage: ${ERROR_MESSAGE}!`);
