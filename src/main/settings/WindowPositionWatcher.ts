@@ -38,12 +38,16 @@ export class WindowPositionWatcher {
       clearTimeout(this.updateWindowPositionTimeout);
     }
     this.updateWindowPositionTimeout = setTimeout(() => {
-      this.getNewWindowPosition(window, onWindowPositionChange);
+      const NEW_WINDOW_POSITION: WindowPosition = this.getNewWindowPosition(window);
+      onWindowPositionChange(NEW_WINDOW_POSITION);
+      this.logger.silly(
+        `New window position: ${typeof NEW_WINDOW_POSITION === "string" ? `"${NEW_WINDOW_POSITION}"` : JSON.stringify(NEW_WINDOW_POSITION, null, 2)}.`
+      );
     }, this.UPDATE_WINDOW_POSITION_TIMEOUT_DELAY_MS);
   }
 
-  private getNewWindowPosition(window: BrowserWindow, onWindowPositionChange: (position: WindowPosition) => void): void {
-    this.logger.debug("Updating window position.");
+  private getNewWindowPosition(window: BrowserWindow): WindowPosition {
+    this.logger.debug("Getting new window position.");
     let newWindowPosition: WindowPosition;
     if (window.isFullScreen()) {
       newWindowPosition = WindowState.FullScreen;
@@ -54,11 +58,6 @@ export class WindowPositionWatcher {
     } else {
       newWindowPosition = window.getBounds();
     }
-    this.logger.silly(
-      `Window position after update: ${
-        typeof newWindowPosition === "string" ? `"${newWindowPosition}"` : JSON.stringify(newWindowPosition, null, 2)
-      }.`
-    );
-    onWindowPositionChange(newWindowPosition);
+    return newWindowPosition;
   }
 }
