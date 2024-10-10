@@ -4,7 +4,7 @@ import { UserAccountStorageType } from "./UserAccountStorageType";
 import { ISecuredNewUserData } from "../ISecuredNewUserData";
 import { UUID } from "node:crypto";
 
-// Every user storage must have at least the type in its config (should be further narrowed down to its own in the specific config)
+// Every user account storage must have at least the type in its config (should be further narrowed down to its own in the specific config)
 export interface BaseUserAccountStorageConfig {
   type: UserAccountStorageType;
 }
@@ -16,13 +16,13 @@ export abstract class UserAccountStorage<T extends BaseUserAccountStorageConfig>
 
   public constructor(config: T, configSchema: JSONSchemaType<T>, logger: LogFunctions, ajv: Ajv) {
     this.logger = logger;
-    this.logger.info(`Initialising "${config.type}" User Acount Storage.`);
-    this.logger.silly(`Config: ${JSON.stringify(config, null, 2)}.`);
-    this.CONFIG_VALIDATE_FUNCTION = ajv.compile<T>(configSchema);
     this.config = config;
-    this.logger.silly(`Validating "${config.type}" User Acount Storage config.`);
+    this.logger.info(`Initialising "${this.config.type}" User Acount Storage.`);
+    this.logger.silly(`Config: ${JSON.stringify(this.config, null, 2)}.`);
+    this.CONFIG_VALIDATE_FUNCTION = ajv.compile<T>(configSchema);
+    this.logger.silly(`Validating "${this.config.type}" User Acount Storage config.`);
     if (!this.isConfigValid()) {
-      throw new Error(`Could not initialise "${config.type}" User Acount Storage`);
+      throw new Error(`Could not initialise "${this.config.type}" User Acount Storage`);
     }
   }
 
