@@ -16,6 +16,8 @@ export abstract class SettingsManager<SettingsType extends NonNullable<unknown>,
   // Settings
   protected settings: SettingsType | null;
   protected readonly SETTINGS_VALIDATE_FUNCTION: ValidateFunction<SettingsType>;
+  // Save settings on update
+  public doSaveSettingsOnUpdate: boolean;
 
   public constructor(
     config: ConfigType,
@@ -24,7 +26,7 @@ export abstract class SettingsManager<SettingsType extends NonNullable<unknown>,
     logger: LogFunctions
   ) {
     this.logger = logger;
-    this.logger.info(`Initialising "${config.type}" Settings Manager.`);
+    this.logger.info(`Initialising new "${config.type}" Settings Manager.`);
     this.logger.silly(`Config: ${JSON.stringify(config, null, 2)}.`);
     this.CONFIG_VALIDATE_FUNCTION = createJSONValidateFunction<ConfigType>(configSchema);
     this.logger.silly(`Validating "${config.type}" Settings Manager config.`);
@@ -34,6 +36,7 @@ export abstract class SettingsManager<SettingsType extends NonNullable<unknown>,
     this.config = config;
     this.SETTINGS_VALIDATE_FUNCTION = createJSONValidateFunction<SettingsType>(settingsSchema);
     this.settings = null;
+    this.doSaveSettingsOnUpdate = false;
   }
 
   public getConfig(): ConfigType {
@@ -64,6 +67,9 @@ export abstract class SettingsManager<SettingsType extends NonNullable<unknown>,
     if (this.areSettingsValid(settings)) {
       this.settings = settings;
       this.logger.info("Settings updated.");
+      if (this.doSaveSettingsOnUpdate) {
+        this.saveSettings();
+      }
       return true;
     }
     this.logger.warn("Settings not updated.");

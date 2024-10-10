@@ -1,5 +1,10 @@
 {
   "window": {
-    "position": "maximized"
+    "position": {
+      "x": 367,
+      "y": 38,
+      "width": 1521,
+      "height": 600
+    }
   }
 }

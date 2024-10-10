@@ -7,7 +7,6 @@ import { JSONSchemaType } from "ajv/dist/types/json-schema";
 import { IPCTLSAPIIPCChannel, UserAPIIPCChannel } from "./utils/IPC/IPCChannels";
 import { UserAccountManager } from "./user/UserAccountManager";
 import { UserStorageType } from "./user/storage/UserStorageType";
-import { WindowState } from "./utils/window/WindowState";
 import { adjustWindowBounds } from "./utils/window/adjustWindowBounds";
 import { IpcMainEvent } from "electron";
 import { IUserAPI } from "../shared/IPC/APIs/IUserAPI";
@@ -30,11 +29,12 @@ import { SettingsManager } from "./settings/SettingsManager";
 import { SettingsManagerConfig, settingsManagerFactory } from "./settings/settingsManagerFactory";
 import { SettingsManagerType } from "./settings/SettingsManagerType";
 import { UserStorageConfig } from "./user/storage/userStorageFactory";
+import { WindowPosition, WindowPositionWatcher, WindowState } from "./settings/WindowPositionWatcher";
 
-type WindowPosition = Rectangle | WindowState.FullScreen | WindowState.Maximized;
+type WindowPositionSetting = Rectangle | WindowState.FullScreen | WindowState.Maximized;
 
 interface WindowSettings {
-  position: WindowPosition;
+  position: WindowPositionSetting;
 }
 
 export interface AppSettings {
@@ -42,6 +42,7 @@ export interface AppSettings {
 }
 
 export class App {
+  // Own singleton instance
   private static instance: null | App = null;
 
   // Resources
@@ -56,18 +57,15 @@ export class App {
   private readonly bootstrapLogger: LogFunctions = log.scope("main-bootstrap");
   private readonly appLogger: LogFunctions = log.scope("main-app");
   private readonly windowLogger: LogFunctions = log.scope("main-window");
-  private readonly settingsLogger: LogFunctions = log.scope("main-settings");
+  private readonly windowPositionWatcherLogger: LogFunctions = log.scope("main-window-position-watcher");
+  private readonly settingsManagerLogger: LogFunctions = log.scope("main-settings-manager");
   private readonly IPCLogger: LogFunctions = log.scope("main-ipc");
   private readonly IPCUserAPILogger: LogFunctions = log.scope("main-ipc-user-api");
   private readonly IPCTLSAPILogger: LogFunctions = log.scope("main-ipc-tls-api");
   private readonly userAccountManagerLogger: LogFunctions = log.scope("main-user-account-manager");
   private readonly userStorageLogger: LogFunctions = log.scope("main-user-storage");
 
-  // Config
-  // private readonly CONFIG_DIR_PATH: string = resolve(join(app.getAppPath(), "config"));
-  // private readonly CONFIG_FILE_NAME: string = "BlackBoxConfig.json";
-  // private readonly CONFIG_FILE_PATH: string = resolve(join(this.CONFIG_DIR_PATH, this.CONFIG_FILE_NAME));
-
+  // Settings
   public static readonly SETTINGS_SCHEMA: JSONSchemaType<AppSettings> = {
     $schema: "http://json-schema.org/draft-07/schema#",
     type: "object",
@@ -76,7 +74,9 @@ export class App {
         type: "object",
         properties: {
           position: {
+            // One of the accepted Window State options or Electron Rectangle
             anyOf: [
+              // Accepted Window State options are only FullScreen and Maximized (notice absence of Minimized)
               { type: "string", enum: [WindowState.FullScreen, WindowState.Maximized] },
               {
                 // Electron Rectangle schema
@@ -100,7 +100,6 @@ export class App {
     required: ["window"],
     additionalProperties: false
   };
-
   private readonly DEFAULT_SETTINGS: AppSettings = {
     window: {
       position: {
@@ -111,26 +110,12 @@ export class App {
       }
     }
   };
-
-  // private readonly CONFIG_VALIDATE_FUNCTION: ValidateFunction<AppSettings> = createJSONValidateFunction<AppSettings>(this.SETTINGS_SCHEMA);
-  // private config: AppSettings = this.DEFAULT_SETTINGS;
+  private readonly settingsManager: SettingsManager<AppSettings, SettingsManagerConfig>;
   private readonly SETTINGS_MANAGER_CONFIG: SettingsManagerConfig = {
     type: SettingsManagerType.LocalJSON,
     fileDir: resolve(join(app.getAppPath(), "settings")),
     fileName: "BlackBoxSettings.json"
   };
-  private readonly settingsManager: SettingsManager<AppSettings, SettingsManagerConfig> = settingsManagerFactory<AppSettings>(
-    this.SETTINGS_MANAGER_CONFIG,
-    App.SETTINGS_SCHEMA,
-    this.settingsLogger
-  );
-
-  // Will get initialised in the class constructor
-  private readonly MAIN_PROCESS_PUBLIC_RSA_KEY_DER: Buffer;
-  private readonly MAIN_PROCESS_PRIVATE_RSA_KEY_DER: Buffer;
-
-  // Renderer process will send this over when it is ready
-  private rendererProcessAESKey: Buffer | null = null;
 
   // Window
   private readonly WINDOW_CONSTRUCTOR_OPTIONS: BrowserWindowConstructorOptions = {
@@ -144,8 +129,23 @@ export class App {
       allowRunningInsecureContent: false
     }
   };
-
   private window: null | BrowserWindow = null;
+  private readonly windowPositionWatcher: WindowPositionWatcher;
+
+  // Users
+  private readonly userAccountManager: UserAccountManager;
+  private readonly USER_STORAGE_CONFIG: UserStorageConfig = {
+    type: UserStorageType.SQLite,
+    dbDirPath: resolve(join(app.getAppPath(), "data")),
+    dbFileName: "users.sqlite"
+  };
+
+  // Security
+  // Will get initialised in the class constructor
+  private readonly MAIN_PROCESS_PUBLIC_RSA_KEY_DER: Buffer;
+  private readonly MAIN_PROCESS_PRIVATE_RSA_KEY_DER: Buffer;
+  // Renderer process will send this over when it is ready
+  private rendererProcessAESKey: Buffer | null = null;
 
   // IPC API handlers
   private readonly IPC_TLS_API_HANDLERS: MainProcessIPCAPIHandlers<IIPCTLSAPI> = {
@@ -314,24 +314,6 @@ export class App {
     }
   };
 
-  // User account manager
-  private userAccountManager: UserAccountManager = new UserAccountManager(
-    this.USER_API_HANDLERS.sendCurrentlySignedInUserChange,
-    this.USER_API_HANDLERS.sendUserStorageAvailabilityChange,
-    this.userAccountManagerLogger,
-    this.userStorageLogger
-  );
-
-  private readonly USER_STORAGE_CONFIG: UserStorageConfig = {
-    type: UserStorageType.SQLite,
-    dbDirPath: resolve(join(app.getAppPath(), "data")),
-    dbFileName: "users.sqlite"
-  };
-
-  // Timeouts
-  private updateWindowPositionConfigTimeout: null | NodeJS.Timeout = null;
-  private readonly UPDATE_WINDOW_POSITION_CONFIG_DELAY_MS = 500;
-
   // Private constructor to prevent direct instantiation
   private constructor() {
     // Initialise electron-log
@@ -350,12 +332,21 @@ export class App {
     // Add start log separator (also create file if missing)
     appendFileSync(this.LOG_FILE_PATH, `---------- Start : ${new Date().toISOString()} ----------\n`, "utf-8");
     this.bootstrapLogger.info(`Using log file at path: "${log.transports.file.getFile().path}".`);
-    // Read app config
+    // Initialise required managers & watchers
+    this.userAccountManager = new UserAccountManager(
+      this.USER_API_HANDLERS.sendCurrentlySignedInUserChange,
+      this.USER_API_HANDLERS.sendUserStorageAvailabilityChange,
+      this.userAccountManagerLogger,
+      this.userStorageLogger
+    );
+    this.settingsManager = settingsManagerFactory<AppSettings>(this.SETTINGS_MANAGER_CONFIG, App.SETTINGS_SCHEMA, this.settingsManagerLogger);
+    this.windowPositionWatcher = new WindowPositionWatcher(this.windowPositionWatcherLogger);
+    // Read app settings
     try {
       this.settingsManager.updateSettings(this.settingsManager.fetchSettings());
     } catch (err: unknown) {
       const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-      this.bootstrapLogger.error(`Could not get app settings: ${ERROR_MESSAGE}!`);
+      this.bootstrapLogger.error(`Could not fetch app settings: ${ERROR_MESSAGE}!`);
       this.bootstrapLogger.warn("Using default app settings.");
       this.settingsManager.updateSettings(this.DEFAULT_SETTINGS);
     }
@@ -398,16 +389,16 @@ export class App {
 
   private createWindow(): void {
     this.windowLogger.info("Creating window.");
-    // Read window config
-    // This should allow config file edits on macOS to take effect when activating app
+    // Read window settings
+    // This should allow settings file edits on macOS to take effect when activating app
     let lastWindowSettings: WindowSettings;
     try {
       lastWindowSettings = this.settingsManager.fetchSettings().window;
     } catch {
-      this.windowLogger.warn("Using default window config.");
+      this.windowLogger.warn("Using default window settings.");
       lastWindowSettings = this.DEFAULT_SETTINGS.window;
     }
-    this.windowLogger.debug(`Using window config: ${JSON.stringify(lastWindowSettings, null, 2)}.`);
+    this.windowLogger.debug(`Using window settings: ${JSON.stringify(lastWindowSettings, null, 2)}.`);
     // Adjust bounds if the window positions are a Rectangle
     if (lastWindowSettings.position !== WindowState.FullScreen && lastWindowSettings.position !== WindowState.Maximized) {
       this.windowLogger.debug("Adjusting window bounds.");
@@ -496,13 +487,8 @@ export class App {
     }
     this.windowLogger.info("Showing window.");
     this.window.show();
-    // Register these here, because show triggers a "move" event
-    this.window.on("move", () => {
-      this.onWindowMove();
-    });
-    this.window.on("resize", () => {
-      this.onWindowResize();
-    });
+    // Watch window after show, because it triggers a "move" event
+    this.windowPositionWatcher.watchWindowPosition(this.window, this.updateWindowPositionSettings.bind(this));
 
     // TEMPORARY
     // setInterval(() => {
@@ -517,56 +503,17 @@ export class App {
     // }, 5_000);
   }
 
-  private onWindowMove(): void {
-    // Move events fire very often while the window is moving; Debouncing is required
-    this.onWindowBoundsChanged();
-  }
-
-  private onWindowResize(): void {
-    // Resize events fire very often while the window is resizing; Debouncing is required
-    this.onWindowBoundsChanged();
-  }
-
-  private onWindowBoundsChanged(): void {
-    // Debounce updates to config
-    if (this.updateWindowPositionConfigTimeout !== null) {
-      clearTimeout(this.updateWindowPositionConfigTimeout);
-    }
-    this.updateWindowPositionConfigTimeout = setTimeout(() => {
-      this.updateWindowPositionConfig();
-    }, this.UPDATE_WINDOW_POSITION_CONFIG_DELAY_MS);
-  }
-
-  private updateWindowPositionConfig(): void {
-    this.windowLogger.debug("Updating window position config.");
-    if (this.window === null) {
-      this.windowLogger.silly("Window is null. No-op.");
-      return;
-    }
-    if (this.window.isMinimized()) {
-      // Ignore updates when window is minimized
-      this.windowLogger.silly("Window minimized. Config unchanged.");
-      return;
-    }
-    let newWindowPosition: WindowPosition;
-    if (this.window.isFullScreen()) {
-      newWindowPosition = WindowState.FullScreen;
-    } else if (this.window.isMaximized()) {
-      newWindowPosition = WindowState.Maximized;
+  private updateWindowPositionSettings(newWindowPosition: WindowPosition): void {
+    if (newWindowPosition === WindowState.Minimized) {
+      this.settingsManagerLogger.debug("Window minimized. No update to settings.");
     } else {
-      newWindowPosition = this.window.getBounds();
+      // Update settings
+      let currentSettings: AppSettings | null = this.settingsManager.getSettings();
+      if (currentSettings === null) {
+        currentSettings = this.DEFAULT_SETTINGS;
+      }
+      this.settingsManager.updateSettings({ ...currentSettings, window: { ...currentSettings.window, position: newWindowPosition } });
     }
-    this.windowLogger.silly(
-      `Window position after update: ${
-        typeof newWindowPosition === "string" ? `"${newWindowPosition}"` : JSON.stringify(newWindowPosition, null, 2)
-      }.`
-    );
-    // Update settings
-    let currentSettings: AppSettings | null = this.settingsManager.getSettings();
-    if (currentSettings === null) {
-      currentSettings = this.DEFAULT_SETTINGS;
-    }
-    this.settingsManager.updateSettings({ ...currentSettings, window: { ...currentSettings.window, position: newWindowPosition } });
   }
 
   private onceWindowWebContentsDidFinishLoad(): void {

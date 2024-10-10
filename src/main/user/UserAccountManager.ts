@@ -38,7 +38,7 @@ export class UserAccountManager {
     userStorageLogger: LogFunctions
   ) {
     this.logger = logger;
-    this.logger.debug("Creating new User Account Manager.");
+    this.logger.debug("Initialising new User Account Manager.");
     this.userStorageLogger = userStorageLogger;
     this.currentlySignedInUser = null;
     this.onCurrentlySignedInUserChangeCallback = onCurrentlySignedInUserChangeCallback;
