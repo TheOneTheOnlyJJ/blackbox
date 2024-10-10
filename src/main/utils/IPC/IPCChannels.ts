@@ -4,8 +4,8 @@ export enum IPCTLSAPIIPCChannel {
 }
 
 export enum UserAPIIPCChannel {
-  isStorageAvailable = "userAPI:isStorageAvailable",
-  onUserStorageAvailabilityChange = "userAPI:onUserStorageAvailabilityChange",
+  isAccountStorageAvailable = "userAPI:isAccountStorageAvailable",
+  onAccountStorageAvailabilityChange = "userAPI:onAccountStorageAvailabilityChange",
   isUsernameAvailable = "userAPI:isUsernameAvailable",
   signUp = "userAPI:signUp",
   getUserCount = "userAPI:getUserCount",

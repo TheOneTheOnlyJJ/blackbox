@@ -1,15 +1,15 @@
-import { BaseUserStorageConfig, UserStorage } from "../UserStorage";
+import { BaseUserAccountStorageConfig, UserAccountStorage } from "../UserAccountStorage";
 import DatabaseConstructor, { Database } from "better-sqlite3";
 import { LogFunctions } from "electron-log";
 import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import Ajv, { JSONSchemaType } from "ajv";
-import { UserStorageType } from "../UserStorageType";
+import { UserAccountStorageType } from "../UserAccountStorageType";
 import { ISecuredNewUserData } from "../../ISecuredNewUserData";
 import { UUID } from "crypto";
 
-export interface SQLiteUserStorageConfig extends BaseUserStorageConfig {
-  type: UserStorageType.SQLite;
+export interface SQLiteUserAccountStorageConfig extends BaseUserAccountStorageConfig {
+  type: UserAccountStorageType.SQLite;
   dbDirPath: string;
   dbFileName: string;
 }
@@ -20,14 +20,14 @@ interface SQLiteVersion {
   version: string;
 }
 
-export class SQLiteUserStorage extends UserStorage<SQLiteUserStorageConfig> {
-  public static readonly CONFIG_SCHEMA: JSONSchemaType<SQLiteUserStorageConfig> = {
+export class SQLiteUserAccountStorage extends UserAccountStorage<SQLiteUserAccountStorageConfig> {
+  public static readonly CONFIG_SCHEMA: JSONSchemaType<SQLiteUserAccountStorageConfig> = {
     $schema: "http://json-schema.org/draft-07/schema#",
     type: "object",
     properties: {
       type: {
         type: "string",
-        enum: [UserStorageType.SQLite]
+        enum: [UserAccountStorageType.SQLite]
       },
       dbDirPath: {
         type: "string",
@@ -44,8 +44,8 @@ export class SQLiteUserStorage extends UserStorage<SQLiteUserStorageConfig> {
 
   private readonly db: Database;
 
-  public constructor(config: SQLiteUserStorageConfig, logger: LogFunctions, ajv: Ajv) {
-    super(config, SQLiteUserStorage.CONFIG_SCHEMA, logger, ajv);
+  public constructor(config: SQLiteUserAccountStorageConfig, logger: LogFunctions, ajv: Ajv) {
+    super(config, SQLiteUserAccountStorage.CONFIG_SCHEMA, logger, ajv);
     // Create db and directories as required
     if (existsSync(this.config.dbDirPath)) {
       this.logger.debug(`Found database directory at path: "${this.config.dbDirPath}". Looking for SQLite file.`);
@@ -70,7 +70,7 @@ export class SQLiteUserStorage extends UserStorage<SQLiteUserStorageConfig> {
     this.db.pragma("journal_mode = WAL");
     this.logger.silly(`Journal mode: ${this.db.pragma("journal_mode", { simple: true }) as SQLiteJournalMode}.`);
     this.initialiseUsersTable();
-    this.logger.info('"SQLite" user storage ready.');
+    this.logger.info('"SQLite" User Acount Storage ready.');
   }
 
   public isUsernameAvailable(username: string): boolean {

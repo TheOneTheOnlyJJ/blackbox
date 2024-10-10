@@ -1,28 +1,28 @@
 import { LogFunctions } from "electron-log";
-import { UserStorage } from "./storage/UserStorage";
-import { UserStorageConfig, userStorageFactory } from "./storage/userStorageFactory";
-import { UserStorageType } from "./storage/UserStorageType";
-import { BASE_NEW_USER_DATA_JSON_SCHEMA, IBaseNewUserData } from "../../shared/user/IBaseNewUserData";
+import { UserAccountStorage } from "./storage/UserAccountStorage";
+import { UserAccountStorageConfig, userAccountStorageFactory } from "./storage/userAccountStorageFactory";
+import { UserAccountStorageType } from "./storage/UserAccountStorageType";
+import { BASE_NEW_USER_DATA_JSON_SCHEMA, IBaseNewUserData } from "../../../shared/user/IBaseNewUserData";
 import { randomBytes, randomUUID, scryptSync, timingSafeEqual, UUID } from "node:crypto";
 import { ISecuredNewUserData } from "./ISecuredNewUserData";
-import { ICurrentlySignedInUser } from "../../shared/user/ICurrentlySignedInUser";
-import { IUserSignInCredentials, USER_SIGN_IN_CREDENTIALS_JSON_SCHEMA } from "../../shared/user/IUserSignInCredentials";
-import { CurrentlySignedInUserChangeCallback, UserStorageAvailabilityChangeCallback } from "../../shared/IPC/APIs/IUserAPI";
+import { ICurrentlySignedInUser } from "../../../shared/user/ICurrentlySignedInUser";
+import { IUserSignInCredentials, USER_SIGN_IN_CREDENTIALS_JSON_SCHEMA } from "../../../shared/user/IUserSignInCredentials";
+import { CurrentlySignedInUserChangeCallback, UserAccountStorageAvailabilityChangeCallback } from "../../../shared/IPC/APIs/IUserAPI";
 import { isDeepStrictEqual } from "node:util";
 import Ajv, { ValidateFunction } from "ajv";
 
 export class UserAccountManager {
   private readonly logger: LogFunctions;
-  private readonly userStorageLogger: LogFunctions;
+  private readonly userAccountStorageLogger: LogFunctions;
 
   // Currently signed in user
   private currentlySignedInUser: ICurrentlySignedInUser | null;
   private onCurrentlySignedInUserChangeCallback: CurrentlySignedInUserChangeCallback;
 
-  // User storage
-  private userStorage: UserStorage<UserStorageConfig> | null;
-  // This is needed to let the renderer know if the user storage is available when it changes
-  private onUserStorageAvailabilityChangeCallback: UserStorageAvailabilityChangeCallback;
+  // User account storage
+  private userAccountStorage: UserAccountStorage<UserAccountStorageConfig> | null;
+  // This is needed to let the renderer know if the user account storage is available when it changes
+  private onUserAccountStorageAvailabilityChangeCallback: UserAccountStorageAvailabilityChangeCallback;
 
   // AJV insatnce
   private readonly AJV: Ajv;
@@ -32,87 +32,87 @@ export class UserAccountManager {
 
   public constructor(
     onCurrentlySignedInUserChangeCallback: CurrentlySignedInUserChangeCallback,
-    onUserStorageAvailabilityChangeCallback: UserStorageAvailabilityChangeCallback,
+    onUserAccountStorageAvailabilityChangeCallback: UserAccountStorageAvailabilityChangeCallback,
     logger: LogFunctions,
-    userStorageLogger: LogFunctions,
+    userAccountStorageLogger: LogFunctions,
     ajv: Ajv
   ) {
     this.logger = logger;
     this.logger.debug("Initialising new User Account Manager.");
-    this.userStorageLogger = userStorageLogger;
+    this.userAccountStorageLogger = userAccountStorageLogger;
     this.currentlySignedInUser = null;
     this.onCurrentlySignedInUserChangeCallback = onCurrentlySignedInUserChangeCallback;
-    this.userStorage = null;
-    this.onUserStorageAvailabilityChangeCallback = onUserStorageAvailabilityChangeCallback;
+    this.userAccountStorage = null;
+    this.onUserAccountStorageAvailabilityChangeCallback = onUserAccountStorageAvailabilityChangeCallback;
     this.AJV = ajv;
     this.BASE_NEW_USER_DATA_VALIDATE_FUNCTION = this.AJV.compile<IBaseNewUserData>(BASE_NEW_USER_DATA_JSON_SCHEMA);
     this.USER_SIGN_IN_CREDENTIALS_VALIDATE_FUNCTION = this.AJV.compile<IUserSignInCredentials>(USER_SIGN_IN_CREDENTIALS_JSON_SCHEMA);
   }
 
-  public getUserStorageType(): UserStorageType {
-    this.logger.debug("Getting user storage type.");
-    if (this.userStorage === null) {
-      throw new Error("Null user storage");
+  public getUserAccountStorageType(): UserAccountStorageType {
+    this.logger.debug("Getting User Account Storage type.");
+    if (this.userAccountStorage === null) {
+      throw new Error("Null User Account Storage");
     }
-    return this.userStorage.getConfig().type;
+    return this.userAccountStorage.getConfig().type;
   }
 
-  public isUserStorageAvailable(): boolean {
-    this.logger.debug("Getting user storage availability.");
-    return this.userStorage !== null;
+  public isUserAccountStorageAvailable(): boolean {
+    this.logger.debug("Getting User Account Storage availability.");
+    return this.userAccountStorage !== null;
   }
 
-  public openUserStorage(storageConfig: UserStorageConfig): void {
-    this.logger.debug(`Opening user storage of type: ${storageConfig.type}.`);
-    if (this.userStorage !== null) {
-      if (isDeepStrictEqual(this.userStorage.getConfig(), storageConfig)) {
-        this.logger.debug("This exact user storage is already open. No-op.");
+  public openUserAccountStorage(storageConfig: UserAccountStorageConfig): void {
+    this.logger.debug(`Opening User Account Storage of type: ${storageConfig.type}.`);
+    if (this.userAccountStorage !== null) {
+      if (isDeepStrictEqual(this.userAccountStorage.getConfig(), storageConfig)) {
+        this.logger.debug("This exact User Account Storage is already open. No-op.");
         return;
       }
-      this.logger.debug(`User storage (of type ${this.userStorage.getConfig().type}) already open. Closing before opening new one.`);
-      this.closeUserStorage();
+      this.logger.debug(`User Account Storage (of type ${this.userAccountStorage.getConfig().type}) already open. Closing before opening new one.`);
+      this.closeUserAccountStorage();
     }
     try {
-      this.userStorage = userStorageFactory(storageConfig, this.userStorageLogger, this.AJV);
+      this.userAccountStorage = userAccountStorageFactory(storageConfig, this.userAccountStorageLogger, this.AJV);
     } catch (err: unknown) {
       const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-      this.logger.error(`Could not open user storage: ${ERROR_MESSAGE}!`);
-      this.userStorage = null;
+      this.logger.error(`Could not open User Account Storage: ${ERROR_MESSAGE}!`);
+      this.userAccountStorage = null;
       throw err;
     } finally {
-      this.onUserStorageAvailabilityChangeCallback(this.isUserStorageAvailable());
+      this.onUserAccountStorageAvailabilityChangeCallback(this.isUserAccountStorageAvailable());
     }
   }
 
-  public closeUserStorage(): boolean {
-    this.logger.debug("Closing user storage.");
-    if (this.userStorage === null) {
-      throw new Error("Null user storage");
+  public closeUserAccountStorage(): boolean {
+    this.logger.debug("Closing User Account Storage.");
+    if (this.userAccountStorage === null) {
+      throw new Error("Null User Account Storage");
     }
     let isUserStorageClosed: boolean;
     try {
-      isUserStorageClosed = this.userStorage.close();
+      isUserStorageClosed = this.userAccountStorage.close();
       if (isUserStorageClosed) {
-        this.userStorage = null;
+        this.userAccountStorage = null;
       }
     } catch (err: unknown) {
       const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-      this.logger.error(`Could not close user storage: ${ERROR_MESSAGE}!`);
-      this.userStorage = null;
+      this.logger.error(`Could not close User Account Storage: ${ERROR_MESSAGE}!`);
+      this.userAccountStorage = null;
       isUserStorageClosed = false;
       throw err;
     } finally {
-      this.onUserStorageAvailabilityChangeCallback(this.isUserStorageAvailable());
+      this.onUserAccountStorageAvailabilityChangeCallback(this.isUserAccountStorageAvailable());
     }
     return isUserStorageClosed;
   }
 
   public isUsernameAvailable(username: string): boolean {
     this.logger.debug(`Getting username availability for username: "${username}".`);
-    if (this.userStorage === null) {
-      throw new Error("Null user storage");
+    if (this.userAccountStorage === null) {
+      throw new Error("Null User Account Storage");
     }
-    return this.userStorage.isUsernameAvailable(username);
+    return this.userAccountStorage.isUsernameAvailable(username);
   }
 
   private hashPassword(plainTextPassword: string, salt: Buffer): Buffer {
@@ -137,31 +137,31 @@ export class UserAccountManager {
 
   public getUserCount(): number {
     this.logger.debug("Getting user count.");
-    if (this.userStorage === null) {
-      throw new Error("Null user storage");
+    if (this.userAccountStorage === null) {
+      throw new Error("Null User Account Storage");
     }
-    return this.userStorage.getUserCount();
+    return this.userAccountStorage.getUserCount();
   }
 
   public signUpUser(userData: ISecuredNewUserData): boolean {
     this.logger.debug(`Signing up user: "${userData.username}".`);
-    if (this.userStorage === null) {
-      throw new Error("Null user storage");
+    if (this.userAccountStorage === null) {
+      throw new Error("Null User Account Storage");
     }
-    return this.userStorage.addUser(userData);
+    return this.userAccountStorage.addUser(userData);
   }
 
   public signInUser(userSignInCredentials: IUserSignInCredentials): boolean {
     this.logger.debug(`Signing in "${userSignInCredentials.username}".`);
-    if (this.userStorage === null) {
-      throw new Error("Null user storage");
+    if (this.userAccountStorage === null) {
+      throw new Error("Null User Account Storage");
     }
-    const USER_ID: UUID | null = this.userStorage.getUserIdByUsername(userSignInCredentials.username);
+    const USER_ID: UUID | null = this.userAccountStorage.getUserIdByUsername(userSignInCredentials.username);
     if (USER_ID === null) {
       this.logger.debug("No user ID for given username. Username must be missing from storage. Sign in failed.");
       return false;
     }
-    const USER_PASSWORD_DATA: [Buffer, Buffer] | null = this.userStorage.getPasswordDataByUserId(USER_ID);
+    const USER_PASSWORD_DATA: [Buffer, Buffer] | null = this.userAccountStorage.getPasswordDataByUserId(USER_ID);
     if (USER_PASSWORD_DATA === null) {
       throw new Error(`No password hash and salt for user with ID: "${USER_ID}"!`);
     }

@@ -4,7 +4,7 @@ import { ICurrentlySignedInUser } from "../../../../shared/user/ICurrentlySigned
 export interface AppRootContext {
   rendererProcessAESKey: CryptoKey | null;
   currentlySignedInUser: ICurrentlySignedInUser | null;
-  isUserStorageAvailable: boolean;
+  isUserAccountStorageAvailable: boolean;
 }
 
 export const useAppRootContext = (): AppRootContext => {

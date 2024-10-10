@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer, IpcRendererEvent } from "electron";
 import { IPCTLSAPIIPCChannel, UserAPIIPCChannel } from "../main/utils/IPC/IPCChannels";
-import { CurrentlySignedInUserChangeCallback, IUserAPI, UserStorageAvailabilityChangeCallback } from "../shared/IPC/APIs/IUserAPI";
+import { CurrentlySignedInUserChangeCallback, IUserAPI, UserAccountStorageAvailabilityChangeCallback } from "../shared/IPC/APIs/IUserAPI";
 import { IIPCTLSAPI } from "../shared/IPC/APIs/IIPCTLSAPI";
 import { ICurrentlySignedInUser } from "../shared/user/ICurrentlySignedInUser";
 import { IEncryptedUserSignInCredentials } from "../shared/user/encrypted/IEncryptedUserSignInCredentials";
@@ -26,8 +26,8 @@ const USER_STORAGE_API: IUserAPI = {
   signOut: (): IPCAPIResponse => {
     return ipcRenderer.sendSync(UserAPIIPCChannel.signOut) as IPCAPIResponse;
   },
-  isStorageAvailable: (): IPCAPIResponse<boolean> => {
-    return ipcRenderer.sendSync(UserAPIIPCChannel.isStorageAvailable) as IPCAPIResponse<boolean>;
+  isAccountStorageAvailable: (): IPCAPIResponse<boolean> => {
+    return ipcRenderer.sendSync(UserAPIIPCChannel.isAccountStorageAvailable) as IPCAPIResponse<boolean>;
   },
   isUsernameAvailable: (username: string): IPCAPIResponse<boolean> => {
     return ipcRenderer.sendSync(UserAPIIPCChannel.isUsernameAvailable, username) as IPCAPIResponse<boolean>;
@@ -38,13 +38,13 @@ const USER_STORAGE_API: IUserAPI = {
   getCurrentlySignedInUser: (): IPCAPIResponse<ICurrentlySignedInUser | null> => {
     return ipcRenderer.sendSync(UserAPIIPCChannel.getCurrentlySignedInUser) as IPCAPIResponse<ICurrentlySignedInUser | null>;
   },
-  onUserStorageAvailabilityChange: (callback: UserStorageAvailabilityChangeCallback): (() => void) => {
+  onAccountStorageAvailabilityChange: (callback: UserAccountStorageAvailabilityChangeCallback): (() => void) => {
     const LISTENER = (_: IpcRendererEvent, isAvailable: boolean): void => {
       callback(isAvailable);
     };
-    ipcRenderer.on(UserAPIIPCChannel.onUserStorageAvailabilityChange, LISTENER);
+    ipcRenderer.on(UserAPIIPCChannel.onAccountStorageAvailabilityChange, LISTENER);
     return (): void => {
-      ipcRenderer.removeListener(UserAPIIPCChannel.onUserStorageAvailabilityChange, LISTENER);
+      ipcRenderer.removeListener(UserAPIIPCChannel.onAccountStorageAvailabilityChange, LISTENER);
     };
   },
   onCurrentlySignedInUserChange: (callback: CurrentlySignedInUserChangeCallback): (() => void) => {

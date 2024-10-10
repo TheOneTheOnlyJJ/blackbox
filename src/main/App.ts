@@ -5,8 +5,8 @@ import log, { LogFunctions } from "electron-log";
 import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 import { JSONSchemaType } from "ajv/dist/types/json-schema";
 import { IPCTLSAPIIPCChannel, UserAPIIPCChannel } from "./utils/IPC/IPCChannels";
-import { UserAccountManager } from "./user/UserAccountManager";
-import { UserStorageType } from "./user/storage/UserStorageType";
+import { UserAccountManager } from "./user/account/UserAccountManager";
+import { UserAccountStorageType } from "./user/account/storage/UserAccountStorageType";
 import { adjustWindowBounds } from "./utils/window/adjustWindowBounds";
 import { IpcMainEvent } from "electron";
 import { IUserAPI } from "../shared/IPC/APIs/IUserAPI";
@@ -14,7 +14,7 @@ import { MainProcessIPCAPIHandlers } from "./utils/IPC/MainProcessIPCAPIHandlers
 import { IBaseNewUserData } from "../shared/user/IBaseNewUserData";
 import { generateKeyPairSync, webcrypto } from "node:crypto";
 import { IIPCTLSAPI } from "../shared/IPC/APIs/IIPCTLSAPI";
-import { ISecuredNewUserData } from "./user/ISecuredNewUserData";
+import { ISecuredNewUserData } from "./user/account/ISecuredNewUserData";
 import { testAESKey } from "./utils/encryption/testAESKey";
 import { insertLineBreaks } from "../shared/utils/insertNewLines";
 import { bufferToArrayBuffer } from "./utils/typeConversions/bufferToArrayBuffer";
@@ -28,7 +28,7 @@ import { IPCAPIResponseStatus } from "../shared/IPC/IPCAPIResponseStatus";
 import { SettingsManager } from "./settings/SettingsManager";
 import { SettingsManagerConfig, settingsManagerFactory } from "./settings/settingsManagerFactory";
 import { SettingsManagerType } from "./settings/SettingsManagerType";
-import { UserStorageConfig } from "./user/storage/userStorageFactory";
+import { UserAccountStorageConfig } from "./user/account/storage/userAccountStorageFactory";
 import { WindowPosition, WindowPositionWatcher, WindowState } from "./settings/WindowPositionWatcher";
 import Ajv from "ajv";
 
@@ -135,8 +135,8 @@ export class App {
 
   // Users
   private readonly userAccountManager: UserAccountManager;
-  private readonly USER_STORAGE_CONFIG: UserStorageConfig = {
-    type: UserStorageType.SQLite,
+  private readonly USER_STORAGE_CONFIG: UserAccountStorageConfig = {
+    type: UserAccountStorageType.SQLite,
     dbDirPath: resolve(join(app.getAppPath(), "data")),
     dbFileName: "users.sqlite"
   };
@@ -258,15 +258,15 @@ export class App {
         return { status: IPCAPIResponseStatus.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
-    handleIsStorageAvailable: (): IPCAPIResponse<boolean> => {
-      this.IPCUserAPILogger.debug("Received user storage availability status request.");
+    handleIsAccountStorageAvailable: (): IPCAPIResponse<boolean> => {
+      this.IPCUserAPILogger.debug("Received User Account Storage availability status request.");
       try {
-        const IS_STORAGE_AVAILABLE: boolean = this.userAccountManager.isUserStorageAvailable();
-        this.IPCUserAPILogger.debug(`User storage available: ${IS_STORAGE_AVAILABLE.toString()}.`);
+        const IS_STORAGE_AVAILABLE: boolean = this.userAccountManager.isUserAccountStorageAvailable();
+        this.IPCUserAPILogger.debug(`User Account Storage available: ${IS_STORAGE_AVAILABLE.toString()}.`);
         return { status: IPCAPIResponseStatus.SUCCESS, data: IS_STORAGE_AVAILABLE };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-        this.IPCUserAPILogger.error(`Could not get user storage availability: ${ERROR_MESSAGE}!`);
+        this.IPCUserAPILogger.error(`Could not get User Account Storage availability: ${ERROR_MESSAGE}!`);
         return { status: IPCAPIResponseStatus.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
@@ -300,13 +300,13 @@ export class App {
         return { status: IPCAPIResponseStatus.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
-    sendUserStorageAvailabilityChange: (isAvailable: boolean): void => {
-      this.IPCUserAPILogger.debug(`Sending window user storage availability after change: ${isAvailable.toString()}.`);
+    sendAccountStorageAvailabilityChange: (isUserAccountStorageAvailable: boolean): void => {
+      this.IPCUserAPILogger.debug(`Sending window User Account Storage availability after change: ${isUserAccountStorageAvailable.toString()}.`);
       if (this.window === null) {
         this.IPCUserAPILogger.debug('Window is "null". No-op.');
         return;
       }
-      this.window.webContents.send(UserAPIIPCChannel.onUserStorageAvailabilityChange, isAvailable);
+      this.window.webContents.send(UserAPIIPCChannel.onAccountStorageAvailabilityChange, isUserAccountStorageAvailable);
     },
     sendCurrentlySignedInUserChange: (newSignedInUser: ICurrentlySignedInUser | null): void => {
       this.IPCUserAPILogger.debug(`Sending window currently signed in user after change: ${JSON.stringify(newSignedInUser, null, 2)}.`);
@@ -339,7 +339,7 @@ export class App {
     // Initialise required managers & watchers
     this.userAccountManager = new UserAccountManager(
       this.USER_API_HANDLERS.sendCurrentlySignedInUserChange,
-      this.USER_API_HANDLERS.sendUserStorageAvailabilityChange,
+      this.USER_API_HANDLERS.sendAccountStorageAvailabilityChange,
       this.userAccountManagerLogger,
       this.userStorageLogger,
       this.AJV
@@ -400,7 +400,7 @@ export class App {
   private createWindow(): void {
     this.windowLogger.info("Creating window.");
     // Read window settings
-    // This should allow settings file edits on macOS to take effect when activating app
+    // This should allow external settings edits on macOS to take effect when activating app
     let lastWindowSettings: WindowSettings;
     try {
       lastWindowSettings = this.settingsManager.fetchSettings().window;
@@ -605,29 +605,29 @@ export class App {
     this.appLogger.info("App will quit.");
     this.appLogger.debug("Unregistering all global shortcuts.");
     globalShortcut.unregisterAll();
-    if (this.userAccountManager.isUserStorageAvailable()) {
-      this.appLogger.info(`Closing "${this.userAccountManager.getUserStorageType()}" user storage.`);
-      const IS_USER_STORAGE_CLOSED: boolean = this.userAccountManager.closeUserStorage();
-      this.appLogger.debug(IS_USER_STORAGE_CLOSED ? "Closed user storage." : "Could not close user storage.");
+    if (this.userAccountManager.isUserAccountStorageAvailable()) {
+      this.appLogger.info(`Closing "${this.userAccountManager.getUserAccountStorageType()}" User Account Storage.`);
+      const IS_USER_STORAGE_CLOSED: boolean = this.userAccountManager.closeUserAccountStorage();
+      this.appLogger.debug(IS_USER_STORAGE_CLOSED ? "Closed User Account Storage." : "Could not close User Account Storage.");
     } else {
-      this.appLogger.debug("No initialised user storage.");
+      this.appLogger.debug("No initialised User Account Storage.");
     }
     this.appLogger.silly("Pre-quit steps done.");
     appendFileSync(this.LOG_FILE_PATH, `---------- End   : ${new Date().toISOString()} ----------\n\n`, "utf-8");
   }
 
   private openUserStorage(): boolean {
-    this.userAccountManagerLogger.debug("Opening user storage.");
-    if (this.userAccountManager.isUserStorageAvailable()) {
+    this.userAccountManagerLogger.debug("Opening User Account Storage.");
+    if (this.userAccountManager.isUserAccountStorageAvailable()) {
       this.userAccountManagerLogger.debug("User storage already opened.");
       return false;
     }
     try {
-      this.userAccountManager.openUserStorage(this.USER_STORAGE_CONFIG);
+      this.userAccountManager.openUserAccountStorage(this.USER_STORAGE_CONFIG);
       return true;
     } catch (err: unknown) {
       const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-      this.userAccountManagerLogger.error(`Could not open user storage: ${ERROR_MESSAGE}!`);
+      this.userAccountManagerLogger.error(`Could not open User Account Storage: ${ERROR_MESSAGE}!`);
       return false;
     }
   }
@@ -653,8 +653,8 @@ export class App {
 
   private registerUserAPIIPCHandlers(): void {
     this.IPCLogger.debug("Registering User API IPC handlers.");
-    ipcMain.on(UserAPIIPCChannel.isStorageAvailable, (event: IpcMainEvent): void => {
-      event.returnValue = this.USER_API_HANDLERS.handleIsStorageAvailable();
+    ipcMain.on(UserAPIIPCChannel.isAccountStorageAvailable, (event: IpcMainEvent): void => {
+      event.returnValue = this.USER_API_HANDLERS.handleIsAccountStorageAvailable();
     });
     ipcMain.on(UserAPIIPCChannel.isUsernameAvailable, (event: IpcMainEvent, username: string): void => {
       event.returnValue = this.USER_API_HANDLERS.handleIsUsernameAvailable(username);
