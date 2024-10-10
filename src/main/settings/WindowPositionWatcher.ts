@@ -38,11 +38,11 @@ export class WindowPositionWatcher {
       clearTimeout(this.updateWindowPositionTimeout);
     }
     this.updateWindowPositionTimeout = setTimeout(() => {
-      this.updateWindowPosition(window, onWindowPositionChange);
+      this.getNewWindowPosition(window, onWindowPositionChange);
     }, this.UPDATE_WINDOW_POSITION_TIMEOUT_DELAY_MS);
   }
 
-  private updateWindowPosition(window: BrowserWindow, onWindowPositionChange: (position: WindowPosition) => void): void {
+  private getNewWindowPosition(window: BrowserWindow, onWindowPositionChange: (position: WindowPosition) => void): void {
     this.logger.debug("Updating window position.");
     let newWindowPosition: WindowPosition;
     if (window.isFullScreen()) {
