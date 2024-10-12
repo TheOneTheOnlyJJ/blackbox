@@ -24,10 +24,12 @@ export class LocalJSONSettingsManager<SettingsType extends Record<string, unknow
         enum: [SettingsManagerType.LocalJSON]
       },
       fileName: {
-        type: "string"
+        type: "string",
+        minLength: 1
       },
       fileDir: {
-        type: "string"
+        type: "string",
+        minLength: 1
       }
     },
     required: ["type", "fileName", "fileDir"],
