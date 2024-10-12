@@ -1,5 +1,5 @@
 import { BaseUserAccountStorageConfig, UserAccountStorage } from "../UserAccountStorage";
-import DatabaseConstructor, { Database } from "better-sqlite3";
+import DatabaseConstructor, { Database, RunResult } from "better-sqlite3";
 import { LogFunctions } from "electron-log";
 import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
@@ -8,26 +8,27 @@ import { UserAccountStorageType } from "../UserAccountStorageType";
 import { ISecuredNewUserData } from "../../ISecuredNewUserData";
 import { UUID } from "crypto";
 
-export interface SQLiteUserAccountStorageConfig extends BaseUserAccountStorageConfig {
-  type: UserAccountStorageType.SQLite;
+export interface LocalSQLiteUserAccountStorageConfig extends BaseUserAccountStorageConfig {
+  type: UserAccountStorageType.LocalSQLite;
   dbDirPath: string;
   dbFileName: string;
 }
 
-type SQLiteJournalMode = string;
+type SQLiteJournalModePragmaResult = undefined | null | string;
+type SQLiteForeignKeysPragmaResult = undefined | null | 0 | 1;
 
 interface SQLiteVersion {
   version: string;
 }
 
-export class SQLiteUserAccountStorage extends UserAccountStorage<SQLiteUserAccountStorageConfig> {
-  public static readonly CONFIG_SCHEMA: JSONSchemaType<SQLiteUserAccountStorageConfig> = {
+export class LocalSQLiteUserAccountStorage extends UserAccountStorage<LocalSQLiteUserAccountStorageConfig> {
+  public static readonly CONFIG_SCHEMA: JSONSchemaType<LocalSQLiteUserAccountStorageConfig> = {
     $schema: "http://json-schema.org/draft-07/schema#",
     type: "object",
     properties: {
       type: {
         type: "string",
-        enum: [UserAccountStorageType.SQLite]
+        enum: [UserAccountStorageType.LocalSQLite]
       },
       dbDirPath: {
         type: "string",
@@ -44,9 +45,9 @@ export class SQLiteUserAccountStorage extends UserAccountStorage<SQLiteUserAccou
 
   private readonly db: Database;
 
-  public constructor(config: SQLiteUserAccountStorageConfig, logger: LogFunctions, ajv: Ajv) {
-    super(config, SQLiteUserAccountStorage.CONFIG_SCHEMA, logger, ajv);
-    // Create db and directories as required
+  public constructor(config: LocalSQLiteUserAccountStorageConfig, logger: LogFunctions, ajv: Ajv) {
+    super(config, LocalSQLiteUserAccountStorage.CONFIG_SCHEMA, logger, ajv);
+    // Create db and directories
     if (existsSync(this.config.dbDirPath)) {
       this.logger.debug(`Found database directory at path: "${this.config.dbDirPath}". Looking for SQLite file.`);
     } else {
@@ -64,13 +65,22 @@ export class SQLiteUserAccountStorage extends UserAccountStorage<SQLiteUserAccou
     this.db = new DatabaseConstructor(DB_FILE_PATH);
     this.logger.silly("SQLite database constructor completed.");
     // Log SQLite version
-    this.logger.info(`Using SQLite version: ${(this.db.prepare("SELECT sqlite_version() AS version").get() as SQLiteVersion).version}.`);
+    this.logger.debug(`Using SQLite version: "${(this.db.prepare("SELECT sqlite_version() AS version").get() as SQLiteVersion).version}".`);
     // Configuration
+    // Journal mode
     this.logger.debug("Setting journal mode to WAL.");
     this.db.pragma("journal_mode = WAL");
-    this.logger.silly(`Journal mode: ${this.db.pragma("journal_mode", { simple: true }) as SQLiteJournalMode}.`);
+    const JOURNAL_MODE: SQLiteJournalModePragmaResult = this.db.pragma("journal_mode", { simple: true }) as SQLiteJournalModePragmaResult;
+    this.logger.silly(`Journal mode: "${String(JOURNAL_MODE)}".`);
+    // Foreign keys
+    this.logger.debug("Setting on foreign key support.");
+    this.db.pragma("foreign_keys = ON");
+    const FOREIGN_KEYS: SQLiteForeignKeysPragmaResult = this.db.pragma("foreign_keys", { simple: true }) as SQLiteForeignKeysPragmaResult;
+    this.logger.silly(`Foreign keys: "${String(FOREIGN_KEYS)}".`);
+    // Initialise required tables
     this.initialiseUsersTable();
-    this.logger.info('"SQLite" User Acount Storage ready.');
+    this.initialiseUserDataStorageConfigurationsTable();
+    this.logger.info(`"${this.config.type}" User Acount Storage ready.`);
   }
 
   public isUsernameAvailable(username: string): boolean {
@@ -91,15 +101,14 @@ export class SQLiteUserAccountStorage extends UserAccountStorage<SQLiteUserAccou
     const INSERT_NEW_USER_SQL =
       "INSERT INTO users (id, username, password_hash, password_salt) VALUES (@id, @username, @passwordHash, @passwordSalt)";
     try {
-      const INFO: DatabaseConstructor.RunResult = this.db.prepare(INSERT_NEW_USER_SQL).run({
+      const INFO: RunResult = this.db.prepare(INSERT_NEW_USER_SQL).run({
         id: userData.id,
         username: userData.username,
         passwordHash: userData.passwordHash,
         passwordSalt: userData.passwordSalt
       });
-      this.logger.info(
-        `User added successfully! Number of changes: ${INFO.changes.toString()}. Last inserted row ID: ${INFO.lastInsertRowid.toString()}.`
-      );
+      this.logger.info("User added successfully!");
+      this.logger.silly(`Number of changes: "${INFO.changes.toString()}". Last inserted row ID: "${INFO.lastInsertRowid.toString()}".`);
       return true;
     } catch (err: unknown) {
       const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
@@ -140,14 +149,14 @@ export class SQLiteUserAccountStorage extends UserAccountStorage<SQLiteUserAccou
   private initialiseUsersTable(): void {
     this.logger.debug('Initialising "users" table.');
     const SELECT_USERS_TABLE_SQL = "SELECT name FROM sqlite_master WHERE type='table' AND name='users'";
-    const doesUsersTableExist: boolean = this.db.prepare(SELECT_USERS_TABLE_SQL).get() !== undefined;
-    if (doesUsersTableExist) {
+    const DOES_USERS_TABLE_EXIST: boolean = this.db.prepare(SELECT_USERS_TABLE_SQL).get() !== undefined;
+    if (DOES_USERS_TABLE_EXIST) {
       this.logger.debug('Found "users" table.');
     } else {
       this.logger.debug('Did not find "users" table. Creating.');
       const CREATE_USERS_TABLE_SQL = `
       CREATE TABLE IF NOT EXISTS users (
-        id TEXT PRIMARY KEY,
+        id TEXT NOT NULL PRIMARY KEY,
         username TEXT NOT NULL UNIQUE,
         password_hash BLOB NOT NULL,
         password_salt BLOB NOT NULL
@@ -155,6 +164,28 @@ export class SQLiteUserAccountStorage extends UserAccountStorage<SQLiteUserAccou
       `;
       this.db.prepare(CREATE_USERS_TABLE_SQL).run();
       this.logger.debug('Created "users" table.');
+    }
+  }
+
+  private initialiseUserDataStorageConfigurationsTable(): void {
+    this.logger.debug('Initialising "user_data_storage_configurations" table.');
+    const SELECT_USER_DATA_STORAGE_CONFIGURATIONS_TABLE_SQL =
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='user_data_storage_configurations'";
+    const DOES_USER_DATA_STORAGE_CONFIGURATIONS_TABLE_EXIST: boolean =
+      this.db.prepare(SELECT_USER_DATA_STORAGE_CONFIGURATIONS_TABLE_SQL).get() !== undefined;
+    if (DOES_USER_DATA_STORAGE_CONFIGURATIONS_TABLE_EXIST) {
+      this.logger.debug('Found "user_data_storage_configurations" table.');
+    } else {
+      this.logger.debug('Did not find "user_data_storage_configurations" table. Creating.');
+      const CREATE_USERS_TABLE_SQL = `
+      CREATE TABLE IF NOT EXISTS user_data_storage_configurations (
+        user_id TEXT NOT NULL,
+        configuration BLOB NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE
+      )
+      `;
+      this.db.prepare(CREATE_USERS_TABLE_SQL).run();
+      this.logger.debug('Created "user_data_storage_configurations" table.');
     }
   }
 }

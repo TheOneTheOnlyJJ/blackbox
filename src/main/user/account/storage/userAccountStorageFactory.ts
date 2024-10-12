@@ -1,11 +1,9 @@
 import { LogFunctions } from "electron-log";
 import { UserAccountStorage } from "./UserAccountStorage";
-import { SQLiteUserAccountStorage, SQLiteUserAccountStorageConfig } from "./implementations/SQLiteUserAccountStorage";
+import { LocalSQLiteUserAccountStorage } from "./implementations/LocalSQLiteUserAccountStorage";
 import { UserAccountStorageType } from "./UserAccountStorageType";
 import Ajv from "ajv";
-
-// Union of all user account storage concrete implementation configuration interfaces
-export type UserAccountStorageConfig = SQLiteUserAccountStorageConfig;
+import { UserAccountStorageConfig } from "./UserAccountStorageConfig";
 
 export function userAccountStorageFactory(
   config: UserAccountStorageConfig,
@@ -14,8 +12,8 @@ export function userAccountStorageFactory(
 ): UserAccountStorage<UserAccountStorageConfig> {
   logger.debug(`Running User Acount Storage factory with config: ${JSON.stringify(config, null, 2)}.`);
   switch (config.type) {
-    case UserAccountStorageType.SQLite:
-      return new SQLiteUserAccountStorage(config, logger, ajv);
+    case UserAccountStorageType.LocalSQLite:
+      return new LocalSQLiteUserAccountStorage(config, logger, ajv);
     default:
       // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
       throw new Error(`Invalid User Acount Storage type received: ${config.type}`);

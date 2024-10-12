@@ -28,9 +28,9 @@ import { IPCAPIResponseStatus } from "../shared/IPC/IPCAPIResponseStatus";
 import { SettingsManager } from "./settings/SettingsManager";
 import { SettingsManagerConfig, settingsManagerFactory } from "./settings/settingsManagerFactory";
 import { SettingsManagerType } from "./settings/SettingsManagerType";
-import { UserAccountStorageConfig } from "./user/account/storage/userAccountStorageFactory";
 import { WindowPosition, WindowPositionWatcher, WindowState } from "./settings/WindowPositionWatcher";
 import Ajv from "ajv";
+import { UserAccountStorageConfig } from "./user/account/storage/UserAccountStorageConfig";
 
 type WindowPositionSetting = Rectangle | WindowState.FullScreen | WindowState.Maximized;
 
@@ -136,7 +136,7 @@ export class App {
   // Users
   private readonly userAccountManager: UserAccountManager;
   private readonly USER_STORAGE_CONFIG: UserAccountStorageConfig = {
-    type: UserAccountStorageType.SQLite,
+    type: UserAccountStorageType.LocalSQLite,
     dbDirPath: resolve(join(app.getAppPath(), "data")),
     dbFileName: "users.sqlite"
   };
@@ -337,13 +337,9 @@ export class App {
     appendFileSync(this.LOG_FILE_PATH, `---------- Start : ${new Date().toISOString()} ----------\n`, "utf-8");
     this.bootstrapLogger.info(`Using log file at path: "${log.transports.file.getFile().path}".`);
     // Initialise required managers & watchers
-    this.userAccountManager = new UserAccountManager(
-      this.USER_API_HANDLERS.sendCurrentlySignedInUserChange,
-      this.USER_API_HANDLERS.sendAccountStorageAvailabilityChange,
-      this.userAccountManagerLogger,
-      this.userStorageLogger,
-      this.AJV
-    );
+    this.userAccountManager = new UserAccountManager(this.userAccountManagerLogger, this.userStorageLogger, this.AJV);
+    this.userAccountManager.onCurrentlySignedInUserChangeCallback = this.USER_API_HANDLERS.sendCurrentlySignedInUserChange;
+    this.userAccountManager.onUserAccountStorageAvailabilityChangeCallback = this.USER_API_HANDLERS.sendAccountStorageAvailabilityChange;
     this.settingsManager = settingsManagerFactory<AppSettings>(
       this.SETTINGS_MANAGER_CONFIG,
       App.SETTINGS_SCHEMA,

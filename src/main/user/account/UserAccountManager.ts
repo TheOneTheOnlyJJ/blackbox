@@ -1,6 +1,6 @@
 import { LogFunctions } from "electron-log";
 import { UserAccountStorage } from "./storage/UserAccountStorage";
-import { UserAccountStorageConfig, userAccountStorageFactory } from "./storage/userAccountStorageFactory";
+import { userAccountStorageFactory } from "./storage/userAccountStorageFactory";
 import { UserAccountStorageType } from "./storage/UserAccountStorageType";
 import { BASE_NEW_USER_DATA_JSON_SCHEMA, IBaseNewUserData } from "../../../shared/user/IBaseNewUserData";
 import { randomBytes, randomUUID, scryptSync, timingSafeEqual, UUID } from "node:crypto";
@@ -10,6 +10,7 @@ import { IUserSignInCredentials, USER_SIGN_IN_CREDENTIALS_JSON_SCHEMA } from "..
 import { CurrentlySignedInUserChangeCallback, UserAccountStorageAvailabilityChangeCallback } from "../../../shared/IPC/APIs/IUserAPI";
 import { isDeepStrictEqual } from "node:util";
 import Ajv, { ValidateFunction } from "ajv";
+import { UserAccountStorageConfig } from "./storage/UserAccountStorageConfig";
 
 export class UserAccountManager {
   private readonly logger: LogFunctions;
@@ -17,12 +18,12 @@ export class UserAccountManager {
 
   // Currently signed in user
   private currentlySignedInUser: ICurrentlySignedInUser | null;
-  private onCurrentlySignedInUserChangeCallback: CurrentlySignedInUserChangeCallback;
+  public onCurrentlySignedInUserChangeCallback: CurrentlySignedInUserChangeCallback;
 
   // User account storage
   private userAccountStorage: UserAccountStorage<UserAccountStorageConfig> | null;
   // This is needed to let the renderer know if the user account storage is available when it changes
-  private onUserAccountStorageAvailabilityChangeCallback: UserAccountStorageAvailabilityChangeCallback;
+  public onUserAccountStorageAvailabilityChangeCallback: UserAccountStorageAvailabilityChangeCallback;
 
   // AJV insatnce
   private readonly AJV: Ajv;
@@ -30,20 +31,18 @@ export class UserAccountManager {
   public readonly BASE_NEW_USER_DATA_VALIDATE_FUNCTION: ValidateFunction<IBaseNewUserData>;
   public readonly USER_SIGN_IN_CREDENTIALS_VALIDATE_FUNCTION: ValidateFunction<IUserSignInCredentials>;
 
-  public constructor(
-    onCurrentlySignedInUserChangeCallback: CurrentlySignedInUserChangeCallback,
-    onUserAccountStorageAvailabilityChangeCallback: UserAccountStorageAvailabilityChangeCallback,
-    logger: LogFunctions,
-    userAccountStorageLogger: LogFunctions,
-    ajv: Ajv
-  ) {
+  public constructor(logger: LogFunctions, userAccountStorageLogger: LogFunctions, ajv: Ajv) {
     this.logger = logger;
     this.logger.debug("Initialising new User Account Manager.");
     this.userAccountStorageLogger = userAccountStorageLogger;
     this.currentlySignedInUser = null;
-    this.onCurrentlySignedInUserChangeCallback = onCurrentlySignedInUserChangeCallback;
+    this.onCurrentlySignedInUserChangeCallback = (): void => {
+      this.logger.debug("No currently signed in user change callback set.");
+    };
     this.userAccountStorage = null;
-    this.onUserAccountStorageAvailabilityChangeCallback = onUserAccountStorageAvailabilityChangeCallback;
+    this.onUserAccountStorageAvailabilityChangeCallback = (): void => {
+      this.logger.debug("No user account storage availability change callback set.");
+    };
     this.AJV = ajv;
     this.BASE_NEW_USER_DATA_VALIDATE_FUNCTION = this.AJV.compile<IBaseNewUserData>(BASE_NEW_USER_DATA_JSON_SCHEMA);
     this.USER_SIGN_IN_CREDENTIALS_VALIDATE_FUNCTION = this.AJV.compile<IUserSignInCredentials>(USER_SIGN_IN_CREDENTIALS_JSON_SCHEMA);
