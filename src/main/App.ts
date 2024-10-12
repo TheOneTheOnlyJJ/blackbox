@@ -5,7 +5,7 @@ import log, { LogFunctions } from "electron-log";
 import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 import { JSONSchemaType } from "ajv/dist/types/json-schema";
 import { IPCTLSAPIIPCChannel, UserAPIIPCChannel } from "./utils/IPC/IPCChannels";
-import { UserAccountManager } from "./user/account/UserAccountManager";
+import { UserManager } from "./user/UserManager";
 import { UserAccountStorageType } from "./user/account/storage/UserAccountStorageType";
 import { adjustWindowBounds } from "./utils/window/adjustWindowBounds";
 import { IpcMainEvent } from "electron";
@@ -63,8 +63,8 @@ export class App {
   private readonly IPCLogger: LogFunctions = log.scope("main-ipc");
   private readonly IPCUserAPILogger: LogFunctions = log.scope("main-ipc-user-api");
   private readonly IPCTLSAPILogger: LogFunctions = log.scope("main-ipc-tls-api");
-  private readonly userAccountManagerLogger: LogFunctions = log.scope("main-user-account-manager");
-  private readonly userStorageLogger: LogFunctions = log.scope("main-user-storage");
+  private readonly userManagerLogger: LogFunctions = log.scope("main-user-manager");
+  private readonly userAccountStorageLogger: LogFunctions = log.scope("main-user-account-storage");
 
   // Settings
   public static readonly SETTINGS_SCHEMA: JSONSchemaType<AppSettings> = {
@@ -134,7 +134,7 @@ export class App {
   private readonly windowPositionWatcher: WindowPositionWatcher;
 
   // Users
-  private readonly userAccountManager: UserAccountManager;
+  private readonly userManager: UserManager;
   private readonly USER_STORAGE_CONFIG: UserAccountStorageConfig = {
     type: UserAccountStorageType.LocalSQLite,
     dbDirPath: resolve(join(app.getAppPath(), "data")),
@@ -211,15 +211,15 @@ export class App {
         }
         const BASE_NEW_USER_DATA: IBaseNewUserData = decryptJSON<IBaseNewUserData>(
           encryptedBaseNewUserData,
-          this.userAccountManager.BASE_NEW_USER_DATA_VALIDATE_FUNCTION,
+          this.userManager.BASE_NEW_USER_DATA_VALIDATE_FUNCTION,
           this.rendererProcessAESKey,
           this.IPCUserAPILogger,
           "base new user data"
         );
-        const SECURED_NEW_USER_DATA: ISecuredNewUserData = this.userAccountManager.secureBaseNewUserData(BASE_NEW_USER_DATA);
+        const SECURED_NEW_USER_DATA: ISecuredNewUserData = this.userManager.secureBaseNewUserData(BASE_NEW_USER_DATA);
         return {
           status: IPCAPIResponseStatus.SUCCESS,
-          data: this.userAccountManager.signUpUser(SECURED_NEW_USER_DATA)
+          data: this.userManager.signUpUser(SECURED_NEW_USER_DATA)
         };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
@@ -235,12 +235,12 @@ export class App {
         }
         const DECRYPTED_USER_SIGN_IN_CREDENTIALS: IUserSignInCredentials = decryptJSON<IUserSignInCredentials>(
           encryptedUserSignInCredentials,
-          this.userAccountManager.USER_SIGN_IN_CREDENTIALS_VALIDATE_FUNCTION,
+          this.userManager.USER_SIGN_IN_CREDENTIALS_VALIDATE_FUNCTION,
           this.rendererProcessAESKey,
           this.IPCUserAPILogger,
           "user sign in credentials"
         );
-        return { status: IPCAPIResponseStatus.SUCCESS, data: this.userAccountManager.signInUser(DECRYPTED_USER_SIGN_IN_CREDENTIALS) };
+        return { status: IPCAPIResponseStatus.SUCCESS, data: this.userManager.signInUser(DECRYPTED_USER_SIGN_IN_CREDENTIALS) };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
         this.IPCUserAPILogger.error(`Could not sign in user: ${ERROR_MESSAGE}!`);
@@ -250,7 +250,7 @@ export class App {
     handleSignOut: (): IPCAPIResponse => {
       this.IPCUserAPILogger.debug("Received sign out request.");
       try {
-        this.userAccountManager.signOutUser();
+        this.userManager.signOutUser();
         return { status: IPCAPIResponseStatus.SUCCESS };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
@@ -261,7 +261,7 @@ export class App {
     handleIsAccountStorageAvailable: (): IPCAPIResponse<boolean> => {
       this.IPCUserAPILogger.debug("Received User Account Storage availability status request.");
       try {
-        const IS_STORAGE_AVAILABLE: boolean = this.userAccountManager.isUserAccountStorageAvailable();
+        const IS_STORAGE_AVAILABLE: boolean = this.userManager.isUserAccountStorageAvailable();
         this.IPCUserAPILogger.debug(`User Account Storage available: ${IS_STORAGE_AVAILABLE.toString()}.`);
         return { status: IPCAPIResponseStatus.SUCCESS, data: IS_STORAGE_AVAILABLE };
       } catch (err: unknown) {
@@ -273,7 +273,7 @@ export class App {
     handleIsUsernameAvailable: (username: string): IPCAPIResponse<boolean> => {
       this.IPCUserAPILogger.debug("Received username availability status request.");
       try {
-        return { status: IPCAPIResponseStatus.SUCCESS, data: this.userAccountManager.isUsernameAvailable(username) };
+        return { status: IPCAPIResponseStatus.SUCCESS, data: this.userManager.isUsernameAvailable(username) };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
         this.IPCUserAPILogger.error(`Could not get username availability: ${ERROR_MESSAGE}!`);
@@ -283,7 +283,7 @@ export class App {
     handleGetUserCount: (): IPCAPIResponse<number> => {
       this.IPCUserAPILogger.debug("Received user count request.");
       try {
-        return { status: IPCAPIResponseStatus.SUCCESS, data: this.userAccountManager.getUserCount() };
+        return { status: IPCAPIResponseStatus.SUCCESS, data: this.userManager.getUserCount() };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
         this.IPCUserAPILogger.error(`Could not get user count: ${ERROR_MESSAGE}!`);
@@ -293,7 +293,7 @@ export class App {
     handleGetCurrentlySignedInUser: (): IPCAPIResponse<ICurrentlySignedInUser | null> => {
       this.IPCUserAPILogger.debug("Received currently signed in user request.");
       try {
-        return { status: IPCAPIResponseStatus.SUCCESS, data: this.userAccountManager.getCurrentlySignedInUser() };
+        return { status: IPCAPIResponseStatus.SUCCESS, data: this.userManager.getCurrentlySignedInUser() };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
         this.IPCUserAPILogger.error(`Could not get currently signed in user: ${ERROR_MESSAGE}!`);
@@ -337,9 +337,9 @@ export class App {
     appendFileSync(this.LOG_FILE_PATH, `---------- Start : ${new Date().toISOString()} ----------\n`, "utf-8");
     this.bootstrapLogger.info(`Using log file at path: "${log.transports.file.getFile().path}".`);
     // Initialise required managers & watchers
-    this.userAccountManager = new UserAccountManager(this.userAccountManagerLogger, this.userStorageLogger, this.AJV);
-    this.userAccountManager.onCurrentlySignedInUserChangeCallback = this.USER_API_HANDLERS.sendCurrentlySignedInUserChange;
-    this.userAccountManager.onUserAccountStorageAvailabilityChangeCallback = this.USER_API_HANDLERS.sendAccountStorageAvailabilityChange;
+    this.userManager = new UserManager(this.userManagerLogger, this.userAccountStorageLogger, this.AJV);
+    this.userManager.onCurrentlySignedInUserChangeCallback = this.USER_API_HANDLERS.sendCurrentlySignedInUserChange;
+    this.userManager.onUserAccountStorageAvailabilityChangeCallback = this.USER_API_HANDLERS.sendAccountStorageAvailabilityChange;
     this.settingsManager = settingsManagerFactory<AppSettings>(
       this.SETTINGS_MANAGER_CONFIG,
       App.SETTINGS_SCHEMA,
@@ -601,9 +601,9 @@ export class App {
     this.appLogger.info("App will quit.");
     this.appLogger.debug("Unregistering all global shortcuts.");
     globalShortcut.unregisterAll();
-    if (this.userAccountManager.isUserAccountStorageAvailable()) {
-      this.appLogger.info(`Closing "${this.userAccountManager.getUserAccountStorageType()}" User Account Storage.`);
-      const IS_USER_STORAGE_CLOSED: boolean = this.userAccountManager.closeUserAccountStorage();
+    if (this.userManager.isUserAccountStorageAvailable()) {
+      this.appLogger.info(`Closing "${this.userManager.getUserAccountStorageType()}" User Account Storage.`);
+      const IS_USER_STORAGE_CLOSED: boolean = this.userManager.closeUserAccountStorage();
       this.appLogger.debug(IS_USER_STORAGE_CLOSED ? "Closed User Account Storage." : "Could not close User Account Storage.");
     } else {
       this.appLogger.debug("No initialised User Account Storage.");
@@ -613,17 +613,17 @@ export class App {
   }
 
   private openUserStorage(): boolean {
-    this.userAccountManagerLogger.debug("Opening User Account Storage.");
-    if (this.userAccountManager.isUserAccountStorageAvailable()) {
-      this.userAccountManagerLogger.debug("User storage already opened.");
+    this.userManagerLogger.debug("Opening User Account Storage.");
+    if (this.userManager.isUserAccountStorageAvailable()) {
+      this.userManagerLogger.debug("User storage already opened.");
       return false;
     }
     try {
-      this.userAccountManager.openUserAccountStorage(this.USER_STORAGE_CONFIG);
+      this.userManager.openUserAccountStorage(this.USER_STORAGE_CONFIG);
       return true;
     } catch (err: unknown) {
       const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-      this.userAccountManagerLogger.error(`Could not open User Account Storage: ${ERROR_MESSAGE}!`);
+      this.userManagerLogger.error(`Could not open User Account Storage: ${ERROR_MESSAGE}!`);
       return false;
     }
   }

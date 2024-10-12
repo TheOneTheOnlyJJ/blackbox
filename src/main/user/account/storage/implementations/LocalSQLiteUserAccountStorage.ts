@@ -7,6 +7,7 @@ import Ajv, { JSONSchemaType } from "ajv";
 import { UserAccountStorageType } from "../UserAccountStorageType";
 import { ISecuredNewUserData } from "../../ISecuredNewUserData";
 import { UUID } from "crypto";
+import { UserDataStorageConfig } from "../../../data/storage/UserDataStorageConfig";
 
 export interface LocalSQLiteUserAccountStorageConfig extends BaseUserAccountStorageConfig {
   type: UserAccountStorageType.LocalSQLite;
@@ -84,7 +85,6 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<LocalSQLit
   }
 
   public isUsernameAvailable(username: string): boolean {
-    // TODO: Implement this properly
     this.logger.debug(`Checking username availability for username: "${username}".`);
     const IS_USERNAME_AVAILABLE_SQL = "SELECT COUNT(*) AS count FROM users WHERE username = @username";
     const RESULT = this.db.prepare(IS_USERNAME_AVAILABLE_SQL).get({ username: username }) as { count: number };
@@ -99,16 +99,16 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<LocalSQLit
   public addUser(userData: ISecuredNewUserData): boolean {
     this.logger.debug(`Adding new user: "${userData.username}".`);
     const INSERT_NEW_USER_SQL =
-      "INSERT INTO users (id, username, password_hash, password_salt) VALUES (@id, @username, @passwordHash, @passwordSalt)";
+      "INSERT INTO users (user_id, username, password_hash, password_salt) VALUES (@userId, @username, @passwordHash, @passwordSalt)";
     try {
-      const INFO: RunResult = this.db.prepare(INSERT_NEW_USER_SQL).run({
-        id: userData.id,
+      const RUN_RESULT: RunResult = this.db.prepare(INSERT_NEW_USER_SQL).run({
+        userId: userData.userId,
         username: userData.username,
         passwordHash: userData.passwordHash,
         passwordSalt: userData.passwordSalt
       });
       this.logger.info("User added successfully!");
-      this.logger.silly(`Number of changes: "${INFO.changes.toString()}". Last inserted row ID: "${INFO.lastInsertRowid.toString()}".`);
+      this.logger.silly(`Number of changes: "${RUN_RESULT.changes.toString()}". Last inserted row ID: "${RUN_RESULT.lastInsertRowid.toString()}".`);
       return true;
     } catch (err: unknown) {
       const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
@@ -117,19 +117,18 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<LocalSQLit
     }
   }
 
-  public getUserIdByUsername(username: string): UUID | null {
-    this.logger.debug(`Getting user ID by username for user: "${username}".`);
-    const GET_USER_ID_BY_USERNAME_SQL = "SELECT id FROM users WHERE username = @username LIMIT 1";
-    const RESULT = this.db.prepare(GET_USER_ID_BY_USERNAME_SQL).get({ username: username }) as { id: UUID } | undefined;
-    return RESULT === undefined ? null : RESULT.id;
+  public getUserId(username: string): UUID | null {
+    this.logger.debug(`Getting user ID for user: "${username}".`);
+    const GET_USER_ID_SQL = "SELECT user_id AS userId FROM users WHERE username = @username LIMIT 1";
+    const RESULT = this.db.prepare(GET_USER_ID_SQL).get({ username: username }) as { userId: UUID } | undefined;
+    return RESULT === undefined ? null : RESULT.userId;
   }
 
-  public getPasswordDataByUserId(userId: UUID): [Buffer, Buffer] | null {
+  public getPasswordData(userId: UUID): [Buffer, Buffer] | null {
     this.logger.debug(`Getting password salt for user with ID: "${userId}".`);
-    const GET_USER_PASSWORD_SALT_BY_USER_ID = "SELECT password_hash AS passwordHash, password_salt AS passwordSalt FROM users WHERE id = @id LIMIT 1";
-    const RESULT = this.db.prepare(GET_USER_PASSWORD_SALT_BY_USER_ID).get({ id: userId }) as
-      | { passwordHash: Buffer; passwordSalt: Buffer }
-      | undefined;
+    const GET_USER_PASSWORD_SALT_SQL =
+      "SELECT password_hash AS passwordHash, password_salt AS passwordSalt FROM users WHERE user_id = @userId LIMIT 1";
+    const RESULT = this.db.prepare(GET_USER_PASSWORD_SALT_SQL).get({ userId: userId }) as { passwordHash: Buffer; passwordSalt: Buffer } | undefined;
     return RESULT === undefined ? null : [RESULT.passwordHash, RESULT.passwordSalt];
   }
 
@@ -139,6 +138,84 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<LocalSQLit
     const RESULT = this.db.prepare(USER_COUNT_SQL).get() as { count: number };
     this.logger.debug(`User count: ${RESULT.count.toString()}.`);
     return RESULT.count;
+  }
+
+  private isJSONValidInSQLite(json: object | string): boolean {
+    if (typeof json === "object") {
+      json = JSON.stringify(json, null, 2);
+    }
+    this.logger.log(`Performing SQLite JSON validation on: "${json}".`);
+    const VALIDATE_JSON_SQL = "SELECT json_valid(@json) AS isValid";
+    const RESULT = this.db.prepare(VALIDATE_JSON_SQL).get({ json: json }) as { isValid: 0 | 1 };
+    const IS_VALID: boolean = RESULT.isValid === 0 ? false : true;
+    this.logger.debug(`JSON validity in SQLite: "${IS_VALID.toString()}".`);
+    return IS_VALID;
+  }
+
+  public addUserDataStorageConfig(userId: UUID, userDataStorageConfig: UserDataStorageConfig): boolean {
+    this.logger.debug(`Adding new User Data Storage Configuration to user with ID: "${userId}".`);
+    // Validate config
+    this.logger.debug("Validating User Data Storage Configuration.");
+    if (!this.USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION(userDataStorageConfig)) {
+      this.logger.debug("Invalid User Data Storage Configuration.");
+      this.logger.error("Validation errors:");
+      this.USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION.errors?.map((error) => {
+        this.logger.error(`Path: "${error.instancePath.length > 0 ? error.instancePath : "-"}", Message: "${error.message ?? "-"}".`);
+      });
+      return false;
+    }
+    this.logger.debug("Valid User Data Storage Configuration.");
+    const STRINGIFIED_USER_DATA_STORAGE_CONFIGURATION: string = JSON.stringify(userDataStorageConfig, null, 2);
+    // Validate stringified config as JSON at SQLite level
+    if (!this.isJSONValidInSQLite(STRINGIFIED_USER_DATA_STORAGE_CONFIGURATION)) {
+      this.logger.debug("Invalid User Data Storage Configuration. Cannot add to user account.");
+      return false;
+    }
+    this.logger.debug("Valid User Data Storage Configuration. Attempting to add to database.");
+    const ADD_USER_DATA_STORAGE_CONFIG_SQL =
+      "INSERT INTO user_data_storage_configurations (user_id, configuration) VALUES (@userId, jsonb(@userDataStorageConfig))";
+    try {
+      const RUN_RESULT: RunResult = this.db
+        .prepare(ADD_USER_DATA_STORAGE_CONFIG_SQL)
+        .run({ userId: userId, userDataStorageConfig: STRINGIFIED_USER_DATA_STORAGE_CONFIGURATION });
+      this.logger.info("User Data Storage Configuration added successfully!");
+      this.logger.silly(`Number of changes: "${RUN_RESULT.changes.toString()}". Last inserted row ID: "${RUN_RESULT.lastInsertRowid.toString()}".`);
+      return true;
+    } catch (err: unknown) {
+      const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Could not add User Data Storage Configuration! ${ERROR_MESSAGE}!`);
+      return false;
+    }
+  }
+
+  public getAllUserDataStorageConfigs(userId: UUID): UserDataStorageConfig[] {
+    this.logger.debug(`Getting all User Data Storage Configurations for user with ID: "${userId}".`);
+    const GET_ALL_USER_DATA_STORAGE_CONFIGURATIONS_SQL =
+      "SELECT json(configuration) AS config FROM user_data_storage_configurations WHERE user_id = @userId";
+    const RESULT = this.db.prepare(GET_ALL_USER_DATA_STORAGE_CONFIGURATIONS_SQL).all({ userId: userId }) as { config: string }[];
+    const USER_DATA_STORAGE_CONFIGS: UserDataStorageConfig[] = [];
+    try {
+      RESULT.map((element: { config: string }) => {
+        this.logger.debug("Parsing User Data Storage Configuration.");
+        const PARSED_USER_DATA_STORAGE_CONFIG: UserDataStorageConfig = JSON.parse(element.config) as UserDataStorageConfig;
+        this.logger.debug("Validating parsed User Data Storage Configuration.");
+        if (!this.USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION(PARSED_USER_DATA_STORAGE_CONFIG)) {
+          this.logger.debug("Invalid User Data Storage Configuration.");
+          this.logger.error("Validation errors:");
+          this.USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION.errors?.map((error) => {
+            this.logger.error(`Path: "${error.instancePath.length > 0 ? error.instancePath : "-"}", Message: "${error.message ?? "-"}".`);
+          });
+          return;
+        }
+        this.logger.debug("Valid User Data Storage Configuration.");
+        USER_DATA_STORAGE_CONFIGS.push(PARSED_USER_DATA_STORAGE_CONFIG);
+      });
+      return USER_DATA_STORAGE_CONFIGS;
+    } catch (err: unknown) {
+      const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Could not parse results! ${ERROR_MESSAGE}!`);
+      return [];
+    }
   }
 
   public close(): boolean {
@@ -156,7 +233,7 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<LocalSQLit
       this.logger.debug('Did not find "users" table. Creating.');
       const CREATE_USERS_TABLE_SQL = `
       CREATE TABLE IF NOT EXISTS users (
-        id TEXT NOT NULL PRIMARY KEY,
+        user_id TEXT NOT NULL PRIMARY KEY,
         username TEXT NOT NULL UNIQUE,
         password_hash BLOB NOT NULL,
         password_salt BLOB NOT NULL
@@ -181,7 +258,7 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<LocalSQLit
       CREATE TABLE IF NOT EXISTS user_data_storage_configurations (
         user_id TEXT NOT NULL,
         configuration BLOB NOT NULL,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE
+        FOREIGN KEY (user_id) REFERENCES users(user_id) ON UPDATE CASCADE ON DELETE CASCADE
       )
       `;
       this.db.prepare(CREATE_USERS_TABLE_SQL).run();

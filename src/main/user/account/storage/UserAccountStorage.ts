@@ -3,6 +3,7 @@ import Ajv, { JSONSchemaType, ValidateFunction } from "ajv";
 import { UserAccountStorageType } from "./UserAccountStorageType";
 import { ISecuredNewUserData } from "../ISecuredNewUserData";
 import { UUID } from "node:crypto";
+import { USER_DATA_STORAGE_CONFIG_SCHEMA, UserDataStorageConfig } from "../../data/storage/UserDataStorageConfig";
 
 // Every user account storage must have at least the type in its config (should be further narrowed down to its own in the specific config)
 export interface BaseUserAccountStorageConfig {
@@ -12,28 +13,30 @@ export interface BaseUserAccountStorageConfig {
 export abstract class UserAccountStorage<T extends BaseUserAccountStorageConfig> {
   protected readonly logger: LogFunctions;
   protected readonly config: T;
-  private readonly CONFIG_VALIDATE_FUNCTION: ValidateFunction<T>;
+  private readonly USER_ACCOUNT_STORAGE_CONFIG_VALIDATE_FUNCTION: ValidateFunction<T>;
+  protected readonly USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION: ValidateFunction<UserDataStorageConfig>;
 
   public constructor(config: T, configSchema: JSONSchemaType<T>, logger: LogFunctions, ajv: Ajv) {
     this.logger = logger;
     this.config = config;
     this.logger.info(`Initialising "${this.config.type}" User Acount Storage.`);
     this.logger.silly(`Config: ${JSON.stringify(this.config, null, 2)}.`);
-    this.CONFIG_VALIDATE_FUNCTION = ajv.compile<T>(configSchema);
-    this.logger.silly(`Validating "${this.config.type}" User Acount Storage config.`);
+    this.USER_ACCOUNT_STORAGE_CONFIG_VALIDATE_FUNCTION = ajv.compile<T>(configSchema);
+    this.logger.silly(`Validating "${this.config.type}" User Acount Storage Configuration.`);
     if (!this.isConfigValid()) {
       throw new Error(`Could not initialise "${this.config.type}" User Acount Storage`);
     }
+    this.USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION = ajv.compile<UserDataStorageConfig>(USER_DATA_STORAGE_CONFIG_SCHEMA);
   }
 
   public isConfigValid(): boolean {
-    if (this.CONFIG_VALIDATE_FUNCTION(this.config)) {
-      this.logger.debug("Valid config.");
+    if (this.USER_ACCOUNT_STORAGE_CONFIG_VALIDATE_FUNCTION(this.config)) {
+      this.logger.debug("Valid User Account Storage Configuration.");
       return true;
     }
-    this.logger.debug("Invalid config.");
+    this.logger.debug("Invalid User Account Storage Configuration.");
     this.logger.error("Validation errors:");
-    this.CONFIG_VALIDATE_FUNCTION.errors?.map((error) => {
+    this.USER_ACCOUNT_STORAGE_CONFIG_VALIDATE_FUNCTION.errors?.map((error) => {
       this.logger.error(`Path: "${error.instancePath.length > 0 ? error.instancePath : "-"}", Message: "${error.message ?? "-"}".`);
     });
     return false;
@@ -46,8 +49,8 @@ export abstract class UserAccountStorage<T extends BaseUserAccountStorageConfig>
   // public abstract isLocal(): boolean;
   public abstract isUsernameAvailable(username: string): boolean;
   public abstract addUser(userData: ISecuredNewUserData): boolean;
-  public abstract getUserIdByUsername(username: string): UUID | null;
-  public abstract getPasswordDataByUserId(userId: UUID): [Buffer, Buffer] | null;
+  public abstract getUserId(username: string): UUID | null;
+  public abstract getPasswordData(userId: UUID): [Buffer, Buffer] | null;
   // public abstract deleteUser(userId: UserId): boolean;
   // public abstract deleteUsers(userIds: UserId[]): boolean;
   // public abstract getUser(userId: UserId): IUser;
@@ -55,5 +58,7 @@ export abstract class UserAccountStorage<T extends BaseUserAccountStorageConfig>
   // public abstract getAllUsers(): IUser[];
   public abstract getUserCount(): number;
   // public abstract isIdValid(id: UserId): boolean;
+  public abstract addUserDataStorageConfig(userId: UUID, userDataStorageConfig: UserDataStorageConfig): boolean;
+  public abstract getAllUserDataStorageConfigs(userId: UUID): UserDataStorageConfig[];
   public abstract close(): boolean;
 }

@@ -18,7 +18,7 @@ export abstract class UserDataStorage<T extends BaseUserDataStorageConfig> {
     this.logger.info(`Initialising "${this.config.type}" User Data Storage.`);
     this.logger.silly(`Config: ${JSON.stringify(this.config, null, 2)}.`);
     this.CONFIG_VALIDATE_FUNCTION = ajv.compile<T>(configSchema);
-    this.logger.silly(`Validating "${this.config.type}" User Data Storage config.`);
+    this.logger.silly(`Validating "${this.config.type}" User Data Storage Configuration.`);
     if (!this.isConfigValid()) {
       throw new Error(`Could not initialise "${this.config.type}" User Data Storage`);
     }
@@ -26,10 +26,10 @@ export abstract class UserDataStorage<T extends BaseUserDataStorageConfig> {
 
   public isConfigValid(): boolean {
     if (this.CONFIG_VALIDATE_FUNCTION(this.config)) {
-      this.logger.debug("Valid config.");
+      this.logger.debug("Valid User Data Storage Configuration.");
       return true;
     }
-    this.logger.debug("Invalid config.");
+    this.logger.debug("Invalid User Data Storage Configuration.");
     this.logger.error("Validation errors:");
     this.CONFIG_VALIDATE_FUNCTION.errors?.map((error) => {
       this.logger.error(`Path: "${error.instancePath.length > 0 ? error.instancePath : "-"}", Message: "${error.message ?? "-"}".`);
