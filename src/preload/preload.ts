@@ -2,7 +2,7 @@ import { contextBridge, ipcRenderer, IpcRendererEvent } from "electron";
 import { IPCTLSAPIIPCChannel, UserAPIIPCChannel } from "../main/utils/IPC/IPCChannels";
 import { CurrentlySignedInUserChangeCallback, IUserAPI, UserAccountStorageAvailabilityChangeCallback } from "../shared/IPC/APIs/IUserAPI";
 import { IIPCTLSAPI } from "../shared/IPC/APIs/IIPCTLSAPI";
-import { ICurrentlySignedInUser } from "../shared/user/ICurrentlySignedInUser";
+import { CurrentlySignedInUser } from "../shared/user/ICurrentlySignedInUser";
 import { IEncryptedUserSignInCredentials } from "../shared/user/encrypted/IEncryptedUserSignInCredentials";
 import { IEncryptedBaseNewUserData } from "../shared/user/encrypted/IEncryptedBaseNewUserData";
 import { IPCAPIResponse } from "../shared/IPC/IPCAPIResponse";
@@ -35,8 +35,8 @@ const USER_STORAGE_API: IUserAPI = {
   getUserCount: (): IPCAPIResponse<number> => {
     return ipcRenderer.sendSync(UserAPIIPCChannel.getUserCount) as IPCAPIResponse<number>;
   },
-  getCurrentlySignedInUser: (): IPCAPIResponse<ICurrentlySignedInUser | null> => {
-    return ipcRenderer.sendSync(UserAPIIPCChannel.getCurrentlySignedInUser) as IPCAPIResponse<ICurrentlySignedInUser | null>;
+  getCurrentlySignedInUser: (): IPCAPIResponse<CurrentlySignedInUser | null> => {
+    return ipcRenderer.sendSync(UserAPIIPCChannel.getCurrentlySignedInUser) as IPCAPIResponse<CurrentlySignedInUser | null>;
   },
   onAccountStorageAvailabilityChange: (callback: UserAccountStorageAvailabilityChangeCallback): (() => void) => {
     const LISTENER = (_: IpcRendererEvent, isAvailable: boolean): void => {
@@ -48,7 +48,7 @@ const USER_STORAGE_API: IUserAPI = {
     };
   },
   onCurrentlySignedInUserChange: (callback: CurrentlySignedInUserChangeCallback): (() => void) => {
-    const LISTENER = (_: IpcRendererEvent, newSignedInUser: ICurrentlySignedInUser | null): void => {
+    const LISTENER = (_: IpcRendererEvent, newSignedInUser: CurrentlySignedInUser | null): void => {
       callback(newSignedInUser);
     };
     ipcRenderer.on(UserAPIIPCChannel.onCurrentlySignedInUserChange, LISTENER);

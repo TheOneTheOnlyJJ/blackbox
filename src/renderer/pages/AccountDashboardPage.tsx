@@ -8,7 +8,7 @@ import {
 } from "../components/roots/signedInDashboardLayoutRoot/SignedInDashboardLayoutRootContext";
 
 export interface AccountDashboardPageParams extends Record<string, string> {
-  userId: string;
+  username: string;
 }
 
 const AccountDashboardPage: FC = () => {
@@ -32,9 +32,7 @@ const AccountDashboardPage: FC = () => {
         background: "pink"
       }}
     >
-      <Typography variant="h5">
-        Account Dashboard for user: {signedInDashboardLayoutRootContext.currentlySignedInUser.username} with ID: {params.userId}
-      </Typography>
+      <Typography variant="h5">Account Dashboard for user: {params.username}</Typography>
     </Box>
   );
 };

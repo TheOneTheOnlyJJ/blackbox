@@ -10,7 +10,7 @@ export abstract class SettingsManager<SettingsType extends NonNullable<unknown>,
   // Logging
   protected readonly logger: LogFunctions;
   // Own config
-  protected readonly config: ConfigType;
+  public readonly config: ConfigType;
   private readonly SETTINGS_MANAGER_CONFIG_VALIDATE_FUNCTION: ValidateFunction<ConfigType>;
   // Settings
   protected settings: SettingsType | null;

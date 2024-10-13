@@ -132,13 +132,13 @@ const SignedInAppBar = forwardRef<HTMLDivElement, ISignedInAppBarProps>(function
         onClose={handleAccountMenuClose}
         onClick={handleAccountMenuClose}
       >
-        <MenuItem component={Link} to={`/users/${signedInRootContext.currentlySignedInUser.id}/profile`}>
+        <MenuItem component={Link} to={`/users/${signedInRootContext.currentlySignedInUser.username}/profile`}>
           <ListItemIcon>
             <PersonOutlineOutlinedIcon fontSize="small" />
           </ListItemIcon>
           Profile
         </MenuItem>
-        <MenuItem component={Link} to={`/users/${signedInRootContext.currentlySignedInUser.id}/settings`}>
+        <MenuItem component={Link} to={`/users/${signedInRootContext.currentlySignedInUser.username}/settings`}>
           <ListItemIcon>
             <SettingsOutlinedIcon fontSize="small" />
           </ListItemIcon>

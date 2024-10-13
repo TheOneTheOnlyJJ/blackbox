@@ -86,7 +86,7 @@ const AppRoot: FC = () => {
     if (currentlySignedInUser === null) {
       navigationPath = "/";
     } else {
-      navigationPath = `/users/${currentlySignedInUser.id}/dashboard`;
+      navigationPath = `/users/${currentlySignedInUser.username}/dashboard`;
     }
     // Wipe the history stack and navigate to the required path
     appLogger.debug("Wiping window navigation history.");

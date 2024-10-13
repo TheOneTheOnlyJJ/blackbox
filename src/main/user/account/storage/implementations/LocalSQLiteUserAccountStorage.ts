@@ -219,6 +219,7 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<LocalSQLit
   }
 
   public close(): boolean {
+    this.logger.debug(`Closing "${this.config.type}" User Account Storage.`);
     this.db.close();
     return true;
   }

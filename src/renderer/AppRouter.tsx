@@ -30,7 +30,7 @@ const APP_ROUTER = createHashRouter([
         element: <SigningOutPage />
       },
       {
-        path: "users/:userId",
+        path: "users/:username",
         element: <SignedInRoot />,
         children: [
           {

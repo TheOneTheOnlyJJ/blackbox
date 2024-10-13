@@ -12,7 +12,7 @@ export interface BaseUserAccountStorageConfig {
 
 export abstract class UserAccountStorage<T extends BaseUserAccountStorageConfig> {
   protected readonly logger: LogFunctions;
-  protected readonly config: T;
+  public readonly config: T;
   private readonly USER_ACCOUNT_STORAGE_CONFIG_VALIDATE_FUNCTION: ValidateFunction<T>;
   protected readonly USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION: ValidateFunction<UserDataStorageConfig>;
 
@@ -28,7 +28,7 @@ export abstract class UserAccountStorage<T extends BaseUserAccountStorageConfig>
     this.USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION = ajv.compile<UserDataStorageConfig>(USER_DATA_STORAGE_CONFIG_SCHEMA);
   }
 
-  public isConfigValid(): boolean {
+  private isConfigValid(): boolean {
     this.logger.debug("Validating User Acount Storage Configuration.");
     if (this.USER_ACCOUNT_STORAGE_CONFIG_VALIDATE_FUNCTION(this.config)) {
       this.logger.debug(`Valid "${this.config.type}" User Account Storage Configuration.`);
@@ -40,10 +40,6 @@ export abstract class UserAccountStorage<T extends BaseUserAccountStorageConfig>
       this.logger.error(`Path: "${error.instancePath.length > 0 ? error.instancePath : "-"}", Message: "${error.message ?? "-"}".`);
     });
     return false;
-  }
-
-  public getConfig(): T {
-    return this.config;
   }
 
   // public abstract isLocal(): boolean;

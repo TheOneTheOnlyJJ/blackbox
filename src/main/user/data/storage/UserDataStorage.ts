@@ -9,7 +9,7 @@ export interface BaseUserDataStorageConfig {
 
 export abstract class UserDataStorage<T extends BaseUserDataStorageConfig> {
   protected readonly logger: LogFunctions;
-  protected readonly config: T;
+  public readonly config: T;
   private readonly CONFIG_VALIDATE_FUNCTION: ValidateFunction<T>;
 
   public constructor(config: T, configSchema: JSONSchemaType<T>, logger: LogFunctions, ajv: Ajv) {
@@ -35,9 +35,5 @@ export abstract class UserDataStorage<T extends BaseUserDataStorageConfig> {
       this.logger.error(`Path: "${error.instancePath.length > 0 ? error.instancePath : "-"}", Message: "${error.message ?? "-"}".`);
     });
     return false;
-  }
-
-  public getConfig(): T {
-    return this.config;
   }
 }

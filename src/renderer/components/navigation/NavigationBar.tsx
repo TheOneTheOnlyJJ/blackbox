@@ -57,8 +57,8 @@ const NavigationBar = forwardRef<HTMLDivElement, INavigationBarProps>(function N
             <ListItem key={item.name} disablePadding>
               <ListItemButton
                 component={Link}
-                to={`/users/${signedInRootContext.currentlySignedInUser.id}/${item.path}`}
-                selected={location.pathname === `/users/${signedInRootContext.currentlySignedInUser.id}/${item.path}`}
+                to={`/users/${signedInRootContext.currentlySignedInUser.username}/${item.path}`}
+                selected={location.pathname === `/users/${signedInRootContext.currentlySignedInUser.username}/${item.path}`}
               >
                 <ListItemIcon>
                   <item.icon />
