@@ -16,7 +16,7 @@ export abstract class SettingsManager<SettingsType extends NonNullable<unknown>,
   protected settings: SettingsType | null;
   protected readonly SETTINGS_VALIDATE_FUNCTION: ValidateFunction<SettingsType>;
   // Save settings on update
-  public doSaveSettingsOnUpdate: boolean;
+  public doSaveOnUpdate: boolean;
 
   public constructor(
     config: ConfigType,
@@ -26,22 +26,22 @@ export abstract class SettingsManager<SettingsType extends NonNullable<unknown>,
     ajv: Ajv
   ) {
     this.logger = logger;
-    this.logger.info(`Initialising new "${config.type}" Settings Manager.`);
-    this.logger.silly(`Config: ${JSON.stringify(config, null, 2)}.`);
-    this.SETTINGS_MANAGER_CONFIG_VALIDATE_FUNCTION = ajv.compile<ConfigType>(configSchema);
+    this.logger.info("Initialising new Settings Manager.");
     this.config = config;
-    this.logger.silly(`Validating "${config.type}" Settings Manager Configuration.`);
+    this.logger.silly(`Config: ${JSON.stringify(this.config, null, 2)}.`);
+    this.SETTINGS_MANAGER_CONFIG_VALIDATE_FUNCTION = ajv.compile<ConfigType>(configSchema);
     if (!this.isConfigValid()) {
-      throw new Error(`Could not initialise "${config.type}" Settings Manager`);
+      throw new Error("Could not initialise Settings Manager");
     }
     this.SETTINGS_VALIDATE_FUNCTION = ajv.compile<SettingsType>(settingsSchema);
     this.settings = null;
-    this.doSaveSettingsOnUpdate = false;
+    this.doSaveOnUpdate = false;
   }
 
   private isConfigValid(): boolean {
+    this.logger.silly("Validating Settings Manager Configuration.");
     if (this.SETTINGS_MANAGER_CONFIG_VALIDATE_FUNCTION(this.config)) {
-      this.logger.debug("Valid Settings Manager Configuration.");
+      this.logger.debug(`Valid "${this.config.type}" Settings Manager Configuration.`);
       return true;
     }
     this.logger.debug("Invalid Settings Manager Configuration.");
@@ -52,15 +52,12 @@ export abstract class SettingsManager<SettingsType extends NonNullable<unknown>,
     return false;
   }
 
-  public getConfig(): ConfigType {
-    return this.config;
-  }
-
   public areSettingsInitialised(): boolean {
     return this.settings !== null;
   }
 
   public areSettingsValid(settings: SettingsType): boolean {
+    this.logger.debug("Validating settings.");
     if (this.SETTINGS_VALIDATE_FUNCTION(settings)) {
       this.logger.debug("Valid settings.");
       return true;
@@ -77,19 +74,20 @@ export abstract class SettingsManager<SettingsType extends NonNullable<unknown>,
   public updateSettings(settings: SettingsType): boolean {
     this.logger.debug("Updating settings.");
     this.logger.silly(`Settings: ${JSON.stringify(settings, null, 2)}.`);
-    if (this.areSettingsValid(settings)) {
-      this.settings = settings;
-      this.logger.info("Settings updated.");
-      if (this.doSaveSettingsOnUpdate) {
-        this.saveSettings();
-      }
-      return true;
+    if (!this.areSettingsValid(settings)) {
+      this.logger.warn("Settings not updated.");
+      return false;
     }
-    this.logger.warn("Settings not updated.");
-    return false;
+    this.settings = settings;
+    this.logger.info("Settings updated.");
+    if (this.doSaveOnUpdate) {
+      this.saveSettings();
+    }
+    return true;
   }
 
   public getSettings(): SettingsType | null {
+    this.logger.debug("Getting settings.");
     return this.settings;
   }
 

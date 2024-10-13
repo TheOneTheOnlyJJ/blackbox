@@ -14,19 +14,19 @@ export abstract class UserDataStorage<T extends BaseUserDataStorageConfig> {
 
   public constructor(config: T, configSchema: JSONSchemaType<T>, logger: LogFunctions, ajv: Ajv) {
     this.logger = logger;
+    this.logger.info("Initialising User Data Storage.");
     this.config = config;
-    this.logger.info(`Initialising "${this.config.type}" User Data Storage.`);
     this.logger.silly(`Config: ${JSON.stringify(this.config, null, 2)}.`);
     this.CONFIG_VALIDATE_FUNCTION = ajv.compile<T>(configSchema);
-    this.logger.silly(`Validating "${this.config.type}" User Data Storage Configuration.`);
     if (!this.isConfigValid()) {
-      throw new Error(`Could not initialise "${this.config.type}" User Data Storage`);
+      throw new Error("Could not initialise User Data Storage");
     }
   }
 
   public isConfigValid(): boolean {
+    this.logger.silly("Validating User Data Storage Configuration.");
     if (this.CONFIG_VALIDATE_FUNCTION(this.config)) {
-      this.logger.debug("Valid User Data Storage Configuration.");
+      this.logger.debug(`Valid "${this.config.type}" User Data Storage Configuration.`);
       return true;
     }
     this.logger.debug("Invalid User Data Storage Configuration.");

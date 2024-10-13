@@ -18,20 +18,20 @@ export abstract class UserAccountStorage<T extends BaseUserAccountStorageConfig>
 
   public constructor(config: T, configSchema: JSONSchemaType<T>, logger: LogFunctions, ajv: Ajv) {
     this.logger = logger;
+    this.logger.info("Initialising User Acount Storage.");
     this.config = config;
-    this.logger.info(`Initialising "${this.config.type}" User Acount Storage.`);
     this.logger.silly(`Config: ${JSON.stringify(this.config, null, 2)}.`);
     this.USER_ACCOUNT_STORAGE_CONFIG_VALIDATE_FUNCTION = ajv.compile<T>(configSchema);
-    this.logger.silly(`Validating "${this.config.type}" User Acount Storage Configuration.`);
     if (!this.isConfigValid()) {
-      throw new Error(`Could not initialise "${this.config.type}" User Acount Storage`);
+      throw new Error(`Could not initialise User Acount Storage`);
     }
     this.USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION = ajv.compile<UserDataStorageConfig>(USER_DATA_STORAGE_CONFIG_SCHEMA);
   }
 
   public isConfigValid(): boolean {
+    this.logger.debug("Validating User Acount Storage Configuration.");
     if (this.USER_ACCOUNT_STORAGE_CONFIG_VALIDATE_FUNCTION(this.config)) {
-      this.logger.debug("Valid User Account Storage Configuration.");
+      this.logger.debug(`Valid "${this.config.type}" User Account Storage Configuration.`);
       return true;
     }
     this.logger.debug("Invalid User Account Storage Configuration.");
