@@ -135,7 +135,7 @@ export class App {
 
   // Users
   private readonly userManager: UserManager;
-  private readonly USER_STORAGE_CONFIG: UserAccountStorageConfig = {
+  private readonly USER_ACCOUNT_STORAGE_CONFIG: UserAccountStorageConfig = {
     type: UserAccountStorageType.LocalSQLite,
     dbDirPath: resolve(join(app.getAppPath(), "data")),
     dbFileName: "users.sqlite"
@@ -216,7 +216,9 @@ export class App {
           this.IPCUserAPILogger,
           "base new user data"
         );
+        this.appLogger.debug("Decrypted new user data.");
         const SECURED_NEW_USER_DATA: ISecuredNewUserData = this.userManager.secureBaseNewUserData(BASE_NEW_USER_DATA);
+        this.appLogger.debug("Secured new user data.");
         return {
           status: IPCAPIResponseStatus.SUCCESS,
           data: this.userManager.signUpUser(SECURED_NEW_USER_DATA)
@@ -301,7 +303,7 @@ export class App {
       }
     },
     sendAccountStorageAvailabilityChange: (isUserAccountStorageAvailable: boolean): void => {
-      this.IPCUserAPILogger.debug(`Sending window User Account Storage availability after change: ${isUserAccountStorageAvailable.toString()}.`);
+      this.IPCUserAPILogger.debug(`Sending window User Account Storage availability after change: "${isUserAccountStorageAvailable.toString()}".`);
       if (this.window === null) {
         this.IPCUserAPILogger.debug('Window is "null". No-op.');
         return;
@@ -571,7 +573,7 @@ export class App {
 
   private onceAppReady(): void {
     this.appLogger.info("App ready.");
-    this.openUserStorage();
+    this.userManager.openUserAccountStorage(this.USER_ACCOUNT_STORAGE_CONFIG);
     this.createWindow();
     this.appLogger.debug("Registering app activate event handler.");
     app.on("activate", () => {
@@ -610,22 +612,6 @@ export class App {
     }
     this.appLogger.silly("Pre-quit steps done.");
     appendFileSync(this.LOG_FILE_PATH, `---------- End   : ${new Date().toISOString()} ----------\n\n`, "utf-8");
-  }
-
-  private openUserStorage(): boolean {
-    this.userManagerLogger.debug("Opening User Account Storage.");
-    if (this.userManager.isUserAccountStorageAvailable()) {
-      this.userManagerLogger.debug("User storage already opened.");
-      return false;
-    }
-    try {
-      this.userManager.openUserAccountStorage(this.USER_STORAGE_CONFIG);
-      return true;
-    } catch (err: unknown) {
-      const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-      this.userManagerLogger.error(`Could not open User Account Storage: ${ERROR_MESSAGE}!`);
-      return false;
-    }
   }
 
   private registerIPCMainHandlers(): void {

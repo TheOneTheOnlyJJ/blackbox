@@ -24,12 +24,12 @@ export abstract class UserDataStorage<T extends BaseUserDataStorageConfig> {
   }
 
   public isConfigValid(): boolean {
-    this.logger.silly("Validating User Data Storage Configuration.");
+    this.logger.silly("Validating User Data Storage Config.");
     if (this.CONFIG_VALIDATE_FUNCTION(this.config)) {
-      this.logger.debug(`Valid "${this.config.type}" User Data Storage Configuration.`);
+      this.logger.debug(`Valid "${this.config.type}" User Data Storage Config.`);
       return true;
     }
-    this.logger.debug("Invalid User Data Storage Configuration.");
+    this.logger.debug("Invalid User Data Storage Config.");
     this.logger.error("Validation errors:");
     this.CONFIG_VALIDATE_FUNCTION.errors?.map((error) => {
       this.logger.error(`Path: "${error.instancePath.length > 0 ? error.instancePath : "-"}", Message: "${error.message ?? "-"}".`);

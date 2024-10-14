@@ -121,22 +121,29 @@ export class UserManager {
     return this.userAccountStorage.value !== null;
   }
 
-  public openUserAccountStorage(storageConfig: UserAccountStorageConfig): void {
-    this.logger.debug(`Opening User Account Storage of type: ${storageConfig.type}.`);
+  public openUserAccountStorage(storageConfig: UserAccountStorageConfig): boolean {
+    this.logger.debug(`Opening User Account Storage.`);
     if (this.userAccountStorage.value !== null) {
       if (isDeepStrictEqual(this.userAccountStorage.value.config, storageConfig)) {
         this.logger.debug("This exact User Account Storage is already open. No-op.");
-        return;
+        return false;
       }
-      this.logger.debug(`User Account Storage (of type ${this.userAccountStorage.value.config.type}) already open. Closing before opening new one.`);
-      this.closeUserAccountStorage();
+      this.logger.debug(`Previous "${this.userAccountStorage.value.config.type}" User Account Storage still open. Closing before opening new one.`);
+      const IS_PREVIOUS_USER_ACCOUNT_STORAGE_CLOSED: boolean = this.closeUserAccountStorage();
+      if (!IS_PREVIOUS_USER_ACCOUNT_STORAGE_CLOSED) {
+        this.logger.warn(`Could not close previous "${this.userAccountStorage.value.config.type}" User Account Storage. No-op.`);
+        return false;
+      }
     }
     try {
       this.userAccountStorage.value = userAccountStorageFactory(storageConfig, this.userAccountStorageLogger, this.AJV);
+      this.logger.debug(`Opened "${this.userAccountStorage.value.config.type}" User Account Storage.`);
+      return true;
     } catch (err: unknown) {
       const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Could not open "${storageConfig.type}" User Account Storage: ${ERROR_MESSAGE}!`);
       this.userAccountStorage.value = null;
-      throw new Error(`Could not open User Account Storage: ${ERROR_MESSAGE}`);
+      return false;
     }
   }
 
@@ -150,11 +157,14 @@ export class UserManager {
       isUserStorageClosed = this.userAccountStorage.value.close();
     } catch (err: unknown) {
       const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-      this.logger.error(`Could not close User Account Storage: ${ERROR_MESSAGE}`);
-      isUserStorageClosed = false;
+      this.logger.error(`Could not close "${this.userAccountStorage.value.config.type}" User Account Storage: ${ERROR_MESSAGE}!`);
+      return false;
     }
     if (isUserStorageClosed) {
+      this.logger.debug(`Closed "${this.userAccountStorage.value.config.type}" User Account Storage.`);
       this.userAccountStorage.value = null;
+    } else {
+      this.logger.warn(`Could not close "${this.userAccountStorage.value.config.type}" User Account Storage.`);
     }
     return isUserStorageClosed;
   }
@@ -234,8 +244,7 @@ export class UserManager {
       this.logger.debug("No signed in user. No-op.");
       return;
     }
-    const SIGNED_OUT_USER_USERNAME: string = this.currentlySignedInUser.value.username;
-    this.logger.debug(`Found signed in user: "${SIGNED_OUT_USER_USERNAME}". Signing out.`);
+    this.logger.debug(`Signing out user: "${this.currentlySignedInUser.value.username}".`);
     this.currentlySignedInUser.value = null;
   }
 
@@ -244,7 +253,7 @@ export class UserManager {
   }
 
   public addUserDataStorageConfig(userId: UUID, userDataStorageConfig: UserDataStorageConfig): boolean {
-    this.logger.debug(`Adding new User Data Storage Configuration to user with ID: "${userId}".`);
+    this.logger.debug(`Adding new User Data Storage Config to user with ID: "${userId}".`);
     if (this.userAccountStorage.value === null) {
       throw new Error("Null User Account Storage");
     }
@@ -252,7 +261,7 @@ export class UserManager {
   }
 
   public getAllUserDataStorageConfigs(userId: UUID): UserDataStorageConfig[] {
-    this.logger.debug(`Getting all User Data Storage Configurations for user with ID: "${userId}".`);
+    this.logger.debug(`Getting all User Data Storage Configs for user with ID: "${userId}".`);
     if (this.userAccountStorage.value === null) {
       throw new Error("Null User Account Storage");
     }

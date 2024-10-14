@@ -53,9 +53,9 @@ export class LocalJSONSettingsManager<SettingsType extends Record<string, unknow
       const READ_CONFIG_DATA = readFileSync(this.SETTINGS_FILE_PATH, "utf-8");
       this.logger.silly("Parsing read data as JSON.");
       const JSON_CONFIG_DATA: SettingsType = JSON.parse(READ_CONFIG_DATA) as SettingsType;
-      this.logger.silly("Validating read JSON.");
+      this.logger.silly("Valid read JSON.");
       if (!this.areSettingsValid(JSON_CONFIG_DATA)) {
-        throw new Error("Read invalid settings");
+        throw new Error("Fetched invalid settings");
       }
       this.logger.silly("Returning read settings.");
       return JSON_CONFIG_DATA;

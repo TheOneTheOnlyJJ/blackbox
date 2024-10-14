@@ -39,12 +39,12 @@ export abstract class SettingsManager<SettingsType extends NonNullable<unknown>,
   }
 
   private isConfigValid(): boolean {
-    this.logger.silly("Validating Settings Manager Configuration.");
+    this.logger.silly("Validating Settings Manager Config.");
     if (this.SETTINGS_MANAGER_CONFIG_VALIDATE_FUNCTION(this.config)) {
-      this.logger.debug(`Valid "${this.config.type}" Settings Manager Configuration.`);
+      this.logger.debug(`Valid "${this.config.type}" Settings Manager Config.`);
       return true;
     }
-    this.logger.debug("Invalid Settings Manager Configuration.");
+    this.logger.debug("Invalid Settings Manager Config.");
     this.logger.error("Validation errors:");
     this.SETTINGS_MANAGER_CONFIG_VALIDATE_FUNCTION.errors?.map((error) => {
       this.logger.error(`Path: "${error.instancePath.length > 0 ? error.instancePath : "-"}", Message: "${error.message ?? "-"}".`);

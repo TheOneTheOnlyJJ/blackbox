@@ -67,7 +67,7 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<LocalSQLit
     this.logger.silly("SQLite database constructor completed.");
     // Log SQLite version
     this.logger.debug(`Using SQLite version: "${(this.db.prepare("SELECT sqlite_version() AS version").get() as SQLiteVersion).version}".`);
-    // Configuration
+    // Config
     // Journal mode
     this.logger.debug("Setting journal mode to WAL.");
     this.db.pragma("journal_mode = WAL");
@@ -80,7 +80,7 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<LocalSQLit
     this.logger.silly(`Foreign keys: "${String(FOREIGN_KEYS)}".`);
     // Initialise required tables
     this.initialiseUsersTable();
-    this.initialiseUserDataStorageConfigurationsTable();
+    this.initialiseUserDataStorageConfigsTable();
     this.logger.info(`"${this.config.type}" User Acount Storage ready.`);
   }
 
@@ -153,61 +153,60 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<LocalSQLit
   }
 
   public addUserDataStorageConfig(userId: UUID, userDataStorageConfig: UserDataStorageConfig): boolean {
-    this.logger.debug(`Adding new User Data Storage Configuration to user with ID: "${userId}".`);
+    this.logger.debug(`Adding new User Data Storage Config to user with ID: "${userId}".`);
     // Validate config
-    this.logger.debug("Validating User Data Storage Configuration.");
+    this.logger.debug("Validating User Data Storage Config.");
     if (!this.USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION(userDataStorageConfig)) {
-      this.logger.debug("Invalid User Data Storage Configuration.");
+      this.logger.debug("Invalid User Data Storage Config.");
       this.logger.error("Validation errors:");
       this.USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION.errors?.map((error) => {
         this.logger.error(`Path: "${error.instancePath.length > 0 ? error.instancePath : "-"}", Message: "${error.message ?? "-"}".`);
       });
       return false;
     }
-    this.logger.debug("Valid User Data Storage Configuration.");
-    const STRINGIFIED_USER_DATA_STORAGE_CONFIGURATION: string = JSON.stringify(userDataStorageConfig, null, 2);
+    this.logger.debug("Valid User Data Storage Config.");
+    const STRINGIFIED_USER_DATA_STORAGE_CONFIG: string = JSON.stringify(userDataStorageConfig, null, 2);
     // Validate stringified config as JSON at SQLite level
-    if (!this.isJSONValidInSQLite(STRINGIFIED_USER_DATA_STORAGE_CONFIGURATION)) {
-      this.logger.debug("Invalid User Data Storage Configuration. Cannot add to user account.");
+    if (!this.isJSONValidInSQLite(STRINGIFIED_USER_DATA_STORAGE_CONFIG)) {
+      this.logger.debug("Invalid User Data Storage Config. Cannot add to user account.");
       return false;
     }
-    this.logger.debug("Valid User Data Storage Configuration. Attempting to add to database.");
+    this.logger.debug("Valid User Data Storage Config. Attempting to add to database.");
     const ADD_USER_DATA_STORAGE_CONFIG_SQL =
-      "INSERT INTO user_data_storage_configurations (user_id, configuration) VALUES (@userId, jsonb(@userDataStorageConfig))";
+      "INSERT INTO user_data_storage_configs (user_id, config) VALUES (@userId, jsonb(@userDataStorageConfig))";
     try {
       const RUN_RESULT: RunResult = this.db
         .prepare(ADD_USER_DATA_STORAGE_CONFIG_SQL)
-        .run({ userId: userId, userDataStorageConfig: STRINGIFIED_USER_DATA_STORAGE_CONFIGURATION });
-      this.logger.info("User Data Storage Configuration added successfully!");
+        .run({ userId: userId, userDataStorageConfig: STRINGIFIED_USER_DATA_STORAGE_CONFIG });
+      this.logger.info("User Data Storage Config added successfully!");
       this.logger.silly(`Number of changes: "${RUN_RESULT.changes.toString()}". Last inserted row ID: "${RUN_RESULT.lastInsertRowid.toString()}".`);
       return true;
     } catch (err: unknown) {
       const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-      this.logger.error(`Could not add User Data Storage Configuration! ${ERROR_MESSAGE}!`);
+      this.logger.error(`Could not add User Data Storage Config! ${ERROR_MESSAGE}!`);
       return false;
     }
   }
 
   public getAllUserDataStorageConfigs(userId: UUID): UserDataStorageConfig[] {
-    this.logger.debug(`Getting all User Data Storage Configurations for user with ID: "${userId}".`);
-    const GET_ALL_USER_DATA_STORAGE_CONFIGURATIONS_SQL =
-      "SELECT json(configuration) AS config FROM user_data_storage_configurations WHERE user_id = @userId";
-    const RESULT = this.db.prepare(GET_ALL_USER_DATA_STORAGE_CONFIGURATIONS_SQL).all({ userId: userId }) as { config: string }[];
+    this.logger.debug(`Getting all User Data Storage Configs for user with ID: "${userId}".`);
+    const GET_ALL_USER_DATA_STORAGE_CONFIGS_SQL = "SELECT json(config) AS config FROM user_data_storage_configs WHERE user_id = @userId";
+    const RESULT = this.db.prepare(GET_ALL_USER_DATA_STORAGE_CONFIGS_SQL).all({ userId: userId }) as { config: string }[];
     const USER_DATA_STORAGE_CONFIGS: UserDataStorageConfig[] = [];
     try {
       RESULT.map((element: { config: string }) => {
-        this.logger.debug("Parsing User Data Storage Configuration.");
+        this.logger.debug("Parsing User Data Storage Config.");
         const PARSED_USER_DATA_STORAGE_CONFIG: UserDataStorageConfig = JSON.parse(element.config) as UserDataStorageConfig;
-        this.logger.debug("Validating parsed User Data Storage Configuration.");
+        this.logger.debug("Validating parsed User Data Storage Config.");
         if (!this.USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION(PARSED_USER_DATA_STORAGE_CONFIG)) {
-          this.logger.debug("Invalid User Data Storage Configuration.");
+          this.logger.debug("Invalid User Data Storage Config.");
           this.logger.error("Validation errors:");
           this.USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION.errors?.map((error) => {
             this.logger.error(`Path: "${error.instancePath.length > 0 ? error.instancePath : "-"}", Message: "${error.message ?? "-"}".`);
           });
           return;
         }
-        this.logger.debug("Valid User Data Storage Configuration.");
+        this.logger.debug("Valid User Data Storage Config.");
         USER_DATA_STORAGE_CONFIGS.push(PARSED_USER_DATA_STORAGE_CONFIG);
       });
       return USER_DATA_STORAGE_CONFIGS;
@@ -245,25 +244,23 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<LocalSQLit
     }
   }
 
-  private initialiseUserDataStorageConfigurationsTable(): void {
-    this.logger.debug('Initialising "user_data_storage_configurations" table.');
-    const SELECT_USER_DATA_STORAGE_CONFIGURATIONS_TABLE_SQL =
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='user_data_storage_configurations'";
-    const DOES_USER_DATA_STORAGE_CONFIGURATIONS_TABLE_EXIST: boolean =
-      this.db.prepare(SELECT_USER_DATA_STORAGE_CONFIGURATIONS_TABLE_SQL).get() !== undefined;
-    if (DOES_USER_DATA_STORAGE_CONFIGURATIONS_TABLE_EXIST) {
-      this.logger.debug('Found "user_data_storage_configurations" table.');
+  private initialiseUserDataStorageConfigsTable(): void {
+    this.logger.debug('Initialising "user_data_storage_configs" table.');
+    const SELECT_USER_DATA_STORAGE_CONFIGS_TABLE_SQL = "SELECT name FROM sqlite_master WHERE type='table' AND name='user_data_storage_configs'";
+    const DOES_USER_DATA_STORAGE_CONFIGS_TABLE_EXIST: boolean = this.db.prepare(SELECT_USER_DATA_STORAGE_CONFIGS_TABLE_SQL).get() !== undefined;
+    if (DOES_USER_DATA_STORAGE_CONFIGS_TABLE_EXIST) {
+      this.logger.debug('Found "user_data_storage_configs" table.');
     } else {
-      this.logger.debug('Did not find "user_data_storage_configurations" table. Creating.');
+      this.logger.debug('Did not find "user_data_storage_configs" table. Creating.');
       const CREATE_USERS_TABLE_SQL = `
-      CREATE TABLE IF NOT EXISTS user_data_storage_configurations (
+      CREATE TABLE IF NOT EXISTS user_data_storage_configs (
         user_id TEXT NOT NULL,
-        configuration BLOB NOT NULL,
+        config BLOB NOT NULL,
         FOREIGN KEY (user_id) REFERENCES users(user_id) ON UPDATE CASCADE ON DELETE CASCADE
       )
       `;
       this.db.prepare(CREATE_USERS_TABLE_SQL).run();
-      this.logger.debug('Created "user_data_storage_configurations" table.');
+      this.logger.debug('Created "user_data_storage_configs" table.');
     }
   }
 }

@@ -1,7 +1,7 @@
 import { JSONSchemaType } from "ajv";
 import { LocalSQLiteUserDataStorage, LocalSQLiteUserDataStorageConfig } from "./implementations/LocalSQLiteUserDataStorage";
 
-// Union of all user data storage concrete implementation configuration interfaces
+// Union of all user data storage concrete implementation config interfaces
 export type UserDataStorageConfig = LocalSQLiteUserDataStorageConfig;
 
 export const USER_DATA_STORAGE_CONFIG_SCHEMA: JSONSchemaType<UserDataStorageConfig> = {

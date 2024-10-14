@@ -29,12 +29,12 @@ export abstract class UserAccountStorage<T extends BaseUserAccountStorageConfig>
   }
 
   private isConfigValid(): boolean {
-    this.logger.debug("Validating User Acount Storage Configuration.");
+    this.logger.debug("Validating User Acount Storage Config.");
     if (this.USER_ACCOUNT_STORAGE_CONFIG_VALIDATE_FUNCTION(this.config)) {
-      this.logger.debug(`Valid "${this.config.type}" User Account Storage Configuration.`);
+      this.logger.debug(`Valid "${this.config.type}" User Account Storage Config.`);
       return true;
     }
-    this.logger.debug("Invalid User Account Storage Configuration.");
+    this.logger.debug("Invalid User Account Storage Config.");
     this.logger.error("Validation errors:");
     this.USER_ACCOUNT_STORAGE_CONFIG_VALIDATE_FUNCTION.errors?.map((error) => {
       this.logger.error(`Path: "${error.instancePath.length > 0 ? error.instancePath : "-"}", Message: "${error.message ?? "-"}".`);

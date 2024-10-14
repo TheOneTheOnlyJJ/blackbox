@@ -4,7 +4,7 @@ import { SettingsManagerType } from "./SettingsManagerType";
 import { LocalJSONSettingsManager, LocalJSONSettingsManagerConfig } from "./implementations/LocalJSONSettingsManager";
 import Ajv, { JSONSchemaType } from "ajv";
 
-// Union of all settings manager concrete implementation configuration interfaces
+// Union of all settings manager concrete implementation config interfaces
 export type SettingsManagerConfig = LocalJSONSettingsManagerConfig;
 
 export function settingsManagerFactory<SettingsType extends NonNullable<unknown>>(
@@ -13,12 +13,12 @@ export function settingsManagerFactory<SettingsType extends NonNullable<unknown>
   logger: LogFunctions,
   ajv: Ajv
 ): SettingsManager<SettingsType, SettingsManagerConfig> {
-  logger.debug(`Running settings manager factory with config: ${JSON.stringify(config, null, 2)}.`);
+  logger.debug(`Running Settings Manager factory with config: ${JSON.stringify(config, null, 2)}.`);
   switch (config.type) {
     case SettingsManagerType.LocalJSON:
       return new LocalJSONSettingsManager(config, settingsSchema, logger, ajv);
     default:
       // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-      throw new Error(`Invalid settings manager type received: ${config.type}`);
+      throw new Error(`Invalid Settings Manager type received: ${config.type}`);
   }
 }
