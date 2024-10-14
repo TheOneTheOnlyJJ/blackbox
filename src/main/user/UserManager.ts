@@ -18,14 +18,12 @@ export class UserManager {
   private readonly userAccountStorageLogger: LogFunctions;
 
   // Currently signed in user
-  // Must be wrapped in an object because it has a proxy
-  private _currentlySignedInUser: { value: ICurrentlySignedInUser | null };
+  // Must be wrapped in an object because it is a proxy
   private currentlySignedInUser: { value: ICurrentlySignedInUser | null };
   public onCurrentlySignedInUserChangeCallback: CurrentlySignedInUserChangeCallback;
 
   // User Account Storage
-  // Must be wrapped in an object because it too has a proxy
-  private _userAccountStorage: { value: UserAccountStorage<UserAccountStorageConfig> | null };
+  // Must be wrapped in an object because it too is a proxy
   private userAccountStorage: { value: UserAccountStorage<UserAccountStorageConfig> | null };
   // This is needed to let the renderer know if the User Account Storage is available when it changes
   public onUserAccountStorageAvailabilityChangeCallback: UserAccountStorageAvailabilityChangeCallback;
@@ -48,58 +46,66 @@ export class UserManager {
     this.USER_SIGN_IN_CREDENTIALS_VALIDATE_FUNCTION = this.AJV.compile<IUserSignInCredentials>(USER_SIGN_IN_CREDENTIALS_JSON_SCHEMA);
     this.CURRENTLY_SIGNED_IN_USER_VALIDATE_FUNCTION = this.AJV.compile<ICurrentlySignedInUser>(CURRENTLY_SIGNED_IN_USER_SCHEMA);
     // Currently signed in user
-    this._currentlySignedInUser = { value: null };
     this.onCurrentlySignedInUserChangeCallback = (): void => {
       this.logger.debug("No currently signed in user change callback set.");
     };
     // Currently signed in user proxy that performs validation and calls the change callback when required
-    this.currentlySignedInUser = new Proxy<{ value: ICurrentlySignedInUser | null }>(this._currentlySignedInUser, {
-      set: (target: { value: ICurrentlySignedInUser | null }, property: string | symbol, value: unknown): boolean => {
-        if (property !== "value") {
-          throw new Error(`Cannot set property "${String(property)}" on currently signed in user. Only "value" property can be set!`);
+    this.currentlySignedInUser = new Proxy<{ value: ICurrentlySignedInUser | null }>(
+      { value: null },
+      {
+        set: (target: { value: ICurrentlySignedInUser | null }, property: string | symbol, value: unknown): boolean => {
+          if (property !== "value") {
+            this.logger.error(`Cannot set property "${String(property)}" on currently signed in user. Only "value" property can be set! No-op set.`);
+            return false;
+          }
+          if (value !== null && !this.CURRENTLY_SIGNED_IN_USER_VALIDATE_FUNCTION(value)) {
+            this.logger.error(`Value must be "null" or a valid currently signed in user object! No-op set.`);
+            return false;
+          }
+          if (isDeepStrictEqual(target[property], value)) {
+            this.logger.warn(`Currently signed in user already had this value: "${JSON.stringify(value, null, 2)}". No-op set.`);
+            return false;
+          }
+          target[property] = value;
+          if (value === null) {
+            this.logger.info('Currently signed in user set to "null" (signed out).');
+          } else {
+            this.logger.info(`Currently signed in user set to: ${JSON.stringify(value, null, 2)} (signed in).`);
+          }
+          this.onCurrentlySignedInUserChangeCallback(value);
+          return true;
         }
-        if (value !== null && !this.CURRENTLY_SIGNED_IN_USER_VALIDATE_FUNCTION(value)) {
-          throw new Error(`Value must be "null" or a valid currently signed in user object!`);
-        }
-        if (isDeepStrictEqual(target[property], value)) {
-          this.logger.warn(`Currently signed in user already had this value: "${JSON.stringify(value, null, 2)}". No-op set.`);
-          return false;
-        }
-        target[property] = value;
-        if (value === null) {
-          this.logger.info('Currently signed in user set to "null" (signed out).');
-        } else {
-          this.logger.info(`Currently signed in user set to: ${JSON.stringify(value, null, 2)} (signed in).`);
-        }
-        this.onCurrentlySignedInUserChangeCallback(value);
-        return true;
       }
-    });
+    );
     // User Account Storage
-    this._userAccountStorage = { value: null };
     this.onUserAccountStorageAvailabilityChangeCallback = (): void => {
       this.logger.debug("No User Account Storage availability change callback set.");
     };
     // User Account Storage proxy that performs validation and calls the change callback when required
-    this.userAccountStorage = new Proxy<{ value: UserAccountStorage<UserAccountStorageConfig> | null }>(this._userAccountStorage, {
-      set: (target: { value: UserAccountStorage<UserAccountStorageConfig> | null }, property: string | symbol, value: unknown): boolean => {
-        if (property !== "value") {
-          throw new Error(`Cannot set property "${String(property)}" on User Account Storage. Only "value" property can be set!`);
+    this.userAccountStorage = new Proxy<{ value: UserAccountStorage<UserAccountStorageConfig> | null }>(
+      { value: null },
+      {
+        set: (target: { value: UserAccountStorage<UserAccountStorageConfig> | null }, property: string | symbol, value: unknown): boolean => {
+          if (property !== "value") {
+            this.logger.error(`Cannot set property "${String(property)}" on User Account Storage. Only "value" property can be set! No-op set.`);
+            return false;
+          }
+          if (value !== null && !(value instanceof UserAccountStorage)) {
+            this.logger.error(`Value must be "null" or an instance of User Account Storage! No-op set.`);
+            return false;
+          }
+          target[property] = value;
+          if (value === null) {
+            this.logger.info('User Account Storage set to "null" (unavailable).');
+            this.onUserAccountStorageAvailabilityChangeCallback(false);
+          } else {
+            this.logger.info(`User Account Storage set to User Account Storage with config: ${JSON.stringify(value.config, null, 2)} (available).`);
+            this.onUserAccountStorageAvailabilityChangeCallback(true);
+          }
+          return true;
         }
-        if (value !== null && !(value instanceof UserAccountStorage)) {
-          throw new Error(`Value must be "null" or an instance of User Account Storage!`);
-        }
-        target[property] = value;
-        if (value === null) {
-          this.logger.info('User Account Storage set to "null" (unavailable).');
-          this.onUserAccountStorageAvailabilityChangeCallback(false);
-        } else {
-          this.logger.info(`User Account Storage set to User Account Storage with config: ${JSON.stringify(value.config, null, 2)} (available).`);
-          this.onUserAccountStorageAvailabilityChangeCallback(true);
-        }
-        return true;
       }
-    });
+    );
   }
 
   public getUserAccountStorageType(): UserAccountStorageType {

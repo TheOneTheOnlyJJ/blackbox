@@ -89,10 +89,10 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<LocalSQLit
     const IS_USERNAME_AVAILABLE_SQL = "SELECT COUNT(*) AS count FROM users WHERE username = @username";
     const RESULT = this.db.prepare(IS_USERNAME_AVAILABLE_SQL).get({ username: username }) as { count: number };
     if (RESULT.count > 0) {
-      this.logger.debug("Username unavailable.");
+      this.logger.debug(`Username "${username}" is unavailable.`);
       return false;
     }
-    this.logger.debug("Username available.");
+    this.logger.debug(`Username "${username}" is available.`);
     return true;
   }
 

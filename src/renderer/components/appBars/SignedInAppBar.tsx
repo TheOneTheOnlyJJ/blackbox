@@ -56,9 +56,11 @@ const SignedInAppBar = forwardRef<HTMLDivElement, ISignedInAppBarProps>(function
   const [isBackDisabled, setIsBackDisabled] = useState<boolean>(false);
   const [isForwardDisabled, setIsForwardDisabled] = useState<boolean>(false);
   const updateButtonStates = useCallback(() => {
-    const state = window.history.state as { idx?: number } | null;
-    setIsBackDisabled(location.key === "default" || state?.idx === 0);
-    setIsForwardDisabled(state?.idx === window.history.length - 1);
+    const STATE = window.history.state as { idx?: number } | null;
+    setIsBackDisabled(location.key === "default" || STATE?.idx === 0);
+    // TODO: Remove eslint diable rule, remove @types/dom-navigation once it becomes Baseline widely available
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    setIsForwardDisabled(!window.navigation.canGoForward);
   }, [setIsBackDisabled, setIsForwardDisabled, location]);
 
   useEffect(() => {

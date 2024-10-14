@@ -91,9 +91,7 @@ const AppRoot: FC = () => {
     // Wipe the history stack and navigate to the required path
     appLogger.debug("Wiping window navigation history.");
     window.history.replaceState({ idx: 0 }, "", navigationPath);
-    if (location.pathname !== navigationPath) {
-      navigate(navigationPath, { replace: true });
-    }
+    navigate(navigationPath, { replace: true });
   }, [currentlySignedInUser]);
 
   // Log user account storage availability changes
