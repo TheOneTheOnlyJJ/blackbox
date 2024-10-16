@@ -1,13 +1,6 @@
 {
   "extends": "./tsconfig.base.json",
-  "include": [
-    "./src/renderer/env.d.ts",
-    "./src/renderer/**/*",
-    "./src/renderer/**/*.ts",
-    "./src/renderer/**/*.tsx",
-    "./src/preload/*.d.ts",
-    "./src/shared/**/*"
-  ],
+  "include": ["./src/preload/*.d.ts", "./src/renderer/**/*", "./src/shared/**/*"],
   "compilerOptions": {
     "composite": true,
     "jsx": "react-jsx",

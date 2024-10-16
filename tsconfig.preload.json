@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.base.json",
+  "include": ["./src/main/**/*", "./src/preload/**/*", "./src/shared/**/*"],
+  "compilerOptions": {
+    "composite": true,
+    "module": "CommonJS",
+    "paths": {
+      "@main/*": ["./src/main/*"],
+      "@preload/*": ["./src/preload/*"],
+      "@shared/*": ["./src/shared/*"]
+    },
+    "types": ["node", "electron-vite/node"]
+  }
+}
