@@ -70,7 +70,7 @@ const AppRoot: FC = () => {
     appLogger.silly(`RSA-wrapped AES key:\n${insertLineBreaks(arrayBufferToBase64(WRAPPED_RENDERER_PROCESS_AES_KEY))}\n.`);
     // ...and send it to the main process
     if ((await window.IPCTLSAPI.sendRendererProcessWrappedAESKey(WRAPPED_RENDERER_PROCESS_AES_KEY)).status !== IPCAPIResponseStatus.SUCCESS) {
-      enqueueSnackbar({ message: "Error sending AES encryption ket to main process.", variant: "error" });
+      enqueueSnackbar({ message: "Error sending AES encryption key to main process.", variant: "error" });
     }
   }, [setRendererProcessAESKey]);
 

@@ -11,7 +11,7 @@ import { CurrentlySignedInUserChangeCallback, UserAccountStorageAvailabilityChan
 import { isDeepStrictEqual } from "node:util";
 import Ajv, { ValidateFunction } from "ajv";
 import { UserAccountStorageConfig } from "./account/storage/UserAccountStorageConfig";
-import { UserDataStorageConfig } from "./data/storage/UserDataStorageConfig";
+import { IUserDataStorageConfigWithMetadata } from "./data/storage/IUserDataStorageConfigWithMetadata";
 
 export class UserManager {
   private readonly logger: LogFunctions;
@@ -55,12 +55,10 @@ export class UserManager {
       {
         set: (target: { value: ICurrentlySignedInUser | null }, property: string | symbol, value: unknown): boolean => {
           if (property !== "value") {
-            this.logger.error(`Cannot set property "${String(property)}" on currently signed in user. Only "value" property can be set! No-op set.`);
-            return false;
+            throw new Error(`Cannot set property "${String(property)}" on currently signed in user. Only "value" property can be set! No-op set.`);
           }
           if (value !== null && !this.CURRENTLY_SIGNED_IN_USER_VALIDATE_FUNCTION(value)) {
-            this.logger.error(`Value must be "null" or a valid currently signed in user object! No-op set.`);
-            return false;
+            throw new Error(`Value must be "null" or a valid currently signed in user object! No-op set.`);
           }
           if (isDeepStrictEqual(target[property], value)) {
             this.logger.warn(`Currently signed in user already had this value: "${JSON.stringify(value, null, 2)}". No-op set.`);
@@ -87,12 +85,10 @@ export class UserManager {
       {
         set: (target: { value: UserAccountStorage<UserAccountStorageConfig> | null }, property: string | symbol, value: unknown): boolean => {
           if (property !== "value") {
-            this.logger.error(`Cannot set property "${String(property)}" on User Account Storage. Only "value" property can be set! No-op set.`);
-            return false;
+            throw new Error(`Cannot set property "${String(property)}" on User Account Storage. Only "value" property can be set! No-op set.`);
           }
           if (value !== null && !(value instanceof UserAccountStorage)) {
-            this.logger.error(`Value must be "null" or an instance of User Account Storage! No-op set.`);
-            return false;
+            throw new Error(`Value must be "null" or an instance of User Account Storage! No-op set.`);
           }
           target[property] = value;
           if (value === null) {
@@ -252,15 +248,15 @@ export class UserManager {
     return this.currentlySignedInUser.value;
   }
 
-  public addUserDataStorageConfig(userId: UUID, userDataStorageConfig: UserDataStorageConfig): boolean {
+  public addUserDataStorageConfig(userId: UUID, userDataStorageConfigWithMetadata: IUserDataStorageConfigWithMetadata): boolean {
     this.logger.debug(`Adding new User Data Storage Config to user with ID: "${userId}".`);
     if (this.userAccountStorage.value === null) {
       throw new Error("Null User Account Storage");
     }
-    return this.userAccountStorage.value.addUserDataStorageConfig(userId, userDataStorageConfig);
+    return this.userAccountStorage.value.addUserDataStorageConfig(userId, userDataStorageConfigWithMetadata);
   }
 
-  public getAllUserDataStorageConfigs(userId: UUID): UserDataStorageConfig[] {
+  public getAllUserDataStorageConfigs(userId: UUID): IUserDataStorageConfigWithMetadata[] {
     this.logger.debug(`Getting all User Data Storage Configs for user with ID: "${userId}".`);
     if (this.userAccountStorage.value === null) {
       throw new Error("Null User Account Storage");

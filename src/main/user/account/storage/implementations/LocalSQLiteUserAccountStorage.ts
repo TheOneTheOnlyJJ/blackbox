@@ -8,6 +8,7 @@ import { UserAccountStorageType } from "../UserAccountStorageType";
 import { ISecuredNewUserData } from "../../ISecuredNewUserData";
 import { UUID } from "crypto";
 import { UserDataStorageConfig } from "../../../data/storage/UserDataStorageConfig";
+import { IUserDataStorageConfigWithMetadata } from "../../../data/storage/IUserDataStorageConfigWithMetadata";
 
 export interface LocalSQLiteUserAccountStorageConfig extends BaseUserAccountStorageConfig {
   type: UserAccountStorageType.LocalSQLite;
@@ -152,11 +153,11 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<LocalSQLit
     return IS_VALID;
   }
 
-  public addUserDataStorageConfig(userId: UUID, userDataStorageConfig: UserDataStorageConfig): boolean {
+  public addUserDataStorageConfig(userId: UUID, userDataStorageConfigWithMetadata: IUserDataStorageConfigWithMetadata): boolean {
     this.logger.debug(`Adding new User Data Storage Config to user with ID: "${userId}".`);
     // Validate config
     this.logger.debug("Validating User Data Storage Config.");
-    if (!this.USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION(userDataStorageConfig)) {
+    if (!this.USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION(userDataStorageConfigWithMetadata.config)) {
       this.logger.debug("Invalid User Data Storage Config.");
       this.logger.error("Validation errors:");
       this.USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION.errors?.map((error) => {
@@ -165,7 +166,7 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<LocalSQLit
       return false;
     }
     this.logger.debug("Valid User Data Storage Config.");
-    const STRINGIFIED_USER_DATA_STORAGE_CONFIG: string = JSON.stringify(userDataStorageConfig, null, 2);
+    const STRINGIFIED_USER_DATA_STORAGE_CONFIG: string = JSON.stringify(userDataStorageConfigWithMetadata.config, null, 2);
     // Validate stringified config as JSON at SQLite level
     if (!this.isJSONValidInSQLite(STRINGIFIED_USER_DATA_STORAGE_CONFIG)) {
       this.logger.debug("Invalid User Data Storage Config. Cannot add to user account.");
@@ -173,11 +174,14 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<LocalSQLit
     }
     this.logger.debug("Valid User Data Storage Config. Attempting to add to database.");
     const ADD_USER_DATA_STORAGE_CONFIG_SQL =
-      "INSERT INTO user_data_storage_configs (user_id, config) VALUES (@userId, jsonb(@userDataStorageConfig))";
+      "INSERT INTO user_data_storage_configs (config_id, user_id, name, config) VALUES (@configId, @userId, @name, jsonb(@config))";
     try {
-      const RUN_RESULT: RunResult = this.db
-        .prepare(ADD_USER_DATA_STORAGE_CONFIG_SQL)
-        .run({ userId: userId, userDataStorageConfig: STRINGIFIED_USER_DATA_STORAGE_CONFIG });
+      const RUN_RESULT: RunResult = this.db.prepare(ADD_USER_DATA_STORAGE_CONFIG_SQL).run({
+        configId: userDataStorageConfigWithMetadata.configId,
+        userId: userId,
+        name: userDataStorageConfigWithMetadata.name,
+        config: STRINGIFIED_USER_DATA_STORAGE_CONFIG
+      });
       this.logger.info("User Data Storage Config added successfully!");
       this.logger.silly(`Number of changes: "${RUN_RESULT.changes.toString()}". Last inserted row ID: "${RUN_RESULT.lastInsertRowid.toString()}".`);
       return true;
@@ -188,15 +192,23 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<LocalSQLit
     }
   }
 
-  public getAllUserDataStorageConfigs(userId: UUID): UserDataStorageConfig[] {
+  public getAllUserDataStorageConfigs(userId: UUID): IUserDataStorageConfigWithMetadata[] {
     this.logger.debug(`Getting all User Data Storage Configs for user with ID: "${userId}".`);
-    const GET_ALL_USER_DATA_STORAGE_CONFIGS_SQL = "SELECT json(config) AS config FROM user_data_storage_configs WHERE user_id = @userId";
-    const RESULT = this.db.prepare(GET_ALL_USER_DATA_STORAGE_CONFIGS_SQL).all({ userId: userId }) as { config: string }[];
-    const USER_DATA_STORAGE_CONFIGS: UserDataStorageConfig[] = [];
+    const GET_ALL_USER_DATA_STORAGE_CONFIGS_SQL =
+      "SELECT config_id AS configId, name, json(config) AS config FROM user_data_storage_configs WHERE user_id = @userId";
+    const RESULT = this.db.prepare(GET_ALL_USER_DATA_STORAGE_CONFIGS_SQL).all({ userId: userId }) as {
+      configId: UUID;
+      name: string;
+      config: string;
+    }[];
+    this.logger.warn(JSON.stringify(RESULT, null, 2));
+    const USER_DATA_STORAGE_CONFIGS_WITH_METADATA: IUserDataStorageConfigWithMetadata[] = [];
     try {
-      RESULT.map((element: { config: string }) => {
+      RESULT.map((rawUserDataStorageConfigWithMetadata: { configId: UUID; name: string; config: string }) => {
         this.logger.debug("Parsing User Data Storage Config.");
-        const PARSED_USER_DATA_STORAGE_CONFIG: UserDataStorageConfig = JSON.parse(element.config) as UserDataStorageConfig;
+        const PARSED_USER_DATA_STORAGE_CONFIG: UserDataStorageConfig = JSON.parse(
+          rawUserDataStorageConfigWithMetadata.config
+        ) as UserDataStorageConfig;
         this.logger.debug("Validating parsed User Data Storage Config.");
         if (!this.USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION(PARSED_USER_DATA_STORAGE_CONFIG)) {
           this.logger.debug("Invalid User Data Storage Config.");
@@ -207,9 +219,13 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<LocalSQLit
           return;
         }
         this.logger.debug("Valid User Data Storage Config.");
-        USER_DATA_STORAGE_CONFIGS.push(PARSED_USER_DATA_STORAGE_CONFIG);
+        USER_DATA_STORAGE_CONFIGS_WITH_METADATA.push({
+          configId: rawUserDataStorageConfigWithMetadata.configId,
+          name: rawUserDataStorageConfigWithMetadata.name,
+          config: PARSED_USER_DATA_STORAGE_CONFIG
+        });
       });
-      return USER_DATA_STORAGE_CONFIGS;
+      return USER_DATA_STORAGE_CONFIGS_WITH_METADATA;
     } catch (err: unknown) {
       const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
       this.logger.error(`Could not parse results! ${ERROR_MESSAGE}!`);
@@ -252,14 +268,15 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<LocalSQLit
       this.logger.debug('Found "user_data_storage_configs" table.');
     } else {
       this.logger.debug('Did not find "user_data_storage_configs" table. Creating.');
-      const CREATE_USERS_TABLE_SQL = `
+      const CREATE_USER_DATA_STORAGE_CONFIGS_TABLE_SQL = `
       CREATE TABLE IF NOT EXISTS user_data_storage_configs (
-        user_id TEXT NOT NULL,
-        config BLOB NOT NULL,
-        FOREIGN KEY (user_id) REFERENCES users(user_id) ON UPDATE CASCADE ON DELETE CASCADE
+        config_id TEXT NOT NULL PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(user_id) ON UPDATE CASCADE ON DELETE CASCADE,
+        name TEXT NOT NULL,
+        config BLOB NOT NULL
       )
       `;
-      this.db.prepare(CREATE_USERS_TABLE_SQL).run();
+      this.db.prepare(CREATE_USER_DATA_STORAGE_CONFIGS_TABLE_SQL).run();
       this.logger.debug('Created "user_data_storage_configs" table.');
     }
   }
