@@ -1,4 +1,4 @@
-import { IPCAPIResponse } from "../IPCAPIResponse";
+import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 
 export interface IIPCTLSAPI {
   getMainProcessPublicRSAKeyDER: () => IPCAPIResponse<ArrayBuffer>;

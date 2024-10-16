@@ -10,7 +10,7 @@ import { SvgIconComponent } from "@mui/icons-material";
 import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import { Link, useLocation } from "react-router-dom";
-import { SignedInRootContext, useSignedInRootContext } from "../roots/signedInRoot/SignedInRootContext";
+import { SignedInRootContext, useSignedInRootContext } from "@renderer/components/roots/signedInRoot/SignedInRootContext";
 
 interface IDrawerItem {
   name: string;

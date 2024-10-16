@@ -1,10 +1,10 @@
 import Box from "@mui/material/Box/Box";
 import { FC, MutableRefObject, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { SignedInRootContext, useSignedInRootContext } from "../signedInRoot/SignedInRootContext";
-import SignedInAppBar from "../../appBars/SignedInAppBar";
-import NavigationBar from "../../navigation/NavigationBar";
+import { SignedInRootContext, useSignedInRootContext } from "@renderer/components/roots/signedInRoot/SignedInRootContext";
+import SignedInAppBar from "@renderer/components/appBars/SignedInAppBar";
+import NavigationBar from "@renderer/components//navigation/NavigationBar";
 import { Outlet } from "react-router-dom";
-import { appLogger } from "../../../utils/loggers";
+import { appLogger } from "@renderer/utils/loggers";
 import { SignedInDashboardLayoutRootContext } from "./SignedInDashboardLayoutRootContext";
 
 const DEFAULT_DRAWER_WIDTH = 240;

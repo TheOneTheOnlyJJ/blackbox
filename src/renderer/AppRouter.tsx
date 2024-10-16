@@ -1,16 +1,16 @@
 import { FC } from "react";
 import { createHashRouter, RouterProvider } from "react-router-dom";
-import AppRoot from "./components/roots/appRoot/AppRoot";
-import SignInPage from "./pages/SignInPage";
-import SignUpPage from "./pages/SignUpPage";
-import AccountDashboardPage from "./pages/AccountDashboardPage";
-import ForbiddenPage from "./pages/ForbiddenPage";
-import SigningOutPage from "./pages/SigningOutPage";
-import SignedInRoot from "./components/roots/signedInRoot/SignedInRoot";
-import StashPage from "./pages/StashPage";
-import ProfilePage from "./pages/ProfilePage";
-import SettingsPage from "./pages/SettingsPage";
-import SignedInDashboardLayoutRoot from "./components/roots/signedInDashboardLayoutRoot/SignedInDashboardLayoutRoot";
+import AppRoot from "@renderer/components/roots/appRoot/AppRoot";
+import SignInPage from "@renderer/pages/SignInPage";
+import SignUpPage from "@renderer/pages/SignUpPage";
+import AccountDashboardPage from "@renderer/pages/AccountDashboardPage";
+import ForbiddenPage from "@renderer/pages/ForbiddenPage";
+import SigningOutPage from "@renderer/pages/SigningOutPage";
+import SignedInRoot from "@renderer/components/roots/signedInRoot/SignedInRoot";
+import StashPage from "@renderer/pages/StashPage";
+import ProfilePage from "@renderer/pages/ProfilePage";
+import SettingsPage from "@renderer/pages/SettingsPage";
+import SignedInDashboardLayoutRoot from "@renderer/components/roots/signedInDashboardLayoutRoot/SignedInDashboardLayoutRoot";
 
 const APP_ROUTER = createHashRouter([
   {

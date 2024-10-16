@@ -4,9 +4,9 @@ import { FC, useCallback, useEffect } from "react";
 import {
   SignedInDashboardLayoutRootContext,
   useSignedInDashboardLayoutRootContext
-} from "../components/roots/signedInDashboardLayoutRoot/SignedInDashboardLayoutRootContext";
+} from "@renderer/components/roots/signedInDashboardLayoutRoot/SignedInDashboardLayoutRootContext";
 import Button from "@mui/material/Button/Button";
-import { appLogger } from "../utils/loggers";
+import { appLogger } from "@renderer/utils/loggers";
 
 const StashPage: FC = () => {
   const signedInDashboardLayoutRootContext: SignedInDashboardLayoutRootContext = useSignedInDashboardLayoutRootContext();

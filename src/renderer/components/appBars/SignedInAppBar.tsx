@@ -16,10 +16,10 @@ import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import Divider from "@mui/material/Divider/Divider";
 import { NavigateFunction, useLocation, useNavigate, Location, Link } from "react-router-dom";
-import { appLogger } from "../../../renderer/utils/loggers";
+import { appLogger } from "@renderer/utils/loggers";
 import ArrowBackOutlinedIcon from "@mui/icons-material/ArrowBackOutlined";
 import ArrowForwardOutlinedIcon from "@mui/icons-material/ArrowForwardOutlined";
-import { SignedInRootContext, useSignedInRootContext } from "../roots/signedInRoot/SignedInRootContext";
+import { SignedInRootContext, useSignedInRootContext } from "@renderer/components/roots/signedInRoot/SignedInRootContext";
 
 export interface ISignedInAppBarProps {
   title: string;
@@ -58,8 +58,7 @@ const SignedInAppBar = forwardRef<HTMLDivElement, ISignedInAppBarProps>(function
   const updateButtonStates = useCallback(() => {
     const STATE = window.history.state as { idx?: number } | null;
     setIsBackDisabled(location.key === "default" || STATE?.idx === 0);
-    // TODO: Remove eslint diable rule, remove @types/dom-navigation once it becomes Baseline widely available
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    // TODO: Remove @types/dom-navigation once it becomes Baseline widely available
     setIsForwardDisabled(!window.navigation.canGoForward);
   }, [setIsBackDisabled, setIsForwardDisabled, location]);
 

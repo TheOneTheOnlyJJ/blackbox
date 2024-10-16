@@ -1,5 +1,5 @@
 import { ValidateFunction } from "ajv";
-import { IEncryptedData } from "../../../shared/utils/IEncryptedData";
+import { IEncryptedData } from "@shared/utils/IEncryptedData";
 import { createDecipheriv, DecipherGCM } from "node:crypto";
 import { LogFunctions } from "electron-log";
 

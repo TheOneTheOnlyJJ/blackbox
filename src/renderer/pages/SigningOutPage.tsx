@@ -1,12 +1,11 @@
-import "@fontsource/saira-stencil-one";
 import Box from "@mui/material/Box/Box";
 import Typography from "@mui/material/Typography/Typography";
 import Paper from "@mui/material/Paper/Paper";
 import { FC, useEffect } from "react";
-import { IPCAPIResponse } from "../../shared/IPC/IPCAPIResponse";
-import { IPCAPIResponseStatus } from "../../shared/IPC/IPCAPIResponseStatus";
+import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
+import { IPCAPIResponseStatus } from "@shared/IPC/IPCAPIResponseStatus";
 import { enqueueSnackbar } from "notistack";
-import { appLogger } from "../utils/loggers";
+import { appLogger } from "@renderer/utils/loggers";
 
 const SigningOutPage: FC = () => {
   useEffect(() => {

@@ -4,7 +4,7 @@ import { FC, useEffect } from "react";
 import {
   SignedInDashboardLayoutRootContext,
   useSignedInDashboardLayoutRootContext
-} from "../components/roots/signedInDashboardLayoutRoot/SignedInDashboardLayoutRootContext";
+} from "@renderer/components/roots/signedInDashboardLayoutRoot/SignedInDashboardLayoutRootContext";
 
 const ProfilePage: FC = () => {
   const signedInDashboardLayoutRootContext: SignedInDashboardLayoutRootContext = useSignedInDashboardLayoutRootContext();

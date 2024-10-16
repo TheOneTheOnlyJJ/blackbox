@@ -1,12 +1,12 @@
 import { FC, useCallback, useEffect, useState } from "react";
-import { appLogger, IPCLogger } from "../../../utils/loggers";
+import { appLogger, IPCLogger } from "@renderer/utils/loggers";
 import { Outlet, useLocation, Location, useNavigate, NavigateFunction } from "react-router-dom";
 import { AppRootContext } from "./AppRootContext";
-import { arrayBufferToBase64 } from "../../../utils/typeConversions/arrayBufferToBase64";
-import { insertLineBreaks } from "../../../../shared/utils/insertNewLines";
-import { ICurrentlySignedInUser } from "../../../../shared/user/ICurrentlySignedInUser";
-import { IPCAPIResponse } from "../../../../shared/IPC/IPCAPIResponse";
-import { IPCAPIResponseStatus } from "../../../../shared/IPC/IPCAPIResponseStatus";
+import { arrayBufferToBase64 } from "@renderer/utils/typeConversions/arrayBufferToBase64";
+import { insertLineBreaks } from "@shared/utils/insertNewLines";
+import { ICurrentlySignedInUser } from "@shared/user/ICurrentlySignedInUser";
+import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
+import { IPCAPIResponseStatus } from "@shared/IPC/IPCAPIResponseStatus";
 import { enqueueSnackbar, SnackbarProvider } from "notistack";
 import Box from "@mui/material/Box/Box";
 

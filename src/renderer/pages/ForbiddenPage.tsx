@@ -4,7 +4,7 @@ import { FC, useCallback, useEffect, useState } from "react";
 import Paper from "@mui/material/Paper/Paper";
 import Button from "@mui/material/Button/Button";
 import { NavigateFunction, useNavigate, useParams } from "react-router-dom";
-import { appLogger } from "../utils/loggers";
+import { appLogger } from "@renderer/utils/loggers";
 import Typography from "@mui/material/Typography/Typography";
 import Alert from "@mui/material/Alert/Alert";
 import AlertTitle from "@mui/material/AlertTitle/AlertTitle";

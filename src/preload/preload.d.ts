@@ -1,5 +1,5 @@
-import { IIPCTLSAPI } from "../shared/IPC/APIs/IIPCTLSAPI";
-import { IUserAPI } from "../shared/IPC/APIs/IUserAPI";
+import { IIPCTLSAPI } from "@shared/IPC/APIs/IIPCTLSAPI";
+import { IUserAPI } from "@shared/IPC/APIs/IUserAPI";
 
 declare global {
   interface Window {

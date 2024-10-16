@@ -1,7 +1,7 @@
-import { ICurrentlySignedInUser } from "../../user/ICurrentlySignedInUser";
-import { IEncryptedBaseNewUserData } from "../../user/encrypted/IEncryptedBaseNewUserData";
-import { IEncryptedUserSignInCredentials } from "../../user/encrypted/IEncryptedUserSignInCredentials";
-import { IPCAPIResponse } from "../IPCAPIResponse";
+import { ICurrentlySignedInUser } from "@shared/user/ICurrentlySignedInUser";
+import { IEncryptedBaseNewUserData } from "@shared/user/encrypted/IEncryptedBaseNewUserData";
+import { IEncryptedUserSignInCredentials } from "@shared/user/encrypted/IEncryptedUserSignInCredentials";
+import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 
 // Utility types
 export type UserAccountStorageAvailabilityChangeCallback = (isAvailable: boolean) => void;

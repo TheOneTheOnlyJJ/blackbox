@@ -5,10 +5,10 @@ import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import Ajv, { JSONSchemaType } from "ajv";
 import { UserAccountStorageType } from "../UserAccountStorageType";
-import { ISecuredNewUserData } from "../../ISecuredNewUserData";
+import { ISecuredNewUserData } from "@main/user/account/ISecuredNewUserData";
 import { UUID } from "crypto";
-import { UserDataStorageConfig } from "../../../data/storage/UserDataStorageConfig";
-import { IUserDataStorageConfigWithMetadata } from "../../../data/storage/IUserDataStorageConfigWithMetadata";
+import { UserDataStorageConfig } from "@main/user/data/storage/UserDataStorageConfig";
+import { IUserDataStorageConfigWithMetadata } from "@main/user/data/storage/IUserDataStorageConfigWithMetadata";
 
 export interface LocalSQLiteUserAccountStorageConfig extends BaseUserAccountStorageConfig {
   type: UserAccountStorageType.LocalSQLite;

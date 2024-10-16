@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import Box from "@mui/material/Box/Box";
 import Paper from "@mui/material/Paper/Paper";
 import Typography from "@mui/material/Typography/Typography";
-import UserSignUpForm from "../components/forms/UserSignUpForm";
+import UserSignUpForm from "@renderer/components/forms/UserSignUpForm";
 
 const SignUpPage: FC = () => {
   return (

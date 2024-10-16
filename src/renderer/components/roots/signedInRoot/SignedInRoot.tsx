@@ -1,8 +1,8 @@
 import { FC, useEffect, useState } from "react";
 import { Navigate, Outlet } from "react-router-dom";
-import { AppRootContext, useAppRootContext } from "../appRoot/AppRootContext";
+import { AppRootContext, useAppRootContext } from "@renderer/components/roots/appRoot/AppRootContext";
 import { SignedInRootContext } from "./SignedInRootContext";
-import { appLogger } from "../../../utils/loggers";
+import { appLogger } from "@renderer/utils/loggers";
 
 const SignedInRoot: FC = () => {
   const appRootContext: AppRootContext = useAppRootContext();

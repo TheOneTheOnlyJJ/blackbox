@@ -5,7 +5,7 @@ import { useParams } from "react-router-dom";
 import {
   SignedInDashboardLayoutRootContext,
   useSignedInDashboardLayoutRootContext
-} from "../components/roots/signedInDashboardLayoutRoot/SignedInDashboardLayoutRootContext";
+} from "@renderer/components/roots/signedInDashboardLayoutRoot/SignedInDashboardLayoutRootContext";
 
 export interface AccountDashboardPageParams extends Record<string, string> {
   username: string;

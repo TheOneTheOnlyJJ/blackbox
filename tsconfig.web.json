@@ -14,9 +14,9 @@
     "jsxImportSource": "react",
     "allowSyntheticDefaultImports": true,
     "allowUmdGlobalAccess": true,
-    "baseUrl": ".",
     "paths": {
-      "@renderer/*": ["./src/renderer/src/*"]
+      "@renderer/*": ["./src/renderer/*"],
+      "@shared/*": ["./src/shared/*"]
     },
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "types": ["react", "react-dom", "dom-navigation"]
