@@ -9,7 +9,7 @@ import { forwardRef, useMemo } from "react";
 import { SvgIconComponent } from "@mui/icons-material";
 import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
-import { useLocation } from "react-router-dom";
+import { Location, useLocation } from "react-router-dom";
 import { SignedInRootContext, useSignedInRootContext } from "@renderer/components/roots/signedInRoot/SignedInRootContext";
 import DebouncedLink from "./DebouncedLink";
 
@@ -27,7 +27,7 @@ export interface INavigationBarProps {
 
 const NavigationBar = forwardRef<HTMLDivElement, INavigationBarProps>(function NavigationBar(props: INavigationBarProps) {
   const signedInRootContext: SignedInRootContext = useSignedInRootContext();
-  const location = useLocation();
+  const location: Location = useLocation();
   const DRAWER_ITEMS: IDrawerItem[] = useMemo<IDrawerItem[]>((): IDrawerItem[] => {
     return [
       {
