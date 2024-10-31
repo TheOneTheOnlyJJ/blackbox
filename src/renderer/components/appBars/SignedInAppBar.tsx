@@ -8,18 +8,12 @@ import useTheme from "@mui/material/styles/useTheme";
 import { Theme } from "@mui/material/styles/createTheme";
 import AccountCircleOutlinedIcon from "@mui/icons-material/AccountCircleOutlined";
 import Tooltip from "@mui/material/Tooltip/Tooltip";
-import Menu from "@mui/material/Menu/Menu";
-import MenuItem from "@mui/material/MenuItem/MenuItem";
-import ListItemIcon from "@mui/material/ListItemIcon/ListItemIcon";
-import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
-import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
-import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
-import Divider from "@mui/material/Divider/Divider";
-import { NavigateFunction, useLocation, useNavigate, Location, Link } from "react-router-dom";
+import { NavigateFunction, useLocation, useNavigate, Location } from "react-router-dom";
 import { appLogger } from "@renderer/utils/loggers";
 import ArrowBackOutlinedIcon from "@mui/icons-material/ArrowBackOutlined";
 import ArrowForwardOutlinedIcon from "@mui/icons-material/ArrowForwardOutlined";
 import { SignedInRootContext, useSignedInRootContext } from "@renderer/components/roots/signedInRoot/SignedInRootContext";
+import UserAccountMenu from "../navigation/UserAccountMenu";
 
 export interface ISignedInAppBarProps {
   title: string;
@@ -33,21 +27,21 @@ const SignedInAppBar = forwardRef<HTMLDivElement, ISignedInAppBarProps>(function
   const theme: Theme = useTheme();
   const navigate: NavigateFunction = useNavigate();
   const location: Location = useLocation();
-  const [accountMenuAnchorElement, setAccountMenuAnchorElement] = useState<null | HTMLElement>(null);
-  const isAccountMenuOpen: boolean = useMemo<boolean>(() => {
-    return Boolean(accountMenuAnchorElement);
-  }, [accountMenuAnchorElement]);
-  const handleAccountButtonClick = useCallback(
-    (event: MouseEvent<HTMLButtonElement>) => {
-      setAccountMenuAnchorElement(event.currentTarget);
+  const [userAccountMenuAnchorElement, setUserAccountMenuAnchorElement] = useState<null | HTMLElement>(null);
+  const isUserAccountMenuOpen: boolean = useMemo<boolean>((): boolean => {
+    return Boolean(userAccountMenuAnchorElement);
+  }, [userAccountMenuAnchorElement]);
+  const handleUserAccountButtonClick = useCallback(
+    (event: MouseEvent<HTMLButtonElement>): void => {
+      setUserAccountMenuAnchorElement(event.currentTarget);
     },
-    [setAccountMenuAnchorElement]
+    [setUserAccountMenuAnchorElement]
   );
-  const handleAccountMenuClose = useCallback(() => {
-    setAccountMenuAnchorElement(null);
-  }, [setAccountMenuAnchorElement]);
+  const handleUserAccountMenuClose = useCallback((): void => {
+    setUserAccountMenuAnchorElement(null);
+  }, [setUserAccountMenuAnchorElement]);
   const handleNavigationArrowButtonClick = useCallback(
-    (direction: "back" | "forward") => {
+    (direction: "back" | "forward"): void => {
       appLogger.debug(`Clicked ${direction} arrow from the App Bar.`);
       navigate(direction === "back" ? -1 : 1);
     },
@@ -55,7 +49,7 @@ const SignedInAppBar = forwardRef<HTMLDivElement, ISignedInAppBarProps>(function
   );
   const [isBackDisabled, setIsBackDisabled] = useState<boolean>(false);
   const [isForwardDisabled, setIsForwardDisabled] = useState<boolean>(false);
-  const updateButtonStates = useCallback(() => {
+  const updateButtonStates = useCallback((): void => {
     const STATE = window.history.state as { idx?: number } | null;
     setIsBackDisabled(location.key === "default" || STATE?.idx === 0);
     // TODO: Remove @types/dom-navigation once it becomes Baseline widely available
@@ -118,41 +112,20 @@ const SignedInAppBar = forwardRef<HTMLDivElement, ISignedInAppBarProps>(function
               aria-controls="menu-appbar"
               aria-haspopup="true"
               color="inherit"
-              onClick={handleAccountButtonClick}
+              onClick={handleUserAccountButtonClick}
             >
               <AccountCircleOutlinedIcon />
             </IconButton>
           </Tooltip>
         </Toolbar>
       </AppBar>
-      {/* Account menu */}
-      <Menu
-        anchorEl={accountMenuAnchorElement}
-        id="account-menu"
-        open={isAccountMenuOpen}
-        onClose={handleAccountMenuClose}
-        onClick={handleAccountMenuClose}
-      >
-        <MenuItem component={Link} to={`/users/${signedInRootContext.currentlySignedInUser.username}/profile`}>
-          <ListItemIcon>
-            <PersonOutlineOutlinedIcon fontSize="small" />
-          </ListItemIcon>
-          Profile
-        </MenuItem>
-        <MenuItem component={Link} to={`/users/${signedInRootContext.currentlySignedInUser.username}/settings`}>
-          <ListItemIcon>
-            <SettingsOutlinedIcon fontSize="small" />
-          </ListItemIcon>
-          Settings
-        </MenuItem>
-        <Divider />
-        <MenuItem component={Link} to={`/signing-out`}>
-          <ListItemIcon>
-            <LogoutOutlinedIcon fontSize="small" />
-          </ListItemIcon>
-          Sign Out
-        </MenuItem>
-      </Menu>
+      {/* User account menu */}
+      <UserAccountMenu
+        anchorEl={userAccountMenuAnchorElement}
+        open={isUserAccountMenuOpen}
+        onClick={handleUserAccountMenuClose}
+        onClose={handleUserAccountMenuClose}
+      />
     </>
   );
 });

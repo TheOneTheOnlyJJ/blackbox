@@ -18,7 +18,7 @@ const AccountDashboardPage: FC = () => {
   useEffect(() => {
     signedInDashboardLayoutRootContext.setAppBarTitle("Dashboard");
     signedInDashboardLayoutRootContext.setForbiddenLocationName("Dashboard");
-  }, []);
+  }, [signedInDashboardLayoutRootContext]);
 
   return (
     <Box

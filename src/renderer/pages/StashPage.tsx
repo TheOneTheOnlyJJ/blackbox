@@ -17,7 +17,7 @@ const StashPage: FC = () => {
   useEffect(() => {
     signedInDashboardLayoutRootContext.setAppBarTitle("Stash");
     signedInDashboardLayoutRootContext.setForbiddenLocationName("Stash");
-  }, []);
+  }, [signedInDashboardLayoutRootContext]);
 
   return (
     <Box

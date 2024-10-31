@@ -92,7 +92,7 @@ const AppRoot: FC = () => {
     appLogger.debug("Wiping window navigation history.");
     window.history.replaceState({ idx: 0 }, "", navigationPath);
     navigate(navigationPath, { replace: true });
-  }, [currentlySignedInUser]);
+  }, [navigate, currentlySignedInUser]);
 
   // Log user account storage availability changes
   useEffect((): void => {
@@ -148,7 +148,7 @@ const AppRoot: FC = () => {
       REMOVE_ON_CURRENTLY_SIGNED_IN_USER_CHANGE_LISTENER();
       REMOVE_ON_USER_ACCOUNT_STORAGE_AVAILABILITY_CHANGE_LISTENER();
     };
-  }, []);
+  }, [generateRendererProcessAESEncryptionKey]);
 
   return (
     <Box sx={{ width: "100vw", height: "100vh" }}>

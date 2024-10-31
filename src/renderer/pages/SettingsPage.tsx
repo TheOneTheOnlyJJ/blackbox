@@ -12,7 +12,7 @@ const SettingsPage: FC = () => {
   useEffect(() => {
     signedInDashboardLayoutRootContext.setAppBarTitle("Settings");
     signedInDashboardLayoutRootContext.setForbiddenLocationName("Settings");
-  }, []);
+  }, [signedInDashboardLayoutRootContext]);
 
   return (
     <Box

@@ -5,31 +5,20 @@ import ListItem from "@mui/material/ListItem/ListItem";
 import ListItemButton from "@mui/material/ListItemButton/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText/ListItemText";
-import { forwardRef } from "react";
+import { forwardRef, useMemo } from "react";
 import { SvgIconComponent } from "@mui/icons-material";
 import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { SignedInRootContext, useSignedInRootContext } from "@renderer/components/roots/signedInRoot/SignedInRootContext";
+import DebouncedLink from "./DebouncedLink";
 
 interface IDrawerItem {
   name: string;
   icon: SvgIconComponent;
   path: string;
+  divider: boolean;
 }
-
-const DRAWER_ITEMS: IDrawerItem[] = [
-  {
-    name: "Dashboard",
-    icon: DashboardOutlinedIcon,
-    path: "dashboard"
-  },
-  {
-    name: "Stash",
-    icon: Inventory2OutlinedIcon,
-    path: "stash"
-  }
-];
 
 export interface INavigationBarProps {
   width: number;
@@ -39,6 +28,23 @@ export interface INavigationBarProps {
 const NavigationBar = forwardRef<HTMLDivElement, INavigationBarProps>(function NavigationBar(props: INavigationBarProps) {
   const signedInRootContext: SignedInRootContext = useSignedInRootContext();
   const location = useLocation();
+  const DRAWER_ITEMS: IDrawerItem[] = useMemo<IDrawerItem[]>((): IDrawerItem[] => {
+    return [
+      {
+        name: "Dashboard",
+        icon: DashboardOutlinedIcon,
+        path: `/users/${signedInRootContext.currentlySignedInUser.username}/dashboard`,
+        divider: false
+      },
+      {
+        name: "Stash",
+        icon: Inventory2OutlinedIcon,
+        path: `/users/${signedInRootContext.currentlySignedInUser.username}/stash`,
+        divider: false
+      }
+    ];
+  }, [signedInRootContext]);
+
   return (
     <Drawer
       variant="permanent"
@@ -53,13 +59,9 @@ const NavigationBar = forwardRef<HTMLDivElement, INavigationBarProps>(function N
     >
       <Box sx={{ overflow: "auto" }}>
         <List>
-          {DRAWER_ITEMS.map((item: IDrawerItem) => (
-            <ListItem key={item.name} disablePadding>
-              <ListItemButton
-                component={Link}
-                to={`/users/${signedInRootContext.currentlySignedInUser.username}/${item.path}`}
-                selected={location.pathname === `/users/${signedInRootContext.currentlySignedInUser.username}/${item.path}`}
-              >
+          {DRAWER_ITEMS.map((item: IDrawerItem, index: number) => (
+            <ListItem key={index} disablePadding divider={item.divider}>
+              <ListItemButton component={DebouncedLink} to={item.path} selected={location.pathname === item.path}>
                 <ListItemIcon>
                   <item.icon />
                 </ListItemIcon>

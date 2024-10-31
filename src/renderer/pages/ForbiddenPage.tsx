@@ -39,7 +39,7 @@ const ForbiddenPage: FC = () => {
       appLogger.error(`Could not set alert message: ${ERROR_MESSAGE}!`);
       setAlertMessage(null);
     }
-  }, []);
+  }, [params.reason]);
 
   return (
     <Box

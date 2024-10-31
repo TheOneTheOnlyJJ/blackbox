@@ -12,7 +12,7 @@ const ProfilePage: FC = () => {
   useEffect(() => {
     signedInDashboardLayoutRootContext.setAppBarTitle("Profile");
     signedInDashboardLayoutRootContext.setForbiddenLocationName("Profile");
-  }, []);
+  }, [signedInDashboardLayoutRootContext]);
 
   return (
     <Box
