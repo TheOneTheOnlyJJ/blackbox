@@ -4,14 +4,14 @@ import { LogFunctions } from "electron-log";
 import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import Ajv, { JSONSchemaType } from "ajv";
-import { UserAccountStorageType } from "../UserAccountStorageType";
+import { USER_ACCOUNT_STORAGE_TYPE, UserAccountStorageTypes } from "../UserAccountStorageType";
 import { ISecuredNewUserData } from "@main/user/account/ISecuredNewUserData";
 import { UUID } from "crypto";
 import { UserDataStorageConfig } from "@main/user/data/storage/UserDataStorageConfig";
 import { IUserDataStorageConfigWithMetadata } from "@main/user/data/storage/IUserDataStorageConfigWithMetadata";
 
 export interface LocalSQLiteUserAccountStorageConfig extends BaseUserAccountStorageConfig {
-  type: UserAccountStorageType.LocalSQLite;
+  type: UserAccountStorageTypes["LocalSQLite"];
   dbDirPath: string;
   dbFileName: string;
 }
@@ -30,7 +30,7 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<LocalSQLit
     properties: {
       type: {
         type: "string",
-        enum: [UserAccountStorageType.LocalSQLite]
+        enum: [USER_ACCOUNT_STORAGE_TYPE.LocalSQLite]
       },
       dbDirPath: {
         type: "string",

@@ -1,6 +1,6 @@
 import { LogFunctions } from "electron-log";
 import { SettingsManager } from "./SettingsManager";
-import { SettingsManagerType } from "./SettingsManagerType";
+import { SETTINGS_MANAGER_TYPE } from "./SettingsManagerType";
 import { LocalJSONSettingsManager, LocalJSONSettingsManagerConfig } from "./implementations/LocalJSONSettingsManager";
 import Ajv, { JSONSchemaType } from "ajv";
 
@@ -15,7 +15,7 @@ export function settingsManagerFactory<SettingsType extends NonNullable<unknown>
 ): SettingsManager<SettingsType, SettingsManagerConfig> {
   logger.debug(`Running Settings Manager factory with config: ${JSON.stringify(config, null, 2)}.`);
   switch (config.type) {
-    case SettingsManagerType.LocalJSON:
+    case SETTINGS_MANAGER_TYPE.LocalJSON:
       return new LocalJSONSettingsManager(config, settingsSchema, logger, ajv);
     default:
       // eslint-disable-next-line @typescript-eslint/restrict-template-expressions

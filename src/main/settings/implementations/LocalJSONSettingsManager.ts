@@ -1,12 +1,12 @@
 import { LogFunctions } from "electron-log";
 import { BaseSettingsManagerConfig, SettingsManager } from "../SettingsManager";
-import { SettingsManagerType } from "../SettingsManagerType";
+import { SETTINGS_MANAGER_TYPE, SettingsManagerTypes } from "../SettingsManagerType";
 import Ajv, { JSONSchemaType } from "ajv";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 export interface LocalJSONSettingsManagerConfig extends BaseSettingsManagerConfig {
-  type: SettingsManagerType.LocalJSON;
+  type: SettingsManagerTypes["LocalJSON"];
   fileDir: string;
   fileName: string;
 }
@@ -21,7 +21,7 @@ export class LocalJSONSettingsManager<SettingsType extends Record<string, unknow
     properties: {
       type: {
         type: "string",
-        enum: [SettingsManagerType.LocalJSON]
+        enum: [SETTINGS_MANAGER_TYPE.LocalJSON]
       },
       fileName: {
         type: "string",

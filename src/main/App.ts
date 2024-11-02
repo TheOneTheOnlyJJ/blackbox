@@ -6,7 +6,7 @@ import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 import { JSONSchemaType } from "ajv/dist/types/json-schema";
 import { IPCTLSAPIIPCChannel, UserAPIIPCChannel } from "@main/utils/IPC/IPCChannels";
 import { UserManager } from "@main/user/UserManager";
-import { UserAccountStorageType } from "@main/user/account/storage/UserAccountStorageType";
+import { USER_ACCOUNT_STORAGE_TYPE } from "@main/user/account/storage/UserAccountStorageType";
 import { adjustWindowBounds } from "@main/utils/window/adjustWindowBounds";
 import { IpcMainEvent } from "electron";
 import { IUserAPI } from "@shared/IPC/APIs/IUserAPI";
@@ -27,7 +27,7 @@ import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPCAPIResponseStatus } from "@shared/IPC/IPCAPIResponseStatus";
 import { SettingsManager } from "@main/settings/SettingsManager";
 import { SettingsManagerConfig, settingsManagerFactory } from "@main/settings/settingsManagerFactory";
-import { SettingsManagerType } from "@main/settings/SettingsManagerType";
+import { SETTINGS_MANAGER_TYPE } from "@main/settings/SettingsManagerType";
 import { WindowPosition, WindowPositionWatcher, WindowState } from "@main/settings/WindowPositionWatcher";
 import Ajv from "ajv";
 import { UserAccountStorageConfig } from "@main/user/account/storage/UserAccountStorageConfig";
@@ -113,7 +113,7 @@ export class App {
   };
   private readonly settingsManager: SettingsManager<AppSettings, SettingsManagerConfig>;
   private readonly SETTINGS_MANAGER_CONFIG: SettingsManagerConfig = {
-    type: SettingsManagerType.LocalJSON,
+    type: SETTINGS_MANAGER_TYPE.LocalJSON,
     fileDir: resolve(join(app.getAppPath(), "settings")),
     fileName: "BlackBoxSettings.json"
   };
@@ -136,7 +136,7 @@ export class App {
   // Users
   private readonly userManager: UserManager;
   private readonly USER_ACCOUNT_STORAGE_CONFIG: UserAccountStorageConfig = {
-    type: UserAccountStorageType.LocalSQLite,
+    type: USER_ACCOUNT_STORAGE_TYPE.LocalSQLite,
     dbDirPath: resolve(join(app.getAppPath(), "data")),
     dbFileName: "users.sqlite"
   };
@@ -458,7 +458,6 @@ export class App {
       void this.window.loadFile(this.INDEX_HTML_FILE_PATH);
     }
     // Log dev tools shortcut registration
-    // TODO: Investigate this
     const MODE: string = app.isPackaged ? "production" : "development" + " mode";
     if (isDevToolsShortcutRegistered) {
       this.windowLogger.debug(`Developer tools shortcut registered (${MODE}).`);

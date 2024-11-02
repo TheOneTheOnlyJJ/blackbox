@@ -1,4 +1,6 @@
-// Enum of strings representing every concrete implementation of settings manager
-export enum SettingsManagerType {
-  LocalJSON = "Local JSON"
-}
+export const SETTINGS_MANAGER_TYPE = {
+  LocalJSON: "Local JSON"
+} as const;
+
+export type SettingsManagerTypes = typeof SETTINGS_MANAGER_TYPE;
+export type SettingsManagerType = SettingsManagerTypes[keyof SettingsManagerTypes];

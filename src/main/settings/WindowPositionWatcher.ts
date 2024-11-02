@@ -1,6 +1,7 @@
 import { LogFunctions } from "electron-log";
 import { BrowserWindow, Rectangle } from "electron/main";
 
+// TODO: make this as const
 export enum WindowState {
   FullScreen = "fullscreen",
   Maximized = "maximized",

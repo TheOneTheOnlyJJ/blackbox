@@ -1,4 +1,4 @@
-import Dialog from "@mui/material/Dialog/Dialog";
+import Dialog, { DialogProps } from "@mui/material/Dialog/Dialog";
 import CheckCircleOutlineOutlinedIcon from "@mui/icons-material/CheckCircleOutlineOutlined";
 import { FC, useCallback, useState } from "react";
 import { NavigateFunction, useNavigate } from "react-router-dom";
@@ -17,7 +17,7 @@ import { IPCAPIResponseStatus } from "@shared/IPC/IPCAPIResponseStatus";
 import { enqueueSnackbar } from "notistack";
 
 export interface SuccessfulUserSignUpDialogProps {
-  open: boolean;
+  open: DialogProps["open"];
   username: string;
   userCount: number | null;
   encryptedNewUserSignInCredentials: IEncryptedUserSignInCredentials | null;

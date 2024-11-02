@@ -1,10 +1,10 @@
 import { LogFunctions } from "electron-log";
 import { BaseUserDataStorageConfig, UserDataStorage } from "../UserDataStorage";
-import { UserDataStorageType } from "../UserDataStorageType";
+import { USER_DATA_STORAGE_TYPES, UserDataStorageTypes } from "@shared/user/data/storage/UserDataStorageType";
 import Ajv, { JSONSchemaType } from "ajv";
 
 export interface LocalSQLiteUserDataStorageConfig extends BaseUserDataStorageConfig {
-  type: UserDataStorageType.LocalSQLite;
+  type: UserDataStorageTypes["LocalSQLite"];
   dbDirPath: string;
   dbFileName: string;
 }
@@ -16,7 +16,7 @@ export class LocalSQLiteUserDataStorage extends UserDataStorage<LocalSQLiteUserD
     properties: {
       type: {
         type: "string",
-        enum: [UserDataStorageType.LocalSQLite]
+        enum: [USER_DATA_STORAGE_TYPES.LocalSQLite]
       },
       dbDirPath: {
         type: "string",

@@ -1,3 +1,4 @@
+// TODO: Make these as const
 export enum IPCTLSAPIIPCChannel {
   getMainProcessPublicRSAKeyDER = "IPCTLSAPI:getMainProcessPublicRSAKeyDER",
   sendRendererProcessWrappedAESKey = "IPCTLSAPI:sendRendererProcessWrappedAESKey"
