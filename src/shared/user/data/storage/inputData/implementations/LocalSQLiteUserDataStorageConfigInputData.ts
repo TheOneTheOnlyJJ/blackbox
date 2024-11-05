@@ -14,15 +14,16 @@ export const LOCAL_SQLITE_USER_DATA_STORAGE_CONFIG_INPUT_DATA_SCHEMA: JSONSchema
   properties: {
     type: {
       type: "string",
-      enum: [USER_DATA_STORAGE_TYPES.LocalSQLite]
+      enum: [USER_DATA_STORAGE_TYPES.LocalSQLite],
+      default: USER_DATA_STORAGE_TYPES.LocalSQLite
     },
     dbDirPath: {
       type: "string",
-      minLength: 1
+      minLength: 5
     },
     dbFileName: {
       type: "string",
-      minLength: 1
+      minLength: 5
     }
   },
   required: ["type", "dbDirPath", "dbFileName"],

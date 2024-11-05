@@ -9,6 +9,7 @@ import Button from "@mui/material/Button/Button";
 import { appLogger } from "@renderer/utils/loggers";
 import UserDataStorageConfigFormDialog from "@renderer/components/dialogs/UserDataStorageConfigFormDialog";
 
+// TODO: Rename this and everything related to "Stash"
 const StashPage: FC = () => {
   const signedInDashboardLayoutRootContext: SignedInDashboardLayoutRootContext = useSignedInDashboardLayoutRootContext();
   // User data storage config form dialog

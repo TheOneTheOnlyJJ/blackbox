@@ -2,6 +2,7 @@ import { JSONSchemaType } from "ajv";
 import { IBaseNewUserData } from "./IBaseNewUserData";
 import { NEW_USER_PASSWORD_CONSTRAINTS, NEW_USER_USERNAME_CONSTRAINTS } from "./NewUserConstraints";
 
+// TODO: Rename this
 export interface IFormNewUserData extends IBaseNewUserData {
   confirmPassword: string;
 }

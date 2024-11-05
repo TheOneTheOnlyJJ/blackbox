@@ -1,4 +1,4 @@
-import { FC, useCallback } from "react";
+import { FC, useCallback, useEffect } from "react";
 import { FormProps, IChangeEvent, withTheme } from "@rjsf/core";
 import { Theme } from "@rjsf/mui";
 import { ErrorTransformer, RJSFSchema, RJSFValidationError } from "@rjsf/utils";
@@ -9,6 +9,7 @@ import {
   USER_DATA_STORAGE_CONFIG_INPUT_DATA_SCHEMA,
   UserDataStorageConfigInputData
 } from "@shared/user/data/storage/inputData/UserDataStorageConfigInputData";
+import { USER_DATA_STORAGE_CONFIG_INPUT_DATA_UI_SCHEMA } from "@renderer/user/data/storage/uiSchemas/UserDataStorageConfigInputDataUiSchemas";
 
 const MUIForm = withTheme<UserDataStorageConfigInputData>(Theme);
 
@@ -17,14 +18,28 @@ const USER_DATA_STORAGE_CONFIG_INPUT_DATA_FORM_VALIDATOR = customizeValidator<Us
 const userDataStorageConfigInputDataFormTransformErrors: ErrorTransformer<UserDataStorageConfigInputData> = (
   errors: RJSFValidationError[]
 ): RJSFValidationError[] => {
-  return errors.map((error: RJSFValidationError) => {
-    // Capitalize first letter
-    if (error.message !== undefined) {
-      error.message = error.message.charAt(0).toUpperCase() + error.message.slice(1) + ".";
-    }
-    error.stack = error.stack.charAt(0).toUpperCase() + error.stack.slice(1) + ".";
-    return error;
-  });
+  return (
+    errors
+      // Filter errors
+      .filter((error: RJSFValidationError): boolean => {
+        if (error.name === "additionalProperties") {
+          // TODO: Add Logger messages here once specialised loggers are added
+          return false;
+        }
+        if (error.name === "anyOf") {
+          return false;
+        }
+        return true;
+      })
+      .map((error: RJSFValidationError): RJSFValidationError => {
+        // Capitalize first letter
+        if (error.message !== undefined) {
+          error.message = error.message.charAt(0).toUpperCase() + error.message.slice(1) + ".";
+        }
+        error.stack = error.stack.charAt(0).toUpperCase() + error.stack.slice(1) + ".";
+        return error;
+      })
+  );
 };
 
 export interface IUserDataStorageConfigFormProps {
@@ -32,7 +47,13 @@ export interface IUserDataStorageConfigFormProps {
   doRenderSubmitButton: boolean;
 }
 
+// TODO: Get title in error messages properly
 const UserDataStorageConfigForm: FC<IUserDataStorageConfigFormProps> = (props: IUserDataStorageConfigFormProps) => {
+  // TODO: Delete this
+  useEffect(() => {
+    appLogger.error(JSON.stringify(USER_DATA_STORAGE_CONFIG_INPUT_DATA_SCHEMA, null, 2));
+    appLogger.error(JSON.stringify(USER_DATA_STORAGE_CONFIG_INPUT_DATA_UI_SCHEMA, null, 2));
+  }, []);
   const handleSubmit = useCallback((data: IChangeEvent<UserDataStorageConfigInputData>): void => {
     if (data.formData === undefined) {
       appLogger.error("Undefined User Data Storage Config form data. No-op.");
@@ -49,8 +70,11 @@ const UserDataStorageConfigForm: FC<IUserDataStorageConfigFormProps> = (props: I
       schema={USER_DATA_STORAGE_CONFIG_INPUT_DATA_SCHEMA as RJSFSchema}
       validator={USER_DATA_STORAGE_CONFIG_INPUT_DATA_FORM_VALIDATOR}
       uiSchema={{
+        ...USER_DATA_STORAGE_CONFIG_INPUT_DATA_UI_SCHEMA,
         "ui:submitButtonOptions": { norender: !props.doRenderSubmitButton }
       }}
+      omitExtraData={true}
+      liveOmit={true}
       showErrorList={false}
       transformErrors={userDataStorageConfigInputDataFormTransformErrors}
       onSubmit={handleSubmit}
