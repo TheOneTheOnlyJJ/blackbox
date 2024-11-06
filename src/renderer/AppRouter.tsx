@@ -7,7 +7,7 @@ import AccountDashboardPage from "@renderer/pages/AccountDashboardPage";
 import ForbiddenPage from "@renderer/pages/ForbiddenPage";
 import SigningOutPage from "@renderer/pages/SigningOutPage";
 import SignedInRoot from "@renderer/components/roots/signedInRoot/SignedInRoot";
-import StashPage from "@renderer/pages/StashPage";
+import UserDataStoragesPage from "@renderer/pages/UserDataStoragesPage";
 import ProfilePage from "@renderer/pages/ProfilePage";
 import SettingsPage from "@renderer/pages/SettingsPage";
 import SignedInDashboardLayoutRoot from "@renderer/components/roots/signedInDashboardLayoutRoot/SignedInDashboardLayoutRoot";
@@ -41,8 +41,8 @@ const APP_ROUTER = createHashRouter([
                 element: <AccountDashboardPage />
               },
               {
-                path: "stash",
-                element: <StashPage />
+                path: "userDataStorages",
+                element: <UserDataStoragesPage />
               },
               {
                 path: "profile",

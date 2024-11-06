@@ -9,8 +9,7 @@ import Button from "@mui/material/Button/Button";
 import { appLogger } from "@renderer/utils/loggers";
 import UserDataStorageConfigFormDialog from "@renderer/components/dialogs/UserDataStorageConfigFormDialog";
 
-// TODO: Rename this and everything related to "Stash"
-const StashPage: FC = () => {
+const UserDataStoragesPage: FC = () => {
   const signedInDashboardLayoutRootContext: ISignedInDashboardLayoutRootContext = useSignedInDashboardLayoutRootContext();
   // User data storage config form dialog
   const [isUserDataStorageConfigFormDialogOpen, setIsUserDataStorageConfigFormDialogOpen] = useState<boolean>(false);
@@ -18,14 +17,14 @@ const StashPage: FC = () => {
     setIsUserDataStorageConfigFormDialogOpen(false);
   }, []);
 
-  const handleNewStashButtonClick = useCallback((): void => {
-    appLogger.debug("New Stash button clicked.");
+  const handleNewDataStorageButtonClick = useCallback((): void => {
+    appLogger.debug("New Data Storage button clicked.");
     setIsUserDataStorageConfigFormDialogOpen(true);
   }, []);
 
   useEffect(() => {
-    signedInDashboardLayoutRootContext.setAppBarTitle("Stash");
-    signedInDashboardLayoutRootContext.setForbiddenLocationName("Stash");
+    signedInDashboardLayoutRootContext.setAppBarTitle("Data Storages");
+    signedInDashboardLayoutRootContext.setForbiddenLocationName("Data Storages");
   }, [signedInDashboardLayoutRootContext]);
 
   return (
@@ -41,9 +40,9 @@ const StashPage: FC = () => {
           background: "lime"
         }}
       >
-        <Typography variant="h5">Stash</Typography>
-        <Button variant="contained" size="large" onClick={handleNewStashButtonClick}>
-          New Stash
+        <Typography variant="h5">Data Storages</Typography>
+        <Button variant="contained" size="large" onClick={handleNewDataStorageButtonClick}>
+          New Data Storage
         </Button>
       </Box>
       <UserDataStorageConfigFormDialog open={isUserDataStorageConfigFormDialogOpen} onClose={handleUserDataStorageConfigFormDialoggClose} />
@@ -51,4 +50,4 @@ const StashPage: FC = () => {
   );
 };
 
-export default StashPage;
+export default UserDataStoragesPage;

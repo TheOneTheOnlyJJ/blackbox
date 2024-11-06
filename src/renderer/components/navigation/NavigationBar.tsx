@@ -37,9 +37,9 @@ const NavigationBar = forwardRef<HTMLDivElement, INavigationBarProps>(function N
         divider: false
       },
       {
-        name: "Stash",
+        name: "Data Storages",
         icon: Inventory2OutlinedIcon,
-        path: `/users/${signedInRootContext.currentlySignedInUser.username}/stash`,
+        path: `/users/${signedInRootContext.currentlySignedInUser.username}/userDataStorages`,
         divider: false
       }
     ];
