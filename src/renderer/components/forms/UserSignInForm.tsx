@@ -10,7 +10,7 @@ import Button from "@mui/material/Button/Button";
 import { IAppRootContext, useAppRootContext } from "@renderer/components/roots/appRoot/AppRootContext";
 import { IEncryptedUserSignInCredentials } from "@shared/user/encrypted/EncryptedUserSignInCredentials";
 import { appLogger } from "@renderer/utils/loggers";
-import { IPCAPIResponseStatus } from "@shared/IPC/IPCAPIResponseStatus";
+import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import Alert from "@mui/material/Alert/Alert";
 import AlertTitle from "@mui/material/AlertTitle/AlertTitle";
 import { enqueueSnackbar } from "notistack";
@@ -42,7 +42,7 @@ const UserSignInForm: FC = () => {
           (encryptedUserSignInCredentials: IEncryptedUserSignInCredentials): void => {
             appLogger.debug("Done encrypting user sign in credentials.");
             const SIGN_IN_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.signIn(encryptedUserSignInCredentials);
-            if (SIGN_IN_RESPONSE.status === IPCAPIResponseStatus.SUCCESS) {
+            if (SIGN_IN_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
               if (SIGN_IN_RESPONSE.data) {
                 setWasSignInSuccessful(true);
                 enqueueSnackbar({ message: "Signed in." });

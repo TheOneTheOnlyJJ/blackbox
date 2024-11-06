@@ -14,7 +14,7 @@ import Button from "@mui/material/Button/Button";
 import { IUserSignInCredentials } from "@shared/user/UserSignInCredentials";
 import { IEncryptedUserSignInCredentials } from "@shared/user/encrypted/EncryptedUserSignInCredentials";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
-import { IPCAPIResponseStatus } from "@shared/IPC/IPCAPIResponseStatus";
+import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { enqueueSnackbar } from "notistack";
 import { errorCapitalizerTransformer } from "@renderer/utils/RJSF/errorTransformers/errorCapitalizerTransformer";
 import { NEW_USER_INPUT_DATA_UI_SCHEMA } from "@renderer/user/account/uiSchemas/NewUserInputDataUiSchema";
@@ -32,7 +32,7 @@ const userSignUpFormCustomValidate: CustomValidator<INewUserInputData> = (
     return errors;
   }
   const IS_USERNAME_AVAILABLE_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.isUsernameAvailable(formData.username);
-  if (IS_USERNAME_AVAILABLE_RESPONSE.status !== IPCAPIResponseStatus.SUCCESS) {
+  if (IS_USERNAME_AVAILABLE_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
     errors.username.addError("Could not get username availability.");
   } else {
     if (!IS_USERNAME_AVAILABLE_RESPONSE.data) {
@@ -77,7 +77,7 @@ const UserSignUpForm: FC = () => {
           (encryptedBaseNewUserData: IEncryptedBaseNewUserData): void => {
             appLogger.debug("Done encrypting base new user data.");
             const SIGN_UP_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.signUp(encryptedBaseNewUserData);
-            if (SIGN_UP_RESPONSE.status !== IPCAPIResponseStatus.SUCCESS) {
+            if (SIGN_UP_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
               enqueueSnackbar({ message: "Sign up error.", variant: "error" });
               return;
             }
@@ -120,7 +120,7 @@ const UserSignUpForm: FC = () => {
                   appLogger.debug("Opening successful user sign up dialog.");
                   let userCount: number | null = null;
                   const GET_USER_COUNT_RESPONSE: IPCAPIResponse<number> = window.userAPI.getUserCount();
-                  if (GET_USER_COUNT_RESPONSE.status === IPCAPIResponseStatus.SUCCESS) {
+                  if (GET_USER_COUNT_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
                     userCount = GET_USER_COUNT_RESPONSE.data;
                   }
                   setSuccessfulUserSignUpDialogProps({
