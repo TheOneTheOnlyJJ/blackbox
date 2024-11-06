@@ -1,5 +1,5 @@
 import { FC, useCallback, useState } from "react";
-import { IUserSignInCredentials, USER_SIGN_IN_CREDENTIALS_JSON_SCHEMA } from "@shared/user/IUserSignInCredentials";
+import { IUserSignInCredentials, USER_SIGN_IN_CREDENTIALS_JSON_SCHEMA } from "@shared/user/UserSignInCredentials";
 import { encrypt } from "@renderer/utils/encryption/encrypt";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IChangeEvent, withTheme } from "@rjsf/core";
@@ -7,8 +7,8 @@ import { Theme } from "@rjsf/mui";
 import { RJSFSchema } from "@rjsf/utils";
 import { customizeValidator } from "@rjsf/validator-ajv8";
 import Button from "@mui/material/Button/Button";
-import { AppRootContext, useAppRootContext } from "@renderer/components/roots/appRoot/AppRootContext";
-import { IEncryptedUserSignInCredentials } from "@shared/user/encrypted/IEncryptedUserSignInCredentials";
+import { IAppRootContext, useAppRootContext } from "@renderer/components/roots/appRoot/AppRootContext";
+import { IEncryptedUserSignInCredentials } from "@shared/user/encrypted/EncryptedUserSignInCredentials";
 import { appLogger } from "@renderer/utils/loggers";
 import { IPCAPIResponseStatus } from "@shared/IPC/IPCAPIResponseStatus";
 import Alert from "@mui/material/Alert/Alert";
@@ -22,7 +22,7 @@ const MUIForm = withTheme<IUserSignInCredentials>(Theme);
 const USER_SIGN_IN_FORM_VALIDATOR = customizeValidator<IUserSignInCredentials>();
 
 const UserSignInForm: FC = () => {
-  const appRootContext: AppRootContext = useAppRootContext();
+  const appRootContext: IAppRootContext = useAppRootContext();
   const [wasSignInSuccessful, setWasSignInSuccessful] = useState<boolean>(true);
   const handleSubmit = useCallback(
     (data: IChangeEvent<IUserSignInCredentials>): void => {
@@ -65,7 +65,7 @@ const UserSignInForm: FC = () => {
           enqueueSnackbar({ message: "Credentials encryption error.", variant: "error" });
         });
     },
-    [appRootContext.rendererProcessAESKey, setWasSignInSuccessful]
+    [appRootContext.rendererProcessAESKey]
   );
 
   return (

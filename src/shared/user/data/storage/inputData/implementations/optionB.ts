@@ -1,13 +1,13 @@
 import { JSONSchemaType } from "ajv";
 import { USER_DATA_STORAGE_TYPES, UserDataStorageTypes } from "../../UserDataStorageType";
-import { BaseUserDataStorageConfigInputData } from "../BaseUserDataStorageConfigInputData";
+import { IBaseUserDataStorageConfigInputData } from "../BaseUserDataStorageConfigInputData";
 
-export interface OptionBUserDataStorageConfigInputData extends BaseUserDataStorageConfigInputData {
+export interface IOptionBUserDataStorageConfigInputData extends IBaseUserDataStorageConfigInputData {
   type: UserDataStorageTypes["OptionB"];
   optionB: string;
 }
 
-export const OPTION_B_USER_DATA_STORAGE_CONFIG_INPUT_DATA_SCHEMA: JSONSchemaType<OptionBUserDataStorageConfigInputData> = {
+export const OPTION_B_USER_DATA_STORAGE_CONFIG_INPUT_DATA_SCHEMA: JSONSchemaType<IOptionBUserDataStorageConfigInputData> = {
   type: "object",
   properties: {
     type: {

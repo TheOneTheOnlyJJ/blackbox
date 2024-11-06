@@ -9,13 +9,13 @@ import Typography from "@mui/material/Typography/Typography";
 import Alert from "@mui/material/Alert/Alert";
 import AlertTitle from "@mui/material/AlertTitle/AlertTitle";
 
-export interface ForbiddenPageParams extends Record<string, string> {
+export interface IForbiddenPageParams extends Record<string, string> {
   reason: string;
 }
 
 const ForbiddenPage: FC = () => {
   const navigate: NavigateFunction = useNavigate();
-  const params: Readonly<Partial<ForbiddenPageParams>> = useParams<ForbiddenPageParams>();
+  const params: Readonly<Partial<IForbiddenPageParams>> = useParams<IForbiddenPageParams>();
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const handleBackButtonClick = useCallback((): void => {
     appLogger.debug("Back button clicked.");

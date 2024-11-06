@@ -1,18 +1,18 @@
 import { FC, useCallback, useState } from "react";
-import { AppRootContext, useAppRootContext } from "@renderer/components/roots/appRoot/AppRootContext";
-import { IBaseNewUserData } from "@shared/user/IBaseNewUserData";
-import { INewUserInputData, NEW_USER_INPUT_DATA_JSON_SCHEMA } from "@shared/user/INewUserInputData";
+import { IAppRootContext, useAppRootContext } from "@renderer/components/roots/appRoot/AppRootContext";
+import { IBaseNewUserData } from "@shared/user/BaseNewUserData";
+import { INewUserInputData, NEW_USER_INPUT_DATA_JSON_SCHEMA } from "@shared/user/NewUserInputData";
 import { Theme } from "@rjsf/mui";
 import { customizeValidator } from "@rjsf/validator-ajv8";
 import { withTheme, IChangeEvent } from "@rjsf/core";
 import { CustomValidator, FormValidation, RJSFSchema } from "@rjsf/utils";
 import { appLogger } from "@renderer/utils/loggers";
 import { encrypt } from "@renderer/utils/encryption/encrypt";
-import { IEncryptedBaseNewUserData } from "@shared/user/encrypted/IEncryptedBaseNewUserData";
-import SuccessfulUserRegistrationDialog, { SuccessfulUserSignUpDialogProps } from "@renderer/components/dialogs/SuccessfulUserSignUpDialog";
+import { IEncryptedBaseNewUserData } from "@shared/user/encrypted/EncryptedBaseNewUserData";
+import SuccessfulUserRegistrationDialog, { ISuccessfulUserSignUpDialogProps } from "@renderer/components/dialogs/SuccessfulUserSignUpDialog";
 import Button from "@mui/material/Button/Button";
-import { IUserSignInCredentials } from "@shared/user/IUserSignInCredentials";
-import { IEncryptedUserSignInCredentials } from "@shared/user/encrypted/IEncryptedUserSignInCredentials";
+import { IUserSignInCredentials } from "@shared/user/UserSignInCredentials";
+import { IEncryptedUserSignInCredentials } from "@shared/user/encrypted/EncryptedUserSignInCredentials";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPCAPIResponseStatus } from "@shared/IPC/IPCAPIResponseStatus";
 import { enqueueSnackbar } from "notistack";
@@ -46,8 +46,8 @@ const userSignUpFormCustomValidate: CustomValidator<INewUserInputData> = (
 };
 
 const UserSignUpForm: FC = () => {
-  const appRootContext: AppRootContext = useAppRootContext();
-  const [successfulUserSignUpDialogProps, setSuccessfulUserSignUpDialogProps] = useState<SuccessfulUserSignUpDialogProps>({
+  const appRootContext: IAppRootContext = useAppRootContext();
+  const [successfulUserSignUpDialogProps, setSuccessfulUserSignUpDialogProps] = useState<ISuccessfulUserSignUpDialogProps>({
     open: false,
     username: "",
     userCount: null,
@@ -148,7 +148,7 @@ const UserSignUpForm: FC = () => {
           enqueueSnackbar({ message: "Account data encryption error.", variant: "error" });
         });
     },
-    [appRootContext.rendererProcessAESKey, setSuccessfulUserSignUpDialogProps]
+    [appRootContext.rendererProcessAESKey]
   );
 
   return (

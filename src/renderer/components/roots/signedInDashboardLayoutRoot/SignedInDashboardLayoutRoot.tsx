@@ -1,16 +1,16 @@
 import Box from "@mui/material/Box/Box";
 import { FC, MutableRefObject, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { SignedInRootContext, useSignedInRootContext } from "@renderer/components/roots/signedInRoot/SignedInRootContext";
+import { ISignedInRootContext, useSignedInRootContext } from "@renderer/components/roots/signedInRoot/SignedInRootContext";
 import SignedInAppBar from "@renderer/components/appBars/SignedInAppBar";
 import NavigationBar from "@renderer/components//navigation/NavigationBar";
 import { Outlet } from "react-router-dom";
 import { appLogger } from "@renderer/utils/loggers";
-import { SignedInDashboardLayoutRootContext } from "./SignedInDashboardLayoutRootContext";
+import { ISignedInDashboardLayoutRootContext } from "./SignedInDashboardLayoutRootContext";
 
 const DEFAULT_DRAWER_WIDTH = 240;
 
 const SignedInDashboardLayoutRoot: FC = () => {
-  const signedInRootContext: SignedInRootContext = useSignedInRootContext();
+  const signedInRootContext: ISignedInRootContext = useSignedInRootContext();
   const appBarRef: MutableRefObject<HTMLDivElement | null> = useRef(null);
   const drawerRef: MutableRefObject<HTMLDivElement | null> = useRef(null);
   const [appBarHeight, setAppBarHeight] = useState<number>(0);
@@ -73,7 +73,7 @@ const SignedInDashboardLayoutRoot: FC = () => {
           overflow: "auto"
         }}
       >
-        <Outlet context={{ ...signedInRootContext, appBarTitle, setAppBarTitle } satisfies SignedInDashboardLayoutRootContext} />
+        <Outlet context={{ ...signedInRootContext, appBarTitle, setAppBarTitle } satisfies ISignedInDashboardLayoutRootContext} />
       </Box>
     </>
   );

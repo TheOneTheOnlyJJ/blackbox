@@ -1,5 +1,5 @@
 import { JSONSchemaType } from "ajv";
-import { IBaseNewUserData } from "./IBaseNewUserData";
+import { IBaseNewUserData } from "./BaseNewUserData";
 import { NEW_USER_PASSWORD_CONSTRAINTS, NEW_USER_USERNAME_CONSTRAINTS } from "./NewUserConstraints";
 
 export interface INewUserInputData extends IBaseNewUserData {

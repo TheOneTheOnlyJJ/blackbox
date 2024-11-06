@@ -1,6 +1,6 @@
-import { ICurrentlySignedInUser } from "@shared/user/ICurrentlySignedInUser";
-import { IEncryptedBaseNewUserData } from "@shared/user/encrypted/IEncryptedBaseNewUserData";
-import { IEncryptedUserSignInCredentials } from "@shared/user/encrypted/IEncryptedUserSignInCredentials";
+import { ICurrentlySignedInUser } from "@shared/user/CurrentlySignedInUser";
+import { IEncryptedBaseNewUserData } from "@shared/user/encrypted/EncryptedBaseNewUserData";
+import { IEncryptedUserSignInCredentials } from "@shared/user/encrypted/EncryptedUserSignInCredentials";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 
 // Utility types

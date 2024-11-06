@@ -3,11 +3,11 @@ import Ajv, { JSONSchemaType, ValidateFunction } from "ajv";
 import { UserDataStorageType } from "@shared/user/data/storage/UserDataStorageType";
 
 // Every user data storage must have at least the type in its config (should be further narrowed down to its own in the specific config)
-export interface BaseUserDataStorageConfig {
+export interface IBaseUserDataStorageConfig {
   type: UserDataStorageType;
 }
 
-export abstract class UserDataStorage<T extends BaseUserDataStorageConfig> {
+export abstract class UserDataStorage<T extends IBaseUserDataStorageConfig> {
   protected readonly logger: LogFunctions;
   public readonly config: T;
   private readonly CONFIG_VALIDATE_FUNCTION: ValidateFunction<T>;

@@ -1,11 +1,11 @@
 import { FC, useEffect, useState } from "react";
 import { Navigate, Outlet } from "react-router-dom";
-import { AppRootContext, useAppRootContext } from "@renderer/components/roots/appRoot/AppRootContext";
-import { SignedInRootContext } from "./SignedInRootContext";
+import { IAppRootContext, useAppRootContext } from "@renderer/components/roots/appRoot/AppRootContext";
+import { ISignedInRootContext } from "./SignedInRootContext";
 import { appLogger } from "@renderer/utils/loggers";
 
 const SignedInRoot: FC = () => {
-  const appRootContext: AppRootContext = useAppRootContext();
+  const appRootContext: IAppRootContext = useAppRootContext();
   const [forbiddenLocationName, setForbiddenLocationName] = useState<string>("this-page");
 
   useEffect(() => {
@@ -29,7 +29,7 @@ const SignedInRoot: FC = () => {
           ...appRootContext,
           currentlySignedInUser: appRootContext.currentlySignedInUser,
           setForbiddenLocationName: setForbiddenLocationName
-        } satisfies SignedInRootContext
+        } satisfies ISignedInRootContext
       }
     />
   ) : (

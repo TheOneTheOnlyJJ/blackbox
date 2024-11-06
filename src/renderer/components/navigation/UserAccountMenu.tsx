@@ -6,7 +6,7 @@ import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import DebouncedLink from "./DebouncedLink";
-import { SignedInRootContext, useSignedInRootContext } from "../roots/signedInRoot/SignedInRootContext";
+import { ISignedInRootContext, useSignedInRootContext } from "../roots/signedInRoot/SignedInRootContext";
 import { SvgIconComponent } from "@mui/icons-material";
 import { useLocation, Location } from "react-router-dom";
 
@@ -20,7 +20,7 @@ interface IUserAccountMenuItem {
 type UserAccountMenuProps = Pick<MenuProps, "anchorEl" | "open" | "onClose" | "onClick">;
 
 const UserAccountMenu: FC<UserAccountMenuProps> = (props: UserAccountMenuProps) => {
-  const signedInRootContext: SignedInRootContext = useSignedInRootContext();
+  const signedInRootContext: ISignedInRootContext = useSignedInRootContext();
   const location: Location = useLocation();
   const USER_ACCOUNT_MENU_ITEMS: IUserAccountMenuItem[] = useMemo<IUserAccountMenuItem[]>((): IUserAccountMenuItem[] => {
     return [

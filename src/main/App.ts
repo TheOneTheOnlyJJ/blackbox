@@ -9,20 +9,20 @@ import { UserManager } from "@main/user/UserManager";
 import { USER_ACCOUNT_STORAGE_TYPE } from "@main/user/account/storage/UserAccountStorageType";
 import { adjustWindowBounds } from "@main/utils/window/adjustWindowBounds";
 import { IpcMainEvent } from "electron";
-import { IUserAPI } from "@shared/IPC/APIs/IUserAPI";
+import { IUserAPI } from "@shared/IPC/APIs/UserAPI";
 import { MainProcessIPCAPIHandlers } from "@main/utils/IPC/MainProcessIPCAPIHandlers";
-import { IBaseNewUserData } from "@shared/user/IBaseNewUserData";
+import { IBaseNewUserData } from "@shared/user/BaseNewUserData";
 import { generateKeyPairSync, webcrypto } from "node:crypto";
-import { IIPCTLSAPI } from "@shared/IPC/APIs/IIPCTLSAPI";
-import { ISecuredNewUserData } from "@main/user/account/ISecuredNewUserData";
+import { IIPCTLSAPI } from "@shared/IPC/APIs/IPCTLSAPI";
+import { ISecuredNewUserData } from "@main/user/account/SecuredNewUserData";
 import { testAESKey } from "@main/utils/encryption/testAESKey";
 import { insertLineBreaks } from "@shared/utils/insertNewLines";
 import { bufferToArrayBuffer } from "@main/utils/typeConversions/bufferToArrayBuffer";
 import { decryptJSON } from "@main/utils/encryption/decryptJSON";
-import { IEncryptedBaseNewUserData } from "@shared/user/encrypted/IEncryptedBaseNewUserData";
-import { ICurrentlySignedInUser } from "@shared/user/ICurrentlySignedInUser";
-import { IUserSignInCredentials } from "@shared/user/IUserSignInCredentials";
-import { IEncryptedUserSignInCredentials } from "@shared/user/encrypted/IEncryptedUserSignInCredentials";
+import { IEncryptedBaseNewUserData } from "@shared/user/encrypted/EncryptedBaseNewUserData";
+import { ICurrentlySignedInUser } from "@shared/user/CurrentlySignedInUser";
+import { IUserSignInCredentials } from "@shared/user/UserSignInCredentials";
+import { IEncryptedUserSignInCredentials } from "@shared/user/encrypted/EncryptedUserSignInCredentials";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPCAPIResponseStatus } from "@shared/IPC/IPCAPIResponseStatus";
 import { SettingsManager } from "@main/settings/SettingsManager";
@@ -34,12 +34,12 @@ import { UserAccountStorageConfig } from "@main/user/account/storage/UserAccount
 
 type WindowPositionSetting = Rectangle | WindowState.FullScreen | WindowState.Maximized;
 
-interface WindowSettings {
+interface IWindowSettings {
   position: WindowPositionSetting;
 }
 
-export interface AppSettings {
-  window: WindowSettings;
+export interface IAppSettings {
+  window: IWindowSettings;
 }
 
 export class App {
@@ -67,7 +67,7 @@ export class App {
   private readonly userAccountStorageLogger: LogFunctions = log.scope("main-user-account-storage");
 
   // Settings
-  public static readonly SETTINGS_SCHEMA: JSONSchemaType<AppSettings> = {
+  public static readonly SETTINGS_SCHEMA: JSONSchemaType<IAppSettings> = {
     $schema: "http://json-schema.org/draft-07/schema#",
     type: "object",
     properties: {
@@ -101,7 +101,7 @@ export class App {
     required: ["window"],
     additionalProperties: false
   };
-  private readonly DEFAULT_SETTINGS: AppSettings = {
+  private readonly DEFAULT_SETTINGS: IAppSettings = {
     window: {
       position: {
         x: 510,
@@ -111,7 +111,7 @@ export class App {
       }
     }
   };
-  private readonly settingsManager: SettingsManager<AppSettings, SettingsManagerConfig>;
+  private readonly settingsManager: SettingsManager<IAppSettings, SettingsManagerConfig>;
   private readonly SETTINGS_MANAGER_CONFIG: SettingsManagerConfig = {
     type: SETTINGS_MANAGER_TYPE.LocalJSON,
     fileDir: resolve(join(app.getAppPath(), "settings")),
@@ -342,7 +342,7 @@ export class App {
     this.userManager = new UserManager(this.userManagerLogger, this.userAccountStorageLogger, this.AJV);
     this.userManager.onCurrentlySignedInUserChangeCallback = this.USER_API_HANDLERS.sendCurrentlySignedInUserChange;
     this.userManager.onUserAccountStorageAvailabilityChangeCallback = this.USER_API_HANDLERS.sendAccountStorageAvailabilityChange;
-    this.settingsManager = settingsManagerFactory<AppSettings>(
+    this.settingsManager = settingsManagerFactory<IAppSettings>(
       this.SETTINGS_MANAGER_CONFIG,
       App.SETTINGS_SCHEMA,
       this.settingsManagerLogger,
@@ -399,7 +399,7 @@ export class App {
     this.windowLogger.info("Creating window.");
     // Read window settings
     // This should allow external settings edits on macOS to take effect when activating app
-    let lastWindowSettings: WindowSettings;
+    let lastWindowSettings: IWindowSettings;
     try {
       lastWindowSettings = this.settingsManager.fetchSettings().window;
     } catch {
@@ -515,7 +515,7 @@ export class App {
       this.settingsManagerLogger.debug("Window minimized. No update to settings.");
     } else {
       // Update settings
-      let currentSettings: AppSettings | null = this.settingsManager.getSettings();
+      let currentSettings: IAppSettings | null = this.settingsManager.getSettings();
       if (currentSettings === null) {
         currentSettings = this.DEFAULT_SETTINGS;
       }

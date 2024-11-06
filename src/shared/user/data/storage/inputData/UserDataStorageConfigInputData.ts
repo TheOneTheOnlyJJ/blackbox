@@ -1,17 +1,17 @@
 import { JSONSchemaType } from "ajv";
 import {
   LOCAL_SQLITE_USER_DATA_STORAGE_CONFIG_INPUT_DATA_SCHEMA,
-  LocalSQLiteUserDataStorageConfigInputData
+  ILocalSQLiteUserDataStorageConfigInputData
 } from "./implementations/LocalSQLiteUserDataStorageConfigInputData";
 import { USER_DATA_STORAGE_TYPES, UserDataStorageType } from "../UserDataStorageType";
-import { OPTION_B_USER_DATA_STORAGE_CONFIG_INPUT_DATA_SCHEMA, OptionBUserDataStorageConfigInputData } from "./implementations/optionB";
-import { OPTION_C_USER_DATA_STORAGE_CONFIG_INPUT_DATA_SCHEMA, OptionCUserDataStorageConfigInputData } from "./implementations/optionC";
+import { OPTION_B_USER_DATA_STORAGE_CONFIG_INPUT_DATA_SCHEMA, IOptionBUserDataStorageConfigInputData } from "./implementations/optionB";
+import { OPTION_C_USER_DATA_STORAGE_CONFIG_INPUT_DATA_SCHEMA, IOptionCUserDataStorageConfigInputData } from "./implementations/optionC";
 
 // Map of every user data storage type to its corresponding config input data type
 export interface IUserDataStorageConfigInputDataMap {
-  [USER_DATA_STORAGE_TYPES.LocalSQLite]: LocalSQLiteUserDataStorageConfigInputData;
-  [USER_DATA_STORAGE_TYPES.OptionB]: OptionBUserDataStorageConfigInputData;
-  [USER_DATA_STORAGE_TYPES.OptionC]: OptionCUserDataStorageConfigInputData;
+  [USER_DATA_STORAGE_TYPES.LocalSQLite]: ILocalSQLiteUserDataStorageConfigInputData;
+  [USER_DATA_STORAGE_TYPES.OptionB]: IOptionBUserDataStorageConfigInputData;
+  [USER_DATA_STORAGE_TYPES.OptionC]: IOptionCUserDataStorageConfigInputData;
 }
 // Union of all user data storage concrete implementation config input data interfaces
 export type UserDataStorageConfigInputData = IUserDataStorageConfigInputDataMap[keyof IUserDataStorageConfigInputDataMap];

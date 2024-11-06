@@ -1,16 +1,16 @@
-import { BaseUserAccountStorageConfig, UserAccountStorage } from "../UserAccountStorage";
+import { IBaseUserAccountStorageConfig, UserAccountStorage } from "../UserAccountStorage";
 import DatabaseConstructor, { Database, RunResult } from "better-sqlite3";
 import { LogFunctions } from "electron-log";
 import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import Ajv, { JSONSchemaType } from "ajv";
 import { USER_ACCOUNT_STORAGE_TYPE, UserAccountStorageTypes } from "../UserAccountStorageType";
-import { ISecuredNewUserData } from "@main/user/account/ISecuredNewUserData";
+import { ISecuredNewUserData } from "@main/user/account/SecuredNewUserData";
 import { UUID } from "crypto";
 import { UserDataStorageConfig } from "@main/user/data/storage/UserDataStorageConfig";
-import { IUserDataStorageConfigWithMetadata } from "@main/user/data/storage/IUserDataStorageConfigWithMetadata";
+import { IUserDataStorageConfigWithMetadata } from "@main/user/data/storage/UserDataStorageConfigWithMetadata";
 
-export interface LocalSQLiteUserAccountStorageConfig extends BaseUserAccountStorageConfig {
+export interface ILocalSQLiteUserAccountStorageConfig extends IBaseUserAccountStorageConfig {
   type: UserAccountStorageTypes["LocalSQLite"];
   dbDirPath: string;
   dbFileName: string;
@@ -23,8 +23,8 @@ interface SQLiteVersion {
   version: string;
 }
 
-export class LocalSQLiteUserAccountStorage extends UserAccountStorage<LocalSQLiteUserAccountStorageConfig> {
-  public static readonly CONFIG_SCHEMA: JSONSchemaType<LocalSQLiteUserAccountStorageConfig> = {
+export class LocalSQLiteUserAccountStorage extends UserAccountStorage<ILocalSQLiteUserAccountStorageConfig> {
+  public static readonly CONFIG_SCHEMA: JSONSchemaType<ILocalSQLiteUserAccountStorageConfig> = {
     $schema: "http://json-schema.org/draft-07/schema#",
     type: "object",
     properties: {
@@ -47,7 +47,7 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<LocalSQLit
 
   private readonly db: Database;
 
-  public constructor(config: LocalSQLiteUserAccountStorageConfig, logger: LogFunctions, ajv: Ajv) {
+  public constructor(config: ILocalSQLiteUserAccountStorageConfig, logger: LogFunctions, ajv: Ajv) {
     super(config, LocalSQLiteUserAccountStorage.CONFIG_SCHEMA, logger, ajv);
     // Create db and directories
     if (existsSync(this.config.dbDirPath)) {

@@ -1,10 +1,10 @@
 import { FC, useCallback, useEffect, useState } from "react";
 import { appLogger, IPCLogger } from "@renderer/utils/loggers";
 import { Outlet, useLocation, Location, useNavigate, NavigateFunction } from "react-router-dom";
-import { AppRootContext } from "./AppRootContext";
+import { IAppRootContext } from "./AppRootContext";
 import { arrayBufferToBase64 } from "@renderer/utils/typeConversions/arrayBufferToBase64";
 import { insertLineBreaks } from "@shared/utils/insertNewLines";
-import { ICurrentlySignedInUser } from "@shared/user/ICurrentlySignedInUser";
+import { ICurrentlySignedInUser } from "@shared/user/CurrentlySignedInUser";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPCAPIResponseStatus } from "@shared/IPC/IPCAPIResponseStatus";
 import { enqueueSnackbar, SnackbarProvider } from "notistack";
@@ -163,7 +163,7 @@ const AppRoot: FC = () => {
             rendererProcessAESKey: rendererProcessAESKey,
             currentlySignedInUser: currentlySignedInUser,
             isUserAccountStorageAvailable: isUserAccountStorageAvailable
-          } satisfies AppRootContext
+          } satisfies IAppRootContext
         }
       />
     </Box>

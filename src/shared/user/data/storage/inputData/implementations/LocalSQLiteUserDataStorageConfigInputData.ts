@@ -1,14 +1,14 @@
 import { JSONSchemaType } from "ajv";
 import { USER_DATA_STORAGE_TYPES, UserDataStorageTypes } from "../../UserDataStorageType";
-import { BaseUserDataStorageConfigInputData } from "../BaseUserDataStorageConfigInputData";
+import { IBaseUserDataStorageConfigInputData } from "../BaseUserDataStorageConfigInputData";
 
-export interface LocalSQLiteUserDataStorageConfigInputData extends BaseUserDataStorageConfigInputData {
+export interface ILocalSQLiteUserDataStorageConfigInputData extends IBaseUserDataStorageConfigInputData {
   type: UserDataStorageTypes["LocalSQLite"];
   dbDirPath: string;
   dbFileName: string;
 }
 
-export const LOCAL_SQLITE_USER_DATA_STORAGE_CONFIG_INPUT_DATA_SCHEMA: JSONSchemaType<LocalSQLiteUserDataStorageConfigInputData> = {
+export const LOCAL_SQLITE_USER_DATA_STORAGE_CONFIG_INPUT_DATA_SCHEMA: JSONSchemaType<ILocalSQLiteUserDataStorageConfigInputData> = {
   $schema: "http://json-schema.org/draft-07/schema#",
   type: "object",
   properties: {

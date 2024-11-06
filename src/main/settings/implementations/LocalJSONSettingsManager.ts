@@ -1,11 +1,11 @@
 import { LogFunctions } from "electron-log";
-import { BaseSettingsManagerConfig, SettingsManager } from "../SettingsManager";
+import { IBaseSettingsManagerConfig, SettingsManager } from "../SettingsManager";
 import { SETTINGS_MANAGER_TYPE, SettingsManagerTypes } from "../SettingsManagerType";
 import Ajv, { JSONSchemaType } from "ajv";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
-export interface LocalJSONSettingsManagerConfig extends BaseSettingsManagerConfig {
+export interface ILocalJSONSettingsManagerConfig extends IBaseSettingsManagerConfig {
   type: SettingsManagerTypes["LocalJSON"];
   fileDir: string;
   fileName: string;
@@ -13,9 +13,9 @@ export interface LocalJSONSettingsManagerConfig extends BaseSettingsManagerConfi
 
 export class LocalJSONSettingsManager<SettingsType extends Record<string, unknown>> extends SettingsManager<
   SettingsType,
-  LocalJSONSettingsManagerConfig
+  ILocalJSONSettingsManagerConfig
 > {
-  public static readonly CONFIG_SCHEMA: JSONSchemaType<LocalJSONSettingsManagerConfig> = {
+  public static readonly CONFIG_SCHEMA: JSONSchemaType<ILocalJSONSettingsManagerConfig> = {
     $schema: "http://json-schema.org/draft-07/schema#",
     type: "object",
     properties: {
@@ -37,7 +37,7 @@ export class LocalJSONSettingsManager<SettingsType extends Record<string, unknow
   };
   private readonly SETTINGS_FILE_PATH: string;
 
-  public constructor(config: LocalJSONSettingsManagerConfig, settingsSchema: JSONSchemaType<SettingsType>, logger: LogFunctions, ajv: Ajv) {
+  public constructor(config: ILocalJSONSettingsManagerConfig, settingsSchema: JSONSchemaType<SettingsType>, logger: LogFunctions, ajv: Ajv) {
     super(config, LocalJSONSettingsManager.CONFIG_SCHEMA, settingsSchema, logger, ajv);
     this.SETTINGS_FILE_PATH = resolve(join(this.config.fileDir, this.config.fileName));
   }

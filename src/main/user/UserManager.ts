@@ -2,16 +2,16 @@ import { LogFunctions } from "electron-log";
 import { UserAccountStorage } from "./account/storage/UserAccountStorage";
 import { userAccountStorageFactory } from "./account/storage/userAccountStorageFactory";
 import { UserAccountStorageType } from "./account/storage/UserAccountStorageType";
-import { BASE_NEW_USER_DATA_JSON_SCHEMA, IBaseNewUserData } from "@shared/user/IBaseNewUserData";
+import { BASE_NEW_USER_DATA_JSON_SCHEMA, IBaseNewUserData } from "@shared/user/BaseNewUserData";
 import { randomBytes, randomUUID, scryptSync, timingSafeEqual, UUID } from "node:crypto";
-import { ISecuredNewUserData } from "./account/ISecuredNewUserData";
-import { CURRENTLY_SIGNED_IN_USER_SCHEMA, ICurrentlySignedInUser } from "@shared/user/ICurrentlySignedInUser";
-import { IUserSignInCredentials, USER_SIGN_IN_CREDENTIALS_JSON_SCHEMA } from "@shared/user/IUserSignInCredentials";
-import { CurrentlySignedInUserChangeCallback, UserAccountStorageAvailabilityChangeCallback } from "@shared/IPC/APIs/IUserAPI";
+import { ISecuredNewUserData } from "./account/SecuredNewUserData";
+import { CURRENTLY_SIGNED_IN_USER_SCHEMA, ICurrentlySignedInUser } from "@shared/user/CurrentlySignedInUser";
+import { IUserSignInCredentials, USER_SIGN_IN_CREDENTIALS_JSON_SCHEMA } from "@shared/user/UserSignInCredentials";
+import { CurrentlySignedInUserChangeCallback, UserAccountStorageAvailabilityChangeCallback } from "@shared/IPC/APIs/UserAPI";
 import { isDeepStrictEqual } from "node:util";
 import Ajv, { ValidateFunction } from "ajv";
 import { UserAccountStorageConfig } from "./account/storage/UserAccountStorageConfig";
-import { IUserDataStorageConfigWithMetadata } from "./data/storage/IUserDataStorageConfigWithMetadata";
+import { IUserDataStorageConfigWithMetadata } from "./data/storage/UserDataStorageConfigWithMetadata";
 
 export class UserManager {
   private readonly logger: LogFunctions;

@@ -2,11 +2,11 @@ import { LogFunctions } from "electron-log";
 import { SettingsManagerType } from "./SettingsManagerType";
 import Ajv, { JSONSchemaType, ValidateFunction } from "ajv";
 
-export interface BaseSettingsManagerConfig {
+export interface IBaseSettingsManagerConfig {
   type: SettingsManagerType;
 }
 
-export abstract class SettingsManager<SettingsType extends NonNullable<unknown>, ConfigType extends BaseSettingsManagerConfig> {
+export abstract class SettingsManager<SettingsType extends NonNullable<unknown>, ConfigType extends IBaseSettingsManagerConfig> {
   // Logging
   protected readonly logger: LogFunctions;
   // Own config

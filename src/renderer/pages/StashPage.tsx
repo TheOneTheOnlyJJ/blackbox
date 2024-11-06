@@ -2,7 +2,7 @@ import Box from "@mui/material/Box/Box";
 import Typography from "@mui/material/Typography/Typography";
 import { FC, useCallback, useEffect, useState } from "react";
 import {
-  SignedInDashboardLayoutRootContext,
+  ISignedInDashboardLayoutRootContext,
   useSignedInDashboardLayoutRootContext
 } from "@renderer/components/roots/signedInDashboardLayoutRoot/SignedInDashboardLayoutRootContext";
 import Button from "@mui/material/Button/Button";
@@ -11,7 +11,7 @@ import UserDataStorageConfigFormDialog from "@renderer/components/dialogs/UserDa
 
 // TODO: Rename this and everything related to "Stash"
 const StashPage: FC = () => {
-  const signedInDashboardLayoutRootContext: SignedInDashboardLayoutRootContext = useSignedInDashboardLayoutRootContext();
+  const signedInDashboardLayoutRootContext: ISignedInDashboardLayoutRootContext = useSignedInDashboardLayoutRootContext();
   // User data storage config form dialog
   const [isUserDataStorageConfigFormDialogOpen, setIsUserDataStorageConfigFormDialogOpen] = useState<boolean>(false);
   const handleUserDataStorageConfigFormDialoggClose = useCallback((): void => {

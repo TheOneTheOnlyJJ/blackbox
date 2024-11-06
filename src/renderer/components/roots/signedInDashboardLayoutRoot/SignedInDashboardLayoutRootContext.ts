@@ -1,12 +1,12 @@
 import { useOutletContext } from "react-router-dom";
-import { SignedInRootContext } from "@renderer/components/roots/signedInRoot/SignedInRootContext";
+import { ISignedInRootContext } from "@renderer/components/roots/signedInRoot/SignedInRootContext";
 import { Dispatch, SetStateAction } from "react";
 
-export interface SignedInDashboardLayoutRootContext extends SignedInRootContext {
+export interface ISignedInDashboardLayoutRootContext extends ISignedInRootContext {
   appBarTitle: string;
   setAppBarTitle: Dispatch<SetStateAction<string>>;
 }
 
-export const useSignedInDashboardLayoutRootContext = (): SignedInDashboardLayoutRootContext => {
-  return useOutletContext<SignedInDashboardLayoutRootContext>();
+export const useSignedInDashboardLayoutRootContext = (): ISignedInDashboardLayoutRootContext => {
+  return useOutletContext<ISignedInDashboardLayoutRootContext>();
 };

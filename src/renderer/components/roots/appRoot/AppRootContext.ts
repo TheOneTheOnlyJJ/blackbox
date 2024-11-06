@@ -1,12 +1,12 @@
 import { useOutletContext } from "react-router-dom";
-import { ICurrentlySignedInUser } from "@shared/user/ICurrentlySignedInUser";
+import { ICurrentlySignedInUser } from "@shared/user/CurrentlySignedInUser";
 
-export interface AppRootContext {
+export interface IAppRootContext {
   rendererProcessAESKey: CryptoKey | null;
   currentlySignedInUser: ICurrentlySignedInUser | null;
   isUserAccountStorageAvailable: boolean;
 }
 
-export const useAppRootContext = (): AppRootContext => {
-  return useOutletContext<AppRootContext>();
+export const useAppRootContext = (): IAppRootContext => {
+  return useOutletContext<IAppRootContext>();
 };

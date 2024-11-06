@@ -12,7 +12,7 @@ import { NavigateFunction, useLocation, useNavigate, Location } from "react-rout
 import { appLogger } from "@renderer/utils/loggers";
 import ArrowBackOutlinedIcon from "@mui/icons-material/ArrowBackOutlined";
 import ArrowForwardOutlinedIcon from "@mui/icons-material/ArrowForwardOutlined";
-import { SignedInRootContext, useSignedInRootContext } from "@renderer/components/roots/signedInRoot/SignedInRootContext";
+import { ISignedInRootContext, useSignedInRootContext } from "@renderer/components/roots/signedInRoot/SignedInRootContext";
 import UserAccountMenu from "../navigation/UserAccountMenu";
 
 export interface ISignedInAppBarProps {
@@ -23,7 +23,7 @@ const SignedInAppBar = forwardRef<HTMLDivElement, ISignedInAppBarProps>(function
   props: ISignedInAppBarProps,
   ref: ForwardedRef<HTMLDivElement>
 ) {
-  const signedInRootContext: SignedInRootContext = useSignedInRootContext();
+  const signedInRootContext: ISignedInRootContext = useSignedInRootContext();
   const theme: Theme = useTheme();
   const navigate: NavigateFunction = useNavigate();
   const location: Location = useLocation();

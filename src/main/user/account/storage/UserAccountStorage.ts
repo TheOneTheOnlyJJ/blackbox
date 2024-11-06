@@ -1,17 +1,17 @@
 import { LogFunctions } from "electron-log";
 import Ajv, { JSONSchemaType, ValidateFunction } from "ajv";
 import { UserAccountStorageType } from "./UserAccountStorageType";
-import { ISecuredNewUserData } from "../ISecuredNewUserData";
+import { ISecuredNewUserData } from "../SecuredNewUserData";
 import { UUID } from "node:crypto";
 import { USER_DATA_STORAGE_CONFIG_SCHEMA, UserDataStorageConfig } from "../../data/storage/UserDataStorageConfig";
-import { IUserDataStorageConfigWithMetadata } from "../../data/storage/IUserDataStorageConfigWithMetadata";
+import { IUserDataStorageConfigWithMetadata } from "../../data/storage/UserDataStorageConfigWithMetadata";
 
 // Every user account storage must have at least the type in its config (should be further narrowed down to its own in the specific config)
-export interface BaseUserAccountStorageConfig {
+export interface IBaseUserAccountStorageConfig {
   type: UserAccountStorageType;
 }
 
-export abstract class UserAccountStorage<T extends BaseUserAccountStorageConfig> {
+export abstract class UserAccountStorage<T extends IBaseUserAccountStorageConfig> {
   protected readonly logger: LogFunctions;
   public readonly config: T;
   private readonly USER_ACCOUNT_STORAGE_CONFIG_VALIDATE_FUNCTION: ValidateFunction<T>;

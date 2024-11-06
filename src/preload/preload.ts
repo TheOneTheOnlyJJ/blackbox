@@ -1,10 +1,10 @@
 import { contextBridge, ipcRenderer, IpcRendererEvent } from "electron";
 import { IPCTLSAPIIPCChannel, UserAPIIPCChannel } from "@main/utils/IPC/IPCChannels";
-import { CurrentlySignedInUserChangeCallback, IUserAPI, UserAccountStorageAvailabilityChangeCallback } from "@shared/IPC/APIs/IUserAPI";
-import { IIPCTLSAPI } from "@shared/IPC/APIs/IIPCTLSAPI";
-import { ICurrentlySignedInUser } from "@shared/user/ICurrentlySignedInUser";
-import { IEncryptedUserSignInCredentials } from "@shared/user/encrypted/IEncryptedUserSignInCredentials";
-import { IEncryptedBaseNewUserData } from "@shared/user/encrypted/IEncryptedBaseNewUserData";
+import { CurrentlySignedInUserChangeCallback, IUserAPI, UserAccountStorageAvailabilityChangeCallback } from "@shared/IPC/APIs/UserAPI";
+import { IIPCTLSAPI } from "@shared/IPC/APIs/IPCTLSAPI";
+import { ICurrentlySignedInUser } from "@shared/user/CurrentlySignedInUser";
+import { IEncryptedUserSignInCredentials } from "@shared/user/encrypted/EncryptedUserSignInCredentials";
+import { IEncryptedBaseNewUserData } from "@shared/user/encrypted/EncryptedBaseNewUserData";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 
 const IPC_TLS_API: IIPCTLSAPI = {

@@ -3,17 +3,17 @@ import Typography from "@mui/material/Typography/Typography";
 import { FC, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import {
-  SignedInDashboardLayoutRootContext,
+  ISignedInDashboardLayoutRootContext,
   useSignedInDashboardLayoutRootContext
 } from "@renderer/components/roots/signedInDashboardLayoutRoot/SignedInDashboardLayoutRootContext";
 
-export interface AccountDashboardPageParams extends Record<string, string> {
+export interface IAccountDashboardPageParams extends Record<string, string> {
   username: string;
 }
 
 const AccountDashboardPage: FC = () => {
-  const signedInDashboardLayoutRootContext: SignedInDashboardLayoutRootContext = useSignedInDashboardLayoutRootContext();
-  const params: Readonly<Partial<AccountDashboardPageParams>> = useParams<AccountDashboardPageParams>();
+  const signedInDashboardLayoutRootContext: ISignedInDashboardLayoutRootContext = useSignedInDashboardLayoutRootContext();
+  const params: Readonly<Partial<IAccountDashboardPageParams>> = useParams<IAccountDashboardPageParams>();
 
   useEffect(() => {
     signedInDashboardLayoutRootContext.setAppBarTitle("Dashboard");

@@ -1,11 +1,11 @@
 import { LogFunctions } from "electron-log";
 import { SettingsManager } from "./SettingsManager";
 import { SETTINGS_MANAGER_TYPE } from "./SettingsManagerType";
-import { LocalJSONSettingsManager, LocalJSONSettingsManagerConfig } from "./implementations/LocalJSONSettingsManager";
+import { LocalJSONSettingsManager, ILocalJSONSettingsManagerConfig } from "./implementations/LocalJSONSettingsManager";
 import Ajv, { JSONSchemaType } from "ajv";
 
 // Union of all settings manager concrete implementation config interfaces
-export type SettingsManagerConfig = LocalJSONSettingsManagerConfig;
+export type SettingsManagerConfig = ILocalJSONSettingsManagerConfig;
 
 export function settingsManagerFactory<SettingsType extends NonNullable<unknown>>(
   config: SettingsManagerConfig,

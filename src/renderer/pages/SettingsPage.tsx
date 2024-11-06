@@ -2,12 +2,12 @@ import Box from "@mui/material/Box/Box";
 import Typography from "@mui/material/Typography/Typography";
 import { FC, useEffect } from "react";
 import {
-  SignedInDashboardLayoutRootContext,
+  ISignedInDashboardLayoutRootContext,
   useSignedInDashboardLayoutRootContext
 } from "@renderer/components/roots/signedInDashboardLayoutRoot/SignedInDashboardLayoutRootContext";
 
 const SettingsPage: FC = () => {
-  const signedInDashboardLayoutRootContext: SignedInDashboardLayoutRootContext = useSignedInDashboardLayoutRootContext();
+  const signedInDashboardLayoutRootContext: ISignedInDashboardLayoutRootContext = useSignedInDashboardLayoutRootContext();
 
   useEffect(() => {
     signedInDashboardLayoutRootContext.setAppBarTitle("Settings");
