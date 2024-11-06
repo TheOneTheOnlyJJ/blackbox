@@ -31,15 +31,12 @@ const SignedInAppBar = forwardRef<HTMLDivElement, ISignedInAppBarProps>(function
   const isUserAccountMenuOpen: boolean = useMemo<boolean>((): boolean => {
     return Boolean(userAccountMenuAnchorElement);
   }, [userAccountMenuAnchorElement]);
-  const handleUserAccountButtonClick = useCallback(
-    (event: MouseEvent<HTMLButtonElement>): void => {
-      setUserAccountMenuAnchorElement(event.currentTarget);
-    },
-    [setUserAccountMenuAnchorElement]
-  );
+  const handleUserAccountButtonClick = useCallback((event: MouseEvent<HTMLButtonElement>): void => {
+    setUserAccountMenuAnchorElement(event.currentTarget);
+  }, []);
   const handleUserAccountMenuClose = useCallback((): void => {
     setUserAccountMenuAnchorElement(null);
-  }, [setUserAccountMenuAnchorElement]);
+  }, []);
   const handleNavigationArrowButtonClick = useCallback(
     (direction: "back" | "forward"): void => {
       appLogger.debug(`Clicked ${direction} arrow from the App Bar.`);
@@ -54,7 +51,7 @@ const SignedInAppBar = forwardRef<HTMLDivElement, ISignedInAppBarProps>(function
     setIsBackDisabled(location.key === "default" || STATE?.idx === 0);
     // TODO: Remove @types/dom-navigation once it becomes Baseline widely available
     setIsForwardDisabled(!window.navigation.canGoForward);
-  }, [setIsBackDisabled, setIsForwardDisabled, location]);
+  }, [location]);
 
   useEffect(() => {
     updateButtonStates();

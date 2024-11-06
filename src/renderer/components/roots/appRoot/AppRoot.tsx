@@ -72,7 +72,7 @@ const AppRoot: FC = () => {
     if ((await window.IPCTLSAPI.sendRendererProcessWrappedAESKey(WRAPPED_RENDERER_PROCESS_AES_KEY)).status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
       enqueueSnackbar({ message: "Error sending AES encryption key to main process.", variant: "error" });
     }
-  }, [setRendererProcessAESKey]);
+  }, []);
 
   // Log every location change
   useEffect((): void => {

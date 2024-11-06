@@ -21,13 +21,13 @@ const SignedInDashboardLayoutRoot: FC = () => {
     if (appBarRef.current) {
       setAppBarHeight(appBarRef.current.clientHeight);
     }
-  }, [appBarRef, setAppBarHeight]);
+  }, [appBarRef]);
 
   const updateDrawerWidth = useCallback(() => {
     if (drawerRef.current) {
       setDrawerWidth(drawerRef.current.clientWidth);
     }
-  }, [drawerRef, setDrawerWidth]);
+  }, [drawerRef]);
 
   const updateComponentDimensions = useCallback(() => {
     updateAppBarHeight();

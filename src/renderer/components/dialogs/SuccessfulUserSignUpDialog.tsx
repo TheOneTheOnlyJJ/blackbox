@@ -59,7 +59,7 @@ const SuccessfulUserRegistrationDialog: FC<ISuccessfulUserSignUpDialogProps> = (
       setSignInError(SIGN_IN_RESPONSE.error);
       enqueueSnackbar({ message: "Sign in error.", variant: "error" });
     }
-  }, [props.encryptedNewUserSignInCredentials, setSignInError]);
+  }, [props.encryptedNewUserSignInCredentials]);
 
   return (
     <Dialog maxWidth="xl" open={props.open} onClose={handleDialogClose}>

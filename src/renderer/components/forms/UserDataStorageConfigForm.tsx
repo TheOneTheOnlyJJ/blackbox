@@ -1,4 +1,4 @@
-import { FC, useCallback, useEffect } from "react";
+import { FC, useCallback } from "react";
 import { FormProps, IChangeEvent, withTheme } from "@rjsf/core";
 import { Theme } from "@rjsf/mui";
 import { ErrorTransformer, RJSFSchema, RJSFValidationError } from "@rjsf/utils";
@@ -21,11 +21,14 @@ const userDataStorageConfigInputDataFormTransformErrors: ErrorTransformer<UserDa
 ): RJSFValidationError[] => {
   return errorCapitalizerTransformer(
     errors.filter((error: RJSFValidationError): boolean => {
+      // RJSF cannot determine from which anyOf option the errors come from, so they're filtered out
       if (error.name === "additionalProperties") {
-        // TODO: Add Logger messages here once specialised loggers are added
+        appLogger.debug("Filtered additional properties error from User Data Storage Config input data form.");
         return false;
       }
+      // Error coming from no anyOf subschema validity is not relevant for the users, as the specific errors for the current anyOf subschema are displayed
       if (error.name === "anyOf") {
+        appLogger.debug("Filtered anyOf error from User Data Storage Config input data form.");
         return false;
       }
       return true;
@@ -40,11 +43,6 @@ export interface IUserDataStorageConfigFormProps {
 
 // TODO: Get title in error messages properly
 const UserDataStorageConfigForm: FC<IUserDataStorageConfigFormProps> = (props: IUserDataStorageConfigFormProps) => {
-  // TODO: Delete this
-  useEffect(() => {
-    appLogger.error(JSON.stringify(USER_DATA_STORAGE_CONFIG_INPUT_DATA_SCHEMA, null, 2));
-    appLogger.error(JSON.stringify(USER_DATA_STORAGE_CONFIG_INPUT_DATA_UI_SCHEMA, null, 2));
-  }, []);
   const handleSubmit = useCallback((data: IChangeEvent<UserDataStorageConfigInputData>): void => {
     if (data.formData === undefined) {
       appLogger.error("Undefined User Data Storage Config form data. No-op.");

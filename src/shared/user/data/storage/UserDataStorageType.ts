@@ -1,7 +1,7 @@
 export const USER_DATA_STORAGE_TYPES = {
-  LocalSQLite: "Local SQLite",
-  OptionB: "Option B",
-  OptionC: "Option C"
+  LocalSQLite: "localSQLite",
+  OptionB: "optionB",
+  OptionC: "optionC"
 } as const;
 
 export type UserDataStorageTypes = typeof USER_DATA_STORAGE_TYPES;

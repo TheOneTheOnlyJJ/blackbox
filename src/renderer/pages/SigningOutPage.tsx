@@ -9,6 +9,7 @@ import { appLogger } from "@renderer/utils/loggers";
 
 const SigningOutPage: FC = () => {
   useEffect(() => {
+    // TODO: Remove this
     //setTimeout(() => {
     appLogger.debug("Signing out.");
     const SIGN_OUT_RESPONSE: IPCAPIResponse = window.userAPI.signOut();
