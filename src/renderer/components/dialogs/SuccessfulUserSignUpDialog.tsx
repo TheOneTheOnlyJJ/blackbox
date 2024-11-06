@@ -13,7 +13,7 @@ import Button from "@mui/material/Button/Button";
 import { IEncryptedUserSignInCredentials } from "@shared/user/encrypted/EncryptedUserSignInCredentials";
 import { appLogger } from "@renderer/utils/loggers";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
-import { IPCAPIResponseStatus } from "@shared/IPC/IPCAPIResponseStatus";
+import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { enqueueSnackbar } from "notistack";
 
 export interface ISuccessfulUserSignUpDialogProps {
@@ -44,7 +44,7 @@ const SuccessfulUserRegistrationDialog: FC<ISuccessfulUserSignUpDialogProps> = (
     appLogger.debug("Attempting sign in.");
     const SIGN_IN_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.signIn(props.encryptedNewUserSignInCredentials);
     // Automatic sign in should always work for a newly signed up account
-    if (SIGN_IN_RESPONSE.status === IPCAPIResponseStatus.SUCCESS) {
+    if (SIGN_IN_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
       if (SIGN_IN_RESPONSE.data) {
         appLogger.debug("Sign in successful.");
         setSignInError(undefined);

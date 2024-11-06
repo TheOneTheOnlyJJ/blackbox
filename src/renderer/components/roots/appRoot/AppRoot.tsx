@@ -6,7 +6,7 @@ import { arrayBufferToBase64 } from "@renderer/utils/typeConversions/arrayBuffer
 import { insertLineBreaks } from "@shared/utils/insertNewLines";
 import { ICurrentlySignedInUser } from "@shared/user/CurrentlySignedInUser";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
-import { IPCAPIResponseStatus } from "@shared/IPC/IPCAPIResponseStatus";
+import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { enqueueSnackbar, SnackbarProvider } from "notistack";
 import Box from "@mui/material/Box/Box";
 
@@ -29,7 +29,7 @@ const AppRoot: FC = () => {
     appLogger.debug("Generating renderer process AES key.");
     appLogger.debug("Getting main process public RSA key.");
     const GET_MAIN_PROCESS_PUBLIC_RSA_KEY_DER_RESPONSE: IPCAPIResponse<ArrayBuffer> = window.IPCTLSAPI.getMainProcessPublicRSAKeyDER();
-    if (GET_MAIN_PROCESS_PUBLIC_RSA_KEY_DER_RESPONSE.status !== IPCAPIResponseStatus.SUCCESS) {
+    if (GET_MAIN_PROCESS_PUBLIC_RSA_KEY_DER_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
       enqueueSnackbar({ message: "Error getting main process public RSA encryption key.", variant: "error" });
       return;
     }
@@ -69,7 +69,7 @@ const AppRoot: FC = () => {
     );
     appLogger.silly(`RSA-wrapped AES key:\n${insertLineBreaks(arrayBufferToBase64(WRAPPED_RENDERER_PROCESS_AES_KEY))}\n.`);
     // ...and send it to the main process
-    if ((await window.IPCTLSAPI.sendRendererProcessWrappedAESKey(WRAPPED_RENDERER_PROCESS_AES_KEY)).status !== IPCAPIResponseStatus.SUCCESS) {
+    if ((await window.IPCTLSAPI.sendRendererProcessWrappedAESKey(WRAPPED_RENDERER_PROCESS_AES_KEY)).status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
       enqueueSnackbar({ message: "Error sending AES encryption key to main process.", variant: "error" });
     }
   }, [setRendererProcessAESKey]);
@@ -116,14 +116,14 @@ const AppRoot: FC = () => {
         appLogger.error(`Failed to generate renderer process AES key: ${ERROR_MESSAGE}.`);
       });
     const IS_USER_STORAGE_AVAILABLE_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.isAccountStorageAvailable();
-    if (IS_USER_STORAGE_AVAILABLE_RESPONSE.status !== IPCAPIResponseStatus.SUCCESS) {
+    if (IS_USER_STORAGE_AVAILABLE_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
       enqueueSnackbar({ message: "Error getting User Account Storage availability.", variant: "error" });
       setIsUserAccountStorageAvailable(false);
     } else {
       setIsUserAccountStorageAvailable(IS_USER_STORAGE_AVAILABLE_RESPONSE.data);
     }
     const GET_CURRENTLY_SIGNED_IN_USER_RESPONSE: IPCAPIResponse<ICurrentlySignedInUser | null> = window.userAPI.getCurrentlySignedInUser();
-    if (GET_CURRENTLY_SIGNED_IN_USER_RESPONSE.status !== IPCAPIResponseStatus.SUCCESS) {
+    if (GET_CURRENTLY_SIGNED_IN_USER_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
       enqueueSnackbar({ message: "Error getting currently signed in user.", variant: "error" });
       setCurrentlySignedInUser(null);
     } else {

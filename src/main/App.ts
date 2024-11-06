@@ -4,7 +4,7 @@ import { join, resolve } from "node:path";
 import log, { LogFunctions } from "electron-log";
 import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 import { JSONSchemaType } from "ajv/dist/types/json-schema";
-import { IPCTLSAPIIPCChannel, UserAPIIPCChannel } from "@main/utils/IPC/IPCChannels";
+import { IPC_TLS_API_IPC_CHANNELS, USER_API_IPC_CHANNELS } from "@main/utils/IPC/IPCChannels";
 import { UserManager } from "@main/user/UserManager";
 import { USER_ACCOUNT_STORAGE_TYPE } from "@main/user/account/storage/UserAccountStorageType";
 import { adjustWindowBounds } from "@main/utils/window/adjustWindowBounds";
@@ -24,15 +24,15 @@ import { ICurrentlySignedInUser } from "@shared/user/CurrentlySignedInUser";
 import { IUserSignInCredentials } from "@shared/user/UserSignInCredentials";
 import { IEncryptedUserSignInCredentials } from "@shared/user/encrypted/EncryptedUserSignInCredentials";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
-import { IPCAPIResponseStatus } from "@shared/IPC/IPCAPIResponseStatus";
+import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { SettingsManager } from "@main/settings/SettingsManager";
 import { SettingsManagerConfig, settingsManagerFactory } from "@main/settings/settingsManagerFactory";
 import { SETTINGS_MANAGER_TYPE } from "@main/settings/SettingsManagerType";
-import { WindowPosition, WindowPositionWatcher, WindowState } from "@main/settings/WindowPositionWatcher";
+import { WINDOW_STATES, WindowPosition, WindowPositionWatcher, WindowStates } from "@main/settings/WindowPositionWatcher";
 import Ajv from "ajv";
 import { UserAccountStorageConfig } from "@main/user/account/storage/UserAccountStorageConfig";
 
-type WindowPositionSetting = Rectangle | WindowState.FullScreen | WindowState.Maximized;
+type WindowPositionSetting = Rectangle | WindowStates["FullScreen"] | WindowStates["Maximized"];
 
 interface IWindowSettings {
   position: WindowPositionSetting;
@@ -78,7 +78,7 @@ export class App {
             // One of the accepted Window State options or Electron Rectangle
             anyOf: [
               // Accepted Window State options are only FullScreen and Maximized (notice absence of Minimized)
-              { type: "string", enum: [WindowState.FullScreen, WindowState.Maximized] },
+              { type: "string", enum: [WINDOW_STATES.FullScreen, WINDOW_STATES.Maximized] },
               {
                 // Electron Rectangle schema
                 type: "object",
@@ -156,11 +156,11 @@ export class App {
     handleGetMainProcessPublicRSAKeyDER: (): IPCAPIResponse<ArrayBuffer> => {
       this.IPCTLSAPILogger.debug("Received main process public RSA key request.");
       try {
-        return { status: IPCAPIResponseStatus.SUCCESS, data: bufferToArrayBuffer(this.MAIN_PROCESS_PUBLIC_RSA_KEY_DER) };
+        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: bufferToArrayBuffer(this.MAIN_PROCESS_PUBLIC_RSA_KEY_DER) };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
         this.IPCUserAPILogger.error(`Could not get main process public RSA key (DER): ${ERROR_MESSAGE}!`);
-        return { status: IPCAPIResponseStatus.INTERNAL_ERROR, error: "An internal error occurred" };
+        return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
     handleSendRendererProcessWrappedAESKey: async (rendererProcessWrappedAESKey: ArrayBuffer): Promise<IPCAPIResponse> => {
@@ -193,11 +193,11 @@ export class App {
         if (!testAESKey(this.rendererProcessAESKey, this.IPCTLSAPILogger)) {
           throw new Error("AES key failed test");
         }
-        return { status: IPCAPIResponseStatus.SUCCESS };
+        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
         this.IPCTLSAPILogger.error(`Failed to unwrap or validate AES key: ${ERROR_MESSAGE}!`);
-        return { status: IPCAPIResponseStatus.INTERNAL_ERROR, error: "Failed encryption key validation" };
+        return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "Failed encryption key validation" };
       }
     }
   };
@@ -220,13 +220,13 @@ export class App {
         const SECURED_NEW_USER_DATA: ISecuredNewUserData = this.userManager.secureBaseNewUserData(BASE_NEW_USER_DATA);
         this.appLogger.debug("Secured new user data.");
         return {
-          status: IPCAPIResponseStatus.SUCCESS,
+          status: IPC_API_RESPONSE_STATUSES.SUCCESS,
           data: this.userManager.signUpUser(SECURED_NEW_USER_DATA)
         };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
         this.IPCUserAPILogger.error(`Could not sign up user: ${ERROR_MESSAGE}!`);
-        return { status: IPCAPIResponseStatus.INTERNAL_ERROR, error: "An internal error occurred" };
+        return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
     handleSignIn: (encryptedUserSignInCredentials: IEncryptedUserSignInCredentials): IPCAPIResponse<boolean> => {
@@ -242,22 +242,22 @@ export class App {
           this.IPCUserAPILogger,
           "user sign in credentials"
         );
-        return { status: IPCAPIResponseStatus.SUCCESS, data: this.userManager.signInUser(DECRYPTED_USER_SIGN_IN_CREDENTIALS) };
+        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userManager.signInUser(DECRYPTED_USER_SIGN_IN_CREDENTIALS) };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
         this.IPCUserAPILogger.error(`Could not sign in user: ${ERROR_MESSAGE}!`);
-        return { status: IPCAPIResponseStatus.INTERNAL_ERROR, error: "An internal error occurred" };
+        return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
     handleSignOut: (): IPCAPIResponse => {
       this.IPCUserAPILogger.debug("Received sign out request.");
       try {
         this.userManager.signOutUser();
-        return { status: IPCAPIResponseStatus.SUCCESS };
+        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
         this.IPCUserAPILogger.error(`Could not sign out user: ${ERROR_MESSAGE}!`);
-        return { status: IPCAPIResponseStatus.INTERNAL_ERROR, error: "An internal error occurred" };
+        return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
     handleIsAccountStorageAvailable: (): IPCAPIResponse<boolean> => {
@@ -265,41 +265,41 @@ export class App {
       try {
         const IS_STORAGE_AVAILABLE: boolean = this.userManager.isUserAccountStorageAvailable();
         this.IPCUserAPILogger.debug(`User Account Storage available: ${IS_STORAGE_AVAILABLE.toString()}.`);
-        return { status: IPCAPIResponseStatus.SUCCESS, data: IS_STORAGE_AVAILABLE };
+        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: IS_STORAGE_AVAILABLE };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
         this.IPCUserAPILogger.error(`Could not get User Account Storage availability: ${ERROR_MESSAGE}!`);
-        return { status: IPCAPIResponseStatus.INTERNAL_ERROR, error: "An internal error occurred" };
+        return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
     handleIsUsernameAvailable: (username: string): IPCAPIResponse<boolean> => {
       this.IPCUserAPILogger.debug("Received username availability status request.");
       try {
-        return { status: IPCAPIResponseStatus.SUCCESS, data: this.userManager.isUsernameAvailable(username) };
+        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userManager.isUsernameAvailable(username) };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
         this.IPCUserAPILogger.error(`Could not get username availability: ${ERROR_MESSAGE}!`);
-        return { status: IPCAPIResponseStatus.INTERNAL_ERROR, error: "An internal error occurred" };
+        return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
     handleGetUserCount: (): IPCAPIResponse<number> => {
       this.IPCUserAPILogger.debug("Received user count request.");
       try {
-        return { status: IPCAPIResponseStatus.SUCCESS, data: this.userManager.getUserCount() };
+        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userManager.getUserCount() };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
         this.IPCUserAPILogger.error(`Could not get user count: ${ERROR_MESSAGE}!`);
-        return { status: IPCAPIResponseStatus.INTERNAL_ERROR, error: "An internal error occurred" };
+        return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
     handleGetCurrentlySignedInUser: (): IPCAPIResponse<ICurrentlySignedInUser | null> => {
       this.IPCUserAPILogger.debug("Received currently signed in user request.");
       try {
-        return { status: IPCAPIResponseStatus.SUCCESS, data: this.userManager.getCurrentlySignedInUser() };
+        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userManager.getCurrentlySignedInUser() };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
         this.IPCUserAPILogger.error(`Could not get currently signed in user: ${ERROR_MESSAGE}!`);
-        return { status: IPCAPIResponseStatus.INTERNAL_ERROR, error: "An internal error occurred" };
+        return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
     sendAccountStorageAvailabilityChange: (isUserAccountStorageAvailable: boolean): void => {
@@ -308,7 +308,7 @@ export class App {
         this.IPCUserAPILogger.debug('Window is "null". No-op.');
         return;
       }
-      this.window.webContents.send(UserAPIIPCChannel.onAccountStorageAvailabilityChange, isUserAccountStorageAvailable);
+      this.window.webContents.send(USER_API_IPC_CHANNELS.onAccountStorageAvailabilityChange, isUserAccountStorageAvailable);
     },
     sendCurrentlySignedInUserChange: (newSignedInUser: ICurrentlySignedInUser | null): void => {
       this.IPCUserAPILogger.debug(`Sending window currently signed in user after change: ${JSON.stringify(newSignedInUser, null, 2)}.`);
@@ -316,7 +316,7 @@ export class App {
         this.IPCUserAPILogger.debug('Window is "null". No-op.');
         return;
       }
-      this.window.webContents.send(UserAPIIPCChannel.onCurrentlySignedInUserChange, newSignedInUser);
+      this.window.webContents.send(USER_API_IPC_CHANNELS.onCurrentlySignedInUserChange, newSignedInUser);
     }
   };
 
@@ -408,7 +408,7 @@ export class App {
     }
     this.windowLogger.debug(`Using window settings: ${JSON.stringify(lastWindowSettings, null, 2)}.`);
     // Adjust bounds if the window positions are a Rectangle
-    if (lastWindowSettings.position !== WindowState.FullScreen && lastWindowSettings.position !== WindowState.Maximized) {
+    if (lastWindowSettings.position !== WINDOW_STATES.FullScreen && lastWindowSettings.position !== WINDOW_STATES.Maximized) {
       this.windowLogger.debug("Adjusting window bounds.");
       const PRIMARY_DISPLAY_BOUNDS: Rectangle = screen.getPrimaryDisplay().workArea;
       this.windowLogger.debug(`Primary display work area bounds: ${JSON.stringify(PRIMARY_DISPLAY_BOUNDS, null, 2)}.`);
@@ -416,9 +416,9 @@ export class App {
       this.windowLogger.debug(`Adjusted window positions: ${JSON.stringify(lastWindowSettings.position, null, 2)}.`);
     }
     // Initialise window
-    if (lastWindowSettings.position === WindowState.FullScreen || lastWindowSettings.position === WindowState.Maximized) {
+    if (lastWindowSettings.position === WINDOW_STATES.FullScreen || lastWindowSettings.position === WINDOW_STATES.Maximized) {
       this.window = new BrowserWindow(this.WINDOW_CONSTRUCTOR_OPTIONS);
-      if (lastWindowSettings.position === WindowState.FullScreen) {
+      if (lastWindowSettings.position === WINDOW_STATES.FullScreen) {
         this.window.setFullScreen(true);
       } else {
         this.window.maximize();
@@ -511,7 +511,7 @@ export class App {
   }
 
   private updateWindowPositionSettings(newWindowPosition: WindowPosition): void {
-    if (newWindowPosition === WindowState.Minimized) {
+    if (newWindowPosition === WINDOW_STATES.Minimized) {
       this.settingsManagerLogger.debug("Window minimized. No update to settings.");
     } else {
       // Update settings
@@ -621,11 +621,11 @@ export class App {
 
   private registerIPCTLSAPIIPCHandlers(): void {
     this.IPCLogger.debug("Registering IPC TLS API IPC handlers.");
-    ipcMain.on(IPCTLSAPIIPCChannel.getMainProcessPublicRSAKeyDER, (event: IpcMainEvent): void => {
+    ipcMain.on(IPC_TLS_API_IPC_CHANNELS.getMainProcessPublicRSAKeyDER, (event: IpcMainEvent): void => {
       event.returnValue = this.IPC_TLS_API_HANDLERS.handleGetMainProcessPublicRSAKeyDER();
     });
     ipcMain.handle(
-      IPCTLSAPIIPCChannel.sendRendererProcessWrappedAESKey,
+      IPC_TLS_API_IPC_CHANNELS.sendRendererProcessWrappedAESKey,
       (_: IpcMainInvokeEvent, rendererProcessWrappedAESKey: ArrayBuffer): IPCAPIResponse | Promise<IPCAPIResponse> => {
         return this.IPC_TLS_API_HANDLERS.handleSendRendererProcessWrappedAESKey(rendererProcessWrappedAESKey);
       }
@@ -634,25 +634,25 @@ export class App {
 
   private registerUserAPIIPCHandlers(): void {
     this.IPCLogger.debug("Registering User API IPC handlers.");
-    ipcMain.on(UserAPIIPCChannel.isAccountStorageAvailable, (event: IpcMainEvent): void => {
+    ipcMain.on(USER_API_IPC_CHANNELS.isAccountStorageAvailable, (event: IpcMainEvent): void => {
       event.returnValue = this.USER_API_HANDLERS.handleIsAccountStorageAvailable();
     });
-    ipcMain.on(UserAPIIPCChannel.isUsernameAvailable, (event: IpcMainEvent, username: string): void => {
+    ipcMain.on(USER_API_IPC_CHANNELS.isUsernameAvailable, (event: IpcMainEvent, username: string): void => {
       event.returnValue = this.USER_API_HANDLERS.handleIsUsernameAvailable(username);
     });
-    ipcMain.on(UserAPIIPCChannel.signUp, (event: IpcMainEvent, encryptedBaseNewUserData: IEncryptedBaseNewUserData): void => {
+    ipcMain.on(USER_API_IPC_CHANNELS.signUp, (event: IpcMainEvent, encryptedBaseNewUserData: IEncryptedBaseNewUserData): void => {
       event.returnValue = this.USER_API_HANDLERS.handleSignUp(encryptedBaseNewUserData);
     });
-    ipcMain.on(UserAPIIPCChannel.getUserCount, (event: IpcMainEvent): void => {
+    ipcMain.on(USER_API_IPC_CHANNELS.getUserCount, (event: IpcMainEvent): void => {
       event.returnValue = this.USER_API_HANDLERS.handleGetUserCount();
     });
-    ipcMain.on(UserAPIIPCChannel.signIn, (event: IpcMainEvent, encryptedUserSignInCredentials: IEncryptedUserSignInCredentials): void => {
+    ipcMain.on(USER_API_IPC_CHANNELS.signIn, (event: IpcMainEvent, encryptedUserSignInCredentials: IEncryptedUserSignInCredentials): void => {
       event.returnValue = this.USER_API_HANDLERS.handleSignIn(encryptedUserSignInCredentials);
     });
-    ipcMain.on(UserAPIIPCChannel.signOut, (event: IpcMainEvent): void => {
+    ipcMain.on(USER_API_IPC_CHANNELS.signOut, (event: IpcMainEvent): void => {
       event.returnValue = this.USER_API_HANDLERS.handleSignOut();
     });
-    ipcMain.on(UserAPIIPCChannel.getCurrentlySignedInUser, (event: IpcMainEvent): void => {
+    ipcMain.on(USER_API_IPC_CHANNELS.getCurrentlySignedInUser, (event: IpcMainEvent): void => {
       event.returnValue = this.USER_API_HANDLERS.handleGetCurrentlySignedInUser();
     });
   }

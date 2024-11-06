@@ -1,18 +1,18 @@
-import { IPCAPIResponseStatus } from "./IPCAPIResponseStatus";
+import { IPCAPIResponseStatus, IPCAPIResponseStatuses } from "./IPCAPIResponseStatus";
 
 export type IPCAPIResponse<T = undefined> =
   | (T extends undefined
       ? {
-          status: IPCAPIResponseStatus.SUCCESS;
+          status: IPCAPIResponseStatuses["SUCCESS"];
           message?: string;
         }
       : {
-          status: IPCAPIResponseStatus.SUCCESS;
+          status: IPCAPIResponseStatuses["SUCCESS"];
           data: T;
           message?: string;
         })
   | {
-      status: Exclude<IPCAPIResponseStatus, IPCAPIResponseStatus.SUCCESS>;
+      status: Exclude<IPCAPIResponseStatus, IPCAPIResponseStatuses["SUCCESS"]>;
       error: string;
       message?: string;
     };

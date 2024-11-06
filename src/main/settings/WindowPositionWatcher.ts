@@ -1,12 +1,13 @@
 import { LogFunctions } from "electron-log";
 import { BrowserWindow, Rectangle } from "electron/main";
 
-// TODO: make this as const
-export enum WindowState {
-  FullScreen = "fullscreen",
-  Maximized = "maximized",
-  Minimized = "minimized"
-}
+export const WINDOW_STATES = {
+  FullScreen: "fullscreen",
+  Maximized: "maximized",
+  Minimized: "minimized"
+} as const;
+export type WindowStates = typeof WINDOW_STATES;
+export type WindowState = WindowStates[keyof WindowStates];
 
 export type WindowPosition = Rectangle | WindowState;
 
@@ -51,11 +52,11 @@ export class WindowPositionWatcher {
     this.logger.debug("Getting new window position.");
     let newWindowPosition: WindowPosition;
     if (window.isFullScreen()) {
-      newWindowPosition = WindowState.FullScreen;
+      newWindowPosition = WINDOW_STATES.FullScreen;
     } else if (window.isMaximized()) {
-      newWindowPosition = WindowState.Maximized;
+      newWindowPosition = WINDOW_STATES.Maximized;
     } else if (window.isMinimized()) {
-      newWindowPosition = WindowState.Minimized;
+      newWindowPosition = WINDOW_STATES.Minimized;
     } else {
       newWindowPosition = window.getBounds();
     }
