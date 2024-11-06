@@ -1,7 +1,7 @@
 import { LogFunctions } from "electron-log";
 import Ajv, { JSONSchemaType, ValidateFunction } from "ajv";
 import { UserAccountStorageType } from "./UserAccountStorageType";
-import { ISecuredNewUserData } from "../SecuredNewUserData";
+import { ISecuredUserSignUpData } from "../SecuredNewUserData";
 import { UUID } from "node:crypto";
 import { USER_DATA_STORAGE_CONFIG_SCHEMA, UserDataStorageConfig } from "../../data/storage/UserDataStorageConfig";
 import { IUserDataStorageConfigWithMetadata } from "../../data/storage/UserDataStorageConfigWithMetadata";
@@ -45,7 +45,7 @@ export abstract class UserAccountStorage<T extends IBaseUserAccountStorageConfig
 
   // public abstract isLocal(): boolean;
   public abstract isUsernameAvailable(username: string): boolean;
-  public abstract addUser(userData: ISecuredNewUserData): boolean;
+  public abstract addUser(userData: ISecuredUserSignUpData): boolean;
   public abstract getUserId(username: string): UUID | null;
   public abstract getPasswordData(userId: UUID): [Buffer, Buffer] | null;
   // public abstract deleteUser(userId: UserId): boolean;

@@ -25,9 +25,8 @@ export const USER_DATA_STORAGE_CONFIG_INPUT_DATA_SCHEMA_MAP: UserDataStorageConf
   [USER_DATA_STORAGE_TYPES.OptionC]: OPTION_C_USER_DATA_STORAGE_CONFIG_INPUT_DATA_SCHEMA
 } as const;
 
-export const USER_DATA_STORAGE_CONFIG_INPUT_DATA_SCHEMA: JSONSchemaType<UserDataStorageConfigInputData> = {
+export const USER_DATA_STORAGE_CONFIG_INPUT_DATA_JSON_SCHEMA: JSONSchemaType<UserDataStorageConfigInputData> = {
   $schema: "http://json-schema.org/draft-07/schema#",
-  type: "object",
   // Sort by keys to ensure the order is the same even if definitions change around
   anyOf: Object.keys(USER_DATA_STORAGE_CONFIG_INPUT_DATA_SCHEMA_MAP)
     .sort()

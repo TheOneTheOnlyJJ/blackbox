@@ -28,4 +28,4 @@ export const LOCAL_SQLITE_USER_DATA_STORAGE_CONFIG_INPUT_DATA_SCHEMA: JSONSchema
   },
   required: ["type", "dbDirPath", "dbFileName"],
   additionalProperties: false
-};
+} as const;

@@ -5,7 +5,7 @@ import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import Ajv, { JSONSchemaType } from "ajv";
 import { USER_ACCOUNT_STORAGE_TYPE, UserAccountStorageTypes } from "../UserAccountStorageType";
-import { ISecuredNewUserData } from "@main/user/account/SecuredNewUserData";
+import { ISecuredUserSignUpData } from "@main/user/account/SecuredNewUserData";
 import { UUID } from "crypto";
 import { UserDataStorageConfig } from "@main/user/data/storage/UserDataStorageConfig";
 import { IUserDataStorageConfigWithMetadata } from "@main/user/data/storage/UserDataStorageConfigWithMetadata";
@@ -97,7 +97,7 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<ILocalSQLi
     return true;
   }
 
-  public addUser(userData: ISecuredNewUserData): boolean {
+  public addUser(userData: ISecuredUserSignUpData): boolean {
     this.logger.debug(`Adding new user: "${userData.username}".`);
     const INSERT_NEW_USER_SQL =
       "INSERT INTO users (user_id, username, password_hash, password_salt) VALUES (@userId, @username, @passwordHash, @passwordSalt)";

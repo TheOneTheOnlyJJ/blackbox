@@ -2,16 +2,16 @@ import { LogFunctions } from "electron-log";
 import { UserAccountStorage } from "./account/storage/UserAccountStorage";
 import { userAccountStorageFactory } from "./account/storage/userAccountStorageFactory";
 import { UserAccountStorageType } from "./account/storage/UserAccountStorageType";
-import { BASE_NEW_USER_DATA_JSON_SCHEMA, IBaseNewUserData } from "@shared/user/BaseNewUserData";
+import { USER_SIGN_UP_DATA_JSON_SCHEMA, IUserSignUpData } from "@shared/user/account/UserSignUpData";
 import { randomBytes, randomUUID, scryptSync, timingSafeEqual, UUID } from "node:crypto";
-import { ISecuredNewUserData } from "./account/SecuredNewUserData";
-import { CURRENTLY_SIGNED_IN_USER_SCHEMA, ICurrentlySignedInUser } from "@shared/user/CurrentlySignedInUser";
-import { IUserSignInCredentials, USER_SIGN_IN_CREDENTIALS_JSON_SCHEMA } from "@shared/user/UserSignInCredentials";
+import { ISecuredUserSignUpData } from "./account/SecuredNewUserData";
+import { CURRENTLY_SIGNED_IN_USER_SCHEMA, ICurrentlySignedInUser } from "@shared/user/account/CurrentlySignedInUser";
 import { CurrentlySignedInUserChangeCallback, UserAccountStorageAvailabilityChangeCallback } from "@shared/IPC/APIs/UserAPI";
 import { isDeepStrictEqual } from "node:util";
 import Ajv, { ValidateFunction } from "ajv";
 import { UserAccountStorageConfig } from "./account/storage/UserAccountStorageConfig";
 import { IUserDataStorageConfigWithMetadata } from "./data/storage/UserDataStorageConfigWithMetadata";
+import { IUserSignInData, USER_SIGN_IN_DATA_JSON_SCHEMA } from "@shared/user/account/UserSignInData";
 
 export class UserManager {
   private readonly logger: LogFunctions;
@@ -31,8 +31,8 @@ export class UserManager {
   // AJV insatnce
   private readonly AJV: Ajv;
   // AJV Validate functions
-  public readonly BASE_NEW_USER_DATA_VALIDATE_FUNCTION: ValidateFunction<IBaseNewUserData>;
-  public readonly USER_SIGN_IN_CREDENTIALS_VALIDATE_FUNCTION: ValidateFunction<IUserSignInCredentials>;
+  public readonly USER_SIGN_UP_DATA_VALIDATE_FUNCTION: ValidateFunction<IUserSignUpData>;
+  public readonly USER_SIGN_IN_DATA_VALIDATE_FUNCTION: ValidateFunction<IUserSignInData>;
   public readonly CURRENTLY_SIGNED_IN_USER_VALIDATE_FUNCTION: ValidateFunction<ICurrentlySignedInUser>;
 
   public constructor(logger: LogFunctions, userAccountStorageLogger: LogFunctions, ajv: Ajv) {
@@ -42,8 +42,8 @@ export class UserManager {
     this.userAccountStorageLogger = userAccountStorageLogger;
     // AJV and validators
     this.AJV = ajv;
-    this.BASE_NEW_USER_DATA_VALIDATE_FUNCTION = this.AJV.compile<IBaseNewUserData>(BASE_NEW_USER_DATA_JSON_SCHEMA);
-    this.USER_SIGN_IN_CREDENTIALS_VALIDATE_FUNCTION = this.AJV.compile<IUserSignInCredentials>(USER_SIGN_IN_CREDENTIALS_JSON_SCHEMA);
+    this.USER_SIGN_UP_DATA_VALIDATE_FUNCTION = this.AJV.compile<IUserSignUpData>(USER_SIGN_UP_DATA_JSON_SCHEMA);
+    this.USER_SIGN_IN_DATA_VALIDATE_FUNCTION = this.AJV.compile<IUserSignInData>(USER_SIGN_IN_DATA_JSON_SCHEMA);
     this.CURRENTLY_SIGNED_IN_USER_VALIDATE_FUNCTION = this.AJV.compile<ICurrentlySignedInUser>(CURRENTLY_SIGNED_IN_USER_SCHEMA);
     // Currently signed in user
     this.onCurrentlySignedInUserChangeCallback = (): void => {
@@ -179,13 +179,13 @@ export class UserManager {
     return scryptSync(plainTextPassword, salt, 64);
   }
 
-  public secureBaseNewUserData(baseNewUserData: IBaseNewUserData): ISecuredNewUserData {
-    this.logger.debug(`Securing base new user data for user: "${baseNewUserData.username}".`);
+  public secureBaseNewUserData(userSignUpData: IUserSignUpData): ISecuredUserSignUpData {
+    this.logger.debug(`Securing base new user data for user: "${userSignUpData.username}".`);
     const PASSWORD_SALT: Buffer = randomBytes(16);
-    const PASSWORD_HASH: Buffer = this.hashPassword(baseNewUserData.password, PASSWORD_SALT);
-    const SECURED_USER_DATA: ISecuredNewUserData = {
+    const PASSWORD_HASH: Buffer = this.hashPassword(userSignUpData.password, PASSWORD_SALT);
+    const SECURED_USER_DATA: ISecuredUserSignUpData = {
       userId: randomUUID({ disableEntropyCache: true }),
-      username: baseNewUserData.username,
+      username: userSignUpData.username,
       passwordHash: PASSWORD_HASH,
       passwordSalt: PASSWORD_SALT
     };
@@ -201,7 +201,7 @@ export class UserManager {
     return this.userAccountStorage.value.getUserCount();
   }
 
-  public signUpUser(userData: ISecuredNewUserData): boolean {
+  public signUpUser(userData: ISecuredUserSignUpData): boolean {
     this.logger.debug(`Signing up user: "${userData.username}".`);
     if (this.userAccountStorage.value === null) {
       throw new Error("Null User Account Storage");
@@ -209,12 +209,12 @@ export class UserManager {
     return this.userAccountStorage.value.addUser(userData);
   }
 
-  public signInUser(userSignInCredentials: IUserSignInCredentials): boolean {
-    this.logger.debug(`Attempting sign in for user: "${userSignInCredentials.username}".`);
+  public signInUser(userSignInData: IUserSignInData): boolean {
+    this.logger.debug(`Attempting sign in for user: "${userSignInData.username}".`);
     if (this.userAccountStorage.value === null) {
       throw new Error("Null User Account Storage");
     }
-    const USER_ID: UUID | null = this.userAccountStorage.value.getUserId(userSignInCredentials.username);
+    const USER_ID: UUID | null = this.userAccountStorage.value.getUserId(userSignInData.username);
     if (USER_ID === null) {
       this.logger.debug("No user ID for given username. Username must be missing from storage. Sign in failed.");
       return false;
@@ -224,10 +224,10 @@ export class UserManager {
       throw new Error(`No password hash and salt for user with ID: "${USER_ID}"`);
     }
     const [USER_PASSWORD_HASH, USER_PASSWORD_SALT]: [Buffer, Buffer] = USER_PASSWORD_DATA;
-    const SIGN_IN_PASSWORD_HASH: Buffer = this.hashPassword(userSignInCredentials.password, USER_PASSWORD_SALT);
+    const SIGN_IN_PASSWORD_HASH: Buffer = this.hashPassword(userSignInData.password, USER_PASSWORD_SALT);
     if (timingSafeEqual(SIGN_IN_PASSWORD_HASH, USER_PASSWORD_HASH)) {
       this.logger.debug("Password hashed matched! Signing in.");
-      this.currentlySignedInUser.value = { userId: USER_ID, username: userSignInCredentials.username };
+      this.currentlySignedInUser.value = { userId: USER_ID, username: userSignInData.username };
       return true;
     }
     this.logger.debug("Password hashes do not match. Sign in failed.");

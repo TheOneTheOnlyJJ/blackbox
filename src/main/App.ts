@@ -11,18 +11,18 @@ import { adjustWindowBounds } from "@main/utils/window/adjustWindowBounds";
 import { IpcMainEvent } from "electron";
 import { IUserAPI } from "@shared/IPC/APIs/UserAPI";
 import { MainProcessIPCAPIHandlers } from "@main/utils/IPC/MainProcessIPCAPIHandlers";
-import { IBaseNewUserData } from "@shared/user/BaseNewUserData";
+import { IUserSignUpData } from "@shared/user/account/UserSignUpData";
 import { generateKeyPairSync, webcrypto } from "node:crypto";
 import { IIPCTLSAPI } from "@shared/IPC/APIs/IPCTLSAPI";
-import { ISecuredNewUserData } from "@main/user/account/SecuredNewUserData";
+import { ISecuredUserSignUpData } from "@main/user/account/SecuredNewUserData";
 import { testAESKey } from "@main/utils/encryption/testAESKey";
 import { insertLineBreaks } from "@shared/utils/insertNewLines";
 import { bufferToArrayBuffer } from "@main/utils/typeConversions/bufferToArrayBuffer";
 import { decryptJSON } from "@main/utils/encryption/decryptJSON";
-import { IEncryptedBaseNewUserData } from "@shared/user/encrypted/EncryptedBaseNewUserData";
-import { ICurrentlySignedInUser } from "@shared/user/CurrentlySignedInUser";
-import { IUserSignInCredentials } from "@shared/user/UserSignInCredentials";
-import { IEncryptedUserSignInCredentials } from "@shared/user/encrypted/EncryptedUserSignInCredentials";
+import { IEncryptedUserSignUpData } from "@shared/user/account/encrypted/EncryptedUserSignUpData";
+import { ICurrentlySignedInUser } from "@shared/user/account/CurrentlySignedInUser";
+import { IUserSignInData } from "@shared/user/account/UserSignInData";
+import { IEncryptedUserSignInData } from "@shared/user/account/encrypted/EncryptedUserSignInData";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { SettingsManager } from "@main/settings/SettingsManager";
@@ -203,25 +203,25 @@ export class App {
   };
 
   private readonly USER_API_HANDLERS: MainProcessIPCAPIHandlers<IUserAPI> = {
-    handleSignUp: (encryptedBaseNewUserData: IEncryptedBaseNewUserData): IPCAPIResponse<boolean> => {
+    handleSignUp: (encryptedUserSignUpData: IEncryptedUserSignUpData): IPCAPIResponse<boolean> => {
       this.IPCUserAPILogger.debug(`Received sign up request.`);
       try {
         if (this.rendererProcessAESKey === null) {
           throw new Error("Null renderer process AES encryption key");
         }
-        const BASE_NEW_USER_DATA: IBaseNewUserData = decryptJSON<IBaseNewUserData>(
-          encryptedBaseNewUserData,
-          this.userManager.BASE_NEW_USER_DATA_VALIDATE_FUNCTION,
+        const USER_SIGN_UP_DATA: IUserSignUpData = decryptJSON<IUserSignUpData>(
+          encryptedUserSignUpData,
+          this.userManager.USER_SIGN_UP_DATA_VALIDATE_FUNCTION,
           this.rendererProcessAESKey,
           this.IPCUserAPILogger,
-          "base new user data"
+          "user sign up data"
         );
-        this.appLogger.debug("Decrypted new user data.");
-        const SECURED_NEW_USER_DATA: ISecuredNewUserData = this.userManager.secureBaseNewUserData(BASE_NEW_USER_DATA);
-        this.appLogger.debug("Secured new user data.");
+        this.appLogger.debug("Decrypted user sign up data.");
+        const SECURED_USER_SIGN_UP_DATA: ISecuredUserSignUpData = this.userManager.secureBaseNewUserData(USER_SIGN_UP_DATA);
+        this.appLogger.debug("Secured user sign up data.");
         return {
           status: IPC_API_RESPONSE_STATUSES.SUCCESS,
-          data: this.userManager.signUpUser(SECURED_NEW_USER_DATA)
+          data: this.userManager.signUpUser(SECURED_USER_SIGN_UP_DATA)
         };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
@@ -229,20 +229,20 @@ export class App {
         return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
-    handleSignIn: (encryptedUserSignInCredentials: IEncryptedUserSignInCredentials): IPCAPIResponse<boolean> => {
+    handleSignIn: (encryptedUserSignInData: IEncryptedUserSignInData): IPCAPIResponse<boolean> => {
       this.IPCUserAPILogger.debug("Received sign in request.");
       try {
         if (this.rendererProcessAESKey === null) {
           throw new Error("Null renderer process AES key.");
         }
-        const DECRYPTED_USER_SIGN_IN_CREDENTIALS: IUserSignInCredentials = decryptJSON<IUserSignInCredentials>(
-          encryptedUserSignInCredentials,
-          this.userManager.USER_SIGN_IN_CREDENTIALS_VALIDATE_FUNCTION,
+        const DECRYPTED_USER_SIGN_IN_DATA: IUserSignInData = decryptJSON<IUserSignInData>(
+          encryptedUserSignInData,
+          this.userManager.USER_SIGN_IN_DATA_VALIDATE_FUNCTION,
           this.rendererProcessAESKey,
           this.IPCUserAPILogger,
-          "user sign in credentials"
+          "user sign in data"
         );
-        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userManager.signInUser(DECRYPTED_USER_SIGN_IN_CREDENTIALS) };
+        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userManager.signInUser(DECRYPTED_USER_SIGN_IN_DATA) };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
         this.IPCUserAPILogger.error(`Could not sign in user: ${ERROR_MESSAGE}!`);
@@ -640,13 +640,13 @@ export class App {
     ipcMain.on(USER_API_IPC_CHANNELS.isUsernameAvailable, (event: IpcMainEvent, username: string): void => {
       event.returnValue = this.USER_API_HANDLERS.handleIsUsernameAvailable(username);
     });
-    ipcMain.on(USER_API_IPC_CHANNELS.signUp, (event: IpcMainEvent, encryptedBaseNewUserData: IEncryptedBaseNewUserData): void => {
+    ipcMain.on(USER_API_IPC_CHANNELS.signUp, (event: IpcMainEvent, encryptedBaseNewUserData: IEncryptedUserSignUpData): void => {
       event.returnValue = this.USER_API_HANDLERS.handleSignUp(encryptedBaseNewUserData);
     });
     ipcMain.on(USER_API_IPC_CHANNELS.getUserCount, (event: IpcMainEvent): void => {
       event.returnValue = this.USER_API_HANDLERS.handleGetUserCount();
     });
-    ipcMain.on(USER_API_IPC_CHANNELS.signIn, (event: IpcMainEvent, encryptedUserSignInCredentials: IEncryptedUserSignInCredentials): void => {
+    ipcMain.on(USER_API_IPC_CHANNELS.signIn, (event: IpcMainEvent, encryptedUserSignInCredentials: IEncryptedUserSignInData): void => {
       event.returnValue = this.USER_API_HANDLERS.handleSignIn(encryptedUserSignInCredentials);
     });
     ipcMain.on(USER_API_IPC_CHANNELS.signOut, (event: IpcMainEvent): void => {

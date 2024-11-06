@@ -22,4 +22,4 @@ export const OPTION_C_USER_DATA_STORAGE_CONFIG_INPUT_DATA_SCHEMA: JSONSchemaType
   },
   required: ["type", "optionC"],
   additionalProperties: false
-};
+} as const;

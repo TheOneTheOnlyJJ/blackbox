@@ -4,7 +4,7 @@ import { Outlet, useLocation, Location, useNavigate, NavigateFunction } from "re
 import { IAppRootContext } from "./AppRootContext";
 import { arrayBufferToBase64 } from "@renderer/utils/typeConversions/arrayBufferToBase64";
 import { insertLineBreaks } from "@shared/utils/insertNewLines";
-import { ICurrentlySignedInUser } from "@shared/user/CurrentlySignedInUser";
+import { ICurrentlySignedInUser } from "@shared/user/account/CurrentlySignedInUser";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { enqueueSnackbar, SnackbarProvider } from "notistack";

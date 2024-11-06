@@ -12,4 +12,4 @@ export const OPTION_C_USER_DATA_STORAGE_CONFIG_INPUT_DATA_UI_SCHEMA: UiSchema<IO
   optionC: {
     "ui:title": "This is Option C Title"
   }
-};
+} as const;

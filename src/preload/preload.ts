@@ -2,9 +2,9 @@ import { contextBridge, ipcRenderer, IpcRendererEvent } from "electron";
 import { IPC_TLS_API_IPC_CHANNELS, USER_API_IPC_CHANNELS } from "@main/utils/IPC/IPCChannels";
 import { CurrentlySignedInUserChangeCallback, IUserAPI, UserAccountStorageAvailabilityChangeCallback } from "@shared/IPC/APIs/UserAPI";
 import { IIPCTLSAPI } from "@shared/IPC/APIs/IPCTLSAPI";
-import { ICurrentlySignedInUser } from "@shared/user/CurrentlySignedInUser";
-import { IEncryptedUserSignInCredentials } from "@shared/user/encrypted/EncryptedUserSignInCredentials";
-import { IEncryptedBaseNewUserData } from "@shared/user/encrypted/EncryptedBaseNewUserData";
+import { ICurrentlySignedInUser } from "@shared/user/account/CurrentlySignedInUser";
+import { IEncryptedUserSignInData } from "@shared/user/account/encrypted/EncryptedUserSignInData";
+import { IEncryptedUserSignUpData } from "@shared/user/account/encrypted/EncryptedUserSignUpData";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 
 const IPC_TLS_API: IIPCTLSAPI = {
@@ -17,10 +17,10 @@ const IPC_TLS_API: IIPCTLSAPI = {
 };
 
 const USER_STORAGE_API: IUserAPI = {
-  signUp: (encryptedBaseNewUserData: IEncryptedBaseNewUserData): IPCAPIResponse<boolean> => {
-    return ipcRenderer.sendSync(USER_API_IPC_CHANNELS.signUp, encryptedBaseNewUserData) as IPCAPIResponse<boolean>;
+  signUp: (encryptedUserSignUpData: IEncryptedUserSignUpData): IPCAPIResponse<boolean> => {
+    return ipcRenderer.sendSync(USER_API_IPC_CHANNELS.signUp, encryptedUserSignUpData) as IPCAPIResponse<boolean>;
   },
-  signIn: (encryptedSignInCredentials: IEncryptedUserSignInCredentials): IPCAPIResponse<boolean> => {
+  signIn: (encryptedSignInCredentials: IEncryptedUserSignInData): IPCAPIResponse<boolean> => {
     return ipcRenderer.sendSync(USER_API_IPC_CHANNELS.signIn, encryptedSignInCredentials) as IPCAPIResponse<boolean>;
   },
   signOut: (): IPCAPIResponse => {

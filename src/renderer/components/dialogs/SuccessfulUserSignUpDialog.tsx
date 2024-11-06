@@ -10,7 +10,7 @@ import Alert from "@mui/material/Alert/Alert";
 import AlertTitle from "@mui/material/AlertTitle/AlertTitle";
 import DialogActions from "@mui/material/DialogActions/DialogActions";
 import Button from "@mui/material/Button/Button";
-import { IEncryptedUserSignInCredentials } from "@shared/user/encrypted/EncryptedUserSignInCredentials";
+import { IEncryptedUserSignInData } from "@shared/user/account/encrypted/EncryptedUserSignInData";
 import { appLogger } from "@renderer/utils/loggers";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
@@ -20,7 +20,7 @@ export interface ISuccessfulUserSignUpDialogProps {
   open: DialogProps["open"];
   username: string;
   userCount: number | null;
-  encryptedNewUserSignInCredentials: IEncryptedUserSignInCredentials | null;
+  encryptedNewUserSignInCredentials: IEncryptedUserSignInData | null;
 }
 
 const SuccessfulUserRegistrationDialog: FC<ISuccessfulUserSignUpDialogProps> = (props: ISuccessfulUserSignUpDialogProps) => {

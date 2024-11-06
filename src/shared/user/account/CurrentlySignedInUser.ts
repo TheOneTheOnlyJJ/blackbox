@@ -14,4 +14,4 @@ export const CURRENTLY_SIGNED_IN_USER_SCHEMA: JSONSchemaType<ICurrentlySignedInU
   },
   required: ["userId", "username"],
   additionalProperties: false
-};
+} as const;

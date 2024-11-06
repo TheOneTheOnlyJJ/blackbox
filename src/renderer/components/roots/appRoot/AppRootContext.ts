@@ -1,5 +1,5 @@
 import { useOutletContext } from "react-router-dom";
-import { ICurrentlySignedInUser } from "@shared/user/CurrentlySignedInUser";
+import { ICurrentlySignedInUser } from "@shared/user/account/CurrentlySignedInUser";
 
 export interface IAppRootContext {
   rendererProcessAESKey: CryptoKey | null;

@@ -1,6 +1,6 @@
-import { ICurrentlySignedInUser } from "@shared/user/CurrentlySignedInUser";
-import { IEncryptedBaseNewUserData } from "@shared/user/encrypted/EncryptedBaseNewUserData";
-import { IEncryptedUserSignInCredentials } from "@shared/user/encrypted/EncryptedUserSignInCredentials";
+import { ICurrentlySignedInUser } from "@shared/user/account/CurrentlySignedInUser";
+import { IEncryptedUserSignUpData } from "@shared/user/account/encrypted/EncryptedUserSignUpData";
+import { IEncryptedUserSignInData } from "@shared/user/account/encrypted/EncryptedUserSignInData";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 
 // Utility types
@@ -9,8 +9,8 @@ export type CurrentlySignedInUserChangeCallback = (newSignedInUser: ICurrentlySi
 
 // API
 export interface IUserAPI {
-  signUp: (encryptedBaseNewUserData: IEncryptedBaseNewUserData) => IPCAPIResponse<boolean>;
-  signIn: (encryptedSignInCredentials: IEncryptedUserSignInCredentials) => IPCAPIResponse<boolean>;
+  signUp: (encryptedBaseNewUserData: IEncryptedUserSignUpData) => IPCAPIResponse<boolean>;
+  signIn: (encryptedSignInCredentials: IEncryptedUserSignInData) => IPCAPIResponse<boolean>;
   signOut: () => IPCAPIResponse;
   isAccountStorageAvailable: () => IPCAPIResponse<boolean>;
   isUsernameAvailable: (username: string) => IPCAPIResponse<boolean>;

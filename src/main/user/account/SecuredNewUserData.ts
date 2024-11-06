@@ -1,6 +1,6 @@
 import { UUID } from "crypto";
 
-export interface ISecuredNewUserData {
+export interface ISecuredUserSignUpData {
   userId: UUID;
   username: string;
   passwordHash: Buffer;

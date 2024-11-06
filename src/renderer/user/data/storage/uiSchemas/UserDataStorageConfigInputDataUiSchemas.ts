@@ -18,8 +18,7 @@ export const USER_DATA_STORAGE_CONFIG_INPUT_DATA_UI_SCHEMA_MAP: UserDataStorageC
 } as const;
 
 export const USER_DATA_STORAGE_CONFIG_INPUT_DATA_UI_SCHEMA: UiSchema<UserDataStorageConfigInputData> = {
-  $schema: "http://json-schema.org/draft-07/schema#",
-  "ui:title": "Data Storage Type",
+  "ui:title": "Configuration",
   // Sort by keys to ensure the order is the same even if definitions change around
   anyOf: Object.keys(USER_DATA_STORAGE_CONFIG_INPUT_DATA_UI_SCHEMA_MAP)
     .sort()
