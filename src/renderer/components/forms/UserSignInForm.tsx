@@ -4,8 +4,7 @@ import { encrypt } from "@renderer/utils/encryption/encrypt";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IChangeEvent, withTheme } from "@rjsf/core";
 import { Theme } from "@rjsf/mui";
-import { ErrorTransformer, RJSFSchema, RJSFValidationError, UiSchema } from "@rjsf/utils";
-import RJSFPasswordWidget from "@renderer/components/RJSFWidgets/RJSFPasswordWidget";
+import { RJSFSchema } from "@rjsf/utils";
 import { customizeValidator } from "@rjsf/validator-ajv8";
 import Button from "@mui/material/Button/Button";
 import { AppRootContext, useAppRootContext } from "@renderer/components/roots/appRoot/AppRootContext";
@@ -15,27 +14,12 @@ import { IPCAPIResponseStatus } from "@shared/IPC/IPCAPIResponseStatus";
 import Alert from "@mui/material/Alert/Alert";
 import AlertTitle from "@mui/material/AlertTitle/AlertTitle";
 import { enqueueSnackbar } from "notistack";
+import { errorCapitalizerTransformer } from "@renderer/utils/RJSF/errorTransformers/errorCapitalizerTransformer";
+import { USER_SIGN_IN_CREDENTIALS_UI_SCHEMA } from "@renderer/user/account/uiSchemas/UserSignInCredentialsUiSchema";
 
 const MUIForm = withTheme<IUserSignInCredentials>(Theme);
 
-const USER_SIGN_IN_FORM_UI_SCHEMA: UiSchema<IUserSignInCredentials> = {
-  password: {
-    "ui:widget": RJSFPasswordWidget
-  }
-};
-
 const USER_SIGN_IN_FORM_VALIDATOR = customizeValidator<IUserSignInCredentials>();
-
-const userSignInFormTransformErrors: ErrorTransformer<IUserSignInCredentials> = (errors: RJSFValidationError[]): RJSFValidationError[] => {
-  return errors.map((error: RJSFValidationError) => {
-    // Capitalize first letter
-    if (error.message !== undefined) {
-      error.message = error.message.charAt(0).toUpperCase() + error.message.slice(1) + ".";
-    }
-    error.stack = error.stack.charAt(0).toUpperCase() + error.stack.slice(1) + ".";
-    return error;
-  });
-};
 
 const UserSignInForm: FC = () => {
   const appRootContext: AppRootContext = useAppRootContext();
@@ -87,10 +71,10 @@ const UserSignInForm: FC = () => {
   return (
     <MUIForm
       schema={USER_SIGN_IN_CREDENTIALS_JSON_SCHEMA as RJSFSchema}
-      uiSchema={USER_SIGN_IN_FORM_UI_SCHEMA}
+      uiSchema={USER_SIGN_IN_CREDENTIALS_UI_SCHEMA}
       validator={USER_SIGN_IN_FORM_VALIDATOR}
       showErrorList={false}
-      transformErrors={userSignInFormTransformErrors}
+      transformErrors={errorCapitalizerTransformer}
       onSubmit={handleSubmit}
     >
       {!wasSignInSuccessful && (

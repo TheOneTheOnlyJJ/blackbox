@@ -10,6 +10,7 @@ import {
   UserDataStorageConfigInputData
 } from "@shared/user/data/storage/inputData/UserDataStorageConfigInputData";
 import { USER_DATA_STORAGE_CONFIG_INPUT_DATA_UI_SCHEMA } from "@renderer/user/data/storage/uiSchemas/UserDataStorageConfigInputDataUiSchemas";
+import { errorCapitalizerTransformer } from "@renderer/utils/RJSF/errorTransformers/errorCapitalizerTransformer";
 
 const MUIForm = withTheme<UserDataStorageConfigInputData>(Theme);
 
@@ -18,27 +19,17 @@ const USER_DATA_STORAGE_CONFIG_INPUT_DATA_FORM_VALIDATOR = customizeValidator<Us
 const userDataStorageConfigInputDataFormTransformErrors: ErrorTransformer<UserDataStorageConfigInputData> = (
   errors: RJSFValidationError[]
 ): RJSFValidationError[] => {
-  return (
-    errors
-      // Filter errors
-      .filter((error: RJSFValidationError): boolean => {
-        if (error.name === "additionalProperties") {
-          // TODO: Add Logger messages here once specialised loggers are added
-          return false;
-        }
-        if (error.name === "anyOf") {
-          return false;
-        }
-        return true;
-      })
-      .map((error: RJSFValidationError): RJSFValidationError => {
-        // Capitalize first letter
-        if (error.message !== undefined) {
-          error.message = error.message.charAt(0).toUpperCase() + error.message.slice(1) + ".";
-        }
-        error.stack = error.stack.charAt(0).toUpperCase() + error.stack.slice(1) + ".";
-        return error;
-      })
+  return errorCapitalizerTransformer(
+    errors.filter((error: RJSFValidationError): boolean => {
+      if (error.name === "additionalProperties") {
+        // TODO: Add Logger messages here once specialised loggers are added
+        return false;
+      }
+      if (error.name === "anyOf") {
+        return false;
+      }
+      return true;
+    })
   );
 };
 

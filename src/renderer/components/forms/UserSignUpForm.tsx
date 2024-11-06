@@ -1,13 +1,12 @@
 import { FC, useCallback, useState } from "react";
 import { AppRootContext, useAppRootContext } from "@renderer/components/roots/appRoot/AppRootContext";
 import { IBaseNewUserData } from "@shared/user/IBaseNewUserData";
-import { IFormNewUserData, FORM_NEW_USER_DATA_JSON_SCHEMA } from "@shared/user/IFormNewUserData";
+import { INewUserInputData, NEW_USER_INPUT_DATA_JSON_SCHEMA } from "@shared/user/INewUserInputData";
 import { Theme } from "@rjsf/mui";
 import { customizeValidator } from "@rjsf/validator-ajv8";
 import { withTheme, IChangeEvent } from "@rjsf/core";
-import { CustomValidator, ErrorTransformer, FormValidation, RJSFSchema, RJSFValidationError, UiSchema } from "@rjsf/utils";
+import { CustomValidator, FormValidation, RJSFSchema } from "@rjsf/utils";
 import { appLogger } from "@renderer/utils/loggers";
-import RJSFPasswordWidget from "@renderer/components/RJSFWidgets/RJSFPasswordWidget";
 import { encrypt } from "@renderer/utils/encryption/encrypt";
 import { IEncryptedBaseNewUserData } from "@shared/user/encrypted/IEncryptedBaseNewUserData";
 import SuccessfulUserRegistrationDialog, { SuccessfulUserSignUpDialogProps } from "@renderer/components/dialogs/SuccessfulUserSignUpDialog";
@@ -17,24 +16,17 @@ import { IEncryptedUserSignInCredentials } from "@shared/user/encrypted/IEncrypt
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPCAPIResponseStatus } from "@shared/IPC/IPCAPIResponseStatus";
 import { enqueueSnackbar } from "notistack";
+import { errorCapitalizerTransformer } from "@renderer/utils/RJSF/errorTransformers/errorCapitalizerTransformer";
+import { NEW_USER_INPUT_DATA_UI_SCHEMA } from "@renderer/user/account/uiSchemas/NewUserInputDataUiSchema";
 
-const MUIForm = withTheme<IFormNewUserData>(Theme);
+const MUIForm = withTheme<INewUserInputData>(Theme);
 
-const USER_SIGN_UP_FORM_UI_SCHEMA: UiSchema<IFormNewUserData> = {
-  password: {
-    "ui:widget": RJSFPasswordWidget
-  },
-  confirmPassword: {
-    "ui:widget": RJSFPasswordWidget
-  }
-};
+const USER_SIGN_UP_FORM_VALIDATOR = customizeValidator<INewUserInputData>();
 
-const USER_SIGN_UP_FORM_VALIDATOR = customizeValidator<IFormNewUserData>();
-
-const userSignUpFormCustomValidate: CustomValidator<IFormNewUserData> = (
-  formData: IFormNewUserData | undefined,
-  errors: FormValidation<IFormNewUserData>
-): FormValidation<IFormNewUserData> => {
+const userSignUpFormCustomValidate: CustomValidator<INewUserInputData> = (
+  formData: INewUserInputData | undefined,
+  errors: FormValidation<INewUserInputData>
+): FormValidation<INewUserInputData> => {
   // Skip if no form data or errors
   if (formData === undefined || errors.username === undefined || errors.confirmPassword === undefined) {
     return errors;
@@ -53,17 +45,6 @@ const userSignUpFormCustomValidate: CustomValidator<IFormNewUserData> = (
   return errors;
 };
 
-const userSignUpFormTransformErrors: ErrorTransformer<IFormNewUserData> = (errors: RJSFValidationError[]): RJSFValidationError[] => {
-  return errors.map((error: RJSFValidationError) => {
-    // Capitalize first letter
-    if (error.message !== undefined) {
-      error.message = error.message.charAt(0).toUpperCase() + error.message.slice(1) + ".";
-    }
-    error.stack = error.stack.charAt(0).toUpperCase() + error.stack.slice(1) + ".";
-    return error;
-  });
-};
-
 const UserSignUpForm: FC = () => {
   const appRootContext: AppRootContext = useAppRootContext();
   const [successfulUserSignUpDialogProps, setSuccessfulUserSignUpDialogProps] = useState<SuccessfulUserSignUpDialogProps>({
@@ -73,7 +54,7 @@ const UserSignUpForm: FC = () => {
     encryptedNewUserSignInCredentials: null
   });
   const signUpUser = useCallback(
-    (data: IChangeEvent<IFormNewUserData>): void => {
+    (data: IChangeEvent<INewUserInputData>): void => {
       appLogger.debug("Submitted user sign up form.");
       if (data.formData === undefined) {
         appLogger.error("Undefined sign up form data. No-op.");
@@ -173,12 +154,12 @@ const UserSignUpForm: FC = () => {
   return (
     <>
       <MUIForm
-        schema={FORM_NEW_USER_DATA_JSON_SCHEMA as RJSFSchema}
-        uiSchema={USER_SIGN_UP_FORM_UI_SCHEMA}
+        schema={NEW_USER_INPUT_DATA_JSON_SCHEMA as RJSFSchema}
+        uiSchema={NEW_USER_INPUT_DATA_UI_SCHEMA}
         validator={USER_SIGN_UP_FORM_VALIDATOR}
         showErrorList={false}
         customValidate={userSignUpFormCustomValidate}
-        transformErrors={userSignUpFormTransformErrors}
+        transformErrors={errorCapitalizerTransformer}
         onSubmit={signUpUser}
       >
         <Button type="submit" variant="contained" size="large" sx={{ marginTop: "1vw", marginBottom: "1vw" }}>

@@ -2,12 +2,11 @@ import { JSONSchemaType } from "ajv";
 import { IBaseNewUserData } from "./IBaseNewUserData";
 import { NEW_USER_PASSWORD_CONSTRAINTS, NEW_USER_USERNAME_CONSTRAINTS } from "./NewUserConstraints";
 
-// TODO: Rename this
-export interface IFormNewUserData extends IBaseNewUserData {
+export interface INewUserInputData extends IBaseNewUserData {
   confirmPassword: string;
 }
 
-export const FORM_NEW_USER_DATA_JSON_SCHEMA: JSONSchemaType<IFormNewUserData> = {
+export const NEW_USER_INPUT_DATA_JSON_SCHEMA: JSONSchemaType<INewUserInputData> = {
   $schema: "http://json-schema.org/draft-07/schema#",
   type: "object",
   properties: {
