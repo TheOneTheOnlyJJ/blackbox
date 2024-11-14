@@ -16,10 +16,10 @@ export interface IUserDataStorageConfigInputDataMap {
 // Union of all user data storage concrete implementation config input data interfaces
 export type UserDataStorageConfigInputData = IUserDataStorageConfigInputDataMap[keyof IUserDataStorageConfigInputDataMap];
 
-type UserDataStorageConfigInputDataJsonSchemaMap = {
+type UserDataStorageConfigInputDataJSONSchemaMap = {
   [K in UserDataStorageType]: JSONSchemaType<IUserDataStorageConfigInputDataMap[K]>;
 };
-export const USER_DATA_STORAGE_CONFIG_INPUT_DATA_SCHEMA_MAP: UserDataStorageConfigInputDataJsonSchemaMap = {
+export const USER_DATA_STORAGE_CONFIG_INPUT_DATA_SCHEMA_MAP: UserDataStorageConfigInputDataJSONSchemaMap = {
   [USER_DATA_STORAGE_TYPES.LocalSQLite]: LOCAL_SQLITE_USER_DATA_STORAGE_CONFIG_INPUT_DATA_SCHEMA,
   [USER_DATA_STORAGE_TYPES.OptionB]: OPTION_B_USER_DATA_STORAGE_CONFIG_INPUT_DATA_SCHEMA,
   [USER_DATA_STORAGE_TYPES.OptionC]: OPTION_C_USER_DATA_STORAGE_CONFIG_INPUT_DATA_SCHEMA

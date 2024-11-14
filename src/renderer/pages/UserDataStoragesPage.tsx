@@ -13,6 +13,10 @@ const UserDataStoragesPage: FC = () => {
   const signedInDashboardLayoutRootContext: ISignedInDashboardLayoutRootContext = useSignedInDashboardLayoutRootContext();
   // User data storage config form dialog
   const [isUserDataStorageConfigFormDialogOpen, setIsUserDataStorageConfigFormDialogOpen] = useState<boolean>(false);
+  useEffect((): void => {
+    appLogger.debug(`${isUserDataStorageConfigFormDialogOpen ? "Opened" : "Closed"} User Data Storage config form dialog.`);
+  }, [isUserDataStorageConfigFormDialogOpen]);
+
   const handleUserDataStorageConfigFormDialoggClose = useCallback((): void => {
     setIsUserDataStorageConfigFormDialogOpen(false);
   }, []);
