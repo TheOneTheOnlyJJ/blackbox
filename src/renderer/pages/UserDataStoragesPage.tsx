@@ -8,6 +8,13 @@ import {
 import Button from "@mui/material/Button/Button";
 import { appLogger } from "@renderer/utils/loggers";
 import UserDataStorageConfigFormDialog from "@renderer/components/dialogs/UserDataStorageConfigFormDialog";
+import { IChangeEvent } from "@rjsf/core";
+import { IUserDataStorageConfigWithMetadataInputData } from "@shared/user/data/storage/inputData/UserDataStorageConfigWithMetadataInputData";
+import { enqueueSnackbar } from "notistack";
+import { encrypt } from "@renderer/utils/encryption/encrypt";
+import { EncryptedUserDataStorageConfigWithMetadataInputData } from "@shared/user/account/encrypted/EncryptedUserDataStorageConfigWithMetadataInputData";
+import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
+import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 
 const UserDataStoragesPage: FC = () => {
   const signedInDashboardLayoutRootContext: ISignedInDashboardLayoutRootContext = useSignedInDashboardLayoutRootContext();
@@ -26,7 +33,50 @@ const UserDataStoragesPage: FC = () => {
     setIsUserDataStorageConfigFormDialogOpen(true);
   }, []);
 
-  useEffect(() => {
+  const handleUserDataStorageFormSubmit = useCallback(
+    (data: IChangeEvent<IUserDataStorageConfigWithMetadataInputData>): void => {
+      if (data.formData === undefined) {
+        appLogger.error("Undefined User Data Storage Config with metadata input data form data. No-op.");
+        enqueueSnackbar({ message: "Missing form data.", variant: "error" });
+        return;
+      }
+      if (signedInDashboardLayoutRootContext.rendererProcessAESKey === null) {
+        appLogger.error("Null AES encryption key. Cannot encrypt User Data Storage config with metadata input data. No-op.");
+        enqueueSnackbar({ message: "Missing encryption key.", variant: "error" });
+        return;
+      }
+      encrypt(JSON.stringify(data.formData), signedInDashboardLayoutRootContext.rendererProcessAESKey)
+        .then(
+          (encryptedUserDataStorageConfigWithMetadataInputData: EncryptedUserDataStorageConfigWithMetadataInputData): void => {
+            appLogger.debug("Done encrypting User Data Storage config with metadata input data.");
+            const ADD_NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_TO_USER_RESPONSE: IPCAPIResponse<boolean> =
+              window.userAPI.addNewUserDataStorageConfigWithMetadataToUser(encryptedUserDataStorageConfigWithMetadataInputData);
+            if (ADD_NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_TO_USER_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
+              if (ADD_NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_TO_USER_RESPONSE.data) {
+                enqueueSnackbar({ message: "New Data Storage config added successfully.", variant: "success" });
+              } else {
+                enqueueSnackbar({ message: "Could not add New User Data Storage config.", variant: "error" });
+              }
+            } else {
+              enqueueSnackbar({ message: "Error adding New User Data Storage config.", variant: "error" });
+            }
+          },
+          (reason: unknown): void => {
+            const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
+            appLogger.error(`Could not encrypt new User Data Storage config with metadata input data. Reason: ${REASON_MESSAGE}.`);
+            enqueueSnackbar({ message: "User Data Storage config encryption error.", variant: "error" });
+          }
+        )
+        .catch((err: unknown): void => {
+          const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+          appLogger.error(`Could not encrypt new User Data Storage config with metadata input data. Reason: ${ERROR_MESSAGE}.`);
+          enqueueSnackbar({ message: "User Data Storage config encryption error.", variant: "error" });
+        });
+    },
+    [signedInDashboardLayoutRootContext.rendererProcessAESKey]
+  );
+
+  useEffect((): void => {
     signedInDashboardLayoutRootContext.setAppBarTitle("Data Storages");
     signedInDashboardLayoutRootContext.setForbiddenLocationName("Data Storages");
   }, [signedInDashboardLayoutRootContext]);
@@ -49,7 +99,11 @@ const UserDataStoragesPage: FC = () => {
           New Data Storage
         </Button>
       </Box>
-      <UserDataStorageConfigFormDialog open={isUserDataStorageConfigFormDialogOpen} onClose={handleUserDataStorageConfigFormDialoggClose} />
+      <UserDataStorageConfigFormDialog
+        open={isUserDataStorageConfigFormDialogOpen}
+        handleFormSubmit={handleUserDataStorageFormSubmit}
+        onClose={handleUserDataStorageConfigFormDialoggClose}
+      />
     </>
   );
 };

@@ -7,7 +7,7 @@ export interface IOptionBUserDataStorageConfigInputData extends IBaseUserDataSto
   optionB: string;
 }
 
-export const OPTION_B_USER_DATA_STORAGE_CONFIG_INPUT_DATA_SCHEMA: JSONSchemaType<IOptionBUserDataStorageConfigInputData> = {
+export const OPTION_B_USER_DATA_STORAGE_CONFIG_INPUT_DATA_JSON_SCHEMA: JSONSchemaType<IOptionBUserDataStorageConfigInputData> = {
   type: "object",
   properties: {
     type: {

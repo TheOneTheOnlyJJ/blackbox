@@ -8,7 +8,7 @@ import { RJSFSchema } from "@rjsf/utils";
 import { customizeValidator } from "@rjsf/validator-ajv8";
 import Button from "@mui/material/Button/Button";
 import { IAppRootContext, useAppRootContext } from "@renderer/components/roots/appRoot/AppRootContext";
-import { IEncryptedUserSignInData } from "@shared/user/account/encrypted/EncryptedUserSignInData";
+import { EncryptedUserSignInData } from "@shared/user/account/encrypted/EncryptedUserSignInData";
 import { appLogger } from "@renderer/utils/loggers";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import Alert from "@mui/material/Alert/Alert";
@@ -39,9 +39,9 @@ const UserSignInForm: FC = () => {
       const USERNAME: string = data.formData.username;
       encrypt(JSON.stringify(data.formData), appRootContext.rendererProcessAESKey)
         .then(
-          (encryptedUserSignInCredentials: IEncryptedUserSignInData): void => {
+          (encryptedUserSignInData: EncryptedUserSignInData): void => {
             appLogger.debug("Done encrypting user sign in credentials.");
-            const SIGN_IN_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.signIn(encryptedUserSignInCredentials);
+            const SIGN_IN_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.signIn(encryptedUserSignInData);
             if (SIGN_IN_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
               if (SIGN_IN_RESPONSE.data) {
                 setWasSignInSuccessful(true);
@@ -61,7 +61,7 @@ const UserSignInForm: FC = () => {
         )
         .catch((err: unknown): void => {
           const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-          appLogger.error(`Could not encrypt user sign in credentials for user "${USERNAME}". ${ERROR_MESSAGE}.`);
+          appLogger.error(`Could not encrypt user sign in credentials for user "${USERNAME}". Reason: ${ERROR_MESSAGE}.`);
           enqueueSnackbar({ message: "Credentials encryption error.", variant: "error" });
         });
     },

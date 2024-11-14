@@ -10,7 +10,7 @@ import Alert from "@mui/material/Alert/Alert";
 import AlertTitle from "@mui/material/AlertTitle/AlertTitle";
 import DialogActions from "@mui/material/DialogActions/DialogActions";
 import Button from "@mui/material/Button/Button";
-import { IEncryptedUserSignInData } from "@shared/user/account/encrypted/EncryptedUserSignInData";
+import { EncryptedUserSignInData } from "@shared/user/account/encrypted/EncryptedUserSignInData";
 import { appLogger } from "@renderer/utils/loggers";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
@@ -20,7 +20,7 @@ export interface ISuccessfulUserSignUpDialogProps {
   open: DialogProps["open"];
   username: string;
   userCount: number | null;
-  encryptedNewUserSignInCredentials: IEncryptedUserSignInData | null;
+  encryptedNewUserSignInData: EncryptedUserSignInData | null;
 }
 
 const SuccessfulUserRegistrationDialog: FC<ISuccessfulUserSignUpDialogProps> = (props: ISuccessfulUserSignUpDialogProps) => {
@@ -36,13 +36,13 @@ const SuccessfulUserRegistrationDialog: FC<ISuccessfulUserSignUpDialogProps> = (
   }, [navigate]);
   const handleStartExploringButtonClick = useCallback((): void => {
     appLogger.debug("Start exploring button clicked.");
-    if (props.encryptedNewUserSignInCredentials === null) {
+    if (props.encryptedNewUserSignInData === null) {
       appLogger.debug("Null encrypted new user sign in credentials. No-op.");
       enqueueSnackbar({ message: "Missing encrypted sign in credentials.", variant: "error" });
       return;
     }
     appLogger.debug("Attempting sign in.");
-    const SIGN_IN_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.signIn(props.encryptedNewUserSignInCredentials);
+    const SIGN_IN_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.signIn(props.encryptedNewUserSignInData);
     // Automatic sign in should always work for a newly signed up account
     if (SIGN_IN_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
       if (SIGN_IN_RESPONSE.data) {
@@ -59,7 +59,7 @@ const SuccessfulUserRegistrationDialog: FC<ISuccessfulUserSignUpDialogProps> = (
       setSignInError(SIGN_IN_RESPONSE.error);
       enqueueSnackbar({ message: "Sign in error.", variant: "error" });
     }
-  }, [props.encryptedNewUserSignInCredentials]);
+  }, [props.encryptedNewUserSignInData]);
 
   return (
     <Dialog maxWidth="xl" open={props.open} onClose={handleDialogClose}>
@@ -91,10 +91,10 @@ const SuccessfulUserRegistrationDialog: FC<ISuccessfulUserSignUpDialogProps> = (
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button variant={props.encryptedNewUserSignInCredentials === null ? "contained" : "outlined"} onClick={handleBackToSignInButtonClick}>
+        <Button variant={props.encryptedNewUserSignInData === null ? "contained" : "outlined"} onClick={handleBackToSignInButtonClick}>
           Back to Sign In
         </Button>
-        {props.encryptedNewUserSignInCredentials !== null ? (
+        {props.encryptedNewUserSignInData !== null ? (
           <Button variant="contained" onClick={handleStartExploringButtonClick}>
             Start Exploring
           </Button>

@@ -63,7 +63,7 @@ const PasswordWidget: FC<WidgetProps> = (props: WidgetProps) => {
               <IconButton
                 aria-label="toggle password visibility"
                 onClick={(): void => {
-                  setDoShowPassword((prevShowPassword) => !prevShowPassword);
+                  setDoShowPassword((prevShowPassword: boolean): boolean => !prevShowPassword);
                 }}
               >
                 {doShowPassword ? <VisibilityIcon style={{ color: iconColor }} /> : <VisibilityOffIcon style={{ color: iconColor }} />}

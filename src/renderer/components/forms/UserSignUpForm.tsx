@@ -8,11 +8,11 @@ import { withTheme, IChangeEvent } from "@rjsf/core";
 import { CustomValidator, FormValidation, RJSFSchema } from "@rjsf/utils";
 import { appLogger } from "@renderer/utils/loggers";
 import { encrypt } from "@renderer/utils/encryption/encrypt";
-import { IEncryptedUserSignUpData } from "@shared/user/account/encrypted/EncryptedUserSignUpData";
+import { EncryptedUserSignUpData } from "@shared/user/account/encrypted/EncryptedUserSignUpData";
 import SuccessfulUserRegistrationDialog, { ISuccessfulUserSignUpDialogProps } from "@renderer/components/dialogs/SuccessfulUserSignUpDialog";
 import Button from "@mui/material/Button/Button";
 import { IUserSignInData } from "@shared/user/account/UserSignInData";
-import { IEncryptedUserSignInData } from "@shared/user/account/encrypted/EncryptedUserSignInData";
+import { EncryptedUserSignInData } from "@shared/user/account/encrypted/EncryptedUserSignInData";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { enqueueSnackbar } from "notistack";
@@ -51,7 +51,7 @@ const UserSignUpForm: FC = () => {
     open: false,
     username: "",
     userCount: null,
-    encryptedNewUserSignInCredentials: null
+    encryptedNewUserSignInData: null
   });
   const signUpUser = useCallback(
     (data: IChangeEvent<IUserSignUpInputData>): void => {
@@ -74,9 +74,9 @@ const UserSignUpForm: FC = () => {
       appLogger.debug(`Encrypting base new user data for new user "${USER_SIGN_UP_DATA.username}".`);
       encrypt(JSON.stringify(USER_SIGN_UP_DATA), appRootContext.rendererProcessAESKey)
         .then(
-          (encryptedBaseNewUserData: IEncryptedUserSignUpData): void => {
+          (encryptedUserSignUpData: EncryptedUserSignUpData): void => {
             appLogger.debug("Done encrypting base new user data.");
-            const SIGN_UP_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.signUp(encryptedBaseNewUserData);
+            const SIGN_UP_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.signUp(encryptedUserSignUpData);
             if (SIGN_UP_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
               enqueueSnackbar({ message: "Sign up error.", variant: "error" });
               return;
@@ -93,13 +93,13 @@ const UserSignUpForm: FC = () => {
                 username: USER_SIGN_UP_DATA.username,
                 password: USER_SIGN_UP_DATA.password
               };
-              let encryptedUserSignInData: IEncryptedUserSignInData | null = null;
+              let encryptedUserSignInData: EncryptedUserSignInData | null = null;
               appLogger.debug(`Encrypting new user sign in credentials for new user "${NEW_USER_SIGN_IN_DATA.username}".`);
               encrypt(JSON.stringify(NEW_USER_SIGN_IN_DATA), appRootContext.rendererProcessAESKey)
                 .then(
-                  (encryptedNewUserSignInCredentials: IEncryptedUserSignInData): void => {
+                  (encryptedNewUserSignInData: EncryptedUserSignInData): void => {
                     appLogger.debug("Done encrypting new user sign in credentials.");
-                    encryptedUserSignInData = encryptedNewUserSignInCredentials;
+                    encryptedUserSignInData = encryptedNewUserSignInData;
                   },
                   (reason: unknown): void => {
                     const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
@@ -127,7 +127,7 @@ const UserSignUpForm: FC = () => {
                     open: true,
                     username: USER_SIGN_UP_DATA.username,
                     userCount: userCount,
-                    encryptedNewUserSignInCredentials: encryptedUserSignInData
+                    encryptedNewUserSignInData: encryptedUserSignInData
                   });
                   enqueueSnackbar({ message: "Signed up." });
                 });

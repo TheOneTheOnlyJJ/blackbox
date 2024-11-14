@@ -10,7 +10,7 @@ export interface ILocalSQLiteUserDataStorageConfig extends IBaseUserDataStorageC
 }
 
 export class LocalSQLiteUserDataStorage extends UserDataStorage<ILocalSQLiteUserDataStorageConfig> {
-  public static readonly CONFIG_SCHEMA: JSONSchemaType<ILocalSQLiteUserDataStorageConfig> = {
+  public static readonly CONFIG_JSON_SCHEMA: JSONSchemaType<ILocalSQLiteUserDataStorageConfig> = {
     $schema: "http://json-schema.org/draft-07/schema#",
     type: "object",
     properties: {
@@ -32,6 +32,6 @@ export class LocalSQLiteUserDataStorage extends UserDataStorage<ILocalSQLiteUser
   };
 
   public constructor(config: ILocalSQLiteUserDataStorageConfig, logger: LogFunctions, ajv: Ajv) {
-    super(config, LocalSQLiteUserDataStorage.CONFIG_SCHEMA, logger, ajv);
+    super(config, LocalSQLiteUserDataStorage.CONFIG_JSON_SCHEMA, logger, ajv);
   }
 }

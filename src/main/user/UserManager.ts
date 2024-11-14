@@ -12,6 +12,10 @@ import Ajv, { ValidateFunction } from "ajv";
 import { UserAccountStorageConfig } from "./account/storage/UserAccountStorageConfig";
 import { IUserDataStorageConfigWithMetadata } from "./data/storage/UserDataStorageConfigWithMetadata";
 import { IUserSignInData, USER_SIGN_IN_DATA_JSON_SCHEMA } from "@shared/user/account/UserSignInData";
+import {
+  IUserDataStorageConfigWithMetadataInputData,
+  USER_DATA_STORAGE_CONFIG_WITH_METADATA_INPUT_DATA_JSON_SCHEMA
+} from "@shared/user/data/storage/inputData/UserDataStorageConfigWithMetadataInputData";
 
 export class UserManager {
   private readonly logger: LogFunctions;
@@ -34,6 +38,7 @@ export class UserManager {
   public readonly USER_SIGN_UP_DATA_VALIDATE_FUNCTION: ValidateFunction<IUserSignUpData>;
   public readonly USER_SIGN_IN_DATA_VALIDATE_FUNCTION: ValidateFunction<IUserSignInData>;
   public readonly CURRENTLY_SIGNED_IN_USER_VALIDATE_FUNCTION: ValidateFunction<ICurrentlySignedInUser>;
+  public readonly USER_DATA_STORAGE_CONFIG_WITH_METADATA_INPUT_DATA_VALIDATE_FUNCTION: ValidateFunction<IUserDataStorageConfigWithMetadataInputData>;
 
   public constructor(logger: LogFunctions, userAccountStorageLogger: LogFunctions, ajv: Ajv) {
     // Loggers
@@ -45,6 +50,9 @@ export class UserManager {
     this.USER_SIGN_UP_DATA_VALIDATE_FUNCTION = this.AJV.compile<IUserSignUpData>(USER_SIGN_UP_DATA_JSON_SCHEMA);
     this.USER_SIGN_IN_DATA_VALIDATE_FUNCTION = this.AJV.compile<IUserSignInData>(USER_SIGN_IN_DATA_JSON_SCHEMA);
     this.CURRENTLY_SIGNED_IN_USER_VALIDATE_FUNCTION = this.AJV.compile<ICurrentlySignedInUser>(CURRENTLY_SIGNED_IN_USER_SCHEMA);
+    this.USER_DATA_STORAGE_CONFIG_WITH_METADATA_INPUT_DATA_VALIDATE_FUNCTION = this.AJV.compile<IUserDataStorageConfigWithMetadataInputData>(
+      USER_DATA_STORAGE_CONFIG_WITH_METADATA_INPUT_DATA_JSON_SCHEMA
+    );
     // Currently signed in user
     this.onCurrentlySignedInUserChangeCallback = (): void => {
       this.logger.debug("No currently signed in user change callback set.");

@@ -1,10 +1,9 @@
-import { FC, useCallback } from "react";
-import { FormProps, IChangeEvent, withTheme } from "@rjsf/core";
+import { FC } from "react";
+import { FormProps, withTheme } from "@rjsf/core";
 import { Theme } from "@rjsf/mui";
 import { ErrorTransformer, RJSFSchema, RJSFValidationError } from "@rjsf/utils";
 import { customizeValidator } from "@rjsf/validator-ajv8";
 import { appLogger } from "@renderer/utils/loggers";
-import { enqueueSnackbar } from "notistack";
 import { errorCapitalizerTransformer } from "@renderer/utils/RJSF/errorTransformers/errorCapitalizerTransformer";
 import {
   IUserDataStorageConfigWithMetadataInputData,
@@ -38,21 +37,12 @@ const userDataStorageConfigInputDataFormTransformErrors: ErrorTransformer<IUserD
 
 export interface IUserDataStorageConfigFormProps {
   formRef: FormProps["ref"];
+  handleFormSubmit: FormProps<IUserDataStorageConfigWithMetadataInputData>["onSubmit"];
   doRenderSubmitButton: boolean;
 }
 
 // TODO: Get title in error messages properly
 const UserDataStorageConfigForm: FC<IUserDataStorageConfigFormProps> = (props: IUserDataStorageConfigFormProps) => {
-  const handleSubmit = useCallback((data: IChangeEvent<IUserDataStorageConfigWithMetadataInputData>): void => {
-    if (data.formData === undefined) {
-      appLogger.error("Undefined User Data Storage Config form data. No-op.");
-      enqueueSnackbar({ message: "Missing form data.", variant: "error" });
-      return;
-    }
-    appLogger.info("Submitted User Data Storage Config form data.");
-    enqueueSnackbar({ message: "Submitted form data.", variant: "info" });
-  }, []);
-
   return (
     <MUIForm
       ref={props.formRef}
@@ -66,7 +56,7 @@ const UserDataStorageConfigForm: FC<IUserDataStorageConfigFormProps> = (props: I
       liveOmit={true}
       showErrorList={false}
       transformErrors={userDataStorageConfigInputDataFormTransformErrors}
-      onSubmit={handleSubmit}
+      onSubmit={props.handleFormSubmit}
     />
   );
 };

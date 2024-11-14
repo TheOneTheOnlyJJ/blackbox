@@ -3,13 +3,15 @@ import { FC, Ref, useCallback, useRef } from "react";
 import DialogContent from "@mui/material/DialogContent/DialogContent";
 import DialogActions from "@mui/material/DialogActions/DialogActions";
 import UserDataStorageConfigForm from "../forms/UserDataStorageConfigForm";
-import Form from "@rjsf/core";
+import Form, { FormProps } from "@rjsf/core";
 import Button from "@mui/material/Button/Button";
 import { appLogger } from "@renderer/utils/loggers";
 import { enqueueSnackbar } from "notistack";
+import { IUserDataStorageConfigWithMetadataInputData } from "@shared/user/data/storage/inputData/UserDataStorageConfigWithMetadataInputData";
 
 export interface IUserDataStorageConfigFormDialogProps {
   open: DialogProps["open"];
+  handleFormSubmit: FormProps<IUserDataStorageConfigWithMetadataInputData>["onSubmit"];
   onClose: () => void;
 }
 
@@ -24,10 +26,11 @@ const UserDataStorageConfigFormDialog: FC<IUserDataStorageConfigFormDialogProps>
     appLogger.info("Valid User Data Storage Config form data. Submitting.");
     formRef.current.submit();
   }, []);
+
   return (
     <Dialog maxWidth="md" fullWidth={true} open={props.open} onClose={props.onClose}>
       <DialogContent>
-        <UserDataStorageConfigForm formRef={formRef} doRenderSubmitButton={false} />
+        <UserDataStorageConfigForm formRef={formRef} handleFormSubmit={props.handleFormSubmit} doRenderSubmitButton={false} />
       </DialogContent>
       <DialogActions>
         <Button onClick={props.onClose}>Cancel</Button>

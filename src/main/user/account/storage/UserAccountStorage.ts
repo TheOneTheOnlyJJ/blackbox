@@ -3,7 +3,7 @@ import Ajv, { JSONSchemaType, ValidateFunction } from "ajv";
 import { UserAccountStorageType } from "./UserAccountStorageType";
 import { ISecuredUserSignUpData } from "../SecuredNewUserData";
 import { UUID } from "node:crypto";
-import { USER_DATA_STORAGE_CONFIG_SCHEMA, UserDataStorageConfig } from "../../data/storage/UserDataStorageConfig";
+import { USER_DATA_STORAGE_CONFIG_JSON_SCHEMA, UserDataStorageConfig } from "../../data/storage/UserDataStorageConfig";
 import { IUserDataStorageConfigWithMetadata } from "../../data/storage/UserDataStorageConfigWithMetadata";
 
 // Every user account storage must have at least the type in its config (should be further narrowed down to its own in the specific config)
@@ -26,7 +26,7 @@ export abstract class UserAccountStorage<T extends IBaseUserAccountStorageConfig
     if (!this.isConfigValid()) {
       throw new Error(`Could not initialise User Acount Storage`);
     }
-    this.USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION = ajv.compile<UserDataStorageConfig>(USER_DATA_STORAGE_CONFIG_SCHEMA);
+    this.USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION = ajv.compile<UserDataStorageConfig>(USER_DATA_STORAGE_CONFIG_JSON_SCHEMA);
   }
 
   private isConfigValid(): boolean {

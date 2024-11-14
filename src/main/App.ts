@@ -19,10 +19,10 @@ import { testAESKey } from "@main/utils/encryption/testAESKey";
 import { insertLineBreaks } from "@shared/utils/insertNewLines";
 import { bufferToArrayBuffer } from "@main/utils/typeConversions/bufferToArrayBuffer";
 import { decryptJSON } from "@main/utils/encryption/decryptJSON";
-import { IEncryptedUserSignUpData } from "@shared/user/account/encrypted/EncryptedUserSignUpData";
+import { EncryptedUserSignUpData } from "@shared/user/account/encrypted/EncryptedUserSignUpData";
 import { ICurrentlySignedInUser } from "@shared/user/account/CurrentlySignedInUser";
 import { IUserSignInData } from "@shared/user/account/UserSignInData";
-import { IEncryptedUserSignInData } from "@shared/user/account/encrypted/EncryptedUserSignInData";
+import { EncryptedUserSignInData } from "@shared/user/account/encrypted/EncryptedUserSignInData";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { SettingsManager } from "@main/settings/SettingsManager";
@@ -31,6 +31,10 @@ import { SETTINGS_MANAGER_TYPE } from "@main/settings/SettingsManagerType";
 import { WINDOW_STATES, WindowPosition, WindowPositionWatcher, WindowStates } from "@main/settings/WindowPositionWatcher";
 import Ajv from "ajv";
 import { UserAccountStorageConfig } from "@main/user/account/storage/UserAccountStorageConfig";
+import { EncryptedUserDataStorageConfigWithMetadataInputData } from "@shared/user/account/encrypted/EncryptedUserDataStorageConfigWithMetadataInputData";
+import { IUserDataStorageConfigWithMetadataInputData } from "@shared/user/data/storage/inputData/UserDataStorageConfigWithMetadataInputData";
+import { userDataStorageConfigInputDataToUserDataStorageConfig } from "./user/data/storage/UserDataStorageConfigInputDataToUserDataStorageConfig";
+import { UserDataStorageConfig } from "./user/data/storage/UserDataStorageConfig";
 
 type WindowPositionSetting = Rectangle | WindowStates["FullScreen"] | WindowStates["Maximized"];
 
@@ -41,6 +45,9 @@ interface IWindowSettings {
 export interface IAppSettings {
   window: IWindowSettings;
 }
+
+type MainProcessIPCTLSAPIIPCHandlers = MainProcessIPCAPIHandlers<IIPCTLSAPI>;
+type MainProcessUserAPIIPCHandlers = MainProcessIPCAPIHandlers<IUserAPI>;
 
 export class App {
   // Own singleton instance
@@ -152,7 +159,7 @@ export class App {
   private readonly AJV: Ajv = new Ajv({ strict: true });
 
   // IPC API handlers
-  private readonly IPC_TLS_API_HANDLERS: MainProcessIPCAPIHandlers<IIPCTLSAPI> = {
+  private readonly IPC_TLS_API_HANDLERS: MainProcessIPCTLSAPIIPCHandlers = {
     handleGetMainProcessPublicRSAKeyDER: (): IPCAPIResponse<ArrayBuffer> => {
       this.IPCTLSAPILogger.debug("Received main process public RSA key request.");
       try {
@@ -202,8 +209,8 @@ export class App {
     }
   };
 
-  private readonly USER_API_HANDLERS: MainProcessIPCAPIHandlers<IUserAPI> = {
-    handleSignUp: (encryptedUserSignUpData: IEncryptedUserSignUpData): IPCAPIResponse<boolean> => {
+  private readonly USER_API_HANDLERS: MainProcessUserAPIIPCHandlers = {
+    handleSignUp: (encryptedUserSignUpData: EncryptedUserSignUpData): IPCAPIResponse<boolean> => {
       this.IPCUserAPILogger.debug(`Received sign up request.`);
       try {
         if (this.rendererProcessAESKey === null) {
@@ -229,7 +236,7 @@ export class App {
         return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
-    handleSignIn: (encryptedUserSignInData: IEncryptedUserSignInData): IPCAPIResponse<boolean> => {
+    handleSignIn: (encryptedUserSignInData: EncryptedUserSignInData): IPCAPIResponse<boolean> => {
       this.IPCUserAPILogger.debug("Received sign in request.");
       try {
         if (this.rendererProcessAESKey === null) {
@@ -299,6 +306,36 @@ export class App {
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
         this.IPCUserAPILogger.error(`Could not get currently signed in user: ${ERROR_MESSAGE}!`);
+        return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
+      }
+    },
+    handleAddNewUserDataStorageConfigWithMetadataToUser: (
+      encryptedNewUserDataStorageConfigWithMetadataInputData: EncryptedUserDataStorageConfigWithMetadataInputData
+    ): IPCAPIResponse<boolean> => {
+      this.IPCUserAPILogger.debug("Received add new User Data Storage config with metadata request.");
+      try {
+        if (this.rendererProcessAESKey === null) {
+          throw new Error("Null renderer process AES key.");
+        }
+        const DECRYPTED_NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_INPUT_DATA: IUserDataStorageConfigWithMetadataInputData =
+          decryptJSON<IUserDataStorageConfigWithMetadataInputData>(
+            encryptedNewUserDataStorageConfigWithMetadataInputData,
+            this.userManager.USER_DATA_STORAGE_CONFIG_WITH_METADATA_INPUT_DATA_VALIDATE_FUNCTION,
+            this.rendererProcessAESKey,
+            this.IPCUserAPILogger,
+            "User Data Storage config with metadata input data"
+          );
+        const NEW_USER_DATA_STORAGE_CONFIG: UserDataStorageConfig = userDataStorageConfigInputDataToUserDataStorageConfig(
+          DECRYPTED_NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_INPUT_DATA.config,
+          this.IPCUserAPILogger
+        );
+        this.IPCUserAPILogger.debug(`New User Data Storage config: ${JSON.stringify(NEW_USER_DATA_STORAGE_CONFIG, null, 2)}.`);
+        // TODO: Implement this
+        // TODO: Add user to add it to as a parameter
+        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: true };
+      } catch (err: unknown) {
+        const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+        this.IPCUserAPILogger.error(`Could not add new User Data Storage config with metadata: ${ERROR_MESSAGE}!`);
         return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
@@ -640,14 +677,14 @@ export class App {
     ipcMain.on(USER_API_IPC_CHANNELS.isUsernameAvailable, (event: IpcMainEvent, username: string): void => {
       event.returnValue = this.USER_API_HANDLERS.handleIsUsernameAvailable(username);
     });
-    ipcMain.on(USER_API_IPC_CHANNELS.signUp, (event: IpcMainEvent, encryptedBaseNewUserData: IEncryptedUserSignUpData): void => {
-      event.returnValue = this.USER_API_HANDLERS.handleSignUp(encryptedBaseNewUserData);
+    ipcMain.on(USER_API_IPC_CHANNELS.signUp, (event: IpcMainEvent, encryptedUserSignUpData: EncryptedUserSignUpData): void => {
+      event.returnValue = this.USER_API_HANDLERS.handleSignUp(encryptedUserSignUpData);
     });
     ipcMain.on(USER_API_IPC_CHANNELS.getUserCount, (event: IpcMainEvent): void => {
       event.returnValue = this.USER_API_HANDLERS.handleGetUserCount();
     });
-    ipcMain.on(USER_API_IPC_CHANNELS.signIn, (event: IpcMainEvent, encryptedUserSignInCredentials: IEncryptedUserSignInData): void => {
-      event.returnValue = this.USER_API_HANDLERS.handleSignIn(encryptedUserSignInCredentials);
+    ipcMain.on(USER_API_IPC_CHANNELS.signIn, (event: IpcMainEvent, encryptedUserSignInData: EncryptedUserSignInData): void => {
+      event.returnValue = this.USER_API_HANDLERS.handleSignIn(encryptedUserSignInData);
     });
     ipcMain.on(USER_API_IPC_CHANNELS.signOut, (event: IpcMainEvent): void => {
       event.returnValue = this.USER_API_HANDLERS.handleSignOut();
@@ -655,5 +692,13 @@ export class App {
     ipcMain.on(USER_API_IPC_CHANNELS.getCurrentlySignedInUser, (event: IpcMainEvent): void => {
       event.returnValue = this.USER_API_HANDLERS.handleGetCurrentlySignedInUser();
     });
+    ipcMain.on(
+      USER_API_IPC_CHANNELS.addNewUserDataStorageConfigWithMetadataToUser,
+      (event: IpcMainEvent, encryptedNewUserDataStorageConfigWithMetadataInputData: EncryptedUserDataStorageConfigWithMetadataInputData): void => {
+        event.returnValue = this.USER_API_HANDLERS.handleAddNewUserDataStorageConfigWithMetadataToUser(
+          encryptedNewUserDataStorageConfigWithMetadataInputData
+        );
+      }
+    );
   }
 }

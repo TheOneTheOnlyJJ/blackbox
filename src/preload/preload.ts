@@ -3,9 +3,10 @@ import { IPC_TLS_API_IPC_CHANNELS, USER_API_IPC_CHANNELS } from "@main/utils/IPC
 import { CurrentlySignedInUserChangeCallback, IUserAPI, UserAccountStorageAvailabilityChangeCallback } from "@shared/IPC/APIs/UserAPI";
 import { IIPCTLSAPI } from "@shared/IPC/APIs/IPCTLSAPI";
 import { ICurrentlySignedInUser } from "@shared/user/account/CurrentlySignedInUser";
-import { IEncryptedUserSignInData } from "@shared/user/account/encrypted/EncryptedUserSignInData";
-import { IEncryptedUserSignUpData } from "@shared/user/account/encrypted/EncryptedUserSignUpData";
+import { EncryptedUserSignInData } from "@shared/user/account/encrypted/EncryptedUserSignInData";
+import { EncryptedUserSignUpData } from "@shared/user/account/encrypted/EncryptedUserSignUpData";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
+import { EncryptedUserDataStorageConfigWithMetadataInputData } from "@shared/user/account/encrypted/EncryptedUserDataStorageConfigWithMetadataInputData";
 
 const IPC_TLS_API: IIPCTLSAPI = {
   getMainProcessPublicRSAKeyDER: (): IPCAPIResponse<ArrayBuffer> => {
@@ -17,10 +18,10 @@ const IPC_TLS_API: IIPCTLSAPI = {
 };
 
 const USER_STORAGE_API: IUserAPI = {
-  signUp: (encryptedUserSignUpData: IEncryptedUserSignUpData): IPCAPIResponse<boolean> => {
+  signUp: (encryptedUserSignUpData: EncryptedUserSignUpData): IPCAPIResponse<boolean> => {
     return ipcRenderer.sendSync(USER_API_IPC_CHANNELS.signUp, encryptedUserSignUpData) as IPCAPIResponse<boolean>;
   },
-  signIn: (encryptedSignInCredentials: IEncryptedUserSignInData): IPCAPIResponse<boolean> => {
+  signIn: (encryptedSignInCredentials: EncryptedUserSignInData): IPCAPIResponse<boolean> => {
     return ipcRenderer.sendSync(USER_API_IPC_CHANNELS.signIn, encryptedSignInCredentials) as IPCAPIResponse<boolean>;
   },
   signOut: (): IPCAPIResponse => {
@@ -37,6 +38,14 @@ const USER_STORAGE_API: IUserAPI = {
   },
   getCurrentlySignedInUser: (): IPCAPIResponse<ICurrentlySignedInUser | null> => {
     return ipcRenderer.sendSync(USER_API_IPC_CHANNELS.getCurrentlySignedInUser) as IPCAPIResponse<ICurrentlySignedInUser | null>;
+  },
+  addNewUserDataStorageConfigWithMetadataToUser: (
+    encryptedNewUserDataStorageConfigWithMetadataInputData: EncryptedUserDataStorageConfigWithMetadataInputData
+  ) => {
+    return ipcRenderer.sendSync(
+      USER_API_IPC_CHANNELS.addNewUserDataStorageConfigWithMetadataToUser,
+      encryptedNewUserDataStorageConfigWithMetadataInputData
+    ) as IPCAPIResponse<boolean>;
   },
   onAccountStorageAvailabilityChange: (callback: UserAccountStorageAvailabilityChangeCallback): (() => void) => {
     const LISTENER = (_: IpcRendererEvent, isAvailable: boolean): void => {

@@ -1,4 +1,4 @@
-import { IEncryptedData } from "@shared/utils/EncryptedData";
+import { IEncryptedData } from "@shared/utils/IEncryptedData";
 
 const ENCODER = new TextEncoder();
 

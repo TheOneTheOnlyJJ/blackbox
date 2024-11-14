@@ -13,6 +13,7 @@ export const USER_API_IPC_CHANNELS = {
   getUserCount: "userAPI:getUserCount",
   signIn: "userAPI:signIn",
   signOut: "userAPI:signOut",
+  addNewUserDataStorageConfigWithMetadataToUser: "userAPI:addNewUserDataStorageConfigWithMetadataToUser",
   getCurrentlySignedInUser: "userAPI:getCurrentlySignedInUser",
   onCurrentlySignedInUserChange: "userAPI:onCurrentlySignedInUserChange"
 } as const;

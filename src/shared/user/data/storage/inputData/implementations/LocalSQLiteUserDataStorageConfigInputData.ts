@@ -8,7 +8,7 @@ export interface ILocalSQLiteUserDataStorageConfigInputData extends IBaseUserDat
   dbFileName: string;
 }
 
-export const LOCAL_SQLITE_USER_DATA_STORAGE_CONFIG_INPUT_DATA_SCHEMA: JSONSchemaType<ILocalSQLiteUserDataStorageConfigInputData> = {
+export const LOCAL_SQLITE_USER_DATA_STORAGE_CONFIG_INPUT_DATA_JSON_SCHEMA: JSONSchemaType<ILocalSQLiteUserDataStorageConfigInputData> = {
   $schema: "http://json-schema.org/draft-07/schema#",
   type: "object",
   properties: {
