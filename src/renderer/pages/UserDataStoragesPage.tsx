@@ -12,9 +12,10 @@ import { IChangeEvent } from "@rjsf/core";
 import { IUserDataStorageConfigWithMetadataInputData } from "@shared/user/data/storage/inputData/UserDataStorageConfigWithMetadataInputData";
 import { enqueueSnackbar } from "notistack";
 import { encrypt } from "@renderer/utils/encryption/encrypt";
-import { EncryptedUserDataStorageConfigWithMetadataInputData } from "@shared/user/account/encrypted/EncryptedUserDataStorageConfigWithMetadataInputData";
+import { EncryptedNewUserDataStorageConfigWithMetadataDTO } from "@shared/user/account/encrypted/EncryptedNewUserDataStorageConfigWithMetadataDTO";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
+import { INewUserDataStorageConfigWithMetadataDTO } from "@shared/user/data/storage/NewUserDataStorageConfigWithMetadataDTO";
 
 const UserDataStoragesPage: FC = () => {
   const signedInDashboardLayoutRootContext: ISignedInDashboardLayoutRootContext = useSignedInDashboardLayoutRootContext();
@@ -45,12 +46,16 @@ const UserDataStoragesPage: FC = () => {
         enqueueSnackbar({ message: "Missing encryption key.", variant: "error" });
         return;
       }
-      encrypt(JSON.stringify(data.formData), signedInDashboardLayoutRootContext.rendererProcessAESKey)
+      const NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_DTO: INewUserDataStorageConfigWithMetadataDTO = {
+        userId: signedInDashboardLayoutRootContext.currentlySignedInUser.userId,
+        userDataStorageConfigWithMetadataInputData: data.formData
+      };
+      encrypt(JSON.stringify(NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_DTO), signedInDashboardLayoutRootContext.rendererProcessAESKey)
         .then(
-          (encryptedUserDataStorageConfigWithMetadataInputData: EncryptedUserDataStorageConfigWithMetadataInputData): void => {
+          (encryptedNewUserDataStorageConfigWithMetadataDTO: EncryptedNewUserDataStorageConfigWithMetadataDTO): void => {
             appLogger.debug("Done encrypting User Data Storage config with metadata input data.");
             const ADD_NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_TO_USER_RESPONSE: IPCAPIResponse<boolean> =
-              window.userAPI.addNewUserDataStorageConfigWithMetadataToUser(encryptedUserDataStorageConfigWithMetadataInputData);
+              window.userAPI.addNewUserDataStorageConfigWithMetadataToUser(encryptedNewUserDataStorageConfigWithMetadataDTO);
             if (ADD_NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_TO_USER_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
               if (ADD_NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_TO_USER_RESPONSE.data) {
                 enqueueSnackbar({ message: "New Data Storage config added successfully.", variant: "success" });
@@ -73,7 +78,7 @@ const UserDataStoragesPage: FC = () => {
           enqueueSnackbar({ message: "User Data Storage config encryption error.", variant: "error" });
         });
     },
-    [signedInDashboardLayoutRootContext.rendererProcessAESKey]
+    [signedInDashboardLayoutRootContext.currentlySignedInUser.userId, signedInDashboardLayoutRootContext.rendererProcessAESKey]
   );
 
   useEffect((): void => {

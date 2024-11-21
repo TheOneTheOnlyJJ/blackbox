@@ -6,7 +6,7 @@ import { ICurrentlySignedInUser } from "@shared/user/account/CurrentlySignedInUs
 import { EncryptedUserSignInData } from "@shared/user/account/encrypted/EncryptedUserSignInData";
 import { EncryptedUserSignUpData } from "@shared/user/account/encrypted/EncryptedUserSignUpData";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
-import { EncryptedUserDataStorageConfigWithMetadataInputData } from "@shared/user/account/encrypted/EncryptedUserDataStorageConfigWithMetadataInputData";
+import { EncryptedNewUserDataStorageConfigWithMetadataDTO } from "@shared/user/account/encrypted/EncryptedNewUserDataStorageConfigWithMetadataDTO";
 
 const IPC_TLS_API: IIPCTLSAPI = {
   getMainProcessPublicRSAKeyDER: (): IPCAPIResponse<ArrayBuffer> => {
@@ -40,11 +40,11 @@ const USER_STORAGE_API: IUserAPI = {
     return ipcRenderer.sendSync(USER_API_IPC_CHANNELS.getCurrentlySignedInUser) as IPCAPIResponse<ICurrentlySignedInUser | null>;
   },
   addNewUserDataStorageConfigWithMetadataToUser: (
-    encryptedNewUserDataStorageConfigWithMetadataInputData: EncryptedUserDataStorageConfigWithMetadataInputData
+    encryptedNewUserDataStorageConfigWithMetadataDTO: EncryptedNewUserDataStorageConfigWithMetadataDTO
   ) => {
     return ipcRenderer.sendSync(
       USER_API_IPC_CHANNELS.addNewUserDataStorageConfigWithMetadataToUser,
-      encryptedNewUserDataStorageConfigWithMetadataInputData
+      encryptedNewUserDataStorageConfigWithMetadataDTO
     ) as IPCAPIResponse<boolean>;
   },
   onAccountStorageAvailabilityChange: (callback: UserAccountStorageAvailabilityChangeCallback): (() => void) => {

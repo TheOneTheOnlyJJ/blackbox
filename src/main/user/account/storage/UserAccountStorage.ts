@@ -55,7 +55,7 @@ export abstract class UserAccountStorage<T extends IBaseUserAccountStorageConfig
   // public abstract getAllUsers(): IUser[];
   public abstract getUserCount(): number;
   // public abstract isIdValid(id: UserId): boolean;
-  public abstract addUserDataStorageConfig(userId: UUID, userDataStorageConfigWithMetadata: IUserDataStorageConfigWithMetadata): boolean;
+  public abstract addUserDataStorageConfigToUser(userId: UUID, userDataStorageConfigWithMetadata: IUserDataStorageConfigWithMetadata): boolean;
   public abstract getAllUserDataStorageConfigs(userId: UUID): IUserDataStorageConfigWithMetadata[];
   public abstract close(): boolean;
 }

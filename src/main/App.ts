@@ -12,7 +12,7 @@ import { IpcMainEvent } from "electron";
 import { IUserAPI } from "@shared/IPC/APIs/UserAPI";
 import { MainProcessIPCAPIHandlers } from "@main/utils/IPC/MainProcessIPCAPIHandlers";
 import { IUserSignUpData } from "@shared/user/account/UserSignUpData";
-import { generateKeyPairSync, webcrypto } from "node:crypto";
+import { generateKeyPairSync, randomUUID, UUID, webcrypto } from "node:crypto";
 import { IIPCTLSAPI } from "@shared/IPC/APIs/IPCTLSAPI";
 import { ISecuredUserSignUpData } from "@main/user/account/SecuredNewUserData";
 import { testAESKey } from "@main/utils/encryption/testAESKey";
@@ -30,11 +30,13 @@ import { SettingsManagerConfig, settingsManagerFactory } from "@main/settings/se
 import { SETTINGS_MANAGER_TYPE } from "@main/settings/SettingsManagerType";
 import { WINDOW_STATES, WindowPosition, WindowPositionWatcher, WindowStates } from "@main/settings/WindowPositionWatcher";
 import Ajv from "ajv";
+import addFormats from "ajv-formats";
 import { UserAccountStorageConfig } from "@main/user/account/storage/UserAccountStorageConfig";
-import { EncryptedUserDataStorageConfigWithMetadataInputData } from "@shared/user/account/encrypted/EncryptedUserDataStorageConfigWithMetadataInputData";
-import { IUserDataStorageConfigWithMetadataInputData } from "@shared/user/data/storage/inputData/UserDataStorageConfigWithMetadataInputData";
-import { userDataStorageConfigInputDataToUserDataStorageConfig } from "./user/data/storage/UserDataStorageConfigInputDataToUserDataStorageConfig";
+import { EncryptedNewUserDataStorageConfigWithMetadataDTO } from "@shared/user/account/encrypted/EncryptedNewUserDataStorageConfigWithMetadataDTO";
+import { INewUserDataStorageConfigWithMetadataDTO } from "@shared/user/data/storage/NewUserDataStorageConfigWithMetadataDTO";
 import { UserDataStorageConfig } from "./user/data/storage/UserDataStorageConfig";
+import { userDataStorageConfigInputDataToUserDataStorageConfig } from "./user/data/storage/userDataStorageConfigInputDataToUserDataStorageConfig";
+import { IUserDataStorageConfigWithMetadata } from "./user/data/storage/UserDataStorageConfigWithMetadata";
 
 type WindowPositionSetting = Rectangle | WindowStates["FullScreen"] | WindowStates["Maximized"];
 
@@ -310,29 +312,38 @@ export class App {
       }
     },
     handleAddNewUserDataStorageConfigWithMetadataToUser: (
-      encryptedNewUserDataStorageConfigWithMetadataInputData: EncryptedUserDataStorageConfigWithMetadataInputData
+      encryptedNewUserDataStorageConfigWithMetadataDTO: EncryptedNewUserDataStorageConfigWithMetadataDTO
     ): IPCAPIResponse<boolean> => {
       this.IPCUserAPILogger.debug("Received add new User Data Storage config with metadata request.");
       try {
         if (this.rendererProcessAESKey === null) {
           throw new Error("Null renderer process AES key.");
         }
-        const DECRYPTED_NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_INPUT_DATA: IUserDataStorageConfigWithMetadataInputData =
-          decryptJSON<IUserDataStorageConfigWithMetadataInputData>(
-            encryptedNewUserDataStorageConfigWithMetadataInputData,
-            this.userManager.USER_DATA_STORAGE_CONFIG_WITH_METADATA_INPUT_DATA_VALIDATE_FUNCTION,
+        const DECRYPTED_NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_DTO: INewUserDataStorageConfigWithMetadataDTO =
+          decryptJSON<INewUserDataStorageConfigWithMetadataDTO>(
+            encryptedNewUserDataStorageConfigWithMetadataDTO,
+            this.userManager.NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_DTO_VALIDATE_FUNCTION,
             this.rendererProcessAESKey,
             this.IPCUserAPILogger,
             "User Data Storage config with metadata input data"
           );
         const NEW_USER_DATA_STORAGE_CONFIG: UserDataStorageConfig = userDataStorageConfigInputDataToUserDataStorageConfig(
-          DECRYPTED_NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_INPUT_DATA.config,
+          DECRYPTED_NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_DTO.userDataStorageConfigWithMetadataInputData.config,
           this.IPCUserAPILogger
         );
         this.IPCUserAPILogger.debug(`New User Data Storage config: ${JSON.stringify(NEW_USER_DATA_STORAGE_CONFIG, null, 2)}.`);
-        // TODO: Implement this
-        // TODO: Add user to add it to as a parameter
-        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: true };
+        const NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA: IUserDataStorageConfigWithMetadata = {
+          configId: randomUUID({ disableEntropyCache: true }),
+          name: DECRYPTED_NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_DTO.userDataStorageConfigWithMetadataInputData.name,
+          config: NEW_USER_DATA_STORAGE_CONFIG
+        };
+        return {
+          status: IPC_API_RESPONSE_STATUSES.SUCCESS,
+          data: this.userManager.addUserDataStorageConfigToUser(
+            DECRYPTED_NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_DTO.userId as UUID,
+            NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA
+          )
+        };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
         this.IPCUserAPILogger.error(`Could not add new User Data Storage config with metadata: ${ERROR_MESSAGE}!`);
@@ -375,6 +386,8 @@ export class App {
     // Add start log separator (also create file if missing)
     appendFileSync(this.LOG_FILE_PATH, `---------- Start : ${new Date().toISOString()} ----------\n`, "utf-8");
     this.bootstrapLogger.info(`Using log file at path: "${log.transports.file.getFile().path}".`);
+    // Add format validation plugin to AJV
+    addFormats(this.AJV);
     // Initialise required managers & watchers
     this.userManager = new UserManager(this.userManagerLogger, this.userAccountStorageLogger, this.AJV);
     this.userManager.onCurrentlySignedInUserChangeCallback = this.USER_API_HANDLERS.sendCurrentlySignedInUserChange;
@@ -694,7 +707,7 @@ export class App {
     });
     ipcMain.on(
       USER_API_IPC_CHANNELS.addNewUserDataStorageConfigWithMetadataToUser,
-      (event: IpcMainEvent, encryptedNewUserDataStorageConfigWithMetadataInputData: EncryptedUserDataStorageConfigWithMetadataInputData): void => {
+      (event: IpcMainEvent, encryptedNewUserDataStorageConfigWithMetadataInputData: EncryptedNewUserDataStorageConfigWithMetadataDTO): void => {
         event.returnValue = this.USER_API_HANDLERS.handleAddNewUserDataStorageConfigWithMetadataToUser(
           encryptedNewUserDataStorageConfigWithMetadataInputData
         );

@@ -153,7 +153,7 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<ILocalSQLi
     return IS_VALID;
   }
 
-  public addUserDataStorageConfig(userId: UUID, userDataStorageConfigWithMetadata: IUserDataStorageConfigWithMetadata): boolean {
+  public addUserDataStorageConfigToUser(userId: UUID, userDataStorageConfigWithMetadata: IUserDataStorageConfigWithMetadata): boolean {
     this.logger.debug(`Adding new User Data Storage Config to user with ID: "${userId}".`);
     // Validate config
     this.logger.debug("Validating User Data Storage Config.");
@@ -165,14 +165,14 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<ILocalSQLi
       });
       return false;
     }
-    this.logger.debug("Valid User Data Storage Config.");
     const STRINGIFIED_USER_DATA_STORAGE_CONFIG: string = JSON.stringify(userDataStorageConfigWithMetadata.config, null, 2);
     // Validate stringified config as JSON at SQLite level
     if (!this.isJSONValidInSQLite(STRINGIFIED_USER_DATA_STORAGE_CONFIG)) {
-      this.logger.debug("Invalid User Data Storage Config. Cannot add to user account.");
+      this.logger.error("User Data Storage Config invalid as SQLite JSON. Cannot add to user account.");
       return false;
     }
     this.logger.debug("Valid User Data Storage Config. Attempting to add to database.");
+    // TODO: Config should be encrypted blob
     const ADD_USER_DATA_STORAGE_CONFIG_SQL =
       "INSERT INTO user_data_storage_configs (config_id, user_id, name, config) VALUES (@configId, @userId, @name, jsonb(@config))";
     try {
@@ -194,6 +194,7 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<ILocalSQLi
 
   public getAllUserDataStorageConfigs(userId: UUID): IUserDataStorageConfigWithMetadata[] {
     this.logger.debug(`Getting all User Data Storage Configs for user with ID: "${userId}".`);
+    // TODO: Config should be encrypted blob
     const GET_ALL_USER_DATA_STORAGE_CONFIGS_SQL =
       "SELECT config_id AS configId, name, json(config) AS config FROM user_data_storage_configs WHERE user_id = @userId";
     const RESULT = this.db.prepare(GET_ALL_USER_DATA_STORAGE_CONFIGS_SQL).all({ userId: userId }) as {
@@ -268,6 +269,7 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<ILocalSQLi
       this.logger.debug('Found "user_data_storage_configs" table.');
     } else {
       this.logger.debug('Did not find "user_data_storage_configs" table. Creating.');
+      // TODO: Config should be encrypted blob
       const CREATE_USER_DATA_STORAGE_CONFIGS_TABLE_SQL = `
       CREATE TABLE IF NOT EXISTS user_data_storage_configs (
         config_id TEXT NOT NULL PRIMARY KEY,

@@ -13,9 +13,9 @@ import { UserAccountStorageConfig } from "./account/storage/UserAccountStorageCo
 import { IUserDataStorageConfigWithMetadata } from "./data/storage/UserDataStorageConfigWithMetadata";
 import { IUserSignInData, USER_SIGN_IN_DATA_JSON_SCHEMA } from "@shared/user/account/UserSignInData";
 import {
-  IUserDataStorageConfigWithMetadataInputData,
-  USER_DATA_STORAGE_CONFIG_WITH_METADATA_INPUT_DATA_JSON_SCHEMA
-} from "@shared/user/data/storage/inputData/UserDataStorageConfigWithMetadataInputData";
+  INewUserDataStorageConfigWithMetadataDTO,
+  NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_DTO_JSON_SCHEMA
+} from "@shared/user/data/storage/NewUserDataStorageConfigWithMetadataDTO";
 
 export class UserManager {
   private readonly logger: LogFunctions;
@@ -38,7 +38,7 @@ export class UserManager {
   public readonly USER_SIGN_UP_DATA_VALIDATE_FUNCTION: ValidateFunction<IUserSignUpData>;
   public readonly USER_SIGN_IN_DATA_VALIDATE_FUNCTION: ValidateFunction<IUserSignInData>;
   public readonly CURRENTLY_SIGNED_IN_USER_VALIDATE_FUNCTION: ValidateFunction<ICurrentlySignedInUser>;
-  public readonly USER_DATA_STORAGE_CONFIG_WITH_METADATA_INPUT_DATA_VALIDATE_FUNCTION: ValidateFunction<IUserDataStorageConfigWithMetadataInputData>;
+  public readonly NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_DTO_VALIDATE_FUNCTION: ValidateFunction<INewUserDataStorageConfigWithMetadataDTO>;
 
   public constructor(logger: LogFunctions, userAccountStorageLogger: LogFunctions, ajv: Ajv) {
     // Loggers
@@ -50,8 +50,8 @@ export class UserManager {
     this.USER_SIGN_UP_DATA_VALIDATE_FUNCTION = this.AJV.compile<IUserSignUpData>(USER_SIGN_UP_DATA_JSON_SCHEMA);
     this.USER_SIGN_IN_DATA_VALIDATE_FUNCTION = this.AJV.compile<IUserSignInData>(USER_SIGN_IN_DATA_JSON_SCHEMA);
     this.CURRENTLY_SIGNED_IN_USER_VALIDATE_FUNCTION = this.AJV.compile<ICurrentlySignedInUser>(CURRENTLY_SIGNED_IN_USER_SCHEMA);
-    this.USER_DATA_STORAGE_CONFIG_WITH_METADATA_INPUT_DATA_VALIDATE_FUNCTION = this.AJV.compile<IUserDataStorageConfigWithMetadataInputData>(
-      USER_DATA_STORAGE_CONFIG_WITH_METADATA_INPUT_DATA_JSON_SCHEMA
+    this.NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_DTO_VALIDATE_FUNCTION = this.AJV.compile<INewUserDataStorageConfigWithMetadataDTO>(
+      NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_DTO_JSON_SCHEMA
     );
     // Currently signed in user
     this.onCurrentlySignedInUserChangeCallback = (): void => {
@@ -256,12 +256,12 @@ export class UserManager {
     return this.currentlySignedInUser.value;
   }
 
-  public addUserDataStorageConfig(userId: UUID, userDataStorageConfigWithMetadata: IUserDataStorageConfigWithMetadata): boolean {
+  public addUserDataStorageConfigToUser(userId: UUID, userDataStorageConfigWithMetadata: IUserDataStorageConfigWithMetadata): boolean {
     this.logger.debug(`Adding new User Data Storage Config to user with ID: "${userId}".`);
     if (this.userAccountStorage.value === null) {
       throw new Error("Null User Account Storage");
     }
-    return this.userAccountStorage.value.addUserDataStorageConfig(userId, userDataStorageConfigWithMetadata);
+    return this.userAccountStorage.value.addUserDataStorageConfigToUser(userId, userDataStorageConfigWithMetadata);
   }
 
   public getAllUserDataStorageConfigs(userId: UUID): IUserDataStorageConfigWithMetadata[] {
