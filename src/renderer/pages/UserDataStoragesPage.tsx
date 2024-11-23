@@ -1,6 +1,6 @@
 import Box from "@mui/material/Box/Box";
 import Typography from "@mui/material/Typography/Typography";
-import { FC, useCallback, useEffect, useState } from "react";
+import { FC, useCallback, useEffect, useRef, useState } from "react";
 import {
   ISignedInDashboardLayoutRootContext,
   useSignedInDashboardLayoutRootContext
@@ -21,11 +21,17 @@ const UserDataStoragesPage: FC = () => {
   const signedInDashboardLayoutRootContext: ISignedInDashboardLayoutRootContext = useSignedInDashboardLayoutRootContext();
   // User data storage config form dialog
   const [isUserDataStorageConfigFormDialogOpen, setIsUserDataStorageConfigFormDialogOpen] = useState<boolean>(false);
+  const isInitialMount = useRef(true);
   useEffect((): void => {
+    if (isInitialMount.current) {
+      // Skip logging on the initial render
+      isInitialMount.current = false;
+      return;
+    }
     appLogger.debug(`${isUserDataStorageConfigFormDialogOpen ? "Opened" : "Closed"} User Data Storage config form dialog.`);
   }, [isUserDataStorageConfigFormDialogOpen]);
 
-  const handleUserDataStorageConfigFormDialoggClose = useCallback((): void => {
+  const handleUserDataStorageConfigFormDialogClose = useCallback((): void => {
     setIsUserDataStorageConfigFormDialogOpen(false);
   }, []);
 
@@ -77,8 +83,13 @@ const UserDataStoragesPage: FC = () => {
           appLogger.error(`Could not encrypt new User Data Storage config with metadata input data. Reason: ${ERROR_MESSAGE}.`);
           enqueueSnackbar({ message: "User Data Storage config encryption error.", variant: "error" });
         });
+      handleUserDataStorageConfigFormDialogClose();
     },
-    [signedInDashboardLayoutRootContext.currentlySignedInUser.userId, signedInDashboardLayoutRootContext.rendererProcessAESKey]
+    [
+      signedInDashboardLayoutRootContext.currentlySignedInUser.userId,
+      signedInDashboardLayoutRootContext.rendererProcessAESKey,
+      handleUserDataStorageConfigFormDialogClose
+    ]
   );
 
   useEffect((): void => {
@@ -107,7 +118,7 @@ const UserDataStoragesPage: FC = () => {
       <UserDataStorageConfigFormDialog
         open={isUserDataStorageConfigFormDialogOpen}
         handleFormSubmit={handleUserDataStorageFormSubmit}
-        onClose={handleUserDataStorageConfigFormDialoggClose}
+        onClose={handleUserDataStorageConfigFormDialogClose}
       />
     </>
   );
