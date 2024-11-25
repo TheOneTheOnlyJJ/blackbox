@@ -4,7 +4,7 @@ import { UserAccountStorageType } from "./UserAccountStorageType";
 import { ISecuredUserSignUpData } from "../SecuredNewUserData";
 import { UUID } from "node:crypto";
 import { USER_DATA_STORAGE_CONFIG_JSON_SCHEMA, UserDataStorageConfig } from "../../data/storage/UserDataStorageConfig";
-import { IUserDataStorageConfigWithMetadata } from "../../data/storage/UserDataStorageConfigWithMetadata";
+import { ISecuredUserDataStorageConfigWithMetadata } from "@main/user/data/storage/SecuredUserDataStorageConfigWithMetadata";
 
 // Every user account storage must have at least the type in its config (should be further narrowed down to its own in the specific config)
 export interface IBaseUserAccountStorageConfig {
@@ -55,7 +55,7 @@ export abstract class UserAccountStorage<T extends IBaseUserAccountStorageConfig
   // public abstract getAllUsers(): IUser[];
   public abstract getUserCount(): number;
   // public abstract isIdValid(id: UserId): boolean;
-  public abstract addUserDataStorageConfigToUser(userId: UUID, userDataStorageConfigWithMetadata: IUserDataStorageConfigWithMetadata): boolean;
-  public abstract getAllUserDataStorageConfigs(userId: UUID): IUserDataStorageConfigWithMetadata[];
+  public abstract addUserDataStorageConfigToUser(userId: UUID, userDataStorageConfigWithMetadata: ISecuredUserDataStorageConfigWithMetadata): boolean;
+  public abstract getAllUserDataStorageConfigs(userId: UUID): ISecuredUserDataStorageConfigWithMetadata[];
   public abstract close(): boolean;
 }

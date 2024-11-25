@@ -82,8 +82,10 @@ const UserDataStoragesPage: FC = () => {
           const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
           appLogger.error(`Could not encrypt new User Data Storage config with metadata input data. Reason: ${ERROR_MESSAGE}.`);
           enqueueSnackbar({ message: "User Data Storage config encryption error.", variant: "error" });
+        })
+        .finally((): void => {
+          handleUserDataStorageConfigFormDialogClose();
         });
-      handleUserDataStorageConfigFormDialogClose();
     },
     [
       signedInDashboardLayoutRootContext.currentlySignedInUser.userId,

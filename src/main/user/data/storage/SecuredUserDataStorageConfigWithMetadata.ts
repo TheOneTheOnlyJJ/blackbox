@@ -1,9 +1,12 @@
 import { UUID } from "node:crypto";
 import { UserDataStorageConfig } from "./UserDataStorageConfig";
 
-export interface IUserDataStorageConfigWithMetadata {
+export interface ISecuredUserDataStorageConfigWithMetadata {
   configId: UUID;
   name: string;
-  visibilityPassword?: string;
+  visibilityPassword?: {
+    hash: Buffer;
+    salt: Buffer;
+  };
   config: UserDataStorageConfig;
 }

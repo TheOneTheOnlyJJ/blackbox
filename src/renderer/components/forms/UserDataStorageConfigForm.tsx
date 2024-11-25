@@ -13,7 +13,7 @@ import { USER_DATA_STORAGE_CONFIG_WITH_METADATA_INPUT_DATA_UI_SCHEMA } from "@re
 
 const MUIForm = withTheme<IUserDataStorageConfigWithMetadataInputData>(Theme);
 
-const USER_DATA_STORAGE_CONFIG_INPUT_DATA_FORM_VALIDATOR = customizeValidator<IUserDataStorageConfigWithMetadataInputData>();
+const USER_DATA_STORAGE_CONFIG_WITH_METADATA_INPUT_DATA_FORM_VALIDATOR = customizeValidator<IUserDataStorageConfigWithMetadataInputData>();
 
 const userDataStorageConfigInputDataFormTransformErrors: ErrorTransformer<IUserDataStorageConfigWithMetadataInputData> = (
   errors: RJSFValidationError[]
@@ -47,7 +47,7 @@ const UserDataStorageConfigForm: FC<IUserDataStorageConfigFormProps> = (props: I
     <MUIForm
       ref={props.formRef}
       schema={USER_DATA_STORAGE_CONFIG_WITH_METADATA_INPUT_DATA_JSON_SCHEMA as RJSFSchema}
-      validator={USER_DATA_STORAGE_CONFIG_INPUT_DATA_FORM_VALIDATOR}
+      validator={USER_DATA_STORAGE_CONFIG_WITH_METADATA_INPUT_DATA_FORM_VALIDATOR}
       uiSchema={{
         ...USER_DATA_STORAGE_CONFIG_WITH_METADATA_INPUT_DATA_UI_SCHEMA,
         "ui:submitButtonOptions": { norender: !props.doRenderSubmitButton }

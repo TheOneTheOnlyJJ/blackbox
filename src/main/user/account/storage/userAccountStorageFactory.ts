@@ -15,7 +15,6 @@ export function userAccountStorageFactory(
     case USER_ACCOUNT_STORAGE_TYPE.LocalSQLite:
       return new LocalSQLiteUserAccountStorage(config, logger, ajv);
     default:
-      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-      throw new Error(`Invalid User Acount Storage type received: ${config.type}`);
+      throw new Error(`Invalid User Acount Storage type received: ${(config as { type: string }).type}`);
   }
 }

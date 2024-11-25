@@ -16,6 +16,7 @@ import {
   INewUserDataStorageConfigWithMetadataDTO,
   NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_DTO_JSON_SCHEMA
 } from "@shared/user/data/storage/NewUserDataStorageConfigWithMetadataDTO";
+import { ISecuredUserDataStorageConfigWithMetadata } from "./data/storage/SecuredUserDataStorageConfigWithMetadata";
 
 export class UserManager {
   private readonly logger: LogFunctions;
@@ -181,24 +182,53 @@ export class UserManager {
     return this.userAccountStorage.value.isUsernameAvailable(username);
   }
 
-  private hashPassword(plainTextPassword: string, salt: Buffer): Buffer {
-    this.logger.debug("Hashing password.");
+  private hashPassword(plainTextPassword: string, salt: Buffer, passwordPurpose?: string): Buffer {
+    this.logger.debug(`Hashing ${passwordPurpose ? passwordPurpose + " " : ""}password.`);
     // TODO: Change scrypt to argon2 once it becomes available
     return scryptSync(plainTextPassword, salt, 64);
   }
 
-  public secureBaseNewUserData(userSignUpData: IUserSignUpData): ISecuredUserSignUpData {
+  public secureUserSignUpData(userSignUpData: IUserSignUpData): ISecuredUserSignUpData {
     this.logger.debug(`Securing base new user data for user: "${userSignUpData.username}".`);
     const PASSWORD_SALT: Buffer = randomBytes(16);
-    const PASSWORD_HASH: Buffer = this.hashPassword(userSignUpData.password, PASSWORD_SALT);
     const SECURED_USER_DATA: ISecuredUserSignUpData = {
       userId: randomUUID({ disableEntropyCache: true }),
       username: userSignUpData.username,
-      passwordHash: PASSWORD_HASH,
-      passwordSalt: PASSWORD_SALT
+      password: {
+        hash: this.hashPassword(userSignUpData.password, PASSWORD_SALT, "user sign up"),
+        salt: PASSWORD_SALT
+      }
     };
     this.logger.debug("Done securing base new user data.");
     return SECURED_USER_DATA;
+  }
+
+  public secureUserDataStorageConfigWithMetadata(
+    userDataStorageConfigWithMetadata: IUserDataStorageConfigWithMetadata
+  ): ISecuredUserDataStorageConfigWithMetadata {
+    this.logger.debug(`Securing user data storage config with metadata with config ID: "${userDataStorageConfigWithMetadata.configId}".`);
+    let visibilityPassword: { hash: Buffer; salt: Buffer } | undefined;
+    if (userDataStorageConfigWithMetadata.visibilityPassword !== undefined) {
+      this.logger.debug("Config has a visibility password.");
+      const VISIBILITY_PASSWORD_SALT: Buffer = randomBytes(16);
+      visibilityPassword = {
+        hash: this.hashPassword(
+          userDataStorageConfigWithMetadata.visibilityPassword,
+          VISIBILITY_PASSWORD_SALT,
+          "user data storage visibility password"
+        ),
+        salt: VISIBILITY_PASSWORD_SALT
+      };
+    } else {
+      this.logger.debug("Config does not have a visibility password.");
+      visibilityPassword = undefined;
+    }
+    return {
+      configId: userDataStorageConfigWithMetadata.configId,
+      name: userDataStorageConfigWithMetadata.name,
+      visibilityPassword: visibilityPassword,
+      config: userDataStorageConfigWithMetadata.config
+    };
   }
 
   public getUserCount(): number {
@@ -232,9 +262,9 @@ export class UserManager {
       throw new Error(`No password hash and salt for user with ID: "${USER_ID}"`);
     }
     const [USER_PASSWORD_HASH, USER_PASSWORD_SALT]: [Buffer, Buffer] = USER_PASSWORD_DATA;
-    const SIGN_IN_PASSWORD_HASH: Buffer = this.hashPassword(userSignInData.password, USER_PASSWORD_SALT);
+    const SIGN_IN_PASSWORD_HASH: Buffer = this.hashPassword(userSignInData.password, USER_PASSWORD_SALT, "user sign in");
     if (timingSafeEqual(SIGN_IN_PASSWORD_HASH, USER_PASSWORD_HASH)) {
-      this.logger.debug("Password hashed matched! Signing in.");
+      this.logger.debug("Password hashes matched! Signing in.");
       this.currentlySignedInUser.value = { userId: USER_ID, username: userSignInData.username };
       return true;
     }
@@ -261,10 +291,13 @@ export class UserManager {
     if (this.userAccountStorage.value === null) {
       throw new Error("Null User Account Storage");
     }
-    return this.userAccountStorage.value.addUserDataStorageConfigToUser(userId, userDataStorageConfigWithMetadata);
+    // TODO: Encrypt the config with a KDF derived from the user's password
+    const SECURED_USER_DATA_STPRAGE_CONFIG_WITH_METADATA: ISecuredUserDataStorageConfigWithMetadata =
+      this.secureUserDataStorageConfigWithMetadata(userDataStorageConfigWithMetadata);
+    return this.userAccountStorage.value.addUserDataStorageConfigToUser(userId, SECURED_USER_DATA_STPRAGE_CONFIG_WITH_METADATA);
   }
 
-  public getAllUserDataStorageConfigs(userId: UUID): IUserDataStorageConfigWithMetadata[] {
+  public getAllUserDataStorageConfigs(userId: UUID): ISecuredUserDataStorageConfigWithMetadata[] {
     this.logger.debug(`Getting all User Data Storage Configs for user with ID: "${userId}".`);
     if (this.userAccountStorage.value === null) {
       throw new Error("Null User Account Storage");

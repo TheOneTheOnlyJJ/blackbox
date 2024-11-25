@@ -8,7 +8,7 @@ import { USER_ACCOUNT_STORAGE_TYPE, UserAccountStorageTypes } from "../UserAccou
 import { ISecuredUserSignUpData } from "@main/user/account/SecuredNewUserData";
 import { UUID } from "crypto";
 import { UserDataStorageConfig } from "@main/user/data/storage/UserDataStorageConfig";
-import { IUserDataStorageConfigWithMetadata } from "@main/user/data/storage/UserDataStorageConfigWithMetadata";
+import { ISecuredUserDataStorageConfigWithMetadata } from "@main/user/data/storage/SecuredUserDataStorageConfigWithMetadata";
 
 export interface ILocalSQLiteUserAccountStorageConfig extends IBaseUserAccountStorageConfig {
   type: UserAccountStorageTypes["LocalSQLite"];
@@ -19,8 +19,16 @@ export interface ILocalSQLiteUserAccountStorageConfig extends IBaseUserAccountSt
 type SQLiteJournalModePragmaResult = undefined | null | string;
 type SQLiteForeignKeysPragmaResult = undefined | null | 0 | 1;
 
-interface SQLiteVersion {
+interface ISQLiteVersion {
   version: string;
+}
+
+interface IRawSecuredUserDataStorageConfigWithMetadata {
+  configId: UUID;
+  name: string;
+  visibilityPasswordHash: Buffer | null;
+  visibilityPasswordSalt: Buffer | null;
+  config: string;
 }
 
 export class LocalSQLiteUserAccountStorage extends UserAccountStorage<ILocalSQLiteUserAccountStorageConfig> {
@@ -67,7 +75,7 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<ILocalSQLi
     this.db = new DatabaseConstructor(DB_FILE_PATH);
     this.logger.silly("SQLite database constructor completed.");
     // Log SQLite version
-    this.logger.debug(`Using SQLite version: "${(this.db.prepare("SELECT sqlite_version() AS version").get() as SQLiteVersion).version}".`);
+    this.logger.debug(`Using SQLite version: "${(this.db.prepare("SELECT sqlite_version() AS version").get() as ISQLiteVersion).version}".`);
     // Config
     // Journal mode
     this.logger.debug("Setting journal mode to WAL.");
@@ -105,8 +113,8 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<ILocalSQLi
       const RUN_RESULT: RunResult = this.db.prepare(INSERT_NEW_USER_SQL).run({
         userId: userData.userId,
         username: userData.username,
-        passwordHash: userData.passwordHash,
-        passwordSalt: userData.passwordSalt
+        passwordHash: userData.password.hash,
+        passwordSalt: userData.password.salt
       });
       this.logger.info("User added successfully!");
       this.logger.silly(`Number of changes: "${RUN_RESULT.changes.toString()}". Last inserted row ID: "${RUN_RESULT.lastInsertRowid.toString()}".`);
@@ -141,11 +149,11 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<ILocalSQLi
     return RESULT.count;
   }
 
-  private isJSONValidInSQLite(json: object | string): boolean {
+  private isJSONValidInSQLite(json: object | string, jsonPurpose: string): boolean {
     if (typeof json === "object") {
       json = JSON.stringify(json, null, 2);
     }
-    this.logger.log(`Performing SQLite JSON validation on: "${json}".`);
+    this.logger.log(`Performing SQLite JSON validation on ${jsonPurpose}.`);
     const VALIDATE_JSON_SQL = "SELECT json_valid(@json) AS isValid";
     const RESULT = this.db.prepare(VALIDATE_JSON_SQL).get({ json: json }) as { isValid: 0 | 1 };
     const IS_VALID: boolean = RESULT.isValid === 0 ? false : true;
@@ -153,11 +161,11 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<ILocalSQLi
     return IS_VALID;
   }
 
-  public addUserDataStorageConfigToUser(userId: UUID, userDataStorageConfigWithMetadata: IUserDataStorageConfigWithMetadata): boolean {
+  public addUserDataStorageConfigToUser(userId: UUID, securedUserDataStorageConfigWithMetadata: ISecuredUserDataStorageConfigWithMetadata): boolean {
     this.logger.debug(`Adding new User Data Storage Config to user with ID: "${userId}".`);
     // Validate config
     this.logger.debug("Validating User Data Storage Config.");
-    if (!this.USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION(userDataStorageConfigWithMetadata.config)) {
+    if (!this.USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION(securedUserDataStorageConfigWithMetadata.config)) {
       this.logger.debug("Invalid User Data Storage Config.");
       this.logger.error("Validation errors:");
       this.USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION.errors?.map((error) => {
@@ -165,21 +173,27 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<ILocalSQLi
       });
       return false;
     }
-    const STRINGIFIED_USER_DATA_STORAGE_CONFIG: string = JSON.stringify(userDataStorageConfigWithMetadata.config, null, 2);
+    const STRINGIFIED_USER_DATA_STORAGE_CONFIG: string = JSON.stringify(securedUserDataStorageConfigWithMetadata.config, null, 2);
     // Validate stringified config as JSON at SQLite level
-    if (!this.isJSONValidInSQLite(STRINGIFIED_USER_DATA_STORAGE_CONFIG)) {
+    if (!this.isJSONValidInSQLite(STRINGIFIED_USER_DATA_STORAGE_CONFIG, "user data storage config")) {
       this.logger.error("User Data Storage Config invalid as SQLite JSON. Cannot add to user account.");
       return false;
     }
     this.logger.debug("Valid User Data Storage Config. Attempting to add to database.");
     // TODO: Config should be encrypted blob
-    const ADD_USER_DATA_STORAGE_CONFIG_SQL =
-      "INSERT INTO user_data_storage_configs (config_id, user_id, name, config) VALUES (@configId, @userId, @name, jsonb(@config))";
+    const ADD_USER_DATA_STORAGE_CONFIG_SQL = `
+    INSERT INTO user_data_storage_configs (
+      config_id, user_id, name, visibility_password_hash, visibility_password_salt, config
+    ) VALUES (
+      @configId, @userId, @name, @visibilityPasswordHash, @visibilityPasswordSalt, jsonb(@config)
+    )`;
     try {
       const RUN_RESULT: RunResult = this.db.prepare(ADD_USER_DATA_STORAGE_CONFIG_SQL).run({
-        configId: userDataStorageConfigWithMetadata.configId,
+        configId: securedUserDataStorageConfigWithMetadata.configId,
         userId: userId,
-        name: userDataStorageConfigWithMetadata.name,
+        name: securedUserDataStorageConfigWithMetadata.name,
+        visibilityPasswordHash: securedUserDataStorageConfigWithMetadata.visibilityPassword?.hash ?? null,
+        visibilityPasswordSalt: securedUserDataStorageConfigWithMetadata.visibilityPassword?.salt ?? null,
         config: STRINGIFIED_USER_DATA_STORAGE_CONFIG
       });
       this.logger.info("User Data Storage Config added successfully!");
@@ -192,23 +206,37 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<ILocalSQLi
     }
   }
 
-  public getAllUserDataStorageConfigs(userId: UUID): IUserDataStorageConfigWithMetadata[] {
+  public getAllUserDataStorageConfigs(userId: UUID): ISecuredUserDataStorageConfigWithMetadata[] {
     this.logger.debug(`Getting all User Data Storage Configs for user with ID: "${userId}".`);
     // TODO: Config should be encrypted blob
-    const GET_ALL_USER_DATA_STORAGE_CONFIGS_SQL =
-      "SELECT config_id AS configId, name, json(config) AS config FROM user_data_storage_configs WHERE user_id = @userId";
-    const RESULT = this.db.prepare(GET_ALL_USER_DATA_STORAGE_CONFIGS_SQL).all({ userId: userId }) as {
-      configId: UUID;
-      name: string;
-      config: string;
-    }[];
+    const GET_ALL_SECURED_USER_DATA_STORAGE_CONFIGS_SQL = `
+    SELECT
+      config_id AS configId,
+      name,
+      visibility_password_hash AS visibilityPasswordHash,
+      visibility_password_salt AS visibilityPasswordSalt,
+      json(config) AS config
+    FROM user_data_storage_configs WHERE user_id = @userId`;
+    const RESULT = this.db
+      .prepare(GET_ALL_SECURED_USER_DATA_STORAGE_CONFIGS_SQL)
+      .all({ userId: userId }) as IRawSecuredUserDataStorageConfigWithMetadata[];
     this.logger.warn(JSON.stringify(RESULT, null, 2));
-    const USER_DATA_STORAGE_CONFIGS_WITH_METADATA: IUserDataStorageConfigWithMetadata[] = [];
+    const SECURED_USER_DATA_STORAGE_CONFIGS_WITH_METADATA: ISecuredUserDataStorageConfigWithMetadata[] = [];
     try {
-      RESULT.map((rawUserDataStorageConfigWithMetadata: { configId: UUID; name: string; config: string }) => {
+      RESULT.map((rawSecuredUserDataStorageConfigWithMetadata: IRawSecuredUserDataStorageConfigWithMetadata) => {
+        this.logger.debug("Determining visibility password.");
+        const VISIBILITY_PASSWORD: { hash: Buffer; salt: Buffer } | undefined =
+          rawSecuredUserDataStorageConfigWithMetadata.visibilityPasswordHash !== null &&
+          rawSecuredUserDataStorageConfigWithMetadata.visibilityPasswordSalt !== null
+            ? {
+                hash: rawSecuredUserDataStorageConfigWithMetadata.visibilityPasswordHash,
+                salt: rawSecuredUserDataStorageConfigWithMetadata.visibilityPasswordSalt
+              }
+            : undefined;
+        this.logger.silly(VISIBILITY_PASSWORD !== undefined ? "Config has visibility password." : "Config does not have visibility password.");
         this.logger.debug("Parsing User Data Storage Config.");
         const PARSED_USER_DATA_STORAGE_CONFIG: UserDataStorageConfig = JSON.parse(
-          rawUserDataStorageConfigWithMetadata.config
+          rawSecuredUserDataStorageConfigWithMetadata.config
         ) as UserDataStorageConfig;
         this.logger.debug("Validating parsed User Data Storage Config.");
         if (!this.USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION(PARSED_USER_DATA_STORAGE_CONFIG)) {
@@ -220,13 +248,14 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<ILocalSQLi
           return;
         }
         this.logger.debug("Valid User Data Storage Config.");
-        USER_DATA_STORAGE_CONFIGS_WITH_METADATA.push({
-          configId: rawUserDataStorageConfigWithMetadata.configId,
-          name: rawUserDataStorageConfigWithMetadata.name,
+        SECURED_USER_DATA_STORAGE_CONFIGS_WITH_METADATA.push({
+          configId: rawSecuredUserDataStorageConfigWithMetadata.configId,
+          name: rawSecuredUserDataStorageConfigWithMetadata.name,
+          visibilityPassword: VISIBILITY_PASSWORD,
           config: PARSED_USER_DATA_STORAGE_CONFIG
         });
       });
-      return USER_DATA_STORAGE_CONFIGS_WITH_METADATA;
+      return SECURED_USER_DATA_STORAGE_CONFIGS_WITH_METADATA;
     } catch (err: unknown) {
       const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
       this.logger.error(`Could not parse results! ${ERROR_MESSAGE}!`);
@@ -275,6 +304,8 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<ILocalSQLi
         config_id TEXT NOT NULL PRIMARY KEY,
         user_id TEXT NOT NULL REFERENCES users(user_id) ON UPDATE CASCADE ON DELETE CASCADE,
         name TEXT NOT NULL,
+        visibility_password_hash BLOB,
+        visibility_password_salt BLOB,
         config BLOB NOT NULL
       )
       `;

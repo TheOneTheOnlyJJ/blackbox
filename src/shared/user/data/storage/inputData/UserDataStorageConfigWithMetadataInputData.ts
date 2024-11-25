@@ -3,6 +3,7 @@ import { USER_DATA_STORAGE_CONFIG_INPUT_DATA_JSON_SCHEMA, UserDataStorageConfigI
 
 export interface IUserDataStorageConfigWithMetadataInputData {
   name: string;
+  visibilityPassword?: string;
   config: UserDataStorageConfigInputData;
 }
 
@@ -11,6 +12,7 @@ export const USER_DATA_STORAGE_CONFIG_WITH_METADATA_INPUT_DATA_JSON_SCHEMA: JSON
   type: "object",
   properties: {
     name: { type: "string" },
+    visibilityPassword: { type: "string", nullable: true },
     config: USER_DATA_STORAGE_CONFIG_INPUT_DATA_JSON_SCHEMA
   },
   required: ["name", "config"],

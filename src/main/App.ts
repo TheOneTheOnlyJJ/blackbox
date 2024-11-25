@@ -226,7 +226,7 @@ export class App {
           "user sign up data"
         );
         this.appLogger.debug("Decrypted user sign up data.");
-        const SECURED_USER_SIGN_UP_DATA: ISecuredUserSignUpData = this.userManager.secureBaseNewUserData(USER_SIGN_UP_DATA);
+        const SECURED_USER_SIGN_UP_DATA: ISecuredUserSignUpData = this.userManager.secureUserSignUpData(USER_SIGN_UP_DATA);
         this.appLogger.debug("Secured user sign up data.");
         return {
           status: IPC_API_RESPONSE_STATUSES.SUCCESS,
@@ -331,16 +331,17 @@ export class App {
           DECRYPTED_NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_DTO.userDataStorageConfigWithMetadataInputData.config,
           this.IPCUserAPILogger
         );
-        this.IPCUserAPILogger.debug(`New User Data Storage config: ${JSON.stringify(NEW_USER_DATA_STORAGE_CONFIG, null, 2)}.`);
         const NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA: IUserDataStorageConfigWithMetadata = {
           configId: randomUUID({ disableEntropyCache: true }),
           name: DECRYPTED_NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_DTO.userDataStorageConfigWithMetadataInputData.name,
+          visibilityPassword: DECRYPTED_NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_DTO.userDataStorageConfigWithMetadataInputData.visibilityPassword,
           config: NEW_USER_DATA_STORAGE_CONFIG
         };
+        this.IPCUserAPILogger.debug(`New User Data Storage config with metadata ID: ${NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA.configId}.`);
         return {
           status: IPC_API_RESPONSE_STATUSES.SUCCESS,
           data: this.userManager.addUserDataStorageConfigToUser(
-            DECRYPTED_NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_DTO.userId as UUID,
+            DECRYPTED_NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_DTO.userId as UUID, // UUID type is specific to Node.js, unavailable in renderer
             NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA
           )
         };
