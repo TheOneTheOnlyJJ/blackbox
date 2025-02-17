@@ -53,11 +53,11 @@ const SignedInAppBar = forwardRef<HTMLDivElement, ISignedInAppBarProps>(function
     setIsForwardDisabled(!window.navigation.canGoForward);
   }, [location]);
 
-  useEffect(() => {
+  useEffect((): (() => void) => {
     updateButtonStates();
     // Listen for popstate events
     window.addEventListener("popstate", updateButtonStates);
-    return () => {
+    return (): void => {
       window.removeEventListener("popstate", updateButtonStates);
     };
   }, [updateButtonStates, location]);
@@ -77,7 +77,7 @@ const SignedInAppBar = forwardRef<HTMLDivElement, ISignedInAppBarProps>(function
               edge="start"
               color="inherit"
               sx={{ mr: 1 }}
-              onClick={() => {
+              onClick={(): void => {
                 handleNavigationArrowButtonClick("back");
               }}
               disabled={isBackDisabled}
@@ -91,7 +91,7 @@ const SignedInAppBar = forwardRef<HTMLDivElement, ISignedInAppBarProps>(function
               edge="start"
               color="inherit"
               sx={{ mr: 2 }}
-              onClick={() => {
+              onClick={(): void => {
                 handleNavigationArrowButtonClick("forward");
               }}
               disabled={isForwardDisabled}

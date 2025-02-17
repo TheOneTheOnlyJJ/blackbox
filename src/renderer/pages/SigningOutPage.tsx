@@ -8,7 +8,7 @@ import { enqueueSnackbar } from "notistack";
 import { appLogger } from "@renderer/utils/loggers";
 
 const SigningOutPage: FC = () => {
-  useEffect(() => {
+  useEffect((): void => {
     // TODO: Remove this
     //setTimeout(() => {
     appLogger.debug("Signing out.");

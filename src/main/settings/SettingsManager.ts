@@ -46,7 +46,7 @@ export abstract class SettingsManager<SettingsType extends NonNullable<unknown>,
     }
     this.logger.debug("Invalid Settings Manager Config.");
     this.logger.error("Validation errors:");
-    this.SETTINGS_MANAGER_CONFIG_VALIDATE_FUNCTION.errors?.map((error) => {
+    this.SETTINGS_MANAGER_CONFIG_VALIDATE_FUNCTION.errors?.map((error): void => {
       this.logger.error(`Path: "${error.instancePath.length > 0 ? error.instancePath : "-"}", Message: "${error.message ?? "-"}".`);
     });
     return false;

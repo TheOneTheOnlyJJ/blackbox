@@ -4,11 +4,7 @@ import { USER_DATA_STORAGE_CONFIG_INPUT_DATA_UI_SCHEMA } from "./UserDataStorage
 
 export const USER_DATA_STORAGE_CONFIG_WITH_METADATA_INPUT_DATA_UI_SCHEMA: UiSchema<IUserDataStorageConfigWithMetadataInputData> = {
   "ui:title": "Data Storage",
-  name: {
-    "ui:title": "Name"
-  },
   visibilityPassword: {
-    "ui:title": "Visibility Password",
     "ui:description":
       "**Important:** The visibility password **does not encrypt the data**; it only restricts visibility. \
       Leaving this field empty will create a **visible Data Storage** by default. \

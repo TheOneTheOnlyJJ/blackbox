@@ -25,10 +25,10 @@ export class WindowPositionWatcher {
 
   public watchWindowPosition(window: BrowserWindow, onWindowPositionChange: (position: WindowPosition) => void): void {
     this.logger.debug("Starting watching window.");
-    window.on("move", () => {
+    window.on("move", (): void => {
       this.onWindowBoundsChanged(window, onWindowPositionChange);
     });
-    window.on("resize", () => {
+    window.on("resize", (): void => {
       this.onWindowBoundsChanged(window, onWindowPositionChange);
     });
   }
@@ -39,7 +39,7 @@ export class WindowPositionWatcher {
     if (this.updateWindowPositionTimeout !== null) {
       clearTimeout(this.updateWindowPositionTimeout);
     }
-    this.updateWindowPositionTimeout = setTimeout(() => {
+    this.updateWindowPositionTimeout = setTimeout((): void => {
       const NEW_WINDOW_POSITION: WindowPosition = this.getNewWindowPosition(window);
       this.logger.silly(
         `New window position: ${typeof NEW_WINDOW_POSITION === "string" ? `"${NEW_WINDOW_POSITION}"` : JSON.stringify(NEW_WINDOW_POSITION, null, 2)}.`

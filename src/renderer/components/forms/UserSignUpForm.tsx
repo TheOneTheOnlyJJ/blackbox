@@ -55,7 +55,7 @@ const UserSignUpForm: FC = () => {
   });
   const signUpUser = useCallback(
     (data: IChangeEvent<IUserSignUpInputData>): void => {
-      appLogger.debug("Submitted user sign up form.");
+      appLogger.debug("Submitted user Sign Up form.");
       if (data.formData === undefined) {
         appLogger.error("Undefined sign up form data. No-op.");
         enqueueSnackbar({ message: "Missing form data.", variant: "error" });
@@ -153,7 +153,7 @@ const UserSignUpForm: FC = () => {
 
   return (
     <>
-      <MUIForm
+      <MUIForm // TODO: Change errors from "Missing required property"
         schema={USER_SIGN_UP_INPUT_DATA_JSON_SCHEMA as RJSFSchema}
         uiSchema={USER_SIGN_UP_INPUT_DATA_UI_SCHEMA}
         validator={USER_SIGN_UP_FORM_VALIDATOR}
@@ -161,6 +161,7 @@ const UserSignUpForm: FC = () => {
         customValidate={userSignUpFormCustomValidate}
         transformErrors={errorCapitalizerTransformer}
         onSubmit={signUpUser}
+        noHtml5Validate={true}
       >
         <Button type="submit" variant="contained" size="large" sx={{ marginTop: "1vw", marginBottom: "1vw" }}>
           Sign Up

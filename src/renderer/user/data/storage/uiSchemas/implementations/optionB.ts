@@ -8,8 +8,5 @@ export const OPTION_B_USER_DATA_STORAGE_CONFIG_INPUT_DATA_UI_SCHEMA: UiSchema<IO
   },
   type: {
     "ui:widget": "hidden"
-  },
-  optionB: {
-    "ui:title": "OPTION B TITLE"
   }
 } as const;

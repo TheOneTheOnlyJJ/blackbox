@@ -17,6 +17,7 @@ export const OPTION_C_USER_DATA_STORAGE_CONFIG_INPUT_DATA_JSON_SCHEMA: JSONSchem
     },
     optionC: {
       type: "string",
+      title: "This is Option C Title",
       minLength: 10
     }
   },

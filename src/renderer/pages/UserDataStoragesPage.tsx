@@ -42,6 +42,7 @@ const UserDataStoragesPage: FC = () => {
 
   const handleUserDataStorageFormSubmit = useCallback(
     (data: IChangeEvent<IUserDataStorageConfigWithMetadataInputData>): void => {
+      appLogger.info("Submitted new User Data Storage form.");
       if (data.formData === undefined) {
         appLogger.error("Undefined User Data Storage Config with metadata input data form data. No-op.");
         enqueueSnackbar({ message: "Missing form data.", variant: "error" });

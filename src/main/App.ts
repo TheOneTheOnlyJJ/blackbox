@@ -6,7 +6,7 @@ import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 import { JSONSchemaType } from "ajv/dist/types/json-schema";
 import { IPC_TLS_API_IPC_CHANNELS, USER_API_IPC_CHANNELS } from "@main/utils/IPC/IPCChannels";
 import { UserManager } from "@main/user/UserManager";
-import { USER_ACCOUNT_STORAGE_TYPE } from "@main/user/account/storage/UserAccountStorageType";
+import { USER_ACCOUNT_STORAGE_BACKEND_TYPES } from "@main/user/account/storage/UserAccountStorageBackendType";
 import { adjustWindowBounds } from "@main/utils/window/adjustWindowBounds";
 import { IpcMainEvent } from "electron";
 import { IUserAPI } from "@shared/IPC/APIs/UserAPI";
@@ -31,7 +31,7 @@ import { SETTINGS_MANAGER_TYPE } from "@main/settings/SettingsManagerType";
 import { WINDOW_STATES, WindowPosition, WindowPositionWatcher, WindowStates } from "@main/settings/WindowPositionWatcher";
 import Ajv from "ajv";
 import addFormats from "ajv-formats";
-import { UserAccountStorageConfig } from "@main/user/account/storage/UserAccountStorageConfig";
+import { UserAccountStorageBackendConfig } from "@main/user/account/storage/UserAccountStorageBackendConfig";
 import { EncryptedNewUserDataStorageConfigWithMetadataDTO } from "@shared/user/account/encrypted/EncryptedNewUserDataStorageConfigWithMetadataDTO";
 import { INewUserDataStorageConfigWithMetadataDTO } from "@shared/user/data/storage/NewUserDataStorageConfigWithMetadataDTO";
 import { UserDataStorageConfig } from "./user/data/storage/UserDataStorageConfig";
@@ -60,6 +60,7 @@ export class App {
   private readonly INDEX_HTML_FILE_PATH: string = resolve(join(__dirname, "..", "renderer", "index.html"));
 
   // Logging
+  // TODO: Make these configurable from app settings and JSON
   private readonly LOGS_DIR_PATH: string = resolve(join(app.getAppPath(), "logs"));
   private readonly LOG_FILE_NAME = "BlackBoxLogs.log";
   private readonly LOG_FILE_PATH: string = resolve(join(this.LOGS_DIR_PATH, this.LOG_FILE_NAME));
@@ -73,7 +74,7 @@ export class App {
   private readonly IPCUserAPILogger: LogFunctions = log.scope("main-ipc-user-api");
   private readonly IPCTLSAPILogger: LogFunctions = log.scope("main-ipc-tls-api");
   private readonly userManagerLogger: LogFunctions = log.scope("main-user-manager");
-  private readonly userAccountStorageLogger: LogFunctions = log.scope("main-user-account-storage");
+  private readonly userAccountStorageBackendLogger: LogFunctions = log.scope("main-user-account-storage-backend");
 
   // Settings
   public static readonly SETTINGS_SCHEMA: JSONSchemaType<IAppSettings> = {
@@ -144,8 +145,8 @@ export class App {
 
   // Users
   private readonly userManager: UserManager;
-  private readonly USER_ACCOUNT_STORAGE_CONFIG: UserAccountStorageConfig = {
-    type: USER_ACCOUNT_STORAGE_TYPE.LocalSQLite,
+  private readonly USER_ACCOUNT_STORAGE_BACKEND_CONFIG: UserAccountStorageBackendConfig = {
+    type: USER_ACCOUNT_STORAGE_BACKEND_TYPES.LocalSQLite,
     dbDirPath: resolve(join(app.getAppPath(), "data")),
     dbFileName: "users.sqlite"
   };
@@ -269,15 +270,15 @@ export class App {
         return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
-    handleIsAccountStorageAvailable: (): IPCAPIResponse<boolean> => {
-      this.IPCUserAPILogger.debug("Received User Account Storage availability status request.");
+    handleIsAccountStorageBackendAvailable: (): IPCAPIResponse<boolean> => {
+      this.IPCUserAPILogger.debug("Received User Account Storage Backend availability status request.");
       try {
-        const IS_STORAGE_AVAILABLE: boolean = this.userManager.isUserAccountStorageAvailable();
-        this.IPCUserAPILogger.debug(`User Account Storage available: ${IS_STORAGE_AVAILABLE.toString()}.`);
+        const IS_STORAGE_AVAILABLE: boolean = this.userManager.isUserAccountStorageBackendAvailable();
+        this.IPCUserAPILogger.debug(`User Account Storage Backend available: ${IS_STORAGE_AVAILABLE.toString()}.`);
         return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: IS_STORAGE_AVAILABLE };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-        this.IPCUserAPILogger.error(`Could not get User Account Storage availability: ${ERROR_MESSAGE}!`);
+        this.IPCUserAPILogger.error(`Could not get User Account Storage Backend availability: ${ERROR_MESSAGE}!`);
         return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
@@ -351,13 +352,15 @@ export class App {
         return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
-    sendAccountStorageAvailabilityChange: (isUserAccountStorageAvailable: boolean): void => {
-      this.IPCUserAPILogger.debug(`Sending window User Account Storage availability after change: "${isUserAccountStorageAvailable.toString()}".`);
+    sendAccountStorageBackendAvailabilityChange: (isUserAccountStorageAvailable: boolean): void => {
+      this.IPCUserAPILogger.debug(
+        `Sending window User Account Storage Backend availability after change: "${isUserAccountStorageAvailable.toString()}".`
+      );
       if (this.window === null) {
         this.IPCUserAPILogger.debug('Window is "null". No-op.');
         return;
       }
-      this.window.webContents.send(USER_API_IPC_CHANNELS.onAccountStorageAvailabilityChange, isUserAccountStorageAvailable);
+      this.window.webContents.send(USER_API_IPC_CHANNELS.onAccountStorageBackendAvailabilityChange, isUserAccountStorageAvailable);
     },
     sendCurrentlySignedInUserChange: (newSignedInUser: ICurrentlySignedInUser | null): void => {
       this.IPCUserAPILogger.debug(`Sending window currently signed in user after change: ${JSON.stringify(newSignedInUser, null, 2)}.`);
@@ -390,9 +393,9 @@ export class App {
     // Add format validation plugin to AJV
     addFormats(this.AJV);
     // Initialise required managers & watchers
-    this.userManager = new UserManager(this.userManagerLogger, this.userAccountStorageLogger, this.AJV);
+    this.userManager = new UserManager(this.userManagerLogger, this.userAccountStorageBackendLogger, this.AJV);
     this.userManager.onCurrentlySignedInUserChangeCallback = this.USER_API_HANDLERS.sendCurrentlySignedInUserChange;
-    this.userManager.onUserAccountStorageAvailabilityChangeCallback = this.USER_API_HANDLERS.sendAccountStorageAvailabilityChange;
+    this.userManager.onUserAccountStorageBackendAvailabilityChangeCallback = this.USER_API_HANDLERS.sendAccountStorageBackendAvailabilityChange;
     this.settingsManager = settingsManagerFactory<IAppSettings>(
       this.SETTINGS_MANAGER_CONFIG,
       App.SETTINGS_SCHEMA,
@@ -420,7 +423,7 @@ export class App {
     this.MAIN_PROCESS_PUBLIC_RSA_KEY_DER = publicKey;
     this.MAIN_PROCESS_PRIVATE_RSA_KEY_DER = privateKey;
     this.bootstrapLogger.debug(
-      `Generated main process public RSA key:\n${insertLineBreaks(Buffer.from(this.MAIN_PROCESS_PUBLIC_RSA_KEY_DER).toString("base64"))}\n.`
+      `Generated main process public RSA key:\n${insertLineBreaks(this.MAIN_PROCESS_PUBLIC_RSA_KEY_DER.toString("base64"))}\n.`
     );
     this.bootstrapLogger.debug("App constructor done.");
   }
@@ -428,13 +431,13 @@ export class App {
   public run(): void {
     this.bootstrapLogger.info("Running App.");
     this.bootstrapLogger.debug("Registering app event handlers.");
-    app.once("ready", () => {
+    app.once("ready", (): void => {
       this.onceAppReady();
     });
-    app.on("window-all-closed", () => {
+    app.on("window-all-closed", (): void => {
       this.onAppWindowAllClosed();
     });
-    app.once("will-quit", () => {
+    app.once("will-quit", (): void => {
       this.onceAppWillQuit();
     });
   }
@@ -480,19 +483,19 @@ export class App {
     this.window.setMenuBarVisibility(false);
     this.windowLogger.debug("Created window.");
     this.windowLogger.debug("Registering window event handlers.");
-    this.window.once("closed", () => {
+    this.window.once("closed", (): void => {
       this.onceWindowClosed();
     });
-    this.window.once("ready-to-show", () => {
+    this.window.once("ready-to-show", (): void => {
       this.onceWindowReadyToShow();
     });
-    this.window.webContents.once("did-finish-load", () => {
+    this.window.webContents.once("did-finish-load", (): void => {
       this.onceWindowWebContentsDidFinishLoad();
     });
-    this.window.webContents.once("did-fail-load", () => {
+    this.window.webContents.once("did-fail-load", (): void => {
       this.onceWindowWebContentsDidFailLoad();
     });
-    this.window.webContents.setWindowOpenHandler((details) => {
+    this.window.webContents.setWindowOpenHandler((details: HandlerDetails): WindowOpenHandlerResponse => {
       return this.windowOpenHandler(details);
     });
     this.windowLogger.debug("Registered window event handlers.");
@@ -501,7 +504,7 @@ export class App {
     if (!app.isPackaged && process.env.ELECTRON_RENDERER_URL) {
       this.windowLogger.info(`Loading window web contents from URL: "${process.env.ELECTRON_RENDERER_URL}".`);
       void this.window.loadURL(process.env.ELECTRON_RENDERER_URL);
-      isDevToolsShortcutRegistered = globalShortcut.register("CmdOrCtrl+F12", () => {
+      isDevToolsShortcutRegistered = globalShortcut.register("CmdOrCtrl+F12", (): void => {
         this.developerToolsGlobalShortcutCallback();
       });
     } else {
@@ -513,10 +516,10 @@ export class App {
     if (isDevToolsShortcutRegistered) {
       this.windowLogger.debug(`Developer tools shortcut registered (${MODE}).`);
       this.windowLogger.debug("Registering window web contents developer tools event handlers.");
-      this.window.webContents.on("devtools-opened", () => {
+      this.window.webContents.on("devtools-opened", (): void => {
         this.onWindowWebContentsDeveloperToolsOpened();
       });
-      this.window.webContents.on("devtools-closed", () => {
+      this.window.webContents.on("devtools-closed", (): void => {
         this.onWindowWebContentsDeveloperToolsClosed();
       });
       this.windowLogger.debug("Registered window web contents developer tools event handlers.");
@@ -545,7 +548,7 @@ export class App {
     }
     this.windowLogger.info("Showing window.");
     this.window.show();
-    // Watch window after show, because it triggers a "move" event
+    // Watch window only after show, because it triggers a "move" event
     this.windowPositionWatcher.watchWindowPosition(this.window, this.updateWindowPositionSettings.bind(this));
 
     // TEMPORARY
@@ -623,10 +626,10 @@ export class App {
 
   private onceAppReady(): void {
     this.appLogger.info("App ready.");
-    this.userManager.openUserAccountStorage(this.USER_ACCOUNT_STORAGE_CONFIG);
+    this.userManager.openUserAccountStorageBackend(this.USER_ACCOUNT_STORAGE_BACKEND_CONFIG);
     this.createWindow();
     this.appLogger.debug("Registering app activate event handler.");
-    app.on("activate", () => {
+    app.on("activate", (): void => {
       this.onAppActivate();
     });
     this.appLogger.debug("Registering IPC main handlers.");
@@ -653,12 +656,12 @@ export class App {
     this.appLogger.info("App will quit.");
     this.appLogger.debug("Unregistering all global shortcuts.");
     globalShortcut.unregisterAll();
-    if (this.userManager.isUserAccountStorageAvailable()) {
-      this.appLogger.info(`Closing "${this.userManager.getUserAccountStorageType()}" User Account Storage.`);
-      const IS_USER_STORAGE_CLOSED: boolean = this.userManager.closeUserAccountStorage();
-      this.appLogger.debug(IS_USER_STORAGE_CLOSED ? "Closed User Account Storage." : "Could not close User Account Storage.");
+    if (this.userManager.isUserAccountStorageBackendAvailable()) {
+      this.appLogger.info(`Closing "${this.userManager.getUserAccountStorageBackendType()}" User Account Storage Backend.`);
+      const IS_USER_STORAGE_CLOSED: boolean = this.userManager.closeUserAccountStorageBackend();
+      this.appLogger.debug(IS_USER_STORAGE_CLOSED ? "Closed" : "Could not close" + " User Account Storage Backend.");
     } else {
-      this.appLogger.debug("No initialised User Account Storage.");
+      this.appLogger.debug("No initialised User Account Storage Backend.");
     }
     this.appLogger.silly("Pre-quit steps done.");
     appendFileSync(this.LOG_FILE_PATH, `---------- End   : ${new Date().toISOString()} ----------\n\n`, "utf-8");
@@ -685,8 +688,8 @@ export class App {
 
   private registerUserAPIIPCHandlers(): void {
     this.IPCLogger.debug("Registering User API IPC handlers.");
-    ipcMain.on(USER_API_IPC_CHANNELS.isAccountStorageAvailable, (event: IpcMainEvent): void => {
-      event.returnValue = this.USER_API_HANDLERS.handleIsAccountStorageAvailable();
+    ipcMain.on(USER_API_IPC_CHANNELS.isAccountStorageBackendAvailable, (event: IpcMainEvent): void => {
+      event.returnValue = this.USER_API_HANDLERS.handleIsAccountStorageBackendAvailable();
     });
     ipcMain.on(USER_API_IPC_CHANNELS.isUsernameAvailable, (event: IpcMainEvent, username: string): void => {
       event.returnValue = this.USER_API_HANDLERS.handleIsUsernameAvailable(username);

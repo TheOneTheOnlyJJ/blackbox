@@ -1,15 +1,15 @@
 import { LogFunctions } from "electron-log";
-import { UserAccountStorage } from "./account/storage/UserAccountStorage";
-import { userAccountStorageFactory } from "./account/storage/userAccountStorageFactory";
-import { UserAccountStorageType } from "./account/storage/UserAccountStorageType";
+import { UserAccountStorageBackend } from "./account/storage/UserAccountStorageBackend";
+import { userAccountStorageBackendFactory } from "./account/storage/userAccountStorageBackendFactory";
+import { UserAccountStorageBackendType } from "./account/storage/UserAccountStorageBackendType";
 import { USER_SIGN_UP_DATA_JSON_SCHEMA, IUserSignUpData } from "@shared/user/account/UserSignUpData";
 import { randomBytes, randomUUID, scryptSync, timingSafeEqual, UUID } from "node:crypto";
 import { ISecuredUserSignUpData } from "./account/SecuredNewUserData";
-import { CURRENTLY_SIGNED_IN_USER_SCHEMA, ICurrentlySignedInUser } from "@shared/user/account/CurrentlySignedInUser";
-import { CurrentlySignedInUserChangeCallback, UserAccountStorageAvailabilityChangeCallback } from "@shared/IPC/APIs/UserAPI";
+import { CURRENTLY_SIGNED_IN_USER_JSON_SCHEMA, ICurrentlySignedInUser } from "@shared/user/account/CurrentlySignedInUser";
+import { CurrentlySignedInUserChangeCallback, UserAccountStorageBackendAvailabilityChangeCallback } from "@shared/IPC/APIs/UserAPI";
 import { isDeepStrictEqual } from "node:util";
 import Ajv, { ValidateFunction } from "ajv";
-import { UserAccountStorageConfig } from "./account/storage/UserAccountStorageConfig";
+import { UserAccountStorageBackendConfig } from "./account/storage/UserAccountStorageBackendConfig";
 import { IUserDataStorageConfigWithMetadata } from "./data/storage/UserDataStorageConfigWithMetadata";
 import { IUserSignInData, USER_SIGN_IN_DATA_JSON_SCHEMA } from "@shared/user/account/UserSignInData";
 import {
@@ -17,21 +17,22 @@ import {
   NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_DTO_JSON_SCHEMA
 } from "@shared/user/data/storage/NewUserDataStorageConfigWithMetadataDTO";
 import { ISecuredUserDataStorageConfigWithMetadata } from "./data/storage/SecuredUserDataStorageConfigWithMetadata";
+import { ISecuredPasswordData } from "@shared/utils/ISecuredPasswordData";
 
 export class UserManager {
   private readonly logger: LogFunctions;
-  private readonly userAccountStorageLogger: LogFunctions;
+  private readonly userAccountStorageBackendLogger: LogFunctions;
 
   // Currently signed in user
   // Must be wrapped in an object because it is a proxy
   private currentlySignedInUser: { value: ICurrentlySignedInUser | null };
   public onCurrentlySignedInUserChangeCallback: CurrentlySignedInUserChangeCallback;
 
-  // User Account Storage
+  // User Account Storage Backend
   // Must be wrapped in an object because it too is a proxy
-  private userAccountStorage: { value: UserAccountStorage<UserAccountStorageConfig> | null };
-  // This is needed to let the renderer know if the User Account Storage is available when it changes
-  public onUserAccountStorageAvailabilityChangeCallback: UserAccountStorageAvailabilityChangeCallback;
+  private userAccountStorageBackend: { value: UserAccountStorageBackend<UserAccountStorageBackendConfig> | null };
+  // This is needed to let the renderer know if the User Account Storage Backend is available when it changes
+  public onUserAccountStorageBackendAvailabilityChangeCallback: UserAccountStorageBackendAvailabilityChangeCallback;
 
   // AJV insatnce
   private readonly AJV: Ajv;
@@ -41,16 +42,16 @@ export class UserManager {
   public readonly CURRENTLY_SIGNED_IN_USER_VALIDATE_FUNCTION: ValidateFunction<ICurrentlySignedInUser>;
   public readonly NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_DTO_VALIDATE_FUNCTION: ValidateFunction<INewUserDataStorageConfigWithMetadataDTO>;
 
-  public constructor(logger: LogFunctions, userAccountStorageLogger: LogFunctions, ajv: Ajv) {
+  public constructor(logger: LogFunctions, userAccountStorageBackendLogger: LogFunctions, ajv: Ajv) {
     // Loggers
     this.logger = logger;
     this.logger.debug("Initialising new User Manager.");
-    this.userAccountStorageLogger = userAccountStorageLogger;
+    this.userAccountStorageBackendLogger = userAccountStorageBackendLogger;
     // AJV and validators
     this.AJV = ajv;
     this.USER_SIGN_UP_DATA_VALIDATE_FUNCTION = this.AJV.compile<IUserSignUpData>(USER_SIGN_UP_DATA_JSON_SCHEMA);
     this.USER_SIGN_IN_DATA_VALIDATE_FUNCTION = this.AJV.compile<IUserSignInData>(USER_SIGN_IN_DATA_JSON_SCHEMA);
-    this.CURRENTLY_SIGNED_IN_USER_VALIDATE_FUNCTION = this.AJV.compile<ICurrentlySignedInUser>(CURRENTLY_SIGNED_IN_USER_SCHEMA);
+    this.CURRENTLY_SIGNED_IN_USER_VALIDATE_FUNCTION = this.AJV.compile<ICurrentlySignedInUser>(CURRENTLY_SIGNED_IN_USER_JSON_SCHEMA);
     this.NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_DTO_VALIDATE_FUNCTION = this.AJV.compile<INewUserDataStorageConfigWithMetadataDTO>(
       NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_DTO_JSON_SCHEMA
     );
@@ -85,27 +86,33 @@ export class UserManager {
       }
     );
     // User Account Storage
-    this.onUserAccountStorageAvailabilityChangeCallback = (): void => {
-      this.logger.debug("No User Account Storage availability change callback set.");
+    this.onUserAccountStorageBackendAvailabilityChangeCallback = (): void => {
+      this.logger.debug("No User Account Storage Backend availability change callback set.");
     };
     // User Account Storage proxy that performs validation and calls the change callback when required
-    this.userAccountStorage = new Proxy<{ value: UserAccountStorage<UserAccountStorageConfig> | null }>(
+    this.userAccountStorageBackend = new Proxy<{ value: UserAccountStorageBackend<UserAccountStorageBackendConfig> | null }>(
       { value: null },
       {
-        set: (target: { value: UserAccountStorage<UserAccountStorageConfig> | null }, property: string | symbol, value: unknown): boolean => {
+        set: (
+          target: { value: UserAccountStorageBackend<UserAccountStorageBackendConfig> | null },
+          property: string | symbol,
+          value: unknown
+        ): boolean => {
           if (property !== "value") {
-            throw new Error(`Cannot set property "${String(property)}" on User Account Storage. Only "value" property can be set! No-op set.`);
+            throw new Error(
+              `Cannot set property "${String(property)}" on User Account Storage Backend. Only "value" property can be set! No-op set.`
+            );
           }
-          if (value !== null && !(value instanceof UserAccountStorage)) {
-            throw new Error(`Value must be "null" or an instance of User Account Storage! No-op set.`);
+          if (value !== null && !(value instanceof UserAccountStorageBackend)) {
+            throw new Error(`Value must be "null" or an instance of User Account Storage Backend! No-op set.`);
           }
           target[property] = value;
           if (value === null) {
-            this.logger.info('User Account Storage set to "null" (unavailable).');
-            this.onUserAccountStorageAvailabilityChangeCallback(false);
+            this.logger.info('User Account Storage Backend set to "null" (unavailable).');
+            this.onUserAccountStorageBackendAvailabilityChangeCallback(false);
           } else {
-            this.logger.info(`User Account Storage set to User Account Storage with config: ${JSON.stringify(value.config, null, 2)} (available).`);
-            this.onUserAccountStorageAvailabilityChangeCallback(true);
+            this.logger.info(`User Account Storage Backend set with config: ${JSON.stringify(value.config, null, 2)} (available).`);
+            this.onUserAccountStorageBackendAvailabilityChangeCallback(true);
           }
           return true;
         }
@@ -113,73 +120,75 @@ export class UserManager {
     );
   }
 
-  public getUserAccountStorageType(): UserAccountStorageType {
-    this.logger.debug("Getting User Account Storage type.");
-    if (this.userAccountStorage.value === null) {
-      throw new Error("Null User Account Storage");
+  public getUserAccountStorageBackendType(): UserAccountStorageBackendType {
+    this.logger.debug("Getting User Account Storage Backend type.");
+    if (this.userAccountStorageBackend.value === null) {
+      throw new Error("Null User Account Storage Backend");
     }
-    return this.userAccountStorage.value.config.type;
+    return this.userAccountStorageBackend.value.config.type;
   }
 
-  public isUserAccountStorageAvailable(): boolean {
-    this.logger.debug("Getting User Account Storage availability.");
-    return this.userAccountStorage.value !== null;
+  public isUserAccountStorageBackendAvailable(): boolean {
+    this.logger.debug("Getting User Account Storage Backend availability.");
+    return this.userAccountStorageBackend.value !== null;
   }
 
-  public openUserAccountStorage(storageConfig: UserAccountStorageConfig): boolean {
-    this.logger.debug(`Opening User Account Storage.`);
-    if (this.userAccountStorage.value !== null) {
-      if (isDeepStrictEqual(this.userAccountStorage.value.config, storageConfig)) {
-        this.logger.debug("This exact User Account Storage is already open. No-op.");
+  public openUserAccountStorageBackend(config: UserAccountStorageBackendConfig): boolean {
+    this.logger.debug(`Opening User Account Storage Backend.`);
+    if (this.userAccountStorageBackend.value !== null) {
+      if (isDeepStrictEqual(this.userAccountStorageBackend.value.config, config)) {
+        this.logger.debug("This exact User Account Storage Backend is already open. No-op.");
         return false;
       }
-      this.logger.debug(`Previous "${this.userAccountStorage.value.config.type}" User Account Storage still open. Closing before opening new one.`);
-      const IS_PREVIOUS_USER_ACCOUNT_STORAGE_CLOSED: boolean = this.closeUserAccountStorage();
-      if (!IS_PREVIOUS_USER_ACCOUNT_STORAGE_CLOSED) {
-        this.logger.warn(`Could not close previous "${this.userAccountStorage.value.config.type}" User Account Storage. No-op.`);
+      this.logger.debug(
+        `Previous "${this.userAccountStorageBackend.value.config.type}" User Account Storage Backend still open. Closing before opening new one.`
+      );
+      const IS_PREVIOUS_USER_ACCOUNT_STORAGE_BACKEND_CLOSED: boolean = this.closeUserAccountStorageBackend();
+      if (!IS_PREVIOUS_USER_ACCOUNT_STORAGE_BACKEND_CLOSED) {
+        this.logger.warn(`Could not close previous "${this.userAccountStorageBackend.value.config.type}" User Account Storage Backend. No-op.`);
         return false;
       }
     }
     try {
-      this.userAccountStorage.value = userAccountStorageFactory(storageConfig, this.userAccountStorageLogger, this.AJV);
-      this.logger.debug(`Opened "${this.userAccountStorage.value.config.type}" User Account Storage.`);
+      this.userAccountStorageBackend.value = userAccountStorageBackendFactory(config, this.userAccountStorageBackendLogger, this.AJV);
+      this.logger.debug(`Opened "${this.userAccountStorageBackend.value.config.type}" User Account Storage Backend.`);
       return true;
     } catch (err: unknown) {
       const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-      this.logger.error(`Could not open "${storageConfig.type}" User Account Storage: ${ERROR_MESSAGE}!`);
-      this.userAccountStorage.value = null;
+      this.logger.error(`Could not open "${config.type}" User Account Storage Backend: ${ERROR_MESSAGE}!`);
+      this.userAccountStorageBackend.value = null;
       return false;
     }
   }
 
-  public closeUserAccountStorage(): boolean {
-    this.logger.debug("Closing User Account Storage.");
-    if (this.userAccountStorage.value === null) {
-      throw new Error("Null User Account Storage");
+  public closeUserAccountStorageBackend(): boolean {
+    this.logger.debug("Closing User Account Storage Backend.");
+    if (this.userAccountStorageBackend.value === null) {
+      throw new Error("Null User Account Storage Backend");
     }
-    let isUserStorageClosed: boolean;
+    let isUserAccountStorageBackendClosed: boolean;
     try {
-      isUserStorageClosed = this.userAccountStorage.value.close();
+      isUserAccountStorageBackendClosed = this.userAccountStorageBackend.value.close();
     } catch (err: unknown) {
       const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-      this.logger.error(`Could not close "${this.userAccountStorage.value.config.type}" User Account Storage: ${ERROR_MESSAGE}!`);
+      this.logger.error(`Could not close "${this.userAccountStorageBackend.value.config.type}" User Account Storage Backend: ${ERROR_MESSAGE}!`);
       return false;
     }
-    if (isUserStorageClosed) {
-      this.logger.debug(`Closed "${this.userAccountStorage.value.config.type}" User Account Storage.`);
-      this.userAccountStorage.value = null;
+    if (isUserAccountStorageBackendClosed) {
+      this.logger.debug(`Closed "${this.userAccountStorageBackend.value.config.type}" User Account Storage Backend.`);
+      this.userAccountStorageBackend.value = null;
     } else {
-      this.logger.warn(`Could not close "${this.userAccountStorage.value.config.type}" User Account Storage.`);
+      this.logger.warn(`Could not close "${this.userAccountStorageBackend.value.config.type}" User Account Storage Backend.`);
     }
-    return isUserStorageClosed;
+    return isUserAccountStorageBackendClosed;
   }
 
   public isUsernameAvailable(username: string): boolean {
     this.logger.debug(`Getting username availability for username: "${username}".`);
-    if (this.userAccountStorage.value === null) {
-      throw new Error("Null User Account Storage");
+    if (this.userAccountStorageBackend.value === null) {
+      throw new Error("Null User Account Storage Backend");
     }
-    return this.userAccountStorage.value.isUsernameAvailable(username);
+    return this.userAccountStorageBackend.value.isUsernameAvailable(username);
   }
 
   private hashPassword(plainTextPassword: string, salt: Buffer, passwordPurpose?: string): Buffer {
@@ -207,7 +216,7 @@ export class UserManager {
     userDataStorageConfigWithMetadata: IUserDataStorageConfigWithMetadata
   ): ISecuredUserDataStorageConfigWithMetadata {
     this.logger.debug(`Securing user data storage config with metadata with config ID: "${userDataStorageConfigWithMetadata.configId}".`);
-    let visibilityPassword: { hash: Buffer; salt: Buffer } | undefined;
+    let visibilityPassword: ISecuredPasswordData | undefined;
     if (userDataStorageConfigWithMetadata.visibilityPassword !== undefined) {
       this.logger.debug("Config has a visibility password.");
       const VISIBILITY_PASSWORD_SALT: Buffer = randomBytes(16);
@@ -233,37 +242,36 @@ export class UserManager {
 
   public getUserCount(): number {
     this.logger.debug("Getting user count.");
-    if (this.userAccountStorage.value === null) {
-      throw new Error("Null User Account Storage");
+    if (this.userAccountStorageBackend.value === null) {
+      throw new Error("Null User Account Storage Backend");
     }
-    return this.userAccountStorage.value.getUserCount();
+    return this.userAccountStorageBackend.value.getUserCount();
   }
 
   public signUpUser(userData: ISecuredUserSignUpData): boolean {
     this.logger.debug(`Signing up user: "${userData.username}".`);
-    if (this.userAccountStorage.value === null) {
-      throw new Error("Null User Account Storage");
+    if (this.userAccountStorageBackend.value === null) {
+      throw new Error("Null User Account Storage Backend");
     }
-    return this.userAccountStorage.value.addUser(userData);
+    return this.userAccountStorageBackend.value.addUser(userData);
   }
 
   public signInUser(userSignInData: IUserSignInData): boolean {
     this.logger.debug(`Attempting sign in for user: "${userSignInData.username}".`);
-    if (this.userAccountStorage.value === null) {
-      throw new Error("Null User Account Storage");
+    if (this.userAccountStorageBackend.value === null) {
+      throw new Error("Null User Account Storage Backend");
     }
-    const USER_ID: UUID | null = this.userAccountStorage.value.getUserId(userSignInData.username);
+    const USER_ID: UUID | null = this.userAccountStorageBackend.value.getUserId(userSignInData.username);
     if (USER_ID === null) {
       this.logger.debug("No user ID for given username. Username must be missing from storage. Sign in failed.");
       return false;
     }
-    const USER_PASSWORD_DATA: [Buffer, Buffer] | null = this.userAccountStorage.value.getPasswordData(USER_ID);
+    const USER_PASSWORD_DATA: ISecuredPasswordData | null = this.userAccountStorageBackend.value.getPasswordData(USER_ID);
     if (USER_PASSWORD_DATA === null) {
       throw new Error(`No password hash and salt for user with ID: "${USER_ID}"`);
     }
-    const [USER_PASSWORD_HASH, USER_PASSWORD_SALT]: [Buffer, Buffer] = USER_PASSWORD_DATA;
-    const SIGN_IN_PASSWORD_HASH: Buffer = this.hashPassword(userSignInData.password, USER_PASSWORD_SALT, "user sign in");
-    if (timingSafeEqual(SIGN_IN_PASSWORD_HASH, USER_PASSWORD_HASH)) {
+    const SIGN_IN_PASSWORD_HASH: Buffer = this.hashPassword(userSignInData.password, USER_PASSWORD_DATA.salt, "user sign in");
+    if (timingSafeEqual(SIGN_IN_PASSWORD_HASH, USER_PASSWORD_DATA.hash)) {
       this.logger.debug("Password hashes matched! Signing in.");
       this.currentlySignedInUser.value = { userId: USER_ID, username: userSignInData.username };
       return true;
@@ -288,20 +296,23 @@ export class UserManager {
 
   public addUserDataStorageConfigToUser(userId: UUID, userDataStorageConfigWithMetadata: IUserDataStorageConfigWithMetadata): boolean {
     this.logger.debug(`Adding new User Data Storage Config to user with ID: "${userId}".`);
-    if (this.userAccountStorage.value === null) {
-      throw new Error("Null User Account Storage");
+    if (this.userAccountStorageBackend.value === null) {
+      throw new Error("Null User Account Storage Backend");
     }
     // TODO: Encrypt the config with a KDF derived from the user's password
-    const SECURED_USER_DATA_STPRAGE_CONFIG_WITH_METADATA: ISecuredUserDataStorageConfigWithMetadata =
+    if (!this.userAccountStorageBackend.value.doesUserWithIdExist(userId)) {
+      throw new Error(`Cannot add User Data Storage to user with ID "${userId}" because it does not exist`);
+    }
+    const SECURED_USER_DATA_STORAGE_CONFIG_WITH_METADATA: ISecuredUserDataStorageConfigWithMetadata =
       this.secureUserDataStorageConfigWithMetadata(userDataStorageConfigWithMetadata);
-    return this.userAccountStorage.value.addUserDataStorageConfigToUser(userId, SECURED_USER_DATA_STPRAGE_CONFIG_WITH_METADATA);
+    return this.userAccountStorageBackend.value.addUserDataStorageConfigToUser(userId, SECURED_USER_DATA_STORAGE_CONFIG_WITH_METADATA);
   }
 
   public getAllUserDataStorageConfigs(userId: UUID): ISecuredUserDataStorageConfigWithMetadata[] {
     this.logger.debug(`Getting all User Data Storage Configs for user with ID: "${userId}".`);
-    if (this.userAccountStorage.value === null) {
-      throw new Error("Null User Account Storage");
+    if (this.userAccountStorageBackend.value === null) {
+      throw new Error("Null User Account Storage Backend");
     }
-    return this.userAccountStorage.value.getAllUserDataStorageConfigs(userId);
+    return this.userAccountStorageBackend.value.getAllUserDataStorageConfigs(userId);
   }
 }

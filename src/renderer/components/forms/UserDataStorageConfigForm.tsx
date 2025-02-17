@@ -41,7 +41,6 @@ export interface IUserDataStorageConfigFormProps {
   doRenderSubmitButton: boolean;
 }
 
-// TODO: Get title in error messages properly
 const UserDataStorageConfigForm: FC<IUserDataStorageConfigFormProps> = (props: IUserDataStorageConfigFormProps) => {
   return (
     <MUIForm
@@ -57,6 +56,7 @@ const UserDataStorageConfigForm: FC<IUserDataStorageConfigFormProps> = (props: I
       showErrorList={false}
       transformErrors={userDataStorageConfigInputDataFormTransformErrors}
       onSubmit={props.handleFormSubmit}
+      noHtml5Validate={true}
     />
   );
 };

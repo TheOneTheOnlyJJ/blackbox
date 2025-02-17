@@ -22,7 +22,7 @@ const AppRoot: FC = () => {
   // Encryption
   const [rendererProcessAESKey, setRendererProcessAESKey] = useState<CryptoKey | null>(null);
   // User
-  const [isUserAccountStorageAvailable, setIsUserAccountStorageAvailable] = useState<boolean>(false);
+  const [isUserAccountStorageBackendAvailable, setIsUserAccountStorageBackendAvailable] = useState<boolean>(false);
   const [currentlySignedInUser, setCurrentlySignedInUser] = useState<ICurrentlySignedInUser | null>(null);
 
   const generateRendererProcessAESEncryptionKey = useCallback(async (): Promise<void> => {
@@ -94,10 +94,10 @@ const AppRoot: FC = () => {
     navigate(navigationPath, { replace: true });
   }, [navigate, currentlySignedInUser]);
 
-  // Log user account storage availability changes
+  // Log User Account Storage Backend availability changes
   useEffect((): void => {
-    appLogger.debug(`User Account Storage availability changed: ${isUserAccountStorageAvailable.toString()}.`);
-  }, [isUserAccountStorageAvailable]);
+    appLogger.debug(`User Account Storage Backend availability changed: ${isUserAccountStorageBackendAvailable.toString()}.`);
+  }, [isUserAccountStorageBackendAvailable]);
 
   useEffect((): (() => void) => {
     appLogger.debug("Rendering App Root component.");
@@ -115,12 +115,12 @@ const AppRoot: FC = () => {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
         appLogger.error(`Failed to generate renderer process AES key: ${ERROR_MESSAGE}.`);
       });
-    const IS_USER_STORAGE_AVAILABLE_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.isAccountStorageAvailable();
-    if (IS_USER_STORAGE_AVAILABLE_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
-      enqueueSnackbar({ message: "Error getting User Account Storage availability.", variant: "error" });
-      setIsUserAccountStorageAvailable(false);
+    const IS_USER_ACCOUNT_STORAGE_BACKEND_AVAILABLE_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.isAccountStorageBackendAvailable();
+    if (IS_USER_ACCOUNT_STORAGE_BACKEND_AVAILABLE_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
+      enqueueSnackbar({ message: "Error getting User Account Storage Backend availability.", variant: "error" });
+      setIsUserAccountStorageBackendAvailable(false);
     } else {
-      setIsUserAccountStorageAvailable(IS_USER_STORAGE_AVAILABLE_RESPONSE.data);
+      setIsUserAccountStorageBackendAvailable(IS_USER_ACCOUNT_STORAGE_BACKEND_AVAILABLE_RESPONSE.data);
     }
     const GET_CURRENTLY_SIGNED_IN_USER_RESPONSE: IPCAPIResponse<ICurrentlySignedInUser | null> = window.userAPI.getCurrentlySignedInUser();
     if (GET_CURRENTLY_SIGNED_IN_USER_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
@@ -136,17 +136,17 @@ const AppRoot: FC = () => {
         setCurrentlySignedInUser(newSignedInUser);
       }
     );
-    // Monitor changes to user account storage availability status
-    const REMOVE_ON_USER_ACCOUNT_STORAGE_AVAILABILITY_CHANGE_LISTENER: () => void = window.userAPI.onAccountStorageAvailabilityChange(
-      (isUserAccountStorageAvailable: boolean): void => {
-        IPCLogger.debug("Received User Account Storage availability status change event.");
-        setIsUserAccountStorageAvailable(isUserAccountStorageAvailable);
+    // Monitor changes to User Account Storage Backend availability status
+    const REMOVE_ON_USER_ACCOUNT_STORAGE_BACKEND_AVAILABILITY_CHANGE_LISTENER: () => void = window.userAPI.onAccountStorageBackendAvailabilityChange(
+      (isUserAccountStorageBackendAvailable: boolean): void => {
+        IPCLogger.debug("Received User Account Storage Backend availability status change event.");
+        setIsUserAccountStorageBackendAvailable(isUserAccountStorageBackendAvailable);
       }
     );
-    return () => {
+    return (): void => {
       appLogger.debug("Removing App Root event listeners.");
       REMOVE_ON_CURRENTLY_SIGNED_IN_USER_CHANGE_LISTENER();
-      REMOVE_ON_USER_ACCOUNT_STORAGE_AVAILABILITY_CHANGE_LISTENER();
+      REMOVE_ON_USER_ACCOUNT_STORAGE_BACKEND_AVAILABILITY_CHANGE_LISTENER();
     };
   }, [generateRendererProcessAESEncryptionKey]);
 
@@ -162,7 +162,7 @@ const AppRoot: FC = () => {
           {
             rendererProcessAESKey: rendererProcessAESKey,
             currentlySignedInUser: currentlySignedInUser,
-            isUserAccountStorageAvailable: isUserAccountStorageAvailable
+            isUserAccountStorageBackendAvailable: isUserAccountStorageBackendAvailable
           } satisfies IAppRootContext
         }
       />

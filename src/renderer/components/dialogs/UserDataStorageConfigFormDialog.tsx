@@ -18,6 +18,7 @@ export interface IUserDataStorageConfigFormDialogProps {
 const UserDataStorageConfigFormDialog: FC<IUserDataStorageConfigFormDialogProps> = (props: IUserDataStorageConfigFormDialogProps) => {
   const formRef: Ref<Form> = useRef<Form>(null);
   const handleSubmitButtonClick = useCallback((): void => {
+    appLogger.info("User Data Storage Config form Submit button clicked.");
     if (!formRef.current?.validateForm()) {
       enqueueSnackbar({ message: "Invalid form data.", variant: "warning" });
       appLogger.warn("Invalid User Data Storage Config form data.");

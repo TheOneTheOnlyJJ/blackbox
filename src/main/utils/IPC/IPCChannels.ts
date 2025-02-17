@@ -6,8 +6,8 @@ export type IPCTLSAPIIPCChannels = typeof IPC_TLS_API_IPC_CHANNELS;
 export type IPCTLSAPIIPCChannel = IPCTLSAPIIPCChannels[keyof IPCTLSAPIIPCChannels];
 
 export const USER_API_IPC_CHANNELS = {
-  isAccountStorageAvailable: "userAPI:isAccountStorageAvailable",
-  onAccountStorageAvailabilityChange: "userAPI:onAccountStorageAvailabilityChange",
+  isAccountStorageBackendAvailable: "userAPI:isAccountStorageBackendAvailable",
+  onAccountStorageBackendAvailabilityChange: "userAPI:onAccountStorageBackendAvailabilityChange",
   isUsernameAvailable: "userAPI:isUsernameAvailable",
   signUp: "userAPI:signUp",
   getUserCount: "userAPI:getUserCount",

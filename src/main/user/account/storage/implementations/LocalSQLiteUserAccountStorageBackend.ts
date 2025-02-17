@@ -1,17 +1,19 @@
-import { IBaseUserAccountStorageConfig, UserAccountStorage } from "../UserAccountStorage";
+import { IBaseUserAccountStorageBackendConfig, UserAccountStorageBackend } from "../UserAccountStorageBackend";
 import DatabaseConstructor, { Database, RunResult } from "better-sqlite3";
 import { LogFunctions } from "electron-log";
 import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import Ajv, { JSONSchemaType } from "ajv";
-import { USER_ACCOUNT_STORAGE_TYPE, UserAccountStorageTypes } from "../UserAccountStorageType";
+import { USER_ACCOUNT_STORAGE_BACKEND_TYPES, UserAccountStorageBackendTypes } from "../UserAccountStorageBackendType";
 import { ISecuredUserSignUpData } from "@main/user/account/SecuredNewUserData";
 import { UUID } from "crypto";
 import { UserDataStorageConfig } from "@main/user/data/storage/UserDataStorageConfig";
 import { ISecuredUserDataStorageConfigWithMetadata } from "@main/user/data/storage/SecuredUserDataStorageConfigWithMetadata";
+import { ISecuredPasswordData } from "@shared/utils/ISecuredPasswordData";
+import { LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_CONFIG_CONSTANTS } from "@shared/user/account/storage/constants/LocalSQLiteUserAccountStorageBackendConstants";
 
-export interface ILocalSQLiteUserAccountStorageConfig extends IBaseUserAccountStorageConfig {
-  type: UserAccountStorageTypes["LocalSQLite"];
+export interface ILocalSQLiteUserAccountStorageBackendConfig extends IBaseUserAccountStorageBackendConfig {
+  type: UserAccountStorageBackendTypes["LocalSQLite"];
   dbDirPath: string;
   dbFileName: string;
 }
@@ -31,22 +33,24 @@ interface IRawSecuredUserDataStorageConfigWithMetadata {
   config: string;
 }
 
-export class LocalSQLiteUserAccountStorage extends UserAccountStorage<ILocalSQLiteUserAccountStorageConfig> {
-  public static readonly CONFIG_SCHEMA: JSONSchemaType<ILocalSQLiteUserAccountStorageConfig> = {
+export class LocalSQLiteUserAccountStorageBackend extends UserAccountStorageBackend<ILocalSQLiteUserAccountStorageBackendConfig> {
+  public static readonly CONFIG_JSON_SCHEMA: JSONSchemaType<ILocalSQLiteUserAccountStorageBackendConfig> = {
     $schema: "http://json-schema.org/draft-07/schema#",
     type: "object",
     properties: {
       type: {
         type: "string",
-        enum: [USER_ACCOUNT_STORAGE_TYPE.LocalSQLite]
+        enum: [USER_ACCOUNT_STORAGE_BACKEND_TYPES.LocalSQLite]
       },
       dbDirPath: {
         type: "string",
-        minLength: 1
+        title: LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_CONFIG_CONSTANTS.dbDirPath.title,
+        minLength: LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_CONFIG_CONSTANTS.dbDirPath.minLength
       },
       dbFileName: {
         type: "string",
-        minLength: 1
+        title: LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_CONFIG_CONSTANTS.dbFileName.title,
+        minLength: LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_CONFIG_CONSTANTS.dbFileName.minLength
       }
     },
     required: ["type", "dbDirPath", "dbFileName"],
@@ -55,8 +59,8 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<ILocalSQLi
 
   private readonly db: Database;
 
-  public constructor(config: ILocalSQLiteUserAccountStorageConfig, logger: LogFunctions, ajv: Ajv) {
-    super(config, LocalSQLiteUserAccountStorage.CONFIG_SCHEMA, logger, ajv);
+  public constructor(config: ILocalSQLiteUserAccountStorageBackendConfig, logger: LogFunctions, ajv: Ajv) {
+    super(config, LocalSQLiteUserAccountStorageBackend.CONFIG_JSON_SCHEMA, logger, ajv);
     // Create db and directories
     if (existsSync(this.config.dbDirPath)) {
       this.logger.debug(`Found database directory at path: "${this.config.dbDirPath}". Looking for SQLite file.`);
@@ -90,7 +94,7 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<ILocalSQLi
     // Initialise required tables
     this.initialiseUsersTable();
     this.initialiseUserDataStorageConfigsTable();
-    this.logger.info(`"${this.config.type}" User Acount Storage ready.`);
+    this.logger.info(`"${this.config.type}" User Acount Storage Backend ready.`);
   }
 
   public isUsernameAvailable(username: string): boolean {
@@ -103,6 +107,20 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<ILocalSQLi
     }
     this.logger.debug(`Username "${username}" is available.`);
     return true;
+  }
+
+  public doesUserWithIdExist(userId: UUID): boolean {
+    this.logger.debug(`Checking if user with ID "${userId}" exists.`);
+    const DOES_USER_WITH_ID_EXIST_SQL = `SELECT COUNT(*) AS count FROM users WHERE user_id = @userId`;
+    const RESULT = this.db.prepare(DOES_USER_WITH_ID_EXIST_SQL).get({ userId: userId }) as { count: number };
+    if (RESULT.count === 0) {
+      this.logger.debug(`User with ID "${userId}" does not exist.`);
+      return false;
+    } else if (RESULT.count === 1) {
+      this.logger.debug(`User with ID "${userId}" does exist.`);
+      return true;
+    }
+    throw new Error(`Found ${RESULT.count.toString()} users with same ID "${userId}".`);
   }
 
   public addUser(userData: ISecuredUserSignUpData): boolean {
@@ -133,12 +151,12 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<ILocalSQLi
     return RESULT === undefined ? null : RESULT.userId;
   }
 
-  public getPasswordData(userId: UUID): [Buffer, Buffer] | null {
+  public getPasswordData(userId: UUID): ISecuredPasswordData | null {
     this.logger.debug(`Getting password salt for user with ID: "${userId}".`);
     const GET_USER_PASSWORD_SALT_SQL =
       "SELECT password_hash AS passwordHash, password_salt AS passwordSalt FROM users WHERE user_id = @userId LIMIT 1";
     const RESULT = this.db.prepare(GET_USER_PASSWORD_SALT_SQL).get({ userId: userId }) as { passwordHash: Buffer; passwordSalt: Buffer } | undefined;
-    return RESULT === undefined ? null : [RESULT.passwordHash, RESULT.passwordSalt];
+    return RESULT === undefined ? null : { hash: RESULT.passwordHash, salt: RESULT.passwordSalt };
   }
 
   public getUserCount(): number {
@@ -225,7 +243,7 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<ILocalSQLi
     try {
       RESULT.map((rawSecuredUserDataStorageConfigWithMetadata: IRawSecuredUserDataStorageConfigWithMetadata) => {
         this.logger.debug("Determining visibility password.");
-        const VISIBILITY_PASSWORD: { hash: Buffer; salt: Buffer } | undefined =
+        const VISIBILITY_PASSWORD: ISecuredPasswordData | undefined =
           rawSecuredUserDataStorageConfigWithMetadata.visibilityPasswordHash !== null &&
           rawSecuredUserDataStorageConfigWithMetadata.visibilityPasswordSalt !== null
             ? {
@@ -264,7 +282,7 @@ export class LocalSQLiteUserAccountStorage extends UserAccountStorage<ILocalSQLi
   }
 
   public close(): boolean {
-    this.logger.debug(`Closing "${this.config.type}" User Account Storage.`);
+    this.logger.debug(`Closing "${this.config.type}" User Account Storage Backend.`);
     this.db.close();
     return true;
   }

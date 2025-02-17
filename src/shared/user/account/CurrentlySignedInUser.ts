@@ -5,7 +5,7 @@ export interface ICurrentlySignedInUser {
   username: string;
 }
 
-export const CURRENTLY_SIGNED_IN_USER_SCHEMA: JSONSchemaType<ICurrentlySignedInUser> = {
+export const CURRENTLY_SIGNED_IN_USER_JSON_SCHEMA: JSONSchemaType<ICurrentlySignedInUser> = {
   $schema: "http://json-schema.org/draft-07/schema#",
   type: "object",
   properties: {

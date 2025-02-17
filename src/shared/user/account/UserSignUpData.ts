@@ -1,5 +1,5 @@
 import { JSONSchemaType } from "ajv";
-import { USER_SIGN_UP_DATA_CONSTRAINTS } from "./UserSignUpDataConstraints";
+import { USER_SIGN_UP_DATA_CONSTANTS } from "./UserSignUpDataConstants";
 
 export interface IUserSignUpData {
   username: string;
@@ -12,11 +12,11 @@ export const USER_SIGN_UP_DATA_JSON_SCHEMA: JSONSchemaType<IUserSignUpData> = {
   properties: {
     username: {
       type: "string",
-      minLength: USER_SIGN_UP_DATA_CONSTRAINTS.username.minLength,
-      maxLength: USER_SIGN_UP_DATA_CONSTRAINTS.username.maxLength,
-      pattern: USER_SIGN_UP_DATA_CONSTRAINTS.username.pattern
+      minLength: USER_SIGN_UP_DATA_CONSTANTS.username.minLength,
+      maxLength: USER_SIGN_UP_DATA_CONSTANTS.username.maxLength,
+      pattern: USER_SIGN_UP_DATA_CONSTANTS.username.pattern
     },
-    password: { type: "string", minLength: USER_SIGN_UP_DATA_CONSTRAINTS.password.minLength }
+    password: { type: "string", minLength: USER_SIGN_UP_DATA_CONSTANTS.password.minLength }
   },
   required: ["username", "password"],
   additionalProperties: false

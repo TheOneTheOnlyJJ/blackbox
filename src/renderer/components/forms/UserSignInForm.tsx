@@ -26,6 +26,7 @@ const UserSignInForm: FC = () => {
   const [wasSignInSuccessful, setWasSignInSuccessful] = useState<boolean>(true);
   const handleSubmit = useCallback(
     (data: IChangeEvent<IUserSignInInputData>): void => {
+      appLogger.info("Submitted user Sign In form.");
       if (data.formData === undefined) {
         appLogger.error("Undefined sign in form data. No-op.");
         enqueueSnackbar({ message: "Missing form data.", variant: "error" });
@@ -69,13 +70,14 @@ const UserSignInForm: FC = () => {
   );
 
   return (
-    <MUIForm
+    <MUIForm // TODO: Change errors from "Missing required property"
       schema={USER_SIGN_IN_INPUT_DATA_JSON_SCHEMA as RJSFSchema}
       uiSchema={USER_SIGN_IN_INPUT_DATA_UI_SCHEMA}
       validator={USER_SIGN_IN_FORM_VALIDATOR}
       showErrorList={false}
       transformErrors={errorCapitalizerTransformer}
       onSubmit={handleSubmit}
+      noHtml5Validate={true}
     >
       {!wasSignInSuccessful && (
         <Alert severity="error" sx={{ marginTop: "1vw" }}>

@@ -5,7 +5,7 @@ import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { EncryptedNewUserDataStorageConfigWithMetadataDTO } from "@shared/user/account/encrypted/EncryptedNewUserDataStorageConfigWithMetadataDTO";
 
 // Utility types
-export type UserAccountStorageAvailabilityChangeCallback = (isAvailable: boolean) => void;
+export type UserAccountStorageBackendAvailabilityChangeCallback = (isAvailable: boolean) => void;
 export type CurrentlySignedInUserChangeCallback = (newSignedInUser: ICurrentlySignedInUser | null) => void;
 
 // API
@@ -13,13 +13,13 @@ export interface IUserAPI {
   signUp: (encryptedUserSignUpData: EncryptedUserSignUpData) => IPCAPIResponse<boolean>;
   signIn: (encryptedUserSignInData: EncryptedUserSignInData) => IPCAPIResponse<boolean>;
   signOut: () => IPCAPIResponse;
-  isAccountStorageAvailable: () => IPCAPIResponse<boolean>;
+  isAccountStorageBackendAvailable: () => IPCAPIResponse<boolean>;
   isUsernameAvailable: (username: string) => IPCAPIResponse<boolean>;
   getUserCount: () => IPCAPIResponse<number>;
   getCurrentlySignedInUser: () => IPCAPIResponse<ICurrentlySignedInUser | null>;
   addNewUserDataStorageConfigWithMetadataToUser: (
     encryptedNewUserDataStorageConfigWithMetadataDTO: EncryptedNewUserDataStorageConfigWithMetadataDTO
   ) => IPCAPIResponse<boolean>;
-  onAccountStorageAvailabilityChange: (callback: UserAccountStorageAvailabilityChangeCallback) => () => void;
+  onAccountStorageBackendAvailabilityChange: (callback: UserAccountStorageBackendAvailabilityChangeCallback) => () => void;
   onCurrentlySignedInUserChange: (callback: CurrentlySignedInUserChangeCallback) => () => void;
 }

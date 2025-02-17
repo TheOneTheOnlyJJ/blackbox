@@ -1,6 +1,7 @@
 import { JSONSchemaType } from "ajv";
 import { USER_DATA_STORAGE_TYPES, UserDataStorageTypes } from "../../UserDataStorageType";
 import { IBaseUserDataStorageConfigInputData } from "../BaseUserDataStorageConfigInputData";
+import { LOCAL_SQLITE_USER_DATA_STORAGE_CONFIG_CONSTANTS } from "../../constants/LocalSQLiteUserDataStorageConfigConstants";
 
 export interface ILocalSQLiteUserDataStorageConfigInputData extends IBaseUserDataStorageConfigInputData {
   type: UserDataStorageTypes["LocalSQLite"];
@@ -19,11 +20,13 @@ export const LOCAL_SQLITE_USER_DATA_STORAGE_CONFIG_INPUT_DATA_JSON_SCHEMA: JSONS
     },
     dbDirPath: {
       type: "string",
-      minLength: 5
+      title: LOCAL_SQLITE_USER_DATA_STORAGE_CONFIG_CONSTANTS.dbDirPath.title,
+      minLength: LOCAL_SQLITE_USER_DATA_STORAGE_CONFIG_CONSTANTS.dbDirPath.minLength
     },
     dbFileName: {
       type: "string",
-      minLength: 5
+      title: LOCAL_SQLITE_USER_DATA_STORAGE_CONFIG_CONSTANTS.dbFileName.title,
+      minLength: LOCAL_SQLITE_USER_DATA_STORAGE_CONFIG_CONSTANTS.dbFileName.minLength
     }
   },
   required: ["type", "dbDirPath", "dbFileName"],
