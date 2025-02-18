@@ -1,5 +1,5 @@
 export const USER_ACCOUNT_STORAGE_BACKEND_TYPES = {
-  LocalSQLite: "Local SQLite"
+  LocalSQLite: "localSQLite"
 } as const;
 
 export type UserAccountStorageBackendTypes = typeof USER_ACCOUNT_STORAGE_BACKEND_TYPES;

@@ -1,14 +1,13 @@
-const DB_DIR_PATH_CONSTANTS = {
-  title: "Database Directory Path",
-  minLength: 1
-} as const;
-
-const DB_FILE_NAME_CONSTANTS = {
-  title: "Database File Name",
-  minLength: 1
-} as const;
-
-export const LOCAL_SQLITE_USER_DATA_STORAGE_CONFIG_CONSTANTS = {
-  dbDirPath: DB_DIR_PATH_CONSTANTS,
-  dbFileName: DB_FILE_NAME_CONSTANTS
+export const LOCAL_SQLITE_USER_DATA_STORAGE_CONFIG_JSON_SCHEMA_CONSTANTS = {
+  type: {
+    title: "Local SQLite"
+  },
+  dbDirPath: {
+    title: "Database Directory Path",
+    minLength: 1
+  },
+  dbFileName: {
+    title: "Database File Name",
+    minLength: 1
+  }
 } as const;

@@ -15,30 +15,44 @@ export class LocalJSONSettingsManager<SettingsType extends Record<string, unknow
   SettingsType,
   ILocalJSONSettingsManagerConfig
 > {
-  public static readonly CONFIG_SCHEMA: JSONSchemaType<ILocalJSONSettingsManagerConfig> = {
+  public static readonly CONFIG_JSON_SCHEMA_CONSTANTS = {
+    type: {
+      title: "Local JSON"
+    },
+    fileName: {
+      title: "File Name",
+      minLength: 1
+    },
+    fileDir: {
+      title: "File Directory",
+      minLength: 1
+    }
+  } as const;
+  public static readonly CONFIG_JSON_SCHEMA: JSONSchemaType<ILocalJSONSettingsManagerConfig> = {
     $schema: "http://json-schema.org/draft-07/schema#",
     type: "object",
     properties: {
       type: {
         type: "string",
-        enum: [SETTINGS_MANAGER_TYPE.LocalJSON]
+        enum: [SETTINGS_MANAGER_TYPE.LocalJSON],
+        ...LocalJSONSettingsManager.CONFIG_JSON_SCHEMA_CONSTANTS.type
       },
       fileName: {
         type: "string",
-        minLength: 1
+        ...LocalJSONSettingsManager.CONFIG_JSON_SCHEMA_CONSTANTS.fileName
       },
       fileDir: {
         type: "string",
-        minLength: 1
+        ...LocalJSONSettingsManager.CONFIG_JSON_SCHEMA_CONSTANTS.fileDir
       }
     },
     required: ["type", "fileName", "fileDir"],
     additionalProperties: false
-  };
+  } as const;
   private readonly SETTINGS_FILE_PATH: string;
 
   public constructor(config: ILocalJSONSettingsManagerConfig, settingsSchema: JSONSchemaType<SettingsType>, logger: LogFunctions, ajv: Ajv) {
-    super(config, LocalJSONSettingsManager.CONFIG_SCHEMA, settingsSchema, logger, ajv);
+    super(config, LocalJSONSettingsManager.CONFIG_JSON_SCHEMA, settingsSchema, logger, ajv);
     this.SETTINGS_FILE_PATH = resolve(join(this.config.fileDir, this.config.fileName));
   }
 

@@ -1,5 +1,5 @@
 export const SETTINGS_MANAGER_TYPE = {
-  LocalJSON: "Local JSON"
+  LocalJSON: "localJSON"
 } as const;
 
 export type SettingsManagerTypes = typeof SETTINGS_MANAGER_TYPE;

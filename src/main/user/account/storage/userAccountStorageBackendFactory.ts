@@ -12,6 +12,7 @@ export function userAccountStorageBackendFactory(
 ): UserAccountStorageBackend<UserAccountStorageBackendConfig> {
   logger.debug(`Running User Acount Storage Backend factory with config: ${JSON.stringify(config, null, 2)}.`);
   switch (config.type) {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     case USER_ACCOUNT_STORAGE_BACKEND_TYPES.LocalSQLite:
       return new LocalSQLiteUserAccountStorageBackend(config, logger, ajv);
     default:

@@ -15,10 +15,10 @@ export function settingsManagerFactory<SettingsType extends NonNullable<unknown>
 ): SettingsManager<SettingsType, SettingsManagerConfig> {
   logger.debug(`Running Settings Manager factory with config: ${JSON.stringify(config, null, 2)}.`);
   switch (config.type) {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     case SETTINGS_MANAGER_TYPE.LocalJSON:
       return new LocalJSONSettingsManager(config, settingsSchema, logger, ajv);
     default:
-      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-      throw new Error(`Invalid Settings Manager type received: ${config.type}`);
+      throw new Error(`Invalid Settings Manager type received: ${(config.type as string).toString()}`);
   }
 }

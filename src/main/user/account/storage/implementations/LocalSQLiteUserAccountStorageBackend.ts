@@ -10,7 +10,7 @@ import { UUID } from "crypto";
 import { UserDataStorageConfig } from "@main/user/data/storage/UserDataStorageConfig";
 import { ISecuredUserDataStorageConfigWithMetadata } from "@main/user/data/storage/SecuredUserDataStorageConfigWithMetadata";
 import { ISecuredPasswordData } from "@shared/utils/ISecuredPasswordData";
-import { LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_CONFIG_CONSTANTS } from "@shared/user/account/storage/constants/LocalSQLiteUserAccountStorageBackendConstants";
+import { LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS } from "@shared/user/account/storage/constants/LocalSQLiteUserAccountStorageBackendConstants";
 
 export interface ILocalSQLiteUserAccountStorageBackendConfig extends IBaseUserAccountStorageBackendConfig {
   type: UserAccountStorageBackendTypes["LocalSQLite"];
@@ -40,22 +40,21 @@ export class LocalSQLiteUserAccountStorageBackend extends UserAccountStorageBack
     properties: {
       type: {
         type: "string",
-        enum: [USER_ACCOUNT_STORAGE_BACKEND_TYPES.LocalSQLite]
+        enum: [USER_ACCOUNT_STORAGE_BACKEND_TYPES.LocalSQLite],
+        ...LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS.type
       },
       dbDirPath: {
         type: "string",
-        title: LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_CONFIG_CONSTANTS.dbDirPath.title,
-        minLength: LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_CONFIG_CONSTANTS.dbDirPath.minLength
+        ...LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS.dbDirPath
       },
       dbFileName: {
         type: "string",
-        title: LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_CONFIG_CONSTANTS.dbFileName.title,
-        minLength: LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_CONFIG_CONSTANTS.dbFileName.minLength
+        ...LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS.dbFileName
       }
     },
     required: ["type", "dbDirPath", "dbFileName"],
     additionalProperties: false
-  };
+  } as const;
 
   private readonly db: Database;
 
