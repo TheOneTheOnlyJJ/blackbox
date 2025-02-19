@@ -5,11 +5,11 @@ import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import Ajv, { JSONSchemaType } from "ajv";
 import { USER_ACCOUNT_STORAGE_BACKEND_TYPES, UserAccountStorageBackendTypes } from "../UserAccountStorageBackendType";
-import { ISecuredUserSignUpData } from "@main/user/account/SecuredNewUserData";
+import { ISecuredUserSignUpData } from "@main/user/account/SecuredUserSignUpData";
 import { UUID } from "crypto";
 import { UserDataStorageBackendConfig } from "@main/user/data/storage/backend/UserDataStorageBackendConfig";
 import { ISecuredUserDataStorageConfig } from "@main/user/data/storage/SecuredUserDataStorageConfig";
-import { ISecuredPasswordData } from "@main/utils/encryption/ISecuredPasswordData";
+import { ISecuredPasswordData } from "@main/utils/encryption/SecuredPasswordData";
 import { LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS } from "@shared/user/account/storage/backend/implementations/constants/LocalSQLiteUserAccountStorageBackendConstants";
 
 export interface ILocalSQLiteUserAccountStorageBackendConfig extends IBaseUserAccountStorageBackendConfig {

@@ -1,6 +1,6 @@
 import { UUID } from "node:crypto";
 import { USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA, UserDataStorageBackendConfig } from "./backend/UserDataStorageBackendConfig";
-import { ISecuredPasswordData, SECURED_PASSWORD_DATA_JSON_SCHEMA } from "@main/utils/encryption/ISecuredPasswordData";
+import { ISecuredPasswordData, SECURED_PASSWORD_DATA_JSON_SCHEMA } from "@main/utils/encryption/SecuredPasswordData";
 import { JSONSchemaType } from "ajv";
 
 export interface ISecuredUserDataStorageConfig {

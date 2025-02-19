@@ -4,7 +4,7 @@ import { userAccountStorageBackendFactory } from "./account/storage/backend/user
 import { UserAccountStorageBackendType } from "./account/storage/backend/UserAccountStorageBackendType";
 import { USER_SIGN_UP_DATA_JSON_SCHEMA, IUserSignUpData } from "@shared/user/account/UserSignUpData";
 import { randomBytes, randomUUID, scryptSync, timingSafeEqual, UUID } from "node:crypto";
-import { ISecuredUserSignUpData } from "./account/SecuredNewUserData";
+import { ISecuredUserSignUpData } from "./account/SecuredUserSignUpData";
 import { CURRENTLY_SIGNED_IN_USER_JSON_SCHEMA, ICurrentlySignedInUser } from "@shared/user/account/CurrentlySignedInUser";
 import { CurrentlySignedInUserChangedCallback, UserAccountStorageBackendAvailabilityChangedCallback } from "@shared/IPC/APIs/UserAPI";
 import { isDeepStrictEqual } from "node:util";
@@ -17,7 +17,7 @@ import {
   USER_DATA_STORAGE_CONFIG_CREATE_DTO_JSON_SCHEMA
 } from "@shared/user/data/storage/UserDataStorageConfigCreateDTO";
 import { ISecuredUserDataStorageConfig } from "./data/storage/SecuredUserDataStorageConfig";
-import { ISecuredPasswordData } from "@main/utils/encryption/ISecuredPasswordData";
+import { ISecuredPasswordData } from "@main/utils/encryption/SecuredPasswordData";
 
 export class UserManager {
   private readonly logger: LogFunctions;
