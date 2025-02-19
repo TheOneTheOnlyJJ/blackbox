@@ -1,23 +1,23 @@
 import { LogFunctions } from "electron-log";
-import { UserAccountStorageBackend } from "./account/storage/UserAccountStorageBackend";
-import { userAccountStorageBackendFactory } from "./account/storage/userAccountStorageBackendFactory";
-import { UserAccountStorageBackendType } from "./account/storage/UserAccountStorageBackendType";
+import { UserAccountStorageBackend } from "./account/storage/backend/UserAccountStorageBackend";
+import { userAccountStorageBackendFactory } from "./account/storage/backend/userAccountStorageBackendFactory";
+import { UserAccountStorageBackendType } from "./account/storage/backend/UserAccountStorageBackendType";
 import { USER_SIGN_UP_DATA_JSON_SCHEMA, IUserSignUpData } from "@shared/user/account/UserSignUpData";
 import { randomBytes, randomUUID, scryptSync, timingSafeEqual, UUID } from "node:crypto";
 import { ISecuredUserSignUpData } from "./account/SecuredNewUserData";
 import { CURRENTLY_SIGNED_IN_USER_JSON_SCHEMA, ICurrentlySignedInUser } from "@shared/user/account/CurrentlySignedInUser";
-import { CurrentlySignedInUserChangeCallback, UserAccountStorageBackendAvailabilityChangeCallback } from "@shared/IPC/APIs/UserAPI";
+import { CurrentlySignedInUserChangedCallback, UserAccountStorageBackendAvailabilityChangedCallback } from "@shared/IPC/APIs/UserAPI";
 import { isDeepStrictEqual } from "node:util";
 import Ajv, { ValidateFunction } from "ajv";
-import { UserAccountStorageBackendConfig } from "./account/storage/UserAccountStorageBackendConfig";
-import { IUserDataStorageConfigWithMetadata } from "./data/storage/UserDataStorageConfigWithMetadata";
+import { UserAccountStorageBackendConfig } from "./account/storage/backend/UserAccountStorageBackendConfig";
+import { IUserDataStorageConfig } from "./data/storage/UserDataStorageConfig";
 import { IUserSignInData, USER_SIGN_IN_DATA_JSON_SCHEMA } from "@shared/user/account/UserSignInData";
 import {
-  INewUserDataStorageConfigWithMetadataDTO,
-  NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_DTO_JSON_SCHEMA
-} from "@shared/user/data/storage/NewUserDataStorageConfigWithMetadataDTO";
-import { ISecuredUserDataStorageConfigWithMetadata } from "./data/storage/SecuredUserDataStorageConfigWithMetadata";
-import { ISecuredPasswordData } from "@shared/utils/ISecuredPasswordData";
+  IUserDataStorageConfigCreateDTO,
+  USER_DATA_STORAGE_CONFIG_CREATE_DTO_JSON_SCHEMA
+} from "@shared/user/data/storage/UserDataStorageConfigCreateDTO";
+import { ISecuredUserDataStorageConfig } from "./data/storage/SecuredUserDataStorageConfig";
+import { ISecuredPasswordData } from "@main/utils/encryption/ISecuredPasswordData";
 
 export class UserManager {
   private readonly logger: LogFunctions;
@@ -26,13 +26,13 @@ export class UserManager {
   // Currently signed in user
   // Must be wrapped in an object because it is a proxy
   private currentlySignedInUser: { value: ICurrentlySignedInUser | null };
-  public onCurrentlySignedInUserChangeCallback: CurrentlySignedInUserChangeCallback;
+  public onCurrentlySignedInUserChangedCallback: CurrentlySignedInUserChangedCallback;
 
   // User Account Storage Backend
   // Must be wrapped in an object because it too is a proxy
   private userAccountStorageBackend: { value: UserAccountStorageBackend<UserAccountStorageBackendConfig> | null };
   // This is needed to let the renderer know if the User Account Storage Backend is available when it changes
-  public onUserAccountStorageBackendAvailabilityChangeCallback: UserAccountStorageBackendAvailabilityChangeCallback;
+  public onUserAccountStorageBackendAvailabilityChangedCallback: UserAccountStorageBackendAvailabilityChangedCallback;
 
   // AJV insatnce
   private readonly AJV: Ajv;
@@ -40,7 +40,7 @@ export class UserManager {
   public readonly USER_SIGN_UP_DATA_VALIDATE_FUNCTION: ValidateFunction<IUserSignUpData>;
   public readonly USER_SIGN_IN_DATA_VALIDATE_FUNCTION: ValidateFunction<IUserSignInData>;
   public readonly CURRENTLY_SIGNED_IN_USER_VALIDATE_FUNCTION: ValidateFunction<ICurrentlySignedInUser>;
-  public readonly NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_DTO_VALIDATE_FUNCTION: ValidateFunction<INewUserDataStorageConfigWithMetadataDTO>;
+  public readonly USER_DATA_STORAGE_CONFIG_CREATE_DTO_VALIDATE_FUNCTION: ValidateFunction<IUserDataStorageConfigCreateDTO>;
 
   public constructor(logger: LogFunctions, userAccountStorageBackendLogger: LogFunctions, ajv: Ajv) {
     // Loggers
@@ -52,12 +52,12 @@ export class UserManager {
     this.USER_SIGN_UP_DATA_VALIDATE_FUNCTION = this.AJV.compile<IUserSignUpData>(USER_SIGN_UP_DATA_JSON_SCHEMA);
     this.USER_SIGN_IN_DATA_VALIDATE_FUNCTION = this.AJV.compile<IUserSignInData>(USER_SIGN_IN_DATA_JSON_SCHEMA);
     this.CURRENTLY_SIGNED_IN_USER_VALIDATE_FUNCTION = this.AJV.compile<ICurrentlySignedInUser>(CURRENTLY_SIGNED_IN_USER_JSON_SCHEMA);
-    this.NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_DTO_VALIDATE_FUNCTION = this.AJV.compile<INewUserDataStorageConfigWithMetadataDTO>(
-      NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_DTO_JSON_SCHEMA
+    this.USER_DATA_STORAGE_CONFIG_CREATE_DTO_VALIDATE_FUNCTION = this.AJV.compile<IUserDataStorageConfigCreateDTO>(
+      USER_DATA_STORAGE_CONFIG_CREATE_DTO_JSON_SCHEMA
     );
     // Currently signed in user
-    this.onCurrentlySignedInUserChangeCallback = (): void => {
-      this.logger.debug("No currently signed in user change callback set.");
+    this.onCurrentlySignedInUserChangedCallback = (): void => {
+      this.logger.silly("No currently signed in user changed callback set.");
     };
     // Currently signed in user proxy that performs validation and calls the change callback when required
     this.currentlySignedInUser = new Proxy<{ value: ICurrentlySignedInUser | null }>(
@@ -80,14 +80,14 @@ export class UserManager {
           } else {
             this.logger.info(`Currently signed in user set to: ${JSON.stringify(value, null, 2)} (signed in).`);
           }
-          this.onCurrentlySignedInUserChangeCallback(value);
+          this.onCurrentlySignedInUserChangedCallback(value);
           return true;
         }
       }
     );
     // User Account Storage
-    this.onUserAccountStorageBackendAvailabilityChangeCallback = (): void => {
-      this.logger.debug("No User Account Storage Backend availability change callback set.");
+    this.onUserAccountStorageBackendAvailabilityChangedCallback = (): void => {
+      this.logger.silly("No User Account Storage Backend availability changed callback set.");
     };
     // User Account Storage proxy that performs validation and calls the change callback when required
     this.userAccountStorageBackend = new Proxy<{ value: UserAccountStorageBackend<UserAccountStorageBackendConfig> | null }>(
@@ -109,10 +109,10 @@ export class UserManager {
           target[property] = value;
           if (value === null) {
             this.logger.info('User Account Storage Backend set to "null" (unavailable).');
-            this.onUserAccountStorageBackendAvailabilityChangeCallback(false);
+            this.onUserAccountStorageBackendAvailabilityChangedCallback(false);
           } else {
             this.logger.info(`User Account Storage Backend set with config: ${JSON.stringify(value.config, null, 2)} (available).`);
-            this.onUserAccountStorageBackendAvailabilityChangeCallback(true);
+            this.onUserAccountStorageBackendAvailabilityChangedCallback(true);
           }
           return true;
         }
@@ -191,52 +191,47 @@ export class UserManager {
     return this.userAccountStorageBackend.value.isUsernameAvailable(username);
   }
 
-  private hashPassword(plainTextPassword: string, salt: Buffer, passwordPurpose?: string): Buffer {
-    this.logger.debug(`Hashing ${passwordPurpose ? passwordPurpose + " " : ""}password.`);
+  private hashPassword(plainTextPassword: string, salt: Buffer, passwordPurposeToLog?: string): Buffer {
+    this.logger.debug(`Hashing ${passwordPurposeToLog ? passwordPurposeToLog + " " : ""}password.`);
     // TODO: Change scrypt to argon2 once it becomes available
     return scryptSync(plainTextPassword, salt, 64);
   }
 
   public secureUserSignUpData(userSignUpData: IUserSignUpData): ISecuredUserSignUpData {
-    this.logger.debug(`Securing base new user data for user: "${userSignUpData.username}".`);
+    this.logger.debug(`Securing user sign up data for user: "${userSignUpData.username}".`);
     const PASSWORD_SALT: Buffer = randomBytes(16);
     const SECURED_USER_DATA: ISecuredUserSignUpData = {
       userId: randomUUID({ disableEntropyCache: true }),
       username: userSignUpData.username,
-      password: {
-        hash: this.hashPassword(userSignUpData.password, PASSWORD_SALT, "user sign up"),
-        salt: PASSWORD_SALT
+      securedPassword: {
+        hash: this.hashPassword(userSignUpData.password, PASSWORD_SALT, "user sign up").toString("base64"),
+        salt: PASSWORD_SALT.toString("base64")
       }
     };
-    this.logger.debug("Done securing base new user data.");
     return SECURED_USER_DATA;
   }
 
-  public secureUserDataStorageConfigWithMetadata(
-    userDataStorageConfigWithMetadata: IUserDataStorageConfigWithMetadata
-  ): ISecuredUserDataStorageConfigWithMetadata {
-    this.logger.debug(`Securing user data storage config with metadata with config ID: "${userDataStorageConfigWithMetadata.configId}".`);
-    let visibilityPassword: ISecuredPasswordData | undefined;
-    if (userDataStorageConfigWithMetadata.visibilityPassword !== undefined) {
+  public secureUserDataStorageConfig(userDataStorageConfig: IUserDataStorageConfig): ISecuredUserDataStorageConfig {
+    this.logger.debug(`Securing User Data Storage Config with ID: "${userDataStorageConfig.configId}".`);
+    let securedVisibilityPassword: ISecuredPasswordData | undefined;
+    if (userDataStorageConfig.visibilityPassword !== undefined) {
       this.logger.debug("Config has a visibility password.");
       const VISIBILITY_PASSWORD_SALT: Buffer = randomBytes(16);
-      visibilityPassword = {
-        hash: this.hashPassword(
-          userDataStorageConfigWithMetadata.visibilityPassword,
-          VISIBILITY_PASSWORD_SALT,
-          "user data storage visibility password"
+      securedVisibilityPassword = {
+        hash: this.hashPassword(userDataStorageConfig.visibilityPassword, VISIBILITY_PASSWORD_SALT, "user data storage visibility password").toString(
+          "base64"
         ),
-        salt: VISIBILITY_PASSWORD_SALT
+        salt: VISIBILITY_PASSWORD_SALT.toString("base64")
       };
     } else {
       this.logger.debug("Config does not have a visibility password.");
-      visibilityPassword = undefined;
+      securedVisibilityPassword = undefined;
     }
     return {
-      configId: userDataStorageConfigWithMetadata.configId,
-      name: userDataStorageConfigWithMetadata.name,
-      visibilityPassword: visibilityPassword,
-      config: userDataStorageConfigWithMetadata.config
+      configId: userDataStorageConfig.configId,
+      name: userDataStorageConfig.name,
+      securedVisibilityPassword: securedVisibilityPassword,
+      backendConfig: userDataStorageConfig.backendConfig
     };
   }
 
@@ -248,12 +243,14 @@ export class UserManager {
     return this.userAccountStorageBackend.value.getUserCount();
   }
 
-  public signUpUser(userData: ISecuredUserSignUpData): boolean {
-    this.logger.debug(`Signing up user: "${userData.username}".`);
+  public signUpUser(userSignUpData: IUserSignUpData): boolean {
+    this.logger.debug(`Signing up user: "${userSignUpData.username}".`);
     if (this.userAccountStorageBackend.value === null) {
       throw new Error("Null User Account Storage Backend");
     }
-    return this.userAccountStorageBackend.value.addUser(userData);
+    const SECURED_USER_SIGN_UP_DATA: ISecuredUserSignUpData = this.secureUserSignUpData(userSignUpData);
+    this.logger.debug("Secured user sign up data.");
+    return this.userAccountStorageBackend.value.addUser(SECURED_USER_SIGN_UP_DATA);
   }
 
   public signInUser(userSignInData: IUserSignInData): boolean {
@@ -266,12 +263,16 @@ export class UserManager {
       this.logger.debug("No user ID for given username. Username must be missing from storage. Sign in failed.");
       return false;
     }
-    const USER_PASSWORD_DATA: ISecuredPasswordData | null = this.userAccountStorageBackend.value.getPasswordData(USER_ID);
-    if (USER_PASSWORD_DATA === null) {
-      throw new Error(`No password hash and salt for user with ID: "${USER_ID}"`);
+    const SECURED_USER_PASSWORD_DATA: ISecuredPasswordData | null = this.userAccountStorageBackend.value.getSecuredUserPasswordData(USER_ID);
+    if (SECURED_USER_PASSWORD_DATA === null) {
+      throw new Error(`No password hash and salt for user: "${USER_ID}"`);
     }
-    const SIGN_IN_PASSWORD_HASH: Buffer = this.hashPassword(userSignInData.password, USER_PASSWORD_DATA.salt, "user sign in");
-    if (timingSafeEqual(SIGN_IN_PASSWORD_HASH, USER_PASSWORD_DATA.hash)) {
+    const SIGN_IN_PASSWORD_HASH: Buffer = this.hashPassword(
+      userSignInData.password,
+      Buffer.from(SECURED_USER_PASSWORD_DATA.salt, "base64"),
+      "user sign in"
+    );
+    if (timingSafeEqual(SIGN_IN_PASSWORD_HASH, Buffer.from(SECURED_USER_PASSWORD_DATA.hash, "base64"))) {
       this.logger.debug("Password hashes matched! Signing in.");
       this.currentlySignedInUser.value = { userId: USER_ID, username: userSignInData.username };
       return true;
@@ -294,22 +295,22 @@ export class UserManager {
     return this.currentlySignedInUser.value;
   }
 
-  public addUserDataStorageConfigToUser(userId: UUID, userDataStorageConfigWithMetadata: IUserDataStorageConfigWithMetadata): boolean {
-    this.logger.debug(`Adding new User Data Storage Config to user with ID: "${userId}".`);
+  public addUserDataStorageConfigToUser(userId: UUID, userDataStorageConfig: IUserDataStorageConfig): boolean {
+    this.logger.debug(`Adding User Data Storage Config to user: "${userId}".`);
     if (this.userAccountStorageBackend.value === null) {
       throw new Error("Null User Account Storage Backend");
     }
     // TODO: Encrypt the config with a KDF derived from the user's password
     if (!this.userAccountStorageBackend.value.doesUserWithIdExist(userId)) {
-      throw new Error(`Cannot add User Data Storage to user with ID "${userId}" because it does not exist`);
+      throw new Error(`Cannot add User Data Storage to user "${userId}" because it does not exist`);
     }
-    const SECURED_USER_DATA_STORAGE_CONFIG_WITH_METADATA: ISecuredUserDataStorageConfigWithMetadata =
-      this.secureUserDataStorageConfigWithMetadata(userDataStorageConfigWithMetadata);
-    return this.userAccountStorageBackend.value.addUserDataStorageConfigToUser(userId, SECURED_USER_DATA_STORAGE_CONFIG_WITH_METADATA);
+    const SECURED_USER_DATA_STORAGE_CONFIG: ISecuredUserDataStorageConfig = this.secureUserDataStorageConfig(userDataStorageConfig);
+    this.logger.debug("Secured User Data Storage Config.");
+    return this.userAccountStorageBackend.value.addUserDataStorageConfigToUser(userId, SECURED_USER_DATA_STORAGE_CONFIG);
   }
 
-  public getAllUserDataStorageConfigs(userId: UUID): ISecuredUserDataStorageConfigWithMetadata[] {
-    this.logger.debug(`Getting all User Data Storage Configs for user with ID: "${userId}".`);
+  public getAllUserDataStorageConfigs(userId: UUID): ISecuredUserDataStorageConfig[] {
+    this.logger.debug(`Getting all User Data Storage Configs owned by user: "${userId}".`);
     if (this.userAccountStorageBackend.value === null) {
       throw new Error("Null User Account Storage Backend");
     }

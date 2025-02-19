@@ -46,14 +46,16 @@ const UserAccountMenu: FC<UserAccountMenuProps> = (props: UserAccountMenuProps) 
   }, [signedInRootContext]);
   return (
     <Menu id="account-menu" {...props}>
-      {USER_ACCOUNT_MENU_ITEMS.map((item: IUserAccountMenuItem, index: number) => (
-        <MenuItem key={index} component={DebouncedLink} to={item.path} selected={location.pathname === item.path} divider={item.divider}>
-          <ListItemIcon>
-            <item.icon fontSize="small" />
-          </ListItemIcon>
-          {item.name}
-        </MenuItem>
-      ))}
+      {USER_ACCOUNT_MENU_ITEMS.map(
+        (item: IUserAccountMenuItem, index: number): React.JSX.Element => (
+          <MenuItem key={index} component={DebouncedLink} to={item.path} selected={location.pathname === item.path} divider={item.divider}>
+            <ListItemIcon>
+              <item.icon fontSize="small" />
+            </ListItemIcon>
+            {item.name}
+          </MenuItem>
+        )
+      )}
     </Menu>
   );
 };

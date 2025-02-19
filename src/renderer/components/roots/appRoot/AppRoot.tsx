@@ -130,23 +130,22 @@ const AppRoot: FC = () => {
       setCurrentlySignedInUser(GET_CURRENTLY_SIGNED_IN_USER_RESPONSE.data);
     }
     // Monitor changes to currently signed in user
-    const REMOVE_ON_CURRENTLY_SIGNED_IN_USER_CHANGE_LISTENER: () => void = window.userAPI.onCurrentlySignedInUserChange(
-      (newSignedInUser: ICurrentlySignedInUser | null): void => {
-        IPCLogger.debug("Received new currently signed in user event.");
-        setCurrentlySignedInUser(newSignedInUser);
+    const REMOVE_ON_CURRENTLY_SIGNED_IN_USER_CHANGED_LISTENER: () => void = window.userAPI.onCurrentlySignedInUserChanged(
+      (newCurrentlySignedInUser: ICurrentlySignedInUser | null): void => {
+        IPCLogger.debug("Received currently signed in user changed event.");
+        setCurrentlySignedInUser(newCurrentlySignedInUser);
       }
     );
     // Monitor changes to User Account Storage Backend availability status
-    const REMOVE_ON_USER_ACCOUNT_STORAGE_BACKEND_AVAILABILITY_CHANGE_LISTENER: () => void = window.userAPI.onAccountStorageBackendAvailabilityChange(
-      (isUserAccountStorageBackendAvailable: boolean): void => {
-        IPCLogger.debug("Received User Account Storage Backend availability status change event.");
+    const REMOVE_ON_USER_ACCOUNT_STORAGE_BACKEND_AVAILABILITY_CHANGED_LISTENER: () => void =
+      window.userAPI.onAccountStorageBackendAvailabilityChanged((isUserAccountStorageBackendAvailable: boolean): void => {
+        IPCLogger.debug("Received User Account Storage Backend availability status changed event.");
         setIsUserAccountStorageBackendAvailable(isUserAccountStorageBackendAvailable);
-      }
-    );
+      });
     return (): void => {
       appLogger.debug("Removing App Root event listeners.");
-      REMOVE_ON_CURRENTLY_SIGNED_IN_USER_CHANGE_LISTENER();
-      REMOVE_ON_USER_ACCOUNT_STORAGE_BACKEND_AVAILABILITY_CHANGE_LISTENER();
+      REMOVE_ON_CURRENTLY_SIGNED_IN_USER_CHANGED_LISTENER();
+      REMOVE_ON_USER_ACCOUNT_STORAGE_BACKEND_AVAILABILITY_CHANGED_LISTENER();
     };
   }, [generateRendererProcessAESEncryptionKey]);
 

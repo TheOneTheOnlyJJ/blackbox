@@ -1,8 +1,8 @@
 export const stringToArrayBuffer = (str: string): ArrayBuffer => {
-  const buf = new ArrayBuffer(str.length);
-  const bufView = new Uint8Array(buf);
+  const BUF = new ArrayBuffer(str.length);
+  const BUF_VIEW = new Uint8Array(BUF);
   for (let i = 0; i < str.length; i++) {
-    bufView[i] = str.charCodeAt(i);
+    BUF_VIEW[i] = str.charCodeAt(i);
   }
-  return buf;
+  return BUF;
 };

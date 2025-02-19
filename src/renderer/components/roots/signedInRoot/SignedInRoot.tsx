@@ -8,7 +8,7 @@ const SignedInRoot: FC = () => {
   const appRootContext: IAppRootContext = useAppRootContext();
   const [forbiddenLocationName, setForbiddenLocationName] = useState<string>("this-page");
 
-  useEffect(() => {
+  useEffect((): void => {
     try {
       setForbiddenLocationName(encodeURIComponent(forbiddenLocationName));
     } catch (err: unknown) {
@@ -18,7 +18,7 @@ const SignedInRoot: FC = () => {
     }
   }, [forbiddenLocationName]);
 
-  useEffect(() => {
+  useEffect((): void => {
     appLogger.debug("Rendering Signed In Root component.");
   }, []);
 

@@ -59,16 +59,18 @@ const NavigationBar = forwardRef<HTMLDivElement, INavigationBarProps>(function N
     >
       <Box sx={{ overflow: "auto" }}>
         <List>
-          {DRAWER_ITEMS.map((item: IDrawerItem, index: number) => (
-            <ListItem key={index} disablePadding divider={item.divider}>
-              <ListItemButton component={DebouncedLink} to={item.path} selected={location.pathname === item.path}>
-                <ListItemIcon>
-                  <item.icon />
-                </ListItemIcon>
-                <ListItemText primary={item.name} />
-              </ListItemButton>
-            </ListItem>
-          ))}
+          {DRAWER_ITEMS.map(
+            (item: IDrawerItem, index: number): React.JSX.Element => (
+              <ListItem key={index} disablePadding divider={item.divider}>
+                <ListItemButton component={DebouncedLink} to={item.path} selected={location.pathname === item.path}>
+                  <ListItemIcon>
+                    <item.icon />
+                  </ListItemIcon>
+                  <ListItemText primary={item.name} />
+                </ListItemButton>
+              </ListItem>
+            )
+          )}
         </List>
       </Box>
     </Drawer>

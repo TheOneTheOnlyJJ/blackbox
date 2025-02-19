@@ -2,11 +2,11 @@ import { ICurrentlySignedInUser } from "@shared/user/account/CurrentlySignedInUs
 import { EncryptedUserSignUpData } from "@shared/user/account/encrypted/EncryptedUserSignUpData";
 import { EncryptedUserSignInData } from "@shared/user/account/encrypted/EncryptedUserSignInData";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
-import { EncryptedNewUserDataStorageConfigWithMetadataDTO } from "@shared/user/account/encrypted/EncryptedNewUserDataStorageConfigWithMetadataDTO";
+import { EncryptedUserDataStorageConfigCreateDTO } from "@shared/user/account/encrypted/EncryptedUserDataStorageConfigCreateDTO";
 
 // Utility types
-export type UserAccountStorageBackendAvailabilityChangeCallback = (isAvailable: boolean) => void;
-export type CurrentlySignedInUserChangeCallback = (newSignedInUser: ICurrentlySignedInUser | null) => void;
+export type UserAccountStorageBackendAvailabilityChangedCallback = (isUserAccountStorageBackendAvailable: boolean) => void;
+export type CurrentlySignedInUserChangedCallback = (newCurrentlySignedInUser: ICurrentlySignedInUser | null) => void;
 
 // API
 export interface IUserAPI {
@@ -17,9 +17,7 @@ export interface IUserAPI {
   isUsernameAvailable: (username: string) => IPCAPIResponse<boolean>;
   getUserCount: () => IPCAPIResponse<number>;
   getCurrentlySignedInUser: () => IPCAPIResponse<ICurrentlySignedInUser | null>;
-  addNewUserDataStorageConfigWithMetadataToUser: (
-    encryptedNewUserDataStorageConfigWithMetadataDTO: EncryptedNewUserDataStorageConfigWithMetadataDTO
-  ) => IPCAPIResponse<boolean>;
-  onAccountStorageBackendAvailabilityChange: (callback: UserAccountStorageBackendAvailabilityChangeCallback) => () => void;
-  onCurrentlySignedInUserChange: (callback: CurrentlySignedInUserChangeCallback) => () => void;
+  addUserDataStorageConfigToUser: (encryptedUserDataStorageConfigCreateDTO: EncryptedUserDataStorageConfigCreateDTO) => IPCAPIResponse<boolean>;
+  onAccountStorageBackendAvailabilityChanged: (callback: UserAccountStorageBackendAvailabilityChangedCallback) => () => void;
+  onCurrentlySignedInUserChanged: (callback: CurrentlySignedInUserChangedCallback) => () => void;
 }

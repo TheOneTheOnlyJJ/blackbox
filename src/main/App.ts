@@ -6,7 +6,7 @@ import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 import { JSONSchemaType } from "ajv/dist/types/json-schema";
 import { IPC_TLS_API_IPC_CHANNELS, USER_API_IPC_CHANNELS } from "@main/utils/IPC/IPCChannels";
 import { UserManager } from "@main/user/UserManager";
-import { USER_ACCOUNT_STORAGE_BACKEND_TYPES } from "@main/user/account/storage/UserAccountStorageBackendType";
+import { USER_ACCOUNT_STORAGE_BACKEND_TYPES } from "@main/user/account/storage/backend/UserAccountStorageBackendType";
 import { adjustWindowBounds } from "@main/utils/window/adjustWindowBounds";
 import { IpcMainEvent } from "electron";
 import { IUserAPI } from "@shared/IPC/APIs/UserAPI";
@@ -14,11 +14,10 @@ import { MainProcessIPCAPIHandlers } from "@main/utils/IPC/MainProcessIPCAPIHand
 import { IUserSignUpData } from "@shared/user/account/UserSignUpData";
 import { generateKeyPairSync, randomUUID, UUID, webcrypto } from "node:crypto";
 import { IIPCTLSAPI } from "@shared/IPC/APIs/IPCTLSAPI";
-import { ISecuredUserSignUpData } from "@main/user/account/SecuredNewUserData";
 import { testAESKey } from "@main/utils/encryption/testAESKey";
 import { insertLineBreaks } from "@shared/utils/insertNewLines";
 import { bufferToArrayBuffer } from "@main/utils/typeConversions/bufferToArrayBuffer";
-import { decryptJSON } from "@main/utils/encryption/decryptJSON";
+import { decryptAndValidateJSON } from "@main/utils/encryption/decryptAndValidateJSON";
 import { EncryptedUserSignUpData } from "@shared/user/account/encrypted/EncryptedUserSignUpData";
 import { ICurrentlySignedInUser } from "@shared/user/account/CurrentlySignedInUser";
 import { IUserSignInData } from "@shared/user/account/UserSignInData";
@@ -31,12 +30,12 @@ import { SETTINGS_MANAGER_TYPE } from "@main/settings/SettingsManagerType";
 import { WINDOW_STATES, WindowPosition, WindowPositionWatcher, WindowStates } from "@main/settings/WindowPositionWatcher";
 import Ajv from "ajv";
 import addFormats from "ajv-formats";
-import { UserAccountStorageBackendConfig } from "@main/user/account/storage/UserAccountStorageBackendConfig";
-import { EncryptedNewUserDataStorageConfigWithMetadataDTO } from "@shared/user/account/encrypted/EncryptedNewUserDataStorageConfigWithMetadataDTO";
-import { INewUserDataStorageConfigWithMetadataDTO } from "@shared/user/data/storage/NewUserDataStorageConfigWithMetadataDTO";
-import { UserDataStorageConfig } from "./user/data/storage/UserDataStorageConfig";
-import { userDataStorageConfigInputDataToUserDataStorageConfig } from "./user/data/storage/userDataStorageConfigInputDataToUserDataStorageConfig";
-import { IUserDataStorageConfigWithMetadata } from "./user/data/storage/UserDataStorageConfigWithMetadata";
+import { UserAccountStorageBackendConfig } from "@main/user/account/storage/backend/UserAccountStorageBackendConfig";
+import { EncryptedUserDataStorageConfigCreateDTO } from "@shared/user/account/encrypted/EncryptedUserDataStorageConfigCreateDTO";
+import { IUserDataStorageConfigCreateDTO } from "@shared/user/data/storage/UserDataStorageConfigCreateDTO";
+import { UserDataStorageBackendConfig } from "./user/data/storage/backend/UserDataStorageBackendConfig";
+import { userDataStorageBackendConfigCreateInputToUserDataStorageBackendConfig } from "./user/data/storage/backend/userDataStorageBackendConfigCreateInputToUserDataStorageBackendConfig";
+import { IUserDataStorageConfig } from "./user/data/storage/UserDataStorageConfig";
 
 type WindowPositionSetting = Rectangle | WindowStates["FullScreen"] | WindowStates["Maximized"];
 
@@ -110,7 +109,7 @@ export class App {
     },
     required: ["window"],
     additionalProperties: false
-  };
+  } as const;
   private readonly DEFAULT_SETTINGS: IAppSettings = {
     window: {
       position: {
@@ -120,13 +119,13 @@ export class App {
         height: 670
       }
     }
-  };
+  } as const;
   private readonly settingsManager: SettingsManager<IAppSettings, SettingsManagerConfig>;
   private readonly SETTINGS_MANAGER_CONFIG: SettingsManagerConfig = {
     type: SETTINGS_MANAGER_TYPE.LocalJSON,
     fileDir: resolve(join(app.getAppPath(), "settings")),
     fileName: "BlackBoxSettings.json"
-  };
+  } as const;
 
   // Window
   private readonly WINDOW_CONSTRUCTOR_OPTIONS: BrowserWindowConstructorOptions = {
@@ -139,7 +138,7 @@ export class App {
       sandbox: true,
       allowRunningInsecureContent: false
     }
-  };
+  } as const;
   private window: null | BrowserWindow = null;
   private readonly windowPositionWatcher: WindowPositionWatcher;
 
@@ -149,7 +148,7 @@ export class App {
     type: USER_ACCOUNT_STORAGE_BACKEND_TYPES.LocalSQLite,
     dbDirPath: resolve(join(app.getAppPath(), "data")),
     dbFileName: "users.sqlite"
-  };
+  } as const;
 
   // Security
   // Will get initialised in the class constructor
@@ -219,7 +218,7 @@ export class App {
         if (this.rendererProcessAESKey === null) {
           throw new Error("Null renderer process AES encryption key");
         }
-        const USER_SIGN_UP_DATA: IUserSignUpData = decryptJSON<IUserSignUpData>(
+        const USER_SIGN_UP_DATA: IUserSignUpData = decryptAndValidateJSON<IUserSignUpData>(
           encryptedUserSignUpData,
           this.userManager.USER_SIGN_UP_DATA_VALIDATE_FUNCTION,
           this.rendererProcessAESKey,
@@ -227,11 +226,9 @@ export class App {
           "user sign up data"
         );
         this.appLogger.debug("Decrypted user sign up data.");
-        const SECURED_USER_SIGN_UP_DATA: ISecuredUserSignUpData = this.userManager.secureUserSignUpData(USER_SIGN_UP_DATA);
-        this.appLogger.debug("Secured user sign up data.");
         return {
           status: IPC_API_RESPONSE_STATUSES.SUCCESS,
-          data: this.userManager.signUpUser(SECURED_USER_SIGN_UP_DATA)
+          data: this.userManager.signUpUser(USER_SIGN_UP_DATA)
         };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
@@ -245,14 +242,15 @@ export class App {
         if (this.rendererProcessAESKey === null) {
           throw new Error("Null renderer process AES key.");
         }
-        const DECRYPTED_USER_SIGN_IN_DATA: IUserSignInData = decryptJSON<IUserSignInData>(
+        const USER_SIGN_IN_DATA: IUserSignInData = decryptAndValidateJSON<IUserSignInData>(
           encryptedUserSignInData,
           this.userManager.USER_SIGN_IN_DATA_VALIDATE_FUNCTION,
           this.rendererProcessAESKey,
           this.IPCUserAPILogger,
           "user sign in data"
         );
-        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userManager.signInUser(DECRYPTED_USER_SIGN_IN_DATA) };
+        this.appLogger.debug("Decrypted user sign in data.");
+        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userManager.signInUser(USER_SIGN_IN_DATA) };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
         this.IPCUserAPILogger.error(`Could not sign in user: ${ERROR_MESSAGE}!`);
@@ -273,9 +271,9 @@ export class App {
     handleIsAccountStorageBackendAvailable: (): IPCAPIResponse<boolean> => {
       this.IPCUserAPILogger.debug("Received User Account Storage Backend availability status request.");
       try {
-        const IS_STORAGE_AVAILABLE: boolean = this.userManager.isUserAccountStorageBackendAvailable();
-        this.IPCUserAPILogger.debug(`User Account Storage Backend available: ${IS_STORAGE_AVAILABLE.toString()}.`);
-        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: IS_STORAGE_AVAILABLE };
+        const IS_USER_ACCOUNT_STORAGE_BACKEND_AVAILABLE: boolean = this.userManager.isUserAccountStorageBackendAvailable();
+        this.IPCUserAPILogger.debug(`User Account Storage Backend available: ${IS_USER_ACCOUNT_STORAGE_BACKEND_AVAILABLE.toString()}.`);
+        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: IS_USER_ACCOUNT_STORAGE_BACKEND_AVAILABLE };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
         this.IPCUserAPILogger.error(`Could not get User Account Storage Backend availability: ${ERROR_MESSAGE}!`);
@@ -312,47 +310,47 @@ export class App {
         return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
-    handleAddNewUserDataStorageConfigWithMetadataToUser: (
-      encryptedNewUserDataStorageConfigWithMetadataDTO: EncryptedNewUserDataStorageConfigWithMetadataDTO
+    handleAddUserDataStorageConfigToUser: (
+      encryptedUserDataStorageConfigCreateDTO: EncryptedUserDataStorageConfigCreateDTO
     ): IPCAPIResponse<boolean> => {
-      this.IPCUserAPILogger.debug("Received add new User Data Storage config with metadata request.");
+      this.IPCUserAPILogger.debug("Received add User Data Storage Config request.");
       try {
         if (this.rendererProcessAESKey === null) {
           throw new Error("Null renderer process AES key.");
         }
-        const DECRYPTED_NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_DTO: INewUserDataStorageConfigWithMetadataDTO =
-          decryptJSON<INewUserDataStorageConfigWithMetadataDTO>(
-            encryptedNewUserDataStorageConfigWithMetadataDTO,
-            this.userManager.NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_DTO_VALIDATE_FUNCTION,
-            this.rendererProcessAESKey,
-            this.IPCUserAPILogger,
-            "User Data Storage config with metadata input data"
-          );
-        const NEW_USER_DATA_STORAGE_CONFIG: UserDataStorageConfig = userDataStorageConfigInputDataToUserDataStorageConfig(
-          DECRYPTED_NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_DTO.userDataStorageConfigWithMetadataInputData.config,
+        const USER_DATA_STORAGE_CONFIG_CREATE_DTO: IUserDataStorageConfigCreateDTO = decryptAndValidateJSON<IUserDataStorageConfigCreateDTO>(
+          encryptedUserDataStorageConfigCreateDTO,
+          this.userManager.USER_DATA_STORAGE_CONFIG_CREATE_DTO_VALIDATE_FUNCTION,
+          this.rendererProcessAESKey,
+          this.IPCUserAPILogger,
+          "User Data Storage Config DTO"
+        );
+        this.appLogger.debug("Decrypted User Data Storage Config Create DTO.");
+        const USER_DATA_STORAGE_BACKEND_CONFIG: UserDataStorageBackendConfig = userDataStorageBackendConfigCreateInputToUserDataStorageBackendConfig(
+          USER_DATA_STORAGE_CONFIG_CREATE_DTO.userDataStorageConfigCreateInput.backendConfig,
           this.IPCUserAPILogger
         );
-        const NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA: IUserDataStorageConfigWithMetadata = {
+        const USER_DATA_STORAGE_CONFIG: IUserDataStorageConfig = {
           configId: randomUUID({ disableEntropyCache: true }),
-          name: DECRYPTED_NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_DTO.userDataStorageConfigWithMetadataInputData.name,
-          visibilityPassword: DECRYPTED_NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_DTO.userDataStorageConfigWithMetadataInputData.visibilityPassword,
-          config: NEW_USER_DATA_STORAGE_CONFIG
+          name: USER_DATA_STORAGE_CONFIG_CREATE_DTO.userDataStorageConfigCreateInput.name,
+          visibilityPassword: USER_DATA_STORAGE_CONFIG_CREATE_DTO.userDataStorageConfigCreateInput.visibilityPassword,
+          backendConfig: USER_DATA_STORAGE_BACKEND_CONFIG
         };
-        this.IPCUserAPILogger.debug(`New User Data Storage config with metadata ID: ${NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA.configId}.`);
+        this.IPCUserAPILogger.debug(`New User Data Storage Config ID: "${USER_DATA_STORAGE_CONFIG.configId}".`);
         return {
           status: IPC_API_RESPONSE_STATUSES.SUCCESS,
           data: this.userManager.addUserDataStorageConfigToUser(
-            DECRYPTED_NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA_DTO.userId as UUID, // UUID type is specific to Node.js, unavailable in renderer
-            NEW_USER_DATA_STORAGE_CONFIG_WITH_METADATA
+            USER_DATA_STORAGE_CONFIG_CREATE_DTO.userId as UUID, // UUID type is specific to Node.js, unavailable in renderer
+            USER_DATA_STORAGE_CONFIG
           )
         };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-        this.IPCUserAPILogger.error(`Could not add new User Data Storage config with metadata: ${ERROR_MESSAGE}!`);
+        this.IPCUserAPILogger.error(`Could not add User Data Storage Config: ${ERROR_MESSAGE}!`);
         return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
-    sendAccountStorageBackendAvailabilityChange: (isUserAccountStorageAvailable: boolean): void => {
+    sendAccountStorageBackendAvailabilityChanged: (isUserAccountStorageAvailable: boolean): void => {
       this.IPCUserAPILogger.debug(
         `Sending window User Account Storage Backend availability after change: "${isUserAccountStorageAvailable.toString()}".`
       );
@@ -360,15 +358,15 @@ export class App {
         this.IPCUserAPILogger.debug('Window is "null". No-op.');
         return;
       }
-      this.window.webContents.send(USER_API_IPC_CHANNELS.onAccountStorageBackendAvailabilityChange, isUserAccountStorageAvailable);
+      this.window.webContents.send(USER_API_IPC_CHANNELS.onAccountStorageBackendAvailabilityChanged, isUserAccountStorageAvailable);
     },
-    sendCurrentlySignedInUserChange: (newSignedInUser: ICurrentlySignedInUser | null): void => {
-      this.IPCUserAPILogger.debug(`Sending window currently signed in user after change: ${JSON.stringify(newSignedInUser, null, 2)}.`);
+    sendCurrentlySignedInUserChanged: (newCurrentlySignedInUser: ICurrentlySignedInUser | null): void => {
+      this.IPCUserAPILogger.debug(`Sending window currently signed in user after change: ${JSON.stringify(newCurrentlySignedInUser, null, 2)}.`);
       if (this.window === null) {
         this.IPCUserAPILogger.debug('Window is "null". No-op.');
         return;
       }
-      this.window.webContents.send(USER_API_IPC_CHANNELS.onCurrentlySignedInUserChange, newSignedInUser);
+      this.window.webContents.send(USER_API_IPC_CHANNELS.onCurrentlySignedInUserChanged, newCurrentlySignedInUser);
     }
   };
 
@@ -376,7 +374,7 @@ export class App {
   private constructor() {
     // Initialise electron-log
     log.initialize();
-    log.transports.file.resolvePathFn = () => {
+    log.transports.file.resolvePathFn = (): string => {
       return this.LOG_FILE_PATH;
     };
     // Override all console functions with electron-log functions
@@ -394,8 +392,8 @@ export class App {
     addFormats(this.AJV);
     // Initialise required managers & watchers
     this.userManager = new UserManager(this.userManagerLogger, this.userAccountStorageBackendLogger, this.AJV);
-    this.userManager.onCurrentlySignedInUserChangeCallback = this.USER_API_HANDLERS.sendCurrentlySignedInUserChange;
-    this.userManager.onUserAccountStorageBackendAvailabilityChangeCallback = this.USER_API_HANDLERS.sendAccountStorageBackendAvailabilityChange;
+    this.userManager.onCurrentlySignedInUserChangedCallback = this.USER_API_HANDLERS.sendCurrentlySignedInUserChanged;
+    this.userManager.onUserAccountStorageBackendAvailabilityChangedCallback = this.USER_API_HANDLERS.sendAccountStorageBackendAvailabilityChanged;
     this.settingsManager = settingsManagerFactory<IAppSettings>(
       this.SETTINGS_MANAGER_CONFIG,
       App.SETTINGS_SCHEMA,
@@ -552,6 +550,7 @@ export class App {
     this.windowPositionWatcher.watchWindowPosition(this.window, this.updateWindowPositionSettings.bind(this));
 
     // TEMPORARY
+    // TODO: Remove this
     // setInterval(() => {
     //   this.appLogger.warn("SIGNING OUT");
     //   this.userAccountManager.signOutUser();
@@ -710,11 +709,9 @@ export class App {
       event.returnValue = this.USER_API_HANDLERS.handleGetCurrentlySignedInUser();
     });
     ipcMain.on(
-      USER_API_IPC_CHANNELS.addNewUserDataStorageConfigWithMetadataToUser,
-      (event: IpcMainEvent, encryptedNewUserDataStorageConfigWithMetadataInputData: EncryptedNewUserDataStorageConfigWithMetadataDTO): void => {
-        event.returnValue = this.USER_API_HANDLERS.handleAddNewUserDataStorageConfigWithMetadataToUser(
-          encryptedNewUserDataStorageConfigWithMetadataInputData
-        );
+      USER_API_IPC_CHANNELS.addUserDataStorageConfigToUser,
+      (event: IpcMainEvent, encryptedUserDataStorageConfigCreateDTO: EncryptedUserDataStorageConfigCreateDTO): void => {
+        event.returnValue = this.USER_API_HANDLERS.handleAddUserDataStorageConfigToUser(encryptedUserDataStorageConfigCreateDTO);
       }
     );
   }

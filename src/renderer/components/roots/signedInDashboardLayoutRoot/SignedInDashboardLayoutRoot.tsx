@@ -17,44 +17,44 @@ const SignedInDashboardLayoutRoot: FC = () => {
   const [appBarTitle, setAppBarTitle] = useState<string>("");
   const [drawerWidth, setDrawerWidth] = useState<number>(DEFAULT_DRAWER_WIDTH);
 
-  const updateAppBarHeight = useCallback(() => {
+  const updateAppBarHeight = useCallback((): void => {
     if (appBarRef.current) {
       setAppBarHeight(appBarRef.current.clientHeight);
     }
   }, [appBarRef]);
 
-  const updateDrawerWidth = useCallback(() => {
+  const updateDrawerWidth = useCallback((): void => {
     if (drawerRef.current) {
       setDrawerWidth(drawerRef.current.clientWidth);
     }
   }, [drawerRef]);
 
-  const updateComponentDimensions = useCallback(() => {
+  const updateComponentDimensions = useCallback((): void => {
     updateAppBarHeight();
     updateDrawerWidth();
   }, [updateAppBarHeight, updateDrawerWidth]);
 
-  useEffect(() => {
+  useEffect((): void => {
     appLogger.silly(`Updated App Bar height: ${appBarHeight.toString()}.`);
   }, [appBarHeight]);
 
-  useEffect(() => {
+  useEffect((): void => {
     appLogger.silly(`Updated Drawer width: ${drawerWidth.toString()}.`);
   }, [drawerWidth]);
 
   // Measure the necessary component dimensions
-  useLayoutEffect(() => {
+  useLayoutEffect((): (() => void) => {
     // Set initial dimensions
     updateComponentDimensions();
     // Add event listener for window resize
     window.addEventListener("resize", updateComponentDimensions);
     // Cleanup event listener on component unmount
-    return () => {
+    return (): void => {
       window.removeEventListener("resize", updateComponentDimensions);
     };
   }, [updateComponentDimensions]);
 
-  useEffect(() => {
+  useEffect((): void => {
     appLogger.debug("Rendering Signed In Dashboard Layout Root component.");
   }, []);
 

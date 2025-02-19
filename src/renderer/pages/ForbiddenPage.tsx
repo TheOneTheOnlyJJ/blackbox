@@ -22,7 +22,7 @@ const ForbiddenPage: FC = () => {
     navigate(-1);
   }, [navigate]);
 
-  useEffect(() => {
+  useEffect((): void => {
     try {
       if (params.reason !== undefined) {
         const DECODED_ALERT_MESSAGE: string = decodeURIComponent(params.reason.replaceAll("-", " "));

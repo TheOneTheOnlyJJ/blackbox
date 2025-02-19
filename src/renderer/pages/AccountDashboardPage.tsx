@@ -15,7 +15,7 @@ const AccountDashboardPage: FC = () => {
   const signedInDashboardLayoutRootContext: ISignedInDashboardLayoutRootContext = useSignedInDashboardLayoutRootContext();
   const params: Readonly<Partial<IAccountDashboardPageParams>> = useParams<IAccountDashboardPageParams>();
 
-  useEffect(() => {
+  useEffect((): void => {
     signedInDashboardLayoutRootContext.setAppBarTitle("Dashboard");
     signedInDashboardLayoutRootContext.setForbiddenLocationName("Dashboard");
   }, [signedInDashboardLayoutRootContext]);

@@ -7,15 +7,15 @@ export type IPCTLSAPIIPCChannel = IPCTLSAPIIPCChannels[keyof IPCTLSAPIIPCChannel
 
 export const USER_API_IPC_CHANNELS = {
   isAccountStorageBackendAvailable: "userAPI:isAccountStorageBackendAvailable",
-  onAccountStorageBackendAvailabilityChange: "userAPI:onAccountStorageBackendAvailabilityChange",
+  onAccountStorageBackendAvailabilityChanged: "userAPI:onAccountStorageBackendAvailabilityChanged",
   isUsernameAvailable: "userAPI:isUsernameAvailable",
   signUp: "userAPI:signUp",
   getUserCount: "userAPI:getUserCount",
   signIn: "userAPI:signIn",
   signOut: "userAPI:signOut",
-  addNewUserDataStorageConfigWithMetadataToUser: "userAPI:addNewUserDataStorageConfigWithMetadataToUser",
+  addUserDataStorageConfigToUser: "userAPI:addUserDataStorageConfigToUser",
   getCurrentlySignedInUser: "userAPI:getCurrentlySignedInUser",
-  onCurrentlySignedInUserChange: "userAPI:onCurrentlySignedInUserChange"
+  onCurrentlySignedInUserChanged: "userAPI:onCurrentlySignedInUserChanged"
 } as const;
 export type UserAPIIPCChannels = typeof USER_API_IPC_CHANNELS;
 export type UserAPIIPCChannel = UserAPIIPCChannels[keyof UserAPIIPCChannels];

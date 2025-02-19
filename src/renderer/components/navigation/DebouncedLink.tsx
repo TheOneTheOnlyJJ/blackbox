@@ -8,7 +8,7 @@ const DebouncedLink: FC<LinkProps> = (props: LinkProps) => {
     (event: MouseEvent<HTMLAnchorElement>): void => {
       if (location.pathname === props.to) {
         event.preventDefault();
-        appLogger.debug(`Prevented navigation to same location: "${props.to}".`);
+        appLogger.debug(`Prevented redundant navigation to identical location as current: "${props.to}".`);
       }
     },
     [location.pathname, props.to]

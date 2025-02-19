@@ -14,17 +14,17 @@ import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import Alert from "@mui/material/Alert/Alert";
 import AlertTitle from "@mui/material/AlertTitle/AlertTitle";
 import { enqueueSnackbar } from "notistack";
-import { errorCapitalizerTransformer } from "@renderer/utils/RJSF/errorTransformers/errorCapitalizerTransformer";
+import { errorCapitalizerErrorTransformer } from "@renderer/utils/RJSF/errorTransformers/errorCapitalizerErrorTransformer";
 import { USER_SIGN_IN_INPUT_DATA_UI_SCHEMA } from "@renderer/user/account/uiSchemas/UserSignInInputDataUiSchema";
 
 const MUIForm = withTheme<IUserSignInInputData>(Theme);
 
-const USER_SIGN_IN_FORM_VALIDATOR = customizeValidator<IUserSignInInputData>();
+const USER_SIGN_IN_INPUT_DATA_VALIDATOR = customizeValidator<IUserSignInInputData>();
 
 const UserSignInForm: FC = () => {
   const appRootContext: IAppRootContext = useAppRootContext();
   const [wasSignInSuccessful, setWasSignInSuccessful] = useState<boolean>(true);
-  const handleSubmit = useCallback(
+  const handleFormSubmit = useCallback(
     (data: IChangeEvent<IUserSignInInputData>): void => {
       appLogger.info("Submitted user Sign In form.");
       if (data.formData === undefined) {
@@ -73,10 +73,10 @@ const UserSignInForm: FC = () => {
     <MUIForm // TODO: Change errors from "Missing required property"
       schema={USER_SIGN_IN_INPUT_DATA_JSON_SCHEMA as RJSFSchema}
       uiSchema={USER_SIGN_IN_INPUT_DATA_UI_SCHEMA}
-      validator={USER_SIGN_IN_FORM_VALIDATOR}
+      validator={USER_SIGN_IN_INPUT_DATA_VALIDATOR}
       showErrorList={false}
-      transformErrors={errorCapitalizerTransformer}
-      onSubmit={handleSubmit}
+      transformErrors={errorCapitalizerErrorTransformer}
+      onSubmit={handleFormSubmit}
       noHtml5Validate={true}
     >
       {!wasSignInSuccessful && (

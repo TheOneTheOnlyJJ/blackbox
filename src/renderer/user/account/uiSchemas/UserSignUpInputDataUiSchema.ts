@@ -11,7 +11,7 @@ export const USER_SIGN_UP_INPUT_DATA_UI_SCHEMA: UiSchema<IUserSignUpInputData> =
   password: {
     "ui:widget": RJSFPasswordWidget,
     "ui:title": "Password",
-    "ui:description": `Minimum ${USER_SIGN_UP_DATA_CONSTANTS.password.minLength.toString()} characters`
+    "ui:description": `Must have at least ${USER_SIGN_UP_DATA_CONSTANTS.password.minLength.toString()} characters`
   },
   confirmPassword: {
     "ui:widget": RJSFPasswordWidget,

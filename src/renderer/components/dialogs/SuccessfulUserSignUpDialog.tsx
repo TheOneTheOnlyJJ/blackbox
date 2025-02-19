@@ -23,7 +23,7 @@ export interface ISuccessfulUserSignUpDialogProps {
   encryptedNewUserSignInData: EncryptedUserSignInData | null;
 }
 
-const SuccessfulUserRegistrationDialog: FC<ISuccessfulUserSignUpDialogProps> = (props: ISuccessfulUserSignUpDialogProps) => {
+const SuccessfulUserSignUpDialog: FC<ISuccessfulUserSignUpDialogProps> = (props: ISuccessfulUserSignUpDialogProps) => {
   const navigate: NavigateFunction = useNavigate();
   const [signInError, setSignInError] = useState<string | undefined>(undefined);
   const handleDialogClose = useCallback((): void => {
@@ -104,4 +104,4 @@ const SuccessfulUserRegistrationDialog: FC<ISuccessfulUserSignUpDialogProps> = (
   );
 };
 
-export default SuccessfulUserRegistrationDialog;
+export default SuccessfulUserSignUpDialog;

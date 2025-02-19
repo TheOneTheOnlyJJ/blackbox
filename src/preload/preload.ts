@@ -1,13 +1,14 @@
 import { contextBridge, ipcRenderer, IpcRendererEvent } from "electron";
 import { IPC_TLS_API_IPC_CHANNELS, USER_API_IPC_CHANNELS } from "@main/utils/IPC/IPCChannels";
-import { CurrentlySignedInUserChangeCallback, IUserAPI, UserAccountStorageBackendAvailabilityChangeCallback } from "@shared/IPC/APIs/UserAPI";
+import { CurrentlySignedInUserChangedCallback, IUserAPI, UserAccountStorageBackendAvailabilityChangedCallback } from "@shared/IPC/APIs/UserAPI";
 import { IIPCTLSAPI } from "@shared/IPC/APIs/IPCTLSAPI";
 import { ICurrentlySignedInUser } from "@shared/user/account/CurrentlySignedInUser";
 import { EncryptedUserSignInData } from "@shared/user/account/encrypted/EncryptedUserSignInData";
 import { EncryptedUserSignUpData } from "@shared/user/account/encrypted/EncryptedUserSignUpData";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
-import { EncryptedNewUserDataStorageConfigWithMetadataDTO } from "@shared/user/account/encrypted/EncryptedNewUserDataStorageConfigWithMetadataDTO";
+import { EncryptedUserDataStorageConfigCreateDTO } from "@shared/user/account/encrypted/EncryptedUserDataStorageConfigCreateDTO";
 
+// TODO: Investigate if information processing can be hidden in here
 const IPC_TLS_API: IIPCTLSAPI = {
   getMainProcessPublicRSAKeyDER: (): IPCAPIResponse<ArrayBuffer> => {
     return ipcRenderer.sendSync(IPC_TLS_API_IPC_CHANNELS.getMainProcessPublicRSAKeyDER) as IPCAPIResponse<ArrayBuffer>;
@@ -15,14 +16,14 @@ const IPC_TLS_API: IIPCTLSAPI = {
   sendRendererProcessWrappedAESKey: (rendererProcessWrappedAESKey: ArrayBuffer): Promise<IPCAPIResponse> => {
     return ipcRenderer.invoke(IPC_TLS_API_IPC_CHANNELS.sendRendererProcessWrappedAESKey, rendererProcessWrappedAESKey) as Promise<IPCAPIResponse>;
   }
-};
+} as const;
 
 const USER_STORAGE_API: IUserAPI = {
   signUp: (encryptedUserSignUpData: EncryptedUserSignUpData): IPCAPIResponse<boolean> => {
     return ipcRenderer.sendSync(USER_API_IPC_CHANNELS.signUp, encryptedUserSignUpData) as IPCAPIResponse<boolean>;
   },
-  signIn: (encryptedSignInCredentials: EncryptedUserSignInData): IPCAPIResponse<boolean> => {
-    return ipcRenderer.sendSync(USER_API_IPC_CHANNELS.signIn, encryptedSignInCredentials) as IPCAPIResponse<boolean>;
+  signIn: (encryptedUserSignInData: EncryptedUserSignInData): IPCAPIResponse<boolean> => {
+    return ipcRenderer.sendSync(USER_API_IPC_CHANNELS.signIn, encryptedUserSignInData) as IPCAPIResponse<boolean>;
   },
   signOut: (): IPCAPIResponse => {
     return ipcRenderer.sendSync(USER_API_IPC_CHANNELS.signOut) as IPCAPIResponse;
@@ -39,35 +40,33 @@ const USER_STORAGE_API: IUserAPI = {
   getCurrentlySignedInUser: (): IPCAPIResponse<ICurrentlySignedInUser | null> => {
     return ipcRenderer.sendSync(USER_API_IPC_CHANNELS.getCurrentlySignedInUser) as IPCAPIResponse<ICurrentlySignedInUser | null>;
   },
-  addNewUserDataStorageConfigWithMetadataToUser: (
-    encryptedNewUserDataStorageConfigWithMetadataDTO: EncryptedNewUserDataStorageConfigWithMetadataDTO
-  ): IPCAPIResponse<boolean> => {
+  addUserDataStorageConfigToUser: (encryptedUserDataStorageConfigCreateDTO: EncryptedUserDataStorageConfigCreateDTO): IPCAPIResponse<boolean> => {
     return ipcRenderer.sendSync(
-      USER_API_IPC_CHANNELS.addNewUserDataStorageConfigWithMetadataToUser,
-      encryptedNewUserDataStorageConfigWithMetadataDTO
+      USER_API_IPC_CHANNELS.addUserDataStorageConfigToUser,
+      encryptedUserDataStorageConfigCreateDTO
     ) as IPCAPIResponse<boolean>;
   },
-  onAccountStorageBackendAvailabilityChange: (callback: UserAccountStorageBackendAvailabilityChangeCallback): (() => void) => {
-    const CHANNEL: string = USER_API_IPC_CHANNELS.onAccountStorageBackendAvailabilityChange;
-    const LISTENER = (_: IpcRendererEvent, isAvailable: boolean): void => {
-      callback(isAvailable);
+  onAccountStorageBackendAvailabilityChanged: (callback: UserAccountStorageBackendAvailabilityChangedCallback): (() => void) => {
+    const CHANNEL: string = USER_API_IPC_CHANNELS.onAccountStorageBackendAvailabilityChanged;
+    const LISTENER = (_: IpcRendererEvent, isUserAccountStorageBackendAvailable: boolean): void => {
+      callback(isUserAccountStorageBackendAvailable);
     };
     ipcRenderer.on(CHANNEL, LISTENER);
     return (): void => {
       ipcRenderer.removeListener(CHANNEL, LISTENER);
     };
   },
-  onCurrentlySignedInUserChange: (callback: CurrentlySignedInUserChangeCallback): (() => void) => {
-    const CHANNEL: string = USER_API_IPC_CHANNELS.onCurrentlySignedInUserChange;
-    const LISTENER = (_: IpcRendererEvent, newSignedInUser: ICurrentlySignedInUser | null): void => {
-      callback(newSignedInUser);
+  onCurrentlySignedInUserChanged: (callback: CurrentlySignedInUserChangedCallback): (() => void) => {
+    const CHANNEL: string = USER_API_IPC_CHANNELS.onCurrentlySignedInUserChanged;
+    const LISTENER = (_: IpcRendererEvent, newCurrentlySignedInUser: ICurrentlySignedInUser | null): void => {
+      callback(newCurrentlySignedInUser);
     };
     ipcRenderer.on(CHANNEL, LISTENER);
     return (): void => {
       ipcRenderer.removeListener(CHANNEL, LISTENER);
     };
   }
-};
+} as const;
 
 // Expose the APIs in the renderer
 contextBridge.exposeInMainWorld("IPCTLSAPI", IPC_TLS_API);

@@ -12,17 +12,15 @@ export const USER_SIGN_UP_INPUT_DATA_JSON_SCHEMA: JSONSchemaType<IUserSignUpInpu
   properties: {
     username: {
       type: "string",
-      minLength: USER_SIGN_UP_DATA_CONSTANTS.username.minLength,
-      maxLength: USER_SIGN_UP_DATA_CONSTANTS.username.maxLength,
-      pattern: USER_SIGN_UP_DATA_CONSTANTS.username.pattern
+      ...USER_SIGN_UP_DATA_CONSTANTS.username
     },
     password: {
       type: "string",
-      minLength: USER_SIGN_UP_DATA_CONSTANTS.password.minLength
+      ...USER_SIGN_UP_DATA_CONSTANTS.password
     },
     confirmPassword: {
       type: "string",
-      minLength: USER_SIGN_UP_DATA_CONSTANTS.password.minLength
+      ...USER_SIGN_UP_DATA_CONSTANTS.password
     }
   },
   required: ["username", "password", "confirmPassword"],

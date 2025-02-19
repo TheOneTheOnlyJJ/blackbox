@@ -9,7 +9,7 @@ import {
 const ProfilePage: FC = () => {
   const signedInDashboardLayoutRootContext: ISignedInDashboardLayoutRootContext = useSignedInDashboardLayoutRootContext();
 
-  useEffect(() => {
+  useEffect((): void => {
     signedInDashboardLayoutRootContext.setAppBarTitle("Profile");
     signedInDashboardLayoutRootContext.setForbiddenLocationName("Profile");
   }, [signedInDashboardLayoutRootContext]);

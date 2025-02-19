@@ -9,21 +9,21 @@ import { CustomValidator, FormValidation, RJSFSchema } from "@rjsf/utils";
 import { appLogger } from "@renderer/utils/loggers";
 import { encrypt } from "@renderer/utils/encryption/encrypt";
 import { EncryptedUserSignUpData } from "@shared/user/account/encrypted/EncryptedUserSignUpData";
-import SuccessfulUserRegistrationDialog, { ISuccessfulUserSignUpDialogProps } from "@renderer/components/dialogs/SuccessfulUserSignUpDialog";
+import SuccessfulUserSignUpDialog, { ISuccessfulUserSignUpDialogProps } from "@renderer/components/dialogs/SuccessfulUserSignUpDialog";
 import Button from "@mui/material/Button/Button";
 import { IUserSignInData } from "@shared/user/account/UserSignInData";
 import { EncryptedUserSignInData } from "@shared/user/account/encrypted/EncryptedUserSignInData";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { enqueueSnackbar } from "notistack";
-import { errorCapitalizerTransformer } from "@renderer/utils/RJSF/errorTransformers/errorCapitalizerTransformer";
+import { errorCapitalizerErrorTransformer } from "@renderer/utils/RJSF/errorTransformers/errorCapitalizerErrorTransformer";
 import { USER_SIGN_UP_INPUT_DATA_UI_SCHEMA } from "@renderer/user/account/uiSchemas/UserSignUpInputDataUiSchema";
 
 const MUIForm = withTheme<IUserSignUpInputData>(Theme);
 
-const USER_SIGN_UP_FORM_VALIDATOR = customizeValidator<IUserSignUpInputData>();
+const USER_SIGN_UP_INPUT_DATA_VALIDATOR = customizeValidator<IUserSignUpInputData>();
 
-const userSignUpFormCustomValidate: CustomValidator<IUserSignUpInputData> = (
+const userSignUpFormValidator: CustomValidator<IUserSignUpInputData> = (
   formData: IUserSignUpInputData | undefined,
   errors: FormValidation<IUserSignUpInputData>
 ): FormValidation<IUserSignUpInputData> => {
@@ -93,27 +93,27 @@ const UserSignUpForm: FC = () => {
                 username: USER_SIGN_UP_DATA.username,
                 password: USER_SIGN_UP_DATA.password
               };
-              let encryptedUserSignInData: EncryptedUserSignInData | null = null;
+              let encryptedNewUserSignInData: EncryptedUserSignInData | null = null;
               appLogger.debug(`Encrypting new user sign in credentials for new user "${NEW_USER_SIGN_IN_DATA.username}".`);
               encrypt(JSON.stringify(NEW_USER_SIGN_IN_DATA), appRootContext.rendererProcessAESKey)
                 .then(
-                  (encryptedNewUserSignInData: EncryptedUserSignInData): void => {
+                  (encryptedUserSignInData: EncryptedUserSignInData): void => {
                     appLogger.debug("Done encrypting new user sign in credentials.");
-                    encryptedUserSignInData = encryptedNewUserSignInData;
+                    encryptedNewUserSignInData = encryptedUserSignInData;
                   },
                   (reason: unknown): void => {
                     const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
                     appLogger.error(
                       `Could not encrypt new user sign in credentials for new user "${USER_SIGN_UP_DATA.username}". Reason: ${REASON_MESSAGE}.`
                     );
-                    encryptedUserSignInData = null;
+                    encryptedNewUserSignInData = null;
                     enqueueSnackbar({ message: "Credentials encryption error.", variant: "error" });
                   }
                 )
                 .catch((err: unknown): void => {
                   const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
                   appLogger.error(`Could not encrypt new user sign in credentials for new user "${USER_SIGN_UP_DATA.username}". ${ERROR_MESSAGE}.`);
-                  encryptedUserSignInData = null;
+                  encryptedNewUserSignInData = null;
                   enqueueSnackbar({ message: "Credentials encryption error.", variant: "error" });
                 })
                 .finally((): void => {
@@ -127,7 +127,7 @@ const UserSignUpForm: FC = () => {
                     open: true,
                     username: USER_SIGN_UP_DATA.username,
                     userCount: userCount,
-                    encryptedNewUserSignInData: encryptedUserSignInData
+                    encryptedNewUserSignInData: encryptedNewUserSignInData
                   });
                   enqueueSnackbar({ message: "Signed up." });
                 });
@@ -156,10 +156,10 @@ const UserSignUpForm: FC = () => {
       <MUIForm // TODO: Change errors from "Missing required property"
         schema={USER_SIGN_UP_INPUT_DATA_JSON_SCHEMA as RJSFSchema}
         uiSchema={USER_SIGN_UP_INPUT_DATA_UI_SCHEMA}
-        validator={USER_SIGN_UP_FORM_VALIDATOR}
+        validator={USER_SIGN_UP_INPUT_DATA_VALIDATOR}
         showErrorList={false}
-        customValidate={userSignUpFormCustomValidate}
-        transformErrors={errorCapitalizerTransformer}
+        customValidate={userSignUpFormValidator}
+        transformErrors={errorCapitalizerErrorTransformer}
         onSubmit={signUpUser}
         noHtml5Validate={true}
       >
@@ -167,7 +167,7 @@ const UserSignUpForm: FC = () => {
           Sign Up
         </Button>
       </MUIForm>
-      <SuccessfulUserRegistrationDialog {...successfulUserSignUpDialogProps} />
+      <SuccessfulUserSignUpDialog {...successfulUserSignUpDialogProps} />
     </>
   );
 };
