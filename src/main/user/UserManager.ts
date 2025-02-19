@@ -12,10 +12,6 @@ import Ajv, { ValidateFunction } from "ajv";
 import { UserAccountStorageBackendConfig } from "./account/storage/backend/UserAccountStorageBackendConfig";
 import { IUserDataStorageConfig } from "./data/storage/UserDataStorageConfig";
 import { IUserSignInData, USER_SIGN_IN_DATA_JSON_SCHEMA } from "@shared/user/account/UserSignInData";
-import {
-  IUserDataStorageConfigCreateDTO,
-  USER_DATA_STORAGE_CONFIG_CREATE_DTO_JSON_SCHEMA
-} from "@shared/user/data/storage/UserDataStorageConfigCreateDTO";
 import { ISecuredUserDataStorageConfig } from "./data/storage/SecuredUserDataStorageConfig";
 import { ISecuredPasswordData } from "@main/utils/encryption/SecuredPasswordData";
 
@@ -40,7 +36,6 @@ export class UserManager {
   public readonly USER_SIGN_UP_DATA_VALIDATE_FUNCTION: ValidateFunction<IUserSignUpData>;
   public readonly USER_SIGN_IN_DATA_VALIDATE_FUNCTION: ValidateFunction<IUserSignInData>;
   public readonly CURRENTLY_SIGNED_IN_USER_VALIDATE_FUNCTION: ValidateFunction<ICurrentlySignedInUser>;
-  public readonly USER_DATA_STORAGE_CONFIG_CREATE_DTO_VALIDATE_FUNCTION: ValidateFunction<IUserDataStorageConfigCreateDTO>;
 
   public constructor(logger: LogFunctions, userAccountStorageBackendLogger: LogFunctions, ajv: Ajv) {
     // Loggers
@@ -52,9 +47,6 @@ export class UserManager {
     this.USER_SIGN_UP_DATA_VALIDATE_FUNCTION = this.AJV.compile<IUserSignUpData>(USER_SIGN_UP_DATA_JSON_SCHEMA);
     this.USER_SIGN_IN_DATA_VALIDATE_FUNCTION = this.AJV.compile<IUserSignInData>(USER_SIGN_IN_DATA_JSON_SCHEMA);
     this.CURRENTLY_SIGNED_IN_USER_VALIDATE_FUNCTION = this.AJV.compile<ICurrentlySignedInUser>(CURRENTLY_SIGNED_IN_USER_JSON_SCHEMA);
-    this.USER_DATA_STORAGE_CONFIG_CREATE_DTO_VALIDATE_FUNCTION = this.AJV.compile<IUserDataStorageConfigCreateDTO>(
-      USER_DATA_STORAGE_CONFIG_CREATE_DTO_JSON_SCHEMA
-    );
     // Currently signed in user
     this.onCurrentlySignedInUserChangedCallback = (): void => {
       this.logger.silly("No currently signed in user changed callback set.");
@@ -197,11 +189,26 @@ export class UserManager {
     return scryptSync(plainTextPassword, salt, 64);
   }
 
-  public secureUserSignUpData(userSignUpData: IUserSignUpData): ISecuredUserSignUpData {
+  public generateRandomUserId(): UUID {
+    if (this.userAccountStorageBackend.value === null) {
+      throw new Error("Null User Account Storage Backend");
+    }
+    let userId: UUID = randomUUID({ disableEntropyCache: true });
+    this.logger.debug(`Checking user ID "${userId}" availability.`);
+    while (!this.userAccountStorageBackend.value.isUserIdAvailable(userId)) {
+      this.logger.debug(`User ID "${userId}" not available. Generating a new random one.`);
+      userId = randomUUID({ disableEntropyCache: true });
+    }
+    this.logger.debug(`User ID "${userId}" available.`);
+    return userId;
+  }
+
+  // TODO: Move this out of here
+  public secureUserSignUpData(userId: UUID, userSignUpData: IUserSignUpData): ISecuredUserSignUpData {
     this.logger.debug(`Securing user sign up data for user: "${userSignUpData.username}".`);
     const PASSWORD_SALT: Buffer = randomBytes(16);
     const SECURED_USER_DATA: ISecuredUserSignUpData = {
-      userId: randomUUID({ disableEntropyCache: true }),
+      userId: userId,
       username: userSignUpData.username,
       securedPassword: {
         hash: this.hashPassword(userSignUpData.password, PASSWORD_SALT, "user sign up").toString("base64"),
@@ -211,6 +218,21 @@ export class UserManager {
     return SECURED_USER_DATA;
   }
 
+  public generateRandomUserDataStorageConfigId(): UUID {
+    if (this.userAccountStorageBackend.value === null) {
+      throw new Error("Null User Account Storage Backend");
+    }
+    let configId: UUID = randomUUID({ disableEntropyCache: true });
+    this.logger.debug(`Checking User Data Storage Config ID "${configId}" availability.`);
+    while (!this.userAccountStorageBackend.value.isUserDataStorageConfigIdAvailable(configId)) {
+      this.logger.debug(`User Data Storage Config ID "${configId}" not available. Generating a new random one.`);
+      configId = randomUUID({ disableEntropyCache: true });
+    }
+    this.logger.debug(`User Data Storage Config ID "${configId}" available.`);
+    return configId;
+  }
+
+  // TODO: Move this out of here
   public secureUserDataStorageConfig(userDataStorageConfig: IUserDataStorageConfig): ISecuredUserDataStorageConfig {
     this.logger.debug(`Securing User Data Storage Config with ID: "${userDataStorageConfig.configId}".`);
     let securedVisibilityPassword: ISecuredPasswordData | undefined;
@@ -248,7 +270,8 @@ export class UserManager {
     if (this.userAccountStorageBackend.value === null) {
       throw new Error("Null User Account Storage Backend");
     }
-    const SECURED_USER_SIGN_UP_DATA: ISecuredUserSignUpData = this.secureUserSignUpData(userSignUpData);
+    const USER_ID: UUID = this.generateRandomUserId();
+    const SECURED_USER_SIGN_UP_DATA: ISecuredUserSignUpData = this.secureUserSignUpData(USER_ID, userSignUpData);
     this.logger.debug("Secured user sign up data.");
     return this.userAccountStorageBackend.value.addUser(SECURED_USER_SIGN_UP_DATA);
   }
@@ -295,18 +318,18 @@ export class UserManager {
     return this.currentlySignedInUser.value;
   }
 
-  public addUserDataStorageConfigToUser(userId: UUID, userDataStorageConfig: IUserDataStorageConfig): boolean {
-    this.logger.debug(`Adding User Data Storage Config to user: "${userId}".`);
+  public addUserDataStorageConfigToUser(userDataStorageConfig: IUserDataStorageConfig): boolean {
+    this.logger.debug(`Adding User Data Storage Config to user: "${userDataStorageConfig.userId}".`);
     if (this.userAccountStorageBackend.value === null) {
       throw new Error("Null User Account Storage Backend");
     }
     // TODO: Encrypt the config with a KDF derived from the user's password
-    if (!this.userAccountStorageBackend.value.doesUserWithIdExist(userId)) {
-      throw new Error(`Cannot add User Data Storage to user "${userId}" because it does not exist`);
+    if (this.userAccountStorageBackend.value.isUserIdAvailable(userDataStorageConfig.userId)) {
+      throw new Error(`Cannot add User Data Storage to user "${userDataStorageConfig.userId}" because it does not exist`);
     }
     const SECURED_USER_DATA_STORAGE_CONFIG: ISecuredUserDataStorageConfig = this.secureUserDataStorageConfig(userDataStorageConfig);
     this.logger.debug("Secured User Data Storage Config.");
-    return this.userAccountStorageBackend.value.addUserDataStorageConfigToUser(userId, SECURED_USER_DATA_STORAGE_CONFIG);
+    return this.userAccountStorageBackend.value.addUserDataStorageConfigToUser(userDataStorageConfig.userId, SECURED_USER_DATA_STORAGE_CONFIG);
   }
 
   public getAllUserDataStorageConfigs(userId: UUID): ISecuredUserDataStorageConfig[] {

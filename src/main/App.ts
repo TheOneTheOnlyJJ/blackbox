@@ -12,7 +12,7 @@ import { IpcMainEvent } from "electron";
 import { IUserAPI } from "@shared/IPC/APIs/UserAPI";
 import { MainProcessIPCAPIHandlers } from "@main/utils/IPC/MainProcessIPCAPIHandlers";
 import { IUserSignUpData } from "@shared/user/account/UserSignUpData";
-import { generateKeyPairSync, randomUUID, UUID, webcrypto } from "node:crypto";
+import { generateKeyPairSync, webcrypto } from "node:crypto";
 import { IIPCTLSAPI } from "@shared/IPC/APIs/IPCTLSAPI";
 import { testAESKey } from "@main/utils/encryption/testAESKey";
 import { insertLineBreaks } from "@shared/utils/insertNewLines";
@@ -28,14 +28,16 @@ import { SettingsManager } from "@main/settings/SettingsManager";
 import { SettingsManagerConfig, settingsManagerFactory } from "@main/settings/settingsManagerFactory";
 import { SETTINGS_MANAGER_TYPE } from "@main/settings/SettingsManagerType";
 import { WINDOW_STATES, WindowPosition, WindowPositionWatcher, WindowStates } from "@main/settings/WindowPositionWatcher";
-import Ajv from "ajv";
+import Ajv, { ValidateFunction } from "ajv";
 import addFormats from "ajv-formats";
 import { UserAccountStorageBackendConfig } from "@main/user/account/storage/backend/UserAccountStorageBackendConfig";
 import { EncryptedUserDataStorageConfigCreateDTO } from "@shared/user/account/encrypted/EncryptedUserDataStorageConfigCreateDTO";
-import { IUserDataStorageConfigCreateDTO } from "@shared/user/data/storage/UserDataStorageConfigCreateDTO";
-import { UserDataStorageBackendConfig } from "./user/data/storage/backend/UserDataStorageBackendConfig";
-import { userDataStorageBackendConfigCreateInputToUserDataStorageBackendConfig } from "./user/data/storage/backend/userDataStorageBackendConfigCreateInputToUserDataStorageBackendConfig";
+import {
+  IUserDataStorageConfigCreateDTO,
+  USER_DATA_STORAGE_CONFIG_CREATE_DTO_JSON_SCHEMA
+} from "@shared/user/data/storage/UserDataStorageConfigCreateDTO";
 import { IUserDataStorageConfig } from "./user/data/storage/UserDataStorageConfig";
+import { userDataStorageConfigCreateDTOToUserDataStorageConfig } from "./user/data/storage/userDataStorageConfigCreateDTOToUserDataStorageConfig";
 
 type WindowPositionSetting = Rectangle | WindowStates["FullScreen"] | WindowStates["Maximized"];
 
@@ -158,7 +160,9 @@ export class App {
   private rendererProcessAESKey: Buffer | null = null;
 
   // JSON Schema validator
-  private readonly AJV: Ajv = new Ajv({ strict: true });
+  private readonly AJV: Ajv;
+  // JSON Schema validate functions
+  public readonly USER_DATA_STORAGE_CONFIG_CREATE_DTO_VALIDATE_FUNCTION: ValidateFunction<IUserDataStorageConfigCreateDTO>;
 
   // IPC API handlers
   private readonly IPC_TLS_API_HANDLERS: MainProcessIPCTLSAPIIPCHandlers = {
@@ -320,29 +324,21 @@ export class App {
         }
         const USER_DATA_STORAGE_CONFIG_CREATE_DTO: IUserDataStorageConfigCreateDTO = decryptAndValidateJSON<IUserDataStorageConfigCreateDTO>(
           encryptedUserDataStorageConfigCreateDTO,
-          this.userManager.USER_DATA_STORAGE_CONFIG_CREATE_DTO_VALIDATE_FUNCTION,
+          this.USER_DATA_STORAGE_CONFIG_CREATE_DTO_VALIDATE_FUNCTION,
           this.rendererProcessAESKey,
           this.IPCUserAPILogger,
           "User Data Storage Config DTO"
         );
         this.appLogger.debug("Decrypted User Data Storage Config Create DTO.");
-        const USER_DATA_STORAGE_BACKEND_CONFIG: UserDataStorageBackendConfig = userDataStorageBackendConfigCreateInputToUserDataStorageBackendConfig(
-          USER_DATA_STORAGE_CONFIG_CREATE_DTO.userDataStorageConfigCreateInput.backendConfig,
+        const USER_DATA_STORAGE_CONFIG: IUserDataStorageConfig = userDataStorageConfigCreateDTOToUserDataStorageConfig(
+          this.userManager.generateRandomUserDataStorageConfigId(),
+          USER_DATA_STORAGE_CONFIG_CREATE_DTO,
           this.IPCUserAPILogger
         );
-        const USER_DATA_STORAGE_CONFIG: IUserDataStorageConfig = {
-          configId: randomUUID({ disableEntropyCache: true }),
-          name: USER_DATA_STORAGE_CONFIG_CREATE_DTO.userDataStorageConfigCreateInput.name,
-          visibilityPassword: USER_DATA_STORAGE_CONFIG_CREATE_DTO.userDataStorageConfigCreateInput.visibilityPassword,
-          backendConfig: USER_DATA_STORAGE_BACKEND_CONFIG
-        };
         this.IPCUserAPILogger.debug(`New User Data Storage Config ID: "${USER_DATA_STORAGE_CONFIG.configId}".`);
         return {
           status: IPC_API_RESPONSE_STATUSES.SUCCESS,
-          data: this.userManager.addUserDataStorageConfigToUser(
-            USER_DATA_STORAGE_CONFIG_CREATE_DTO.userId as UUID, // UUID type is specific to Node.js, unavailable in renderer
-            USER_DATA_STORAGE_CONFIG
-          )
+          data: this.userManager.addUserDataStorageConfigToUser(USER_DATA_STORAGE_CONFIG)
         };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
@@ -388,8 +384,13 @@ export class App {
     // Add start log separator (also create file if missing)
     appendFileSync(this.LOG_FILE_PATH, `---------- Start : ${new Date().toISOString()} ----------\n`, "utf-8");
     this.bootstrapLogger.info(`Using log file at path: "${log.transports.file.getFile().path}".`);
-    // Add format validation plugin to AJV
+    // Initialise AJV
+    this.AJV = new Ajv({ strict: true });
     addFormats(this.AJV);
+    // Initialise JSON Schema validate functions
+    this.USER_DATA_STORAGE_CONFIG_CREATE_DTO_VALIDATE_FUNCTION = this.AJV.compile<IUserDataStorageConfigCreateDTO>(
+      USER_DATA_STORAGE_CONFIG_CREATE_DTO_JSON_SCHEMA
+    );
     // Initialise required managers & watchers
     this.userManager = new UserManager(this.userManagerLogger, this.userAccountStorageBackendLogger, this.AJV);
     this.userManager.onCurrentlySignedInUserChangedCallback = this.USER_API_HANDLERS.sendCurrentlySignedInUserChanged;

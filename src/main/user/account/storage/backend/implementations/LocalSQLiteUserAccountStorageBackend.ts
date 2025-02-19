@@ -96,38 +96,52 @@ export class LocalSQLiteUserAccountStorageBackend extends UserAccountStorageBack
     this.logger.info(`"${this.config.type}" User Acount Storage Backend ready.`);
   }
 
-  public isUsernameAvailable(username: string): boolean {
-    this.logger.debug(`Checking username availability for username: "${username}".`);
-    const IS_USERNAME_AVAILABLE_SQL = "SELECT COUNT(*) AS count FROM users WHERE username = @username";
-    const RESULT = this.db.prepare(IS_USERNAME_AVAILABLE_SQL).get({ username: username }) as { count: number };
-    if (RESULT.count > 0) {
-      this.logger.debug(`Username "${username}" is unavailable.`);
-      return false;
+  private isJSONValidInSQLite(json: object | string, jsonPurposeToLog: string): boolean {
+    if (typeof json === "object") {
+      json = JSON.stringify(json, null, 2);
     }
-    this.logger.debug(`Username "${username}" is available.`);
-    return true;
+    this.logger.log(`Performing SQLite JSON validation on ${jsonPurposeToLog}.`);
+    const IS_JSON_VALID_SQL = "SELECT json_valid(@json) AS isValid";
+    const RESULT = this.db.prepare(IS_JSON_VALID_SQL).get({ json: json }) as { isValid: 0 | 1 };
+    const IS_VALID: boolean = RESULT.isValid === 0 ? false : true;
+    this.logger.debug(`JSON validity in SQLite: "${IS_VALID.toString()}".`);
+    return IS_VALID;
   }
 
-  public doesUserWithIdExist(userId: UUID): boolean {
-    this.logger.debug(`Checking if user "${userId}" exists.`);
-    const DOES_USER_WITH_ID_EXIST_SQL = `SELECT COUNT(*) AS count FROM users WHERE user_id = @userId`;
-    const RESULT = this.db.prepare(DOES_USER_WITH_ID_EXIST_SQL).get({ userId: userId }) as { count: number };
+  public isUserIdAvailable(userId: UUID): boolean {
+    this.logger.debug(`Checking if user ID "${userId}" is available.`);
+    const IS_USER_ID_AVAILABLE_SQL = `SELECT COUNT(*) AS count FROM users WHERE user_id = @userId`;
+    const RESULT = this.db.prepare(IS_USER_ID_AVAILABLE_SQL).get({ userId: userId }) as { count: number };
     if (RESULT.count === 0) {
-      this.logger.debug(`User "${userId}" does not exist.`);
-      return false;
-    } else if (RESULT.count === 1) {
-      this.logger.debug(`User "${userId}" does exist.`);
+      this.logger.debug(`User ID "${userId}" is available.`);
       return true;
+    } else if (RESULT.count === 1) {
+      this.logger.debug(`User ID "${userId}" is not available.`);
+      return false;
     }
     throw new Error(`Found multiple (${RESULT.count.toString()}) users with same ID "${userId}"`);
   }
 
+  public isUsernameAvailable(username: string): boolean {
+    this.logger.debug(`Checking if username "${username}" is available.`);
+    const IS_USERNAME_AVAILABLE_SQL = "SELECT COUNT(*) AS count FROM users WHERE username = @username";
+    const RESULT = this.db.prepare(IS_USERNAME_AVAILABLE_SQL).get({ username: username }) as { count: number };
+    if (RESULT.count === 0) {
+      this.logger.debug(`Username "${username}" is available.`);
+      return true;
+    } else if (RESULT.count === 1) {
+      this.logger.debug(`Username "${username}" is not available.`);
+      return false;
+    }
+    throw new Error(`Found multiple (${RESULT.count.toString()}) users with same username "${username}"`);
+  }
+
   public addUser(userData: ISecuredUserSignUpData): boolean {
     this.logger.debug(`Adding user: "${userData.username}".`);
-    const INSERT_NEW_USER_SQL =
+    const ADD_USER_SQL =
       "INSERT INTO users (user_id, username, password_hash, password_salt) VALUES (@userId, @username, @passwordHash, @passwordSalt)";
     try {
-      const RUN_RESULT: RunResult = this.db.prepare(INSERT_NEW_USER_SQL).run({
+      const RUN_RESULT: RunResult = this.db.prepare(ADD_USER_SQL).run({
         userId: userData.userId,
         username: userData.username,
         passwordHash: userData.securedPassword.hash,
@@ -166,16 +180,18 @@ export class LocalSQLiteUserAccountStorageBackend extends UserAccountStorageBack
     return RESULT.count;
   }
 
-  private isJSONValidInSQLite(json: object | string, jsonPurposeToLog: string): boolean {
-    if (typeof json === "object") {
-      json = JSON.stringify(json, null, 2);
+  public isUserDataStorageConfigIdAvailable(configId: UUID): boolean {
+    this.logger.debug(`Checking if User Data Storage Config ID "${configId}" is available.`);
+    const IS_USER_DATA_STORAGE_CONFIG_ID_AVAILABLE_SQL = `SELECT COUNT(*) AS count FROM user_data_storage_configs WHERE config_id = @configId`;
+    const RESULT = this.db.prepare(IS_USER_DATA_STORAGE_CONFIG_ID_AVAILABLE_SQL).get({ configId: configId }) as { count: number };
+    if (RESULT.count === 0) {
+      this.logger.debug(`User Data Storage Config ID "${configId}" is available.`);
+      return true;
+    } else if (RESULT.count === 1) {
+      this.logger.debug(`User Data Storage Config ID "${configId}" is not available.`);
+      return false;
     }
-    this.logger.log(`Performing SQLite JSON validation on ${jsonPurposeToLog}.`);
-    const VALIDATE_JSON_SQL = "SELECT json_valid(@json) AS isValid";
-    const RESULT = this.db.prepare(VALIDATE_JSON_SQL).get({ json: json }) as { isValid: 0 | 1 };
-    const IS_VALID: boolean = RESULT.isValid === 0 ? false : true;
-    this.logger.debug(`JSON validity in SQLite: "${IS_VALID.toString()}".`);
-    return IS_VALID;
+    throw new Error(`Found multiple (${RESULT.count.toString()}) User Data Storage Configs with same ID "${configId}"`);
   }
 
   public addUserDataStorageConfigToUser(userId: UUID, securedUserDataStorageConfig: ISecuredUserDataStorageConfig): boolean {

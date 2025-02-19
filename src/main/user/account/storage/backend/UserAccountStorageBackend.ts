@@ -47,8 +47,8 @@ export abstract class UserAccountStorageBackend<T extends IBaseUserAccountStorag
   }
 
   // public abstract isLocal(): boolean;
+  public abstract isUserIdAvailable(userId: UUID): boolean;
   public abstract isUsernameAvailable(username: string): boolean;
-  public abstract doesUserWithIdExist(userId: UUID): boolean;
   public abstract addUser(userData: ISecuredUserSignUpData): boolean;
   public abstract getUserId(username: string): UUID | null;
   public abstract getSecuredUserPasswordData(userId: UUID): ISecuredPasswordData | null;
@@ -59,6 +59,7 @@ export abstract class UserAccountStorageBackend<T extends IBaseUserAccountStorag
   // public abstract getAllUsers(): IUser[];
   public abstract getUserCount(): number;
   // public abstract isIdValid(id: UserId): boolean;
+  public abstract isUserDataStorageConfigIdAvailable(configId: UUID): boolean;
   public abstract addUserDataStorageConfigToUser(userId: UUID, securedUserDataStorageConfig: ISecuredUserDataStorageConfig): boolean;
   public abstract getAllUserDataStorageConfigs(userId: UUID): ISecuredUserDataStorageConfig[];
   public abstract close(): boolean;
