@@ -1,7 +1,7 @@
 import RJSFPasswordWidget from "@renderer/components/RJSFWidgets/RJSFPasswordWidget";
 import { UiSchema } from "@rjsf/utils";
 import { USER_SIGN_UP_DATA_CONSTANTS } from "@shared/user/account/UserSignUpDataConstants";
-import { IUserSignUpInputData } from "@renderer/user/account/inputData/UserSignUpInputData";
+import { IUserSignUpInputData } from "@shared/user/account/input/UserSignUpInputData";
 
 export const USER_SIGN_UP_INPUT_DATA_UI_SCHEMA: UiSchema<IUserSignUpInputData> = {
   username: {

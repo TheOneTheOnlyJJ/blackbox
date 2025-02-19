@@ -1,6 +1,7 @@
-import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
+import { IEncryptedData } from "@shared/utils/EncryptedData";
 
+// Communication is only done from preload to renderer and vice-versa, no IPC channels needed
 export interface IIPCTLSAPI {
-  getMainProcessPublicRSAKeyDER: () => IPCAPIResponse<ArrayBuffer>;
-  sendRendererProcessWrappedAESKey: (rendererProcessWrappedAESKey: ArrayBuffer) => Promise<IPCAPIResponse>;
+  isAESKeyReady: () => boolean;
+  encryptData: (data: string) => Promise<IEncryptedData>;
 }

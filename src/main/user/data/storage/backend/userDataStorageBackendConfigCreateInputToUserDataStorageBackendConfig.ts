@@ -36,6 +36,7 @@ const USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_TO_USER_DATA_STORAGE_BACKEND
     }
   };
 
+// TODO: Make this accept a DTO as argument, not input
 export const userDataStorageBackendConfigCreateInputToUserDataStorageBackendConfig = (
   userDataStorageConfigInputData: UserDataStorageBackendConfigCreateInput,
   logger: LogFunctions

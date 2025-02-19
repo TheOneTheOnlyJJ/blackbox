@@ -8,7 +8,7 @@ export interface IUserDataStorageConfigCreateInput {
   name: string;
   visibilityPassword?: string;
   // TODO: Add description & icon/image & confirm visibility password, implies new transformation in renderer
-  backendConfig: UserDataStorageBackendConfigCreateInput;
+  backendConfigCreateInput: UserDataStorageBackendConfigCreateInput;
 }
 
 export const USER_DATA_STORAGE_CONFIG_CREATE_INPUT_JSON_SCHEMA: JSONSchemaType<IUserDataStorageConfigCreateInput> = {
@@ -17,8 +17,8 @@ export const USER_DATA_STORAGE_CONFIG_CREATE_INPUT_JSON_SCHEMA: JSONSchemaType<I
   properties: {
     name: { type: "string", title: "Name" },
     visibilityPassword: { type: "string", title: "Visibility Password", nullable: true },
-    backendConfig: USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_JSON_SCHEMA
+    backendConfigCreateInput: USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_JSON_SCHEMA
   },
-  required: ["name", "backendConfig"],
+  required: ["name", "backendConfigCreateInput"],
   additionalProperties: false
 } as const;

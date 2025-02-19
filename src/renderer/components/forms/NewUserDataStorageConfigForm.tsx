@@ -12,14 +12,9 @@ import {
 import { USER_DATA_STORAGE_CONFIG_CREATE_INPUT_UI_SCHEMA } from "@renderer/user/data/storage/UserDataStorageConfigCreateInputUiSchema";
 import { enqueueSnackbar } from "notistack";
 import { IUserDataStorageConfigCreateDTO } from "@shared/user/data/storage/UserDataStorageConfigCreateDTO";
-import { encrypt } from "@renderer/utils/encryption/encrypt";
 import { EncryptedUserDataStorageConfigCreateDTO } from "@shared/user/account/encrypted/EncryptedUserDataStorageConfigCreateDTO";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
-import {
-  ISignedInDashboardLayoutRootContext,
-  useSignedInDashboardLayoutRootContext
-} from "../roots/signedInDashboardLayoutRoot/SignedInDashboardLayoutRootContext";
 
 const MUIForm = withTheme<IUserDataStorageConfigCreateInput>(Theme);
 
@@ -53,7 +48,6 @@ export interface INewUserDataStorageConfigFormProps {
 }
 
 const NewUserDataStorageConfigForm: FC<INewUserDataStorageConfigFormProps> = (props: INewUserDataStorageConfigFormProps) => {
-  const signedInDashboardLayoutRootContext: ISignedInDashboardLayoutRootContext = useSignedInDashboardLayoutRootContext();
   const { userIdToAddTo, onAddedSuccessfully } = props;
   const handleFormSubmit = useCallback(
     (data: IChangeEvent<IUserDataStorageConfigCreateInput>): void => {
@@ -63,22 +57,19 @@ const NewUserDataStorageConfigForm: FC<INewUserDataStorageConfigFormProps> = (pr
         enqueueSnackbar({ message: "Missing form data.", variant: "error" });
         return;
       }
-      if (signedInDashboardLayoutRootContext.rendererProcessAESKey === null) {
-        appLogger.error("Null AES encryption key. Cannot encrypt User Data Storage Config Create Input. No-op.");
-        enqueueSnackbar({ message: "Missing encryption key.", variant: "error" });
-        return;
-      }
       const USER_DATA_STORAGE_CONFIG_CREATE_DTO: IUserDataStorageConfigCreateDTO = {
         userId: userIdToAddTo,
         // TODO: Transform this into DTO
-        userDataStorageConfigCreateInput: data.formData
+        name: data.formData.name,
+        visibilityPassword: data.formData.visibilityPassword,
+        backendConfigCreateDTO: data.formData.backendConfigCreateInput
       };
-      encrypt(JSON.stringify(USER_DATA_STORAGE_CONFIG_CREATE_DTO), signedInDashboardLayoutRootContext.rendererProcessAESKey)
+      window.IPCTLSAPI.encryptData(JSON.stringify(USER_DATA_STORAGE_CONFIG_CREATE_DTO))
         .then(
           (encryptedUserDataStorageConfigCreateDTO: EncryptedUserDataStorageConfigCreateDTO): void => {
             appLogger.debug("Done encrypting User Data Storage Config Create DTO.");
             const ADD_USER_DATA_STORAGE_CONFIG_TO_USER_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.addUserDataStorageConfigToUser(
-              encryptedUserDataStorageConfigCreateDTO
+              encryptedUserDataStorageConfigCreateDTO satisfies EncryptedUserDataStorageConfigCreateDTO
             );
             if (ADD_USER_DATA_STORAGE_CONFIG_TO_USER_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
               if (ADD_USER_DATA_STORAGE_CONFIG_TO_USER_RESPONSE.data) {
@@ -103,7 +94,7 @@ const NewUserDataStorageConfigForm: FC<INewUserDataStorageConfigFormProps> = (pr
           enqueueSnackbar({ message: "User Data Storage Config encryption error.", variant: "error" });
         });
     },
-    [signedInDashboardLayoutRootContext.rendererProcessAESKey, userIdToAddTo, onAddedSuccessfully]
+    [userIdToAddTo, onAddedSuccessfully]
   );
 
   return (

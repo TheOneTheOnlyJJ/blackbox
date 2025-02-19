@@ -240,7 +240,7 @@ export class UserManager {
       this.logger.debug("Config has a visibility password.");
       const VISIBILITY_PASSWORD_SALT: Buffer = randomBytes(16);
       securedVisibilityPassword = {
-        hash: this.hashPassword(userDataStorageConfig.visibilityPassword, VISIBILITY_PASSWORD_SALT, "user data storage visibility password").toString(
+        hash: this.hashPassword(userDataStorageConfig.visibilityPassword, VISIBILITY_PASSWORD_SALT, "user data storage visibility").toString(
           "base64"
         ),
         salt: VISIBILITY_PASSWORD_SALT.toString("base64")

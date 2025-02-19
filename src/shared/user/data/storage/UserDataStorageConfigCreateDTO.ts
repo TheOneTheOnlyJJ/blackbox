@@ -1,19 +1,26 @@
 import { JSONSchemaType } from "ajv";
-import { IUserDataStorageConfigCreateInput, USER_DATA_STORAGE_CONFIG_CREATE_INPUT_JSON_SCHEMA } from "./UserDataStorageConfigCreateInput";
+import {
+  USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_JSON_SCHEMA,
+  UserDataStorageBackendConfigCreateInput
+} from "./backend/createInput/UserDataStorageBackendConfigCreateInput";
 
 export interface IUserDataStorageConfigCreateDTO {
   userId: string;
+  name: string;
+  visibilityPassword?: string;
+  backendConfigCreateDTO: UserDataStorageBackendConfigCreateInput; // TODO: Make this a DTO too
   // TODO: Make this a DTO aswell?
-  userDataStorageConfigCreateInput: IUserDataStorageConfigCreateInput; // TODO: Make this its own DTO and add transforms from Input to DTO
 }
 
 export const USER_DATA_STORAGE_CONFIG_CREATE_DTO_JSON_SCHEMA: JSONSchemaType<IUserDataStorageConfigCreateDTO> = {
   $schema: "http://json-schema.org/draft-07/schema#",
   type: "object",
   properties: {
-    userId: { type: "string", format: "uuid" },
-    userDataStorageConfigCreateInput: USER_DATA_STORAGE_CONFIG_CREATE_INPUT_JSON_SCHEMA
+    userId: { type: "string", title: "User ID", format: "uuid" },
+    name: { type: "string", title: "Name" },
+    visibilityPassword: { type: "string", title: "Visibility Password", nullable: true },
+    backendConfigCreateDTO: USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_JSON_SCHEMA
   },
-  required: ["userId", "userDataStorageConfigCreateInput"],
+  required: ["userId", "name", "backendConfigCreateDTO"],
   additionalProperties: false
 } as const;

@@ -13,6 +13,7 @@ export interface IForbiddenPageParams extends Record<string, string> {
   reason: string;
 }
 
+// TODO: Investigate bug when previous path is also forbidden
 const ForbiddenPage: FC = () => {
   const navigate: NavigateFunction = useNavigate();
   const params: Readonly<Partial<IForbiddenPageParams>> = useParams<IForbiddenPageParams>();

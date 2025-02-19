@@ -12,10 +12,10 @@ export function userDataStorageConfigCreateDTOToUserDataStorageConfig(
   return {
     configId: configId,
     userId: userDataStorageConfigCreateDTO.userId as UUID,
-    name: userDataStorageConfigCreateDTO.userDataStorageConfigCreateInput.name,
-    visibilityPassword: userDataStorageConfigCreateDTO.userDataStorageConfigCreateInput.visibilityPassword,
+    name: userDataStorageConfigCreateDTO.name,
+    visibilityPassword: userDataStorageConfigCreateDTO.visibilityPassword,
     backendConfig: userDataStorageBackendConfigCreateInputToUserDataStorageBackendConfig(
-      userDataStorageConfigCreateDTO.userDataStorageConfigCreateInput.backendConfig,
+      userDataStorageConfigCreateDTO.backendConfigCreateDTO,
       logger
     )
   };

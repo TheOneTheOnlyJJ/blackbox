@@ -2,6 +2,7 @@ import { JSONSchemaType } from "ajv";
 import { IUserSignUpData } from "@shared/user/account/UserSignUpData";
 import { USER_SIGN_UP_DATA_CONSTANTS } from "@shared/user/account/UserSignUpDataConstants";
 
+// TODO: Make this more clear, maybe with DTO
 export interface IUserSignUpInputData extends IUserSignUpData {
   confirmPassword: string;
 }
