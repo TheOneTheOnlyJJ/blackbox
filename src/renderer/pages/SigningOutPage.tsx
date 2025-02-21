@@ -11,7 +11,7 @@ const SigningOutPage: FC = () => {
   useEffect((): void => {
     // TODO: Remove this
     //setTimeout(() => {
-    appLogger.debug("Signing out.");
+    appLogger.debug("Signing out page reached.");
     const SIGN_OUT_RESPONSE: IPCAPIResponse = window.userAPI.signOut();
     if (SIGN_OUT_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
       enqueueSnackbar({ message: "Signed out." });

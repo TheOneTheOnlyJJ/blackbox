@@ -41,7 +41,6 @@ const SuccessfulUserSignUpDialog: FC<ISuccessfulUserSignUpDialogProps> = (props:
       enqueueSnackbar({ message: "Missing encrypted sign in credentials.", variant: "error" });
       return;
     }
-    appLogger.debug("Attempting sign in.");
     const SIGN_IN_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.signIn(props.encryptedNewUserSignInData);
     // Automatic sign in should always work for a newly signed up account
     if (SIGN_IN_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {

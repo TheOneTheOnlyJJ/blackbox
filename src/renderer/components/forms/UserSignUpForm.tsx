@@ -90,11 +90,9 @@ const UserSignUpForm: FC = () => {
               password: USER_SIGN_UP_DATA.password
             };
             let encryptedNewUserSignInData: EncryptedUserSignInData | null = null;
-            appLogger.debug(`Encrypting new user sign in credentials for new user "${NEW_USER_SIGN_IN_DATA.username}".`);
-            window.IPCTLSAPI.encryptData(JSON.stringify(NEW_USER_SIGN_IN_DATA))
+            window.IPCTLSAPI.encryptData(JSON.stringify(NEW_USER_SIGN_IN_DATA), "new user sign in credentials")
               .then(
                 (encryptedUserSignInData: EncryptedUserSignInData): void => {
-                  appLogger.debug("Done encrypting new user sign in credentials.");
                   encryptedNewUserSignInData = encryptedUserSignInData satisfies EncryptedUserSignInData;
                 },
                 (reason: unknown): void => {

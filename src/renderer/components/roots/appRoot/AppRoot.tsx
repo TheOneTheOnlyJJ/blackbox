@@ -1,5 +1,5 @@
 import { FC, useEffect, useState } from "react";
-import { appLogger, IPCLogger } from "@renderer/utils/loggers";
+import { appLogger } from "@renderer/utils/loggers";
 import { Outlet, useLocation, Location, useNavigate, NavigateFunction } from "react-router-dom";
 import { IAppRootContext } from "./AppRootContext";
 import { ICurrentlySignedInUser } from "@shared/user/account/CurrentlySignedInUser";
@@ -62,23 +62,40 @@ const AppRoot: FC = () => {
     } else {
       setCurrentlySignedInUser(GET_CURRENTLY_SIGNED_IN_USER_RESPONSE.data);
     }
+    // Monitor changes to renderer IPC TLS readiness
+    const removeRendererTLSReadinessChangedListener: () => void = window.IPCTLSAPI.onRendererReadinessChanged((isRendererTLSReady: boolean): void => {
+      if (isRendererTLSReady) {
+        enqueueSnackbar({ message: "Renderer IPC TLS ready.", variant: "info" });
+      } else {
+        enqueueSnackbar({ message: "Renderer IPC TLS not ready.", variant: "warning" });
+      }
+    });
+    // Monitor changes to main IPC TLS readiness
+    const removeMainTLSReadinessChangedListener: () => void = window.IPCTLSAPI.onMainReadinessChanged((isMainTLSReady: boolean): void => {
+      if (isMainTLSReady) {
+        enqueueSnackbar({ message: "Main IPC TLS ready.", variant: "info" });
+      } else {
+        enqueueSnackbar({ message: "Main IPC TLS not ready.", variant: "warning" });
+      }
+    });
     // Monitor changes to currently signed in user
-    const REMOVE_ON_CURRENTLY_SIGNED_IN_USER_CHANGED_LISTENER: () => void = window.userAPI.onCurrentlySignedInUserChanged(
+    const removeOnCurrentlySignedInUserChangedListener: () => void = window.userAPI.onCurrentlySignedInUserChanged(
       (newCurrentlySignedInUser: ICurrentlySignedInUser | null): void => {
-        IPCLogger.debug("Received currently signed in user changed event.");
         setCurrentlySignedInUser(newCurrentlySignedInUser);
       }
     );
     // Monitor changes to User Account Storage Backend availability status
-    const REMOVE_ON_USER_ACCOUNT_STORAGE_BACKEND_AVAILABILITY_CHANGED_LISTENER: () => void =
-      window.userAPI.onAccountStorageBackendAvailabilityChanged((isUserAccountStorageBackendAvailable: boolean): void => {
-        IPCLogger.debug("Received User Account Storage Backend availability status changed event.");
+    const removeOnUserAccountStorageBackendAvailabilityChangedListener: () => void = window.userAPI.onAccountStorageBackendAvailabilityChanged(
+      (isUserAccountStorageBackendAvailable: boolean): void => {
         setIsUserAccountStorageBackendAvailable(isUserAccountStorageBackendAvailable);
-      });
+      }
+    );
     return (): void => {
       appLogger.debug("Removing App Root event listeners.");
-      REMOVE_ON_CURRENTLY_SIGNED_IN_USER_CHANGED_LISTENER();
-      REMOVE_ON_USER_ACCOUNT_STORAGE_BACKEND_AVAILABILITY_CHANGED_LISTENER();
+      removeRendererTLSReadinessChangedListener();
+      removeMainTLSReadinessChangedListener();
+      removeOnCurrentlySignedInUserChangedListener();
+      removeOnUserAccountStorageBackendAvailabilityChangedListener();
     };
   }, []);
 

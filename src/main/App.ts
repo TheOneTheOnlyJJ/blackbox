@@ -4,7 +4,7 @@ import { join, resolve } from "node:path";
 import log, { LogFunctions } from "electron-log";
 import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 import { JSONSchemaType } from "ajv/dist/types/json-schema";
-import { IIPCTLSInitialisationProgress, IPC_TLS_INITIALISATION_CHANNELS } from "@shared/IPC/IPCTLSInitialisation";
+import { IIPCTLSBootstrapAPI, IIPCTLSBootstrapProgress, IPC_TLS_BOOTSTRAP_API_CHANNELS } from "@shared/IPC/APIs/IPCTLSBootstrapAPI";
 import { USER_API_IPC_CHANNELS } from "@shared/IPC/APIs/UserAPI";
 import { UserManager } from "@main/user/UserManager";
 import { USER_ACCOUNT_STORAGE_BACKEND_TYPES } from "@main/user/account/storage/backend/UserAccountStorageBackendType";
@@ -38,6 +38,7 @@ import {
 } from "@shared/user/data/storage/config/create/DTO/UserDataStorageConfigCreateDTO";
 import { IUserDataStorageConfig } from "./user/data/storage/config/UserDataStorageConfig";
 import { userDataStorageConfigCreateDTOToUserDataStorageConfig } from "./user/data/storage/config/userDataStorageConfigCreateDTOToUserDataStorageConfig";
+import { IIPCTLSAPIMain, IPC_TLS_API_CHANNELS } from "@shared/IPC/APIs/IPCTLSAPI";
 
 type WindowPositionSetting = Rectangle | WindowStates["FullScreen"] | WindowStates["Maximized"];
 
@@ -49,6 +50,8 @@ export interface IAppSettings {
   window: IWindowSettings;
 }
 
+type MainProcessIPCTLSBootstrapAPIIPCHandlers = MainProcessIPCAPIHandlers<IIPCTLSBootstrapAPI>;
+type MainProcessIPCTLSAPIIPCHandlers = MainProcessIPCAPIHandlers<IIPCTLSAPIMain>;
 type MainProcessUserAPIIPCHandlers = MainProcessIPCAPIHandlers<IUserAPI>;
 
 export class App {
@@ -70,8 +73,8 @@ export class App {
   private readonly windowLogger: LogFunctions = log.scope("main-window");
   private readonly windowPositionWatcherLogger: LogFunctions = log.scope("main-window-position-watcher");
   private readonly settingsManagerLogger: LogFunctions = log.scope("main-settings-manager");
-  private readonly IPCLogger: LogFunctions = log.scope("main-ipc");
-  private readonly IPCTLSLogger: LogFunctions = log.scope("main-ipc-tls");
+  private readonly IPCTLSBootstrapAPILogger: LogFunctions = log.scope("main-ipc-tls-bootstrap-api");
+  private readonly IPCTLSAPILogger: LogFunctions = log.scope("main-ipc-tls-api");
   private readonly IPCUserAPILogger: LogFunctions = log.scope("main-ipc-user-api");
   private readonly userManagerLogger: LogFunctions = log.scope("main-user-manager");
   private readonly userAccountStorageBackendLogger: LogFunctions = log.scope("main-user-account-storage-backend");
@@ -156,7 +159,25 @@ export class App {
   private readonly MAIN_PROCESS_PUBLIC_RSA_KEY_DER: Buffer;
   private readonly MAIN_PROCESS_PRIVATE_RSA_KEY_DER: Buffer;
   // Renderer process will send this over when it is ready
-  private IPCTLSAESKey: Buffer | null = null;
+  private isMainTLSReady = false;
+  private readonly IPC_TLS_AES_KEY: { value: Buffer | null } = new Proxy<{ value: Buffer | null }>(
+    { value: null },
+    {
+      set: (target: { value: Buffer | null }, property: string | symbol, value: unknown): boolean => {
+        if (property !== "value") {
+          throw new Error(`Cannot set property "${String(property)}" on IPC TLS AES key. Only "value" property can be set! No-op set.`);
+        }
+        if (value !== null && !Buffer.isBuffer(value)) {
+          throw new Error(`Value must be "null" or a valid Buffer object! No-op set.`);
+        }
+        target[property] = value;
+        this.isMainTLSReady = value !== null;
+        this.IPCTLSAPILogger.debug(`Updated main IPC TLS readiness: "${this.isMainTLSReady.toString()}".`);
+        this.IPC_TLS_API_HANDLERS.sendMainReadinessChanged(this.isMainTLSReady);
+        return true;
+      }
+    }
+  );
 
   // JSON Schema validator
   private readonly AJV: Ajv;
@@ -164,17 +185,103 @@ export class App {
   public readonly USER_DATA_STORAGE_CONFIG_CREATE_DTO_VALIDATE_FUNCTION: ValidateFunction<IUserDataStorageConfigCreateDTO>;
 
   // IPC API handlers
+  private readonly IPC_TLS_BOOTSTRAP_API_HANDLERS: MainProcessIPCTLSBootstrapAPIIPCHandlers = {
+    handleGetPublicRSAKeyDER: (): ArrayBuffer => {
+      return bufferToArrayBuffer(this.MAIN_PROCESS_PUBLIC_RSA_KEY_DER);
+    },
+    handleSendProgress: (progress: IIPCTLSBootstrapProgress): void => {
+      if (progress.wasSuccessful) {
+        this.IPCTLSBootstrapAPILogger.info(`Received IPC TLS initialisation progress: ${progress.message}.`);
+      } else {
+        this.IPCTLSBootstrapAPILogger.error(`Received IPC TLS initialisation error: ${progress.message}!`);
+      }
+    },
+    handleSendWrappedAESKey: (wrappedAESKey: ArrayBuffer): void => {
+      this.IPCTLSBootstrapAPILogger.info(`Received IPC TLS wrapped AES key:\n${insertLineBreaks(Buffer.from(wrappedAESKey).toString("base64"))}`);
+      // Import the main process private RSA key in the WebCryptoAPI format
+      webcrypto.subtle
+        .importKey("pkcs8", this.MAIN_PROCESS_PRIVATE_RSA_KEY_DER, { name: "RSA-OAEP", hash: "SHA-256" }, true, ["unwrapKey"])
+        .then(
+          (mainProcessPrivateRSAKey: CryptoKey): void => {
+            // And use it to unwrap the IPC TLS AES key
+            webcrypto.subtle
+              .unwrapKey("raw", wrappedAESKey, mainProcessPrivateRSAKey, { name: "RSA-OAEP" }, { name: "AES-GCM", length: 256 }, true, [
+                "encrypt",
+                "decrypt"
+              ])
+              .then(
+                (IPCTLSAESKey: CryptoKey): void => {
+                  // Extract the IPC TLS AES key to a Buffer for easier synchronous manipulation in the main process
+                  webcrypto.subtle
+                    .exportKey("raw", IPCTLSAESKey)
+                    .then(
+                      (IPCTLSAESKeyArrayBuffer: ArrayBuffer): void => {
+                        const IPC_TLS_AES_KEY_BUFFER: Buffer = Buffer.from(IPCTLSAESKeyArrayBuffer);
+                        if (!testAESKey(IPC_TLS_AES_KEY_BUFFER, this.IPCTLSBootstrapAPILogger)) {
+                          this.IPCTLSBootstrapAPILogger.error("IPC TLS AES key failed test!");
+                          this.IPC_TLS_AES_KEY.value = null;
+                        } else {
+                          this.IPCTLSBootstrapAPILogger.info("IPC TLS AES key passed test!");
+                          this.IPC_TLS_AES_KEY.value = Buffer.from(IPC_TLS_AES_KEY_BUFFER);
+                        }
+                      },
+                      (reason: unknown): void => {
+                        const REASON_MESSAGE: string = reason instanceof Error ? reason.message : String(reason);
+                        this.IPCTLSBootstrapAPILogger.error(`Could not export IPC TLS AES key to ArrayBuffer: ${REASON_MESSAGE}!`);
+                      }
+                    )
+                    .catch((reason: unknown): void => {
+                      const REASON_MESSAGE: string = reason instanceof Error ? reason.message : String(reason);
+                      this.IPCTLSBootstrapAPILogger.error(`Could not export IPC TLS AES key to ArrayBuffer: ${REASON_MESSAGE}!`);
+                    });
+                },
+                (reason: unknown): void => {
+                  const REASON_MESSAGE: string = reason instanceof Error ? reason.message : String(reason);
+                  this.IPCTLSBootstrapAPILogger.error(`Could not unwrap IPC TLS AES key with main process private RSA key: ${REASON_MESSAGE}!`);
+                }
+              )
+              .catch((reason: unknown): void => {
+                const REASON_MESSAGE: string = reason instanceof Error ? reason.message : String(reason);
+                this.IPCTLSBootstrapAPILogger.error(`Could not unwrap IPC TLS AES key with main process private RSA key: ${REASON_MESSAGE}!`);
+              });
+          },
+          (reason: unknown): void => {
+            const REASON_MESSAGE: string = reason instanceof Error ? reason.message : String(reason);
+            this.IPCTLSBootstrapAPILogger.error(`Could not import main process private RSA key in WebCryptoAPI format: ${REASON_MESSAGE}!`);
+          }
+        )
+        .catch((reason: unknown): void => {
+          const REASON_MESSAGE: string = reason instanceof Error ? reason.message : String(reason);
+          this.IPCTLSBootstrapAPILogger.error(`Could not import main process private RSA key in WebCryptoAPI format: ${REASON_MESSAGE}!`);
+        });
+    }
+  };
+
+  private readonly IPC_TLS_API_HANDLERS: MainProcessIPCTLSAPIIPCHandlers = {
+    handleIsMainReady: (): boolean => {
+      return this.isMainTLSReady;
+    },
+    sendMainReadinessChanged: (isMainTLSReady: boolean): void => {
+      this.IPCTLSAPILogger.debug(`Sending window main IPC TLS readiness: "${isMainTLSReady.toString()}".`);
+      if (this.window === null) {
+        this.IPCUserAPILogger.debug('Window is "null". No-op.');
+        return;
+      }
+      this.IPCTLSAPILogger.debug(`Messaging renderer on channel: "${IPC_TLS_API_CHANNELS.onMainReadinessChanged}".`);
+      this.window.webContents.send(IPC_TLS_API_CHANNELS.onMainReadinessChanged, isMainTLSReady);
+    }
+  };
+
   private readonly USER_API_HANDLERS: MainProcessUserAPIIPCHandlers = {
     handleSignUp: (encryptedUserSignUpData: EncryptedUserSignUpData): IPCAPIResponse<boolean> => {
-      this.IPCUserAPILogger.debug(`Received sign up request.`);
       try {
-        if (this.IPCTLSAESKey === null) {
-          throw new Error("Null renderer process AES encryption key");
+        if (this.IPC_TLS_AES_KEY.value === null) {
+          throw new Error("Null IPC TLS AES key");
         }
         const USER_SIGN_UP_DATA: IUserSignUpData = decryptAndValidateJSON<IUserSignUpData>(
           encryptedUserSignUpData,
           this.userManager.USER_SIGN_UP_DATA_VALIDATE_FUNCTION,
-          this.IPCTLSAESKey,
+          this.IPC_TLS_AES_KEY.value,
           this.IPCUserAPILogger,
           "user sign up data"
         );
@@ -190,15 +297,14 @@ export class App {
       }
     },
     handleSignIn: (encryptedUserSignInData: EncryptedUserSignInData): IPCAPIResponse<boolean> => {
-      this.IPCUserAPILogger.debug("Received sign in request.");
       try {
-        if (this.IPCTLSAESKey === null) {
-          throw new Error("Null renderer process AES key.");
+        if (this.IPC_TLS_AES_KEY.value === null) {
+          throw new Error("Null IPC TLS AES key");
         }
         const USER_SIGN_IN_DATA: IUserSignInData = decryptAndValidateJSON<IUserSignInData>(
           encryptedUserSignInData,
           this.userManager.USER_SIGN_IN_DATA_VALIDATE_FUNCTION,
-          this.IPCTLSAESKey,
+          this.IPC_TLS_AES_KEY.value,
           this.IPCUserAPILogger,
           "user sign in data"
         );
@@ -211,7 +317,6 @@ export class App {
       }
     },
     handleSignOut: (): IPCAPIResponse => {
-      this.IPCUserAPILogger.debug("Received sign out request.");
       try {
         this.userManager.signOutUser();
         return { status: IPC_API_RESPONSE_STATUSES.SUCCESS };
@@ -222,7 +327,6 @@ export class App {
       }
     },
     handleIsAccountStorageBackendAvailable: (): IPCAPIResponse<boolean> => {
-      this.IPCUserAPILogger.debug("Received User Account Storage Backend availability status request.");
       try {
         const IS_USER_ACCOUNT_STORAGE_BACKEND_AVAILABLE: boolean = this.userManager.isUserAccountStorageBackendAvailable();
         this.IPCUserAPILogger.debug(`User Account Storage Backend available: ${IS_USER_ACCOUNT_STORAGE_BACKEND_AVAILABLE.toString()}.`);
@@ -234,7 +338,6 @@ export class App {
       }
     },
     handleIsUsernameAvailable: (username: string): IPCAPIResponse<boolean> => {
-      this.IPCUserAPILogger.debug("Received username availability status request.");
       try {
         return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userManager.isUsernameAvailable(username) };
       } catch (err: unknown) {
@@ -244,7 +347,6 @@ export class App {
       }
     },
     handleGetUserCount: (): IPCAPIResponse<number> => {
-      this.IPCUserAPILogger.debug("Received user count request.");
       try {
         return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userManager.getUserCount() };
       } catch (err: unknown) {
@@ -254,7 +356,6 @@ export class App {
       }
     },
     handleGetCurrentlySignedInUser: (): IPCAPIResponse<ICurrentlySignedInUser | null> => {
-      this.IPCUserAPILogger.debug("Received currently signed in user request.");
       try {
         return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userManager.getCurrentlySignedInUser() };
       } catch (err: unknown) {
@@ -266,15 +367,14 @@ export class App {
     handleAddUserDataStorageConfigToUser: (
       encryptedUserDataStorageConfigCreateDTO: EncryptedUserDataStorageConfigCreateDTO
     ): IPCAPIResponse<boolean> => {
-      this.IPCUserAPILogger.debug("Received add User Data Storage Config request.");
       try {
-        if (this.IPCTLSAESKey === null) {
-          throw new Error("Null renderer process AES key.");
+        if (this.IPC_TLS_AES_KEY.value === null) {
+          throw new Error("Null IPC TLS AES key");
         }
         const USER_DATA_STORAGE_CONFIG_CREATE_DTO: IUserDataStorageConfigCreateDTO = decryptAndValidateJSON<IUserDataStorageConfigCreateDTO>(
           encryptedUserDataStorageConfigCreateDTO,
           this.USER_DATA_STORAGE_CONFIG_CREATE_DTO_VALIDATE_FUNCTION,
-          this.IPCTLSAESKey,
+          this.IPC_TLS_AES_KEY.value,
           this.IPCUserAPILogger,
           "User Data Storage Config DTO"
         );
@@ -303,6 +403,7 @@ export class App {
         this.IPCUserAPILogger.debug('Window is "null". No-op.');
         return;
       }
+      this.IPCUserAPILogger.debug(`Messaging renderer on channel: "${USER_API_IPC_CHANNELS.onAccountStorageBackendAvailabilityChanged}".`);
       this.window.webContents.send(USER_API_IPC_CHANNELS.onAccountStorageBackendAvailabilityChanged, isUserAccountStorageAvailable);
     },
     sendCurrentlySignedInUserChanged: (newCurrentlySignedInUser: ICurrentlySignedInUser | null): void => {
@@ -311,6 +412,7 @@ export class App {
         this.IPCUserAPILogger.debug('Window is "null". No-op.');
         return;
       }
+      this.IPCUserAPILogger.debug(`Messaging renderer on channel: "${USER_API_IPC_CHANNELS.onCurrentlySignedInUserChanged}".`);
       this.window.webContents.send(USER_API_IPC_CHANNELS.onCurrentlySignedInUserChanged, newCurrentlySignedInUser);
     }
   };
@@ -511,6 +613,16 @@ export class App {
     //     this.userManager.signInUser({ username: "testing", password: "testing" });
     //   }, 10_000);
     // }, 5_000);
+    // let latestVal: Buffer | null = null;
+    // setInterval(() => {
+    //   if (latestVal === null) {
+    //     latestVal = this.IPC_TLS_AES_KEY.value;
+    //     this.IPC_TLS_AES_KEY.value = null;
+    //   } else {
+    //     this.IPC_TLS_AES_KEY.value = latestVal;
+    //     latestVal = null;
+    //   }
+    // }, 5_000);
   }
 
   private updateWindowPositionSettings(newWindowPosition: WindowPosition): void {
@@ -618,113 +730,70 @@ export class App {
   }
 
   private registerIPCMainHandlers(): void {
-    this.IPCLogger.debug("Registering IPC API handlers.");
-    this.registerIPCTLSHandlers();
+    this.windowLogger.debug("Registering IPC API handlers.");
+    this.registerIPCTLSBootstrapIPCHandlers();
+    this.registerIPCTLSAPIIPCHandlers();
     this.registerUserAPIIPCHandlers();
   }
 
-  private registerIPCTLSHandlers(): void {
-    this.IPCLogger.debug("Registering IPC TLS IPC handlers.");
-    ipcMain.on(IPC_TLS_INITIALISATION_CHANNELS.getMainProcessPublicRSAKeyDER, (event: IpcMainEvent): void => {
-      this.IPCTLSLogger.info("Received main process public RSA key request.");
-      event.returnValue = bufferToArrayBuffer(this.MAIN_PROCESS_PUBLIC_RSA_KEY_DER);
+  private registerIPCTLSBootstrapIPCHandlers(): void {
+    this.windowLogger.debug("Registering IPC TLS Bootstrap IPC handlers.");
+    ipcMain.on(IPC_TLS_BOOTSTRAP_API_CHANNELS.getPublicRSAKeyDER, (event: IpcMainEvent): void => {
+      this.IPCTLSBootstrapAPILogger.debug(`Received message from renderer on channel: "${IPC_TLS_BOOTSTRAP_API_CHANNELS.getPublicRSAKeyDER}".`);
+      event.returnValue = this.IPC_TLS_BOOTSTRAP_API_HANDLERS.handleGetPublicRSAKeyDER();
     });
-    ipcMain.on(IPC_TLS_INITIALISATION_CHANNELS.IPCTLSInitialisationProgress, (_: IpcMainEvent, progress: IIPCTLSInitialisationProgress): void => {
-      if (progress.wasSuccessful) {
-        this.IPCTLSLogger.info(`Received IPC TLS initialisation progress: ${progress.message}.`);
-      } else {
-        this.IPCTLSLogger.error(`Received IPC TLS initialisation error: ${progress.message}!`);
-      }
+    ipcMain.on(IPC_TLS_BOOTSTRAP_API_CHANNELS.sendProgress, (_: IpcMainEvent, progress: IIPCTLSBootstrapProgress): void => {
+      this.IPCTLSBootstrapAPILogger.debug(`Received message from renderer on channel: "${IPC_TLS_BOOTSTRAP_API_CHANNELS.sendProgress}".`);
+      this.IPC_TLS_BOOTSTRAP_API_HANDLERS.handleSendProgress(progress);
     });
-    ipcMain.on(IPC_TLS_INITIALISATION_CHANNELS.sendWrappedIPCTLSAESKeyToMain, (event: IpcMainEvent, wrappedIPCTLSAESKey: ArrayBuffer): void => {
-      this.IPCTLSLogger.info(`Received IPC TLS wrapped AES key:\n${insertLineBreaks(Buffer.from(wrappedIPCTLSAESKey).toString("base64"))}`);
-      // Import the main process private RSA key in the WebCryptoAPI format
-      webcrypto.subtle
-        .importKey("pkcs8", this.MAIN_PROCESS_PRIVATE_RSA_KEY_DER, { name: "RSA-OAEP", hash: "SHA-256" }, true, ["unwrapKey"])
-        .then(
-          (mainProcessPrivateRSAKey: CryptoKey): void => {
-            // And use it to unwrap the IPC TLS AES key
-            webcrypto.subtle
-              .unwrapKey("raw", wrappedIPCTLSAESKey, mainProcessPrivateRSAKey, { name: "RSA-OAEP" }, { name: "AES-GCM", length: 256 }, true, [
-                "encrypt",
-                "decrypt"
-              ])
-              .then(
-                (IPCTLSAESKey: CryptoKey): void => {
-                  // Extract the IPC TLS AES key to a Buffer for easier synchronous manipulation in the main process
-                  webcrypto.subtle
-                    .exportKey("raw", IPCTLSAESKey)
-                    .then(
-                      (IPCTLSAESKeyArrayBuffer: ArrayBuffer): void => {
-                        const IPC_TLS_AES_KEY_BUFFER: Buffer = Buffer.from(IPCTLSAESKeyArrayBuffer);
-                        if (!testAESKey(IPC_TLS_AES_KEY_BUFFER, this.IPCTLSLogger)) {
-                          this.IPCTLSLogger.error("IPC TLS AES key failed test!");
-                          this.IPCTLSAESKey = null;
-                          event.returnValue = false;
-                        } else {
-                          this.IPCTLSLogger.info("IPC TLS AES key passed test!");
-                          this.IPCTLSAESKey = Buffer.from(IPC_TLS_AES_KEY_BUFFER);
-                          event.returnValue = true;
-                        }
-                      },
-                      (reason: unknown): void => {
-                        const REASON_MESSAGE: string = reason instanceof Error ? reason.message : String(reason);
-                        this.IPCTLSLogger.error(`Could not export IPC TLS AES key to ArrayBuffer: ${REASON_MESSAGE}!`);
-                      }
-                    )
-                    .catch((reason: unknown): void => {
-                      const REASON_MESSAGE: string = reason instanceof Error ? reason.message : String(reason);
-                      this.IPCTLSLogger.error(`Could not export IPC TLS AES key to ArrayBuffer: ${REASON_MESSAGE}!`);
-                    });
-                },
-                (reason: unknown): void => {
-                  const REASON_MESSAGE: string = reason instanceof Error ? reason.message : String(reason);
-                  this.IPCTLSLogger.error(`Could not unwrap IPC TLS AES key with main process private RSA key: ${REASON_MESSAGE}!`);
-                }
-              )
-              .catch((reason: unknown): void => {
-                const REASON_MESSAGE: string = reason instanceof Error ? reason.message : String(reason);
-                this.IPCTLSLogger.error(`Could not unwrap IPC TLS AES key with main process private RSA key: ${REASON_MESSAGE}!`);
-              });
-          },
-          (reason: unknown): void => {
-            const REASON_MESSAGE: string = reason instanceof Error ? reason.message : String(reason);
-            this.IPCTLSLogger.error(`Could not import main process private RSA key in WebCryptoAPI format: ${REASON_MESSAGE}!`);
-          }
-        )
-        .catch((reason: unknown): void => {
-          const REASON_MESSAGE: string = reason instanceof Error ? reason.message : String(reason);
-          this.IPCTLSLogger.error(`Could not import main process private RSA key in WebCryptoAPI format: ${REASON_MESSAGE}!`);
-        });
+    ipcMain.on(IPC_TLS_BOOTSTRAP_API_CHANNELS.sendWrappedAESKey, (_: IpcMainEvent, wrappedIPCTLSAESKey: ArrayBuffer): void => {
+      this.IPCTLSBootstrapAPILogger.debug(`Received message from renderer on channel: "${IPC_TLS_BOOTSTRAP_API_CHANNELS.sendWrappedAESKey}".`);
+      this.IPC_TLS_BOOTSTRAP_API_HANDLERS.handleSendWrappedAESKey(wrappedIPCTLSAESKey);
+    });
+  }
+
+  private registerIPCTLSAPIIPCHandlers(): void {
+    this.windowLogger.debug("Registering IPC TLS IPC handlers.");
+    ipcMain.on(IPC_TLS_API_CHANNELS.isMainReady, (event: IpcMainEvent): void => {
+      this.IPCTLSBootstrapAPILogger.debug(`Received message from renderer on channel: "${IPC_TLS_API_CHANNELS.isMainReady}".`);
+      event.returnValue = this.IPC_TLS_API_HANDLERS.handleIsMainReady();
     });
   }
 
   private registerUserAPIIPCHandlers(): void {
-    this.IPCLogger.debug("Registering User API IPC handlers.");
+    this.windowLogger.debug("Registering User API IPC handlers.");
     ipcMain.on(USER_API_IPC_CHANNELS.isAccountStorageBackendAvailable, (event: IpcMainEvent): void => {
+      this.IPCUserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.isAccountStorageBackendAvailable}".`);
       event.returnValue = this.USER_API_HANDLERS.handleIsAccountStorageBackendAvailable();
     });
     ipcMain.on(USER_API_IPC_CHANNELS.isUsernameAvailable, (event: IpcMainEvent, username: string): void => {
+      this.IPCUserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.isUsernameAvailable}".`);
       event.returnValue = this.USER_API_HANDLERS.handleIsUsernameAvailable(username);
     });
     ipcMain.on(USER_API_IPC_CHANNELS.signUp, (event: IpcMainEvent, encryptedUserSignUpData: EncryptedUserSignUpData): void => {
+      this.IPCUserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.signUp}".`);
       event.returnValue = this.USER_API_HANDLERS.handleSignUp(encryptedUserSignUpData);
     });
     ipcMain.on(USER_API_IPC_CHANNELS.getUserCount, (event: IpcMainEvent): void => {
+      this.IPCUserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.getUserCount}".`);
       event.returnValue = this.USER_API_HANDLERS.handleGetUserCount();
     });
     ipcMain.on(USER_API_IPC_CHANNELS.signIn, (event: IpcMainEvent, encryptedUserSignInData: EncryptedUserSignInData): void => {
+      this.IPCUserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.signIn}".`);
       event.returnValue = this.USER_API_HANDLERS.handleSignIn(encryptedUserSignInData);
     });
     ipcMain.on(USER_API_IPC_CHANNELS.signOut, (event: IpcMainEvent): void => {
+      this.IPCUserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.signOut}".`);
       event.returnValue = this.USER_API_HANDLERS.handleSignOut();
     });
     ipcMain.on(USER_API_IPC_CHANNELS.getCurrentlySignedInUser, (event: IpcMainEvent): void => {
+      this.IPCUserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.getCurrentlySignedInUser}".`);
       event.returnValue = this.USER_API_HANDLERS.handleGetCurrentlySignedInUser();
     });
     ipcMain.on(
       USER_API_IPC_CHANNELS.addUserDataStorageConfigToUser,
       (event: IpcMainEvent, encryptedUserDataStorageConfigCreateDTO: EncryptedUserDataStorageConfigCreateDTO): void => {
+        this.IPCUserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.addUserDataStorageConfigToUser}".`);
         event.returnValue = this.USER_API_HANDLERS.handleAddUserDataStorageConfigToUser(encryptedUserDataStorageConfigCreateDTO);
       }
     );
