@@ -1,9 +1,9 @@
 import { LogFunctions } from "electron-log";
 import { UserAccountStorageBackend } from "./UserAccountStorageBackend";
-import { LocalSQLiteUserAccountStorageBackend } from "./implementations/LocalSQLiteUserAccountStorageBackend";
+import { LocalSQLiteUserAccountStorageBackend } from "./implementations/LocalSQLite/LocalSQLiteUserAccountStorageBackend";
 import { USER_ACCOUNT_STORAGE_BACKEND_TYPES } from "./UserAccountStorageBackendType";
 import Ajv from "ajv";
-import { UserAccountStorageBackendConfig } from "./UserAccountStorageBackendConfig";
+import { UserAccountStorageBackendConfig } from "./config/UserAccountStorageBackendConfig";
 
 export function userAccountStorageBackendFactory(
   config: UserAccountStorageBackendConfig,

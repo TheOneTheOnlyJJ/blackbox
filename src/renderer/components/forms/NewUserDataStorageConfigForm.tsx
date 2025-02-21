@@ -7,14 +7,15 @@ import { appLogger } from "@renderer/utils/loggers";
 import { errorCapitalizerErrorTransformer } from "@renderer/utils/RJSF/errorTransformers/errorCapitalizerErrorTransformer";
 import {
   IUserDataStorageConfigCreateInput,
-  USER_DATA_STORAGE_CONFIG_CREATE_INPUT_JSON_SCHEMA
-} from "@shared/user/data/storage/UserDataStorageConfigCreateInput";
-import { USER_DATA_STORAGE_CONFIG_CREATE_INPUT_UI_SCHEMA } from "@renderer/user/data/storage/UserDataStorageConfigCreateInputUiSchema";
+  USER_DATA_STORAGE_CONFIG_CREATE_INPUT_JSON_SCHEMA,
+  USER_DATA_STORAGE_CONFIG_CREATE_INPUT_UI_SCHEMA
+} from "@renderer/user/data/storage/config/create/input/UserDataStorageConfigCreateInput";
 import { enqueueSnackbar } from "notistack";
-import { IUserDataStorageConfigCreateDTO } from "@shared/user/data/storage/UserDataStorageConfigCreateDTO";
+import { IUserDataStorageConfigCreateDTO } from "@shared/user/data/storage/config/create/DTO/UserDataStorageConfigCreateDTO";
 import { EncryptedUserDataStorageConfigCreateDTO } from "@shared/user/account/encrypted/EncryptedUserDataStorageConfigCreateDTO";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
+import { userDataStorageConfigCreateInputToUserDataStorageConfigCreateDTO } from "@renderer/user/data/storage/config/create/input/userDataStorageConfigCreateInputToUserDataStorageConfigCreateDTO";
 
 const MUIForm = withTheme<IUserDataStorageConfigCreateInput>(Theme);
 
@@ -57,17 +58,14 @@ const NewUserDataStorageConfigForm: FC<INewUserDataStorageConfigFormProps> = (pr
         enqueueSnackbar({ message: "Missing form data.", variant: "error" });
         return;
       }
-      const USER_DATA_STORAGE_CONFIG_CREATE_DTO: IUserDataStorageConfigCreateDTO = {
-        userId: userIdToAddTo,
-        // TODO: Transform this into DTO
-        name: data.formData.name,
-        visibilityPassword: data.formData.visibilityPassword,
-        backendConfigCreateDTO: data.formData.backendConfigCreateInput
-      };
-      window.IPCTLSAPI.encryptData(JSON.stringify(USER_DATA_STORAGE_CONFIG_CREATE_DTO))
+      const USER_DATA_STORAGE_CONFIG_CREATE_DTO: IUserDataStorageConfigCreateDTO = userDataStorageConfigCreateInputToUserDataStorageConfigCreateDTO(
+        userIdToAddTo,
+        data.formData,
+        appLogger
+      );
+      window.IPCTLSAPI.encryptData(JSON.stringify(USER_DATA_STORAGE_CONFIG_CREATE_DTO), "User Data Storage Config Create DTO")
         .then(
           (encryptedUserDataStorageConfigCreateDTO: EncryptedUserDataStorageConfigCreateDTO): void => {
-            appLogger.debug("Done encrypting User Data Storage Config Create DTO.");
             const ADD_USER_DATA_STORAGE_CONFIG_TO_USER_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.addUserDataStorageConfigToUser(
               encryptedUserDataStorageConfigCreateDTO satisfies EncryptedUserDataStorageConfigCreateDTO
             );

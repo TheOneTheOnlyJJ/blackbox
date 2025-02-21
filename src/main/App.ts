@@ -30,14 +30,14 @@ import { SETTINGS_MANAGER_TYPE } from "@main/settings/SettingsManagerType";
 import { WINDOW_STATES, WindowPosition, WindowPositionWatcher, WindowStates } from "@main/settings/WindowPositionWatcher";
 import Ajv, { ValidateFunction } from "ajv";
 import addFormats from "ajv-formats";
-import { UserAccountStorageBackendConfig } from "@main/user/account/storage/backend/UserAccountStorageBackendConfig";
+import { UserAccountStorageBackendConfig } from "@main/user/account/storage/backend/config/UserAccountStorageBackendConfig";
 import { EncryptedUserDataStorageConfigCreateDTO } from "@shared/user/account/encrypted/EncryptedUserDataStorageConfigCreateDTO";
 import {
   IUserDataStorageConfigCreateDTO,
   USER_DATA_STORAGE_CONFIG_CREATE_DTO_JSON_SCHEMA
-} from "@shared/user/data/storage/UserDataStorageConfigCreateDTO";
-import { IUserDataStorageConfig } from "./user/data/storage/UserDataStorageConfig";
-import { userDataStorageConfigCreateDTOToUserDataStorageConfig } from "./user/data/storage/userDataStorageConfigCreateDTOToUserDataStorageConfig";
+} from "@shared/user/data/storage/config/create/DTO/UserDataStorageConfigCreateDTO";
+import { IUserDataStorageConfig } from "./user/data/storage/config/UserDataStorageConfig";
+import { userDataStorageConfigCreateDTOToUserDataStorageConfig } from "./user/data/storage/config/userDataStorageConfigCreateDTOToUserDataStorageConfig";
 
 type WindowPositionSetting = Rectangle | WindowStates["FullScreen"] | WindowStates["Maximized"];
 
@@ -575,6 +575,7 @@ export class App {
 
   private onceAppReady(): void {
     this.appLogger.info("App ready.");
+    // TODO: Make this an actual UserAccountStorage, not just a backend. Add specificity in error messages, add new class and configs required
     this.userManager.openUserAccountStorageBackend(this.USER_ACCOUNT_STORAGE_BACKEND_CONFIG);
     this.createWindow();
     this.appLogger.debug("Registering app activate event handler.");

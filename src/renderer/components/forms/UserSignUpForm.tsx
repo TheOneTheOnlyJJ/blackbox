@@ -73,11 +73,9 @@ const UserSignUpForm: FC = () => {
       username: data.formData.username,
       password: data.formData.password
     };
-    appLogger.debug(`Encrypting sign up user data for new user "${USER_SIGN_UP_DATA.username}".`);
-    window.IPCTLSAPI.encryptData(JSON.stringify(USER_SIGN_UP_DATA))
+    window.IPCTLSAPI.encryptData(JSON.stringify(USER_SIGN_UP_DATA), "user sign up data")
       .then(
         (encryptedUserSignUpData: EncryptedUserSignUpData): void => {
-          appLogger.debug("Done encrypting sign up user data.");
           const SIGN_UP_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.signUp(encryptedUserSignUpData satisfies EncryptedUserSignUpData);
           if (SIGN_UP_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
             appLogger.error(`Sign up error: ${SIGN_UP_RESPONSE.error}!`);

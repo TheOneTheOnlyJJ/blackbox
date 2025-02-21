@@ -1,6 +1,6 @@
 {
   "extends": "./tsconfig.base.json",
-  "include": ["./src/preload/*.d.ts", "./src/renderer/**/*", "./src/shared/**/*", "src/main/utils/encryption/SecuredPasswordData.ts"],
+  "include": ["./src/preload/*.d.ts", "./src/renderer/**/*", "./src/shared/**/*"],
   "compilerOptions": {
     "composite": true,
     "jsx": "react-jsx",

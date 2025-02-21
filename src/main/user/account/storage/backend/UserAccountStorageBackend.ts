@@ -1,15 +1,13 @@
 import { LogFunctions } from "electron-log";
 import Ajv, { JSONSchemaType, ValidateFunction } from "ajv";
-import { UserAccountStorageBackendType } from "./UserAccountStorageBackendType";
 import { ISecuredUserSignUpData } from "../../SecuredUserSignUpData";
 import { UUID } from "node:crypto";
-import { ISecuredUserDataStorageConfig, SECURED_USER_DATA_STORAGE_CONFIG_JSON_SCHEMA } from "@main/user/data/storage/SecuredUserDataStorageConfig";
+import {
+  ISecuredUserDataStorageConfig,
+  SECURED_USER_DATA_STORAGE_CONFIG_JSON_SCHEMA
+} from "@main/user/data/storage/config/SecuredUserDataStorageConfig";
 import { ISecuredPasswordData } from "@main/utils/encryption/SecuredPasswordData";
-
-// Every user account storage must have at least the type in its config (should be further narrowed down to its own in the specific config)
-export interface IBaseUserAccountStorageBackendConfig {
-  type: UserAccountStorageBackendType;
-}
+import { IBaseUserAccountStorageBackendConfig } from "./config/BaseUserAccountStorageBackendConfig";
 
 export abstract class UserAccountStorageBackend<T extends IBaseUserAccountStorageBackendConfig> {
   protected readonly logger: LogFunctions;

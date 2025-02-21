@@ -1,8 +1,8 @@
 import { LogFunctions } from "electron-log";
 import Ajv from "ajv";
-import { LocalSQLiteUserDataStorageBackend } from "./implementations/LocalSQLiteUserDataStorageBackend";
+import { LocalSQLiteUserDataStorageBackend } from "./implementations/LocalSQLite/LocalSQLiteUserDataStorageBackend";
 import { UserDataStorageBackend } from "./UserDataStorageBackend";
-import { UserDataStorageBackendConfig } from "./UserDataStorageBackendConfig";
+import { UserDataStorageBackendConfig } from "./config/UserDataStorageBackendConfig";
 import { USER_DATA_STORAGE_BACKEND_TYPES } from "@shared/user/data/storage/backend/UserDataStorageBackendType";
 
 export function userDataStorageBackendFactory(

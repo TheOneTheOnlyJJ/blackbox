@@ -40,10 +40,9 @@ const UserSignInForm: FC = () => {
       return;
     }
     const USERNAME: string = data.formData.username;
-    window.IPCTLSAPI.encryptData(JSON.stringify(data.formData))
+    window.IPCTLSAPI.encryptData(JSON.stringify(data.formData), "user sign in credentials")
       .then(
         (encryptedUserSignInData: EncryptedUserSignInData): void => {
-          appLogger.debug("Done encrypting user sign in credentials.");
           const SIGN_IN_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.signIn(encryptedUserSignInData satisfies EncryptedUserSignInData);
           if (SIGN_IN_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
             if (SIGN_IN_RESPONSE.data) {

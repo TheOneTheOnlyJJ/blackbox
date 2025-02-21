@@ -13,9 +13,10 @@ import { EncryptedUserDataStorageConfigCreateDTO } from "@shared/user/account/en
 import { IIPCTLSAPI } from "@shared/IPC/APIs/IPCTLSAPI";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 import { IIPCTLSInitialisationProgress, IPC_TLS_INITIALISATION_CHANNELS } from "@shared/IPC/IPCTLSInitialisation";
+import { LogLevel, LogMessage } from "electron-log";
 
-const TEXT_ENCODER = new TextEncoder();
-
+const TEXT_ENCODER: TextEncoder = new TextEncoder();
+const IPC_TLS_API_LOG_SCOPE = "renderer-ipc-tls-api";
 let IPCTLSAESKey: CryptoKey | null = null;
 
 let mainProcessPublicRSAKeyImportProgress: IIPCTLSInitialisationProgress;
@@ -90,27 +91,43 @@ crypto.subtle
     ipcRenderer.send(IPC_TLS_INITIALISATION_CHANNELS.IPCTLSInitialisationProgress, mainProcessPublicRSAKeyImportProgress);
   });
 
+const sendLogToMainProcess = (scope: string, level: LogLevel, message: string): void => {
+  ipcRenderer.send("__ELECTRON_LOG__", {
+    date: new Date(),
+    scope: scope,
+    level: level,
+    data: [message],
+    variables: { processType: "renderer" }
+  } satisfies LogMessage);
+};
+
 const IPC_TLS_API: IIPCTLSAPI = {
   isAESKeyReady: (): boolean => {
     return IPCTLSAESKey !== null;
   },
-  encryptData: async (data: string): Promise<IEncryptedData> => {
+  encryptData: async (data: string, dataPurposeToLog?: string): Promise<IEncryptedData> => {
+    sendLogToMainProcess(IPC_TLS_API_LOG_SCOPE, "debug", `Encrypting ${dataPurposeToLog ?? "data"}.`);
     if (IPCTLSAESKey === null) {
       throw new Error("Missing AES key");
     }
     const IV: Uint8Array = crypto.getRandomValues(new Uint8Array(12));
-    return {
+    const ENCRYPTED_DATA: IEncryptedData = {
       data: await crypto.subtle.encrypt({ name: "AES-GCM", iv: IV }, IPCTLSAESKey, TEXT_ENCODER.encode(data)),
       iv: IV
     };
+    sendLogToMainProcess(IPC_TLS_API_LOG_SCOPE, "debug", `Done encrypting ${dataPurposeToLog ?? "data"}.`);
+    return ENCRYPTED_DATA;
   }
 };
 
-const USER_STORAGE_API: IUserAPI = {
+const USER_API: IUserAPI = {
   signUp: (encryptedUserSignUpData: EncryptedUserSignUpData): IPCAPIResponse<boolean> => {
     return ipcRenderer.sendSync(USER_API_IPC_CHANNELS.signUp, encryptedUserSignUpData) as IPCAPIResponse<boolean>;
   },
   signIn: (encryptedUserSignInData: EncryptedUserSignInData): IPCAPIResponse<boolean> => {
+    // TODO: Wrap entire API with this. Also on main
+    // const CHANNEL = USER_API_IPC_CHANNELS.signIn;
+    // sendLogToMainProcess("renderer-user-api", "debug", `Sending IPC message to main over channel ${CHANNEL}.`);
     return ipcRenderer.sendSync(USER_API_IPC_CHANNELS.signIn, encryptedUserSignInData) as IPCAPIResponse<boolean>;
   },
   signOut: (): IPCAPIResponse => {
@@ -158,5 +175,5 @@ const USER_STORAGE_API: IUserAPI = {
 
 // Expose the APIs in the renderer
 contextBridge.exposeInMainWorld("IPCTLSAPI", IPC_TLS_API);
-contextBridge.exposeInMainWorld("userAPI", USER_STORAGE_API);
+contextBridge.exposeInMainWorld("userAPI", USER_API);
 // Exposing these APIs to the global Window interface is done in the preload.d.ts file

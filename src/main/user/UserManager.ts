@@ -9,10 +9,10 @@ import { CURRENTLY_SIGNED_IN_USER_JSON_SCHEMA, ICurrentlySignedInUser } from "@s
 import { CurrentlySignedInUserChangedCallback, UserAccountStorageBackendAvailabilityChangedCallback } from "@shared/IPC/APIs/UserAPI";
 import { isDeepStrictEqual } from "node:util";
 import Ajv, { ValidateFunction } from "ajv";
-import { UserAccountStorageBackendConfig } from "./account/storage/backend/UserAccountStorageBackendConfig";
-import { IUserDataStorageConfig } from "./data/storage/UserDataStorageConfig";
+import { UserAccountStorageBackendConfig } from "./account/storage/backend/config/UserAccountStorageBackendConfig";
+import { IUserDataStorageConfig } from "./data/storage/config/UserDataStorageConfig";
 import { IUserSignInData, USER_SIGN_IN_DATA_JSON_SCHEMA } from "@shared/user/account/UserSignInData";
-import { ISecuredUserDataStorageConfig } from "./data/storage/SecuredUserDataStorageConfig";
+import { ISecuredUserDataStorageConfig } from "./data/storage/config/SecuredUserDataStorageConfig";
 import { ISecuredPasswordData } from "@main/utils/encryption/SecuredPasswordData";
 
 export class UserManager {
