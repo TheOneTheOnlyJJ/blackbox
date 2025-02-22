@@ -1,6 +1,6 @@
 import { LogFunctions } from "electron-log";
 import Ajv, { JSONSchemaType, ValidateFunction } from "ajv";
-import { ISecuredUserSignUpData } from "../../SecuredUserSignUpData";
+import { ISecuredUserSignUpPayload } from "../../SecuredUserSignUpPayload";
 import { UUID } from "node:crypto";
 import {
   ISecuredUserDataStorageConfig,
@@ -47,7 +47,7 @@ export abstract class UserAccountStorageBackend<T extends IBaseUserAccountStorag
   // public abstract isLocal(): boolean;
   public abstract isUserIdAvailable(userId: UUID): boolean;
   public abstract isUsernameAvailable(username: string): boolean;
-  public abstract addUser(userData: ISecuredUserSignUpData): boolean;
+  public abstract addUser(userData: ISecuredUserSignUpPayload): boolean;
   public abstract getUserId(username: string): UUID | null;
   public abstract getSecuredUserPasswordData(userId: UUID): ISecuredPasswordData | null;
   // public abstract deleteUser(userId: UserId): boolean;

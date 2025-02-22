@@ -69,7 +69,7 @@ export const userDataStorageBackendConfigCreateInputToUserDataStorageBackendConf
       break;
   }
   logger.debug(
-    `Done converting ${userDataStorageBackendConfigCreateInput.type} User Data Storage Backend Config Create Input to User Data Storage Backend Config Create DTO.`
+    `Converted ${userDataStorageBackendConfigCreateInput.type} User Data Storage Backend Config Create Input to User Data Storage Backend Config Create DTO.`
   );
   return CONVERTED_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_DTO;
 };

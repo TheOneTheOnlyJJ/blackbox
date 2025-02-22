@@ -14,17 +14,9 @@ export const SECURED_USER_DATA_STORAGE_CONFIG_JSON_SCHEMA: JSONSchemaType<ISecur
   $schema: "http://json-schema.org/draft-07/schema#",
   type: "object",
   properties: {
-    configId: {
-      type: "string",
-      format: "uuid"
-    },
-    name: {
-      type: "string"
-    },
-    securedVisibilityPassword: {
-      ...SECURED_PASSWORD_DATA_JSON_SCHEMA,
-      nullable: true
-    },
+    configId: { type: "string", format: "uuid" },
+    name: { type: "string" },
+    securedVisibilityPassword: { ...SECURED_PASSWORD_DATA_JSON_SCHEMA, nullable: true },
     backendConfig: USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA
   },
   required: ["configId", "name", "backendConfig"],

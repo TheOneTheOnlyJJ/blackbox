@@ -12,16 +12,16 @@ import { adjustWindowBounds } from "@main/utils/window/adjustWindowBounds";
 import { IpcMainEvent } from "electron";
 import { IUserAPI } from "@shared/IPC/APIs/UserAPI";
 import { MainProcessIPCAPIHandlers } from "@main/utils/IPC/MainProcessIPCAPIHandlers";
-import { IUserSignUpData } from "@shared/user/account/UserSignUpData";
+import { IUserSignUpDTO, USER_SIGN_UP_DTO_JSON_SCHEMA } from "@shared/user/account/UserSignUpDTO";
 import { generateKeyPairSync, webcrypto } from "node:crypto";
 import { testAESKey } from "@main/utils/encryption/testAESKey";
 import { insertLineBreaks } from "@shared/utils/insertNewLines";
 import { bufferToArrayBuffer } from "@main/utils/typeConversions/bufferToArrayBuffer";
 import { decryptAndValidateJSON } from "@main/utils/encryption/decryptAndValidateJSON";
-import { EncryptedUserSignUpData } from "@shared/user/account/encrypted/EncryptedUserSignUpData";
+import { EncryptedUserSignUpDTO } from "@shared/user/account/encrypted/EncryptedUserSignUpDTO";
 import { ICurrentlySignedInUser } from "@shared/user/account/CurrentlySignedInUser";
-import { IUserSignInData } from "@shared/user/account/UserSignInData";
-import { EncryptedUserSignInData } from "@shared/user/account/encrypted/EncryptedUserSignInData";
+import { IUserSignInDTO, USER_SIGN_IN_DTO_JSON_SCHEMA } from "@shared/user/account/UserSignInDTO";
+import { EncryptedUserSignInDTO } from "@shared/user/account/encrypted/EncryptedUserSignInDTO";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { SettingsManager } from "@main/settings/SettingsManager";
@@ -36,9 +36,10 @@ import {
   IUserDataStorageConfigCreateDTO,
   USER_DATA_STORAGE_CONFIG_CREATE_DTO_JSON_SCHEMA
 } from "@shared/user/data/storage/config/create/DTO/UserDataStorageConfigCreateDTO";
-import { IUserDataStorageConfig } from "./user/data/storage/config/UserDataStorageConfig";
-import { userDataStorageConfigCreateDTOToUserDataStorageConfig } from "./user/data/storage/config/userDataStorageConfigCreateDTOToUserDataStorageConfig";
+import { userDataStorageConfigCreateDTOToUserDataStorageConfig } from "./user/data/storage/config/utils/userDataStorageConfigCreateDTOToUserDataStorageConfig";
 import { IIPCTLSAPIMain, IPC_TLS_API_CHANNELS } from "@shared/IPC/APIs/IPCTLSAPI";
+import { userSignInDTOToUserSignInPayload } from "./user/account/utils/userSignInDTOToUserSignInPayload";
+import { userSignUpDTOToUserSignUpPayload } from "./user/account/utils/userSignUpDTOToUserSignUpPayload";
 
 type WindowPositionSetting = Rectangle | WindowStates["FullScreen"] | WindowStates["Maximized"];
 
@@ -75,7 +76,7 @@ export class App {
   private readonly settingsManagerLogger: LogFunctions = log.scope("main-settings-manager");
   private readonly IPCTLSBootstrapAPILogger: LogFunctions = log.scope("main-ipc-tls-bootstrap-api");
   private readonly IPCTLSAPILogger: LogFunctions = log.scope("main-ipc-tls-api");
-  private readonly IPCUserAPILogger: LogFunctions = log.scope("main-ipc-user-api");
+  private readonly UserAPILogger: LogFunctions = log.scope("main-user-api");
   private readonly userManagerLogger: LogFunctions = log.scope("main-user-manager");
   private readonly userAccountStorageBackendLogger: LogFunctions = log.scope("main-user-account-storage-backend");
 
@@ -182,6 +183,8 @@ export class App {
   // JSON Schema validator
   private readonly AJV: Ajv;
   // JSON Schema validate functions
+  public readonly USER_SIGN_UP_DTO_VALIDATE_FUNCTION: ValidateFunction<IUserSignUpDTO>;
+  public readonly USER_SIGN_IN_DTO_VALIDATE_FUNCTION: ValidateFunction<IUserSignInDTO>;
   public readonly USER_DATA_STORAGE_CONFIG_CREATE_DTO_VALIDATE_FUNCTION: ValidateFunction<IUserDataStorageConfigCreateDTO>;
 
   // IPC API handlers
@@ -264,7 +267,7 @@ export class App {
     sendMainReadinessChanged: (isMainTLSReady: boolean): void => {
       this.IPCTLSAPILogger.debug(`Sending window main IPC TLS readiness: "${isMainTLSReady.toString()}".`);
       if (this.window === null) {
-        this.IPCUserAPILogger.debug('Window is "null". No-op.');
+        this.IPCTLSAPILogger.debug('Window is "null". No-op.');
         return;
       }
       this.IPCTLSAPILogger.debug(`Messaging renderer on channel: "${IPC_TLS_API_CHANNELS.onMainReadinessChanged}".`);
@@ -273,46 +276,56 @@ export class App {
   };
 
   private readonly USER_API_HANDLERS: MainProcessUserAPIIPCHandlers = {
-    handleSignUp: (encryptedUserSignUpData: EncryptedUserSignUpData): IPCAPIResponse<boolean> => {
+    handleSignUp: (encryptedUserSignUpDTO: EncryptedUserSignUpDTO): IPCAPIResponse<boolean> => {
       try {
         if (this.IPC_TLS_AES_KEY.value === null) {
           throw new Error("Null IPC TLS AES key");
         }
-        const USER_SIGN_UP_DATA: IUserSignUpData = decryptAndValidateJSON<IUserSignUpData>(
-          encryptedUserSignUpData,
-          this.userManager.USER_SIGN_UP_DATA_VALIDATE_FUNCTION,
-          this.IPC_TLS_AES_KEY.value,
-          this.IPCUserAPILogger,
-          "user sign up data"
-        );
-        this.appLogger.debug("Decrypted user sign up data.");
         return {
           status: IPC_API_RESPONSE_STATUSES.SUCCESS,
-          data: this.userManager.signUpUser(USER_SIGN_UP_DATA)
+          data: this.userManager.signUpUser(
+            userSignUpDTOToUserSignUpPayload(
+              decryptAndValidateJSON<IUserSignUpDTO>(
+                encryptedUserSignUpDTO,
+                this.USER_SIGN_UP_DTO_VALIDATE_FUNCTION,
+                this.IPC_TLS_AES_KEY.value,
+                this.UserAPILogger,
+                "user sign up data"
+              ),
+              this.userManager.generateRandomUserId(),
+              this.UserAPILogger
+            )
+          )
         };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-        this.IPCUserAPILogger.error(`Could not sign up user: ${ERROR_MESSAGE}!`);
+        this.UserAPILogger.error(`Could not sign up user: ${ERROR_MESSAGE}!`);
         return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
-    handleSignIn: (encryptedUserSignInData: EncryptedUserSignInData): IPCAPIResponse<boolean> => {
+    handleSignIn: (encryptedUserSignInDTO: EncryptedUserSignInDTO): IPCAPIResponse<boolean> => {
       try {
         if (this.IPC_TLS_AES_KEY.value === null) {
           throw new Error("Null IPC TLS AES key");
         }
-        const USER_SIGN_IN_DATA: IUserSignInData = decryptAndValidateJSON<IUserSignInData>(
-          encryptedUserSignInData,
-          this.userManager.USER_SIGN_IN_DATA_VALIDATE_FUNCTION,
-          this.IPC_TLS_AES_KEY.value,
-          this.IPCUserAPILogger,
-          "user sign in data"
-        );
-        this.appLogger.debug("Decrypted user sign in data.");
-        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userManager.signInUser(USER_SIGN_IN_DATA) };
+        return {
+          status: IPC_API_RESPONSE_STATUSES.SUCCESS,
+          data: this.userManager.signInUser(
+            userSignInDTOToUserSignInPayload(
+              decryptAndValidateJSON<IUserSignInDTO>(
+                encryptedUserSignInDTO,
+                this.USER_SIGN_IN_DTO_VALIDATE_FUNCTION,
+                this.IPC_TLS_AES_KEY.value,
+                this.UserAPILogger,
+                "user sign in data"
+              ),
+              this.UserAPILogger
+            )
+          )
+        };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-        this.IPCUserAPILogger.error(`Could not sign in user: ${ERROR_MESSAGE}!`);
+        this.UserAPILogger.error(`Could not sign in user: ${ERROR_MESSAGE}!`);
         return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
@@ -322,18 +335,17 @@ export class App {
         return { status: IPC_API_RESPONSE_STATUSES.SUCCESS };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-        this.IPCUserAPILogger.error(`Could not sign out user: ${ERROR_MESSAGE}!`);
+        this.UserAPILogger.error(`Could not sign out user: ${ERROR_MESSAGE}!`);
         return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
     handleIsAccountStorageBackendAvailable: (): IPCAPIResponse<boolean> => {
       try {
         const IS_USER_ACCOUNT_STORAGE_BACKEND_AVAILABLE: boolean = this.userManager.isUserAccountStorageBackendAvailable();
-        this.IPCUserAPILogger.debug(`User Account Storage Backend available: ${IS_USER_ACCOUNT_STORAGE_BACKEND_AVAILABLE.toString()}.`);
         return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: IS_USER_ACCOUNT_STORAGE_BACKEND_AVAILABLE };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-        this.IPCUserAPILogger.error(`Could not get User Account Storage Backend availability: ${ERROR_MESSAGE}!`);
+        this.UserAPILogger.error(`Could not get User Account Storage Backend availability: ${ERROR_MESSAGE}!`);
         return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
@@ -342,7 +354,7 @@ export class App {
         return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userManager.isUsernameAvailable(username) };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-        this.IPCUserAPILogger.error(`Could not get username availability: ${ERROR_MESSAGE}!`);
+        this.UserAPILogger.error(`Could not get username availability: ${ERROR_MESSAGE}!`);
         return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
@@ -351,7 +363,7 @@ export class App {
         return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userManager.getUserCount() };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-        this.IPCUserAPILogger.error(`Could not get user count: ${ERROR_MESSAGE}!`);
+        this.UserAPILogger.error(`Could not get user count: ${ERROR_MESSAGE}!`);
         return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
@@ -360,7 +372,7 @@ export class App {
         return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userManager.getCurrentlySignedInUser() };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-        this.IPCUserAPILogger.error(`Could not get currently signed in user: ${ERROR_MESSAGE}!`);
+        this.UserAPILogger.error(`Could not get currently signed in user: ${ERROR_MESSAGE}!`);
         return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
@@ -371,48 +383,46 @@ export class App {
         if (this.IPC_TLS_AES_KEY.value === null) {
           throw new Error("Null IPC TLS AES key");
         }
-        const USER_DATA_STORAGE_CONFIG_CREATE_DTO: IUserDataStorageConfigCreateDTO = decryptAndValidateJSON<IUserDataStorageConfigCreateDTO>(
-          encryptedUserDataStorageConfigCreateDTO,
-          this.USER_DATA_STORAGE_CONFIG_CREATE_DTO_VALIDATE_FUNCTION,
-          this.IPC_TLS_AES_KEY.value,
-          this.IPCUserAPILogger,
-          "User Data Storage Config DTO"
-        );
-        this.appLogger.debug("Decrypted User Data Storage Config Create DTO.");
-        const USER_DATA_STORAGE_CONFIG: IUserDataStorageConfig = userDataStorageConfigCreateDTOToUserDataStorageConfig(
-          this.userManager.generateRandomUserDataStorageConfigId(),
-          USER_DATA_STORAGE_CONFIG_CREATE_DTO,
-          this.IPCUserAPILogger
-        );
-        this.IPCUserAPILogger.debug(`New User Data Storage Config ID: "${USER_DATA_STORAGE_CONFIG.configId}".`);
         return {
           status: IPC_API_RESPONSE_STATUSES.SUCCESS,
-          data: this.userManager.addUserDataStorageConfigToUser(USER_DATA_STORAGE_CONFIG)
+          data: this.userManager.addUserDataStorageConfigToUser(
+            userDataStorageConfigCreateDTOToUserDataStorageConfig(
+              decryptAndValidateJSON<IUserDataStorageConfigCreateDTO>(
+                encryptedUserDataStorageConfigCreateDTO,
+                this.USER_DATA_STORAGE_CONFIG_CREATE_DTO_VALIDATE_FUNCTION,
+                this.IPC_TLS_AES_KEY.value,
+                this.UserAPILogger,
+                "User Data Storage Config DTO"
+              ),
+              this.userManager.generateRandomUserDataStorageConfigId(),
+              this.UserAPILogger
+            )
+          )
         };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-        this.IPCUserAPILogger.error(`Could not add User Data Storage Config: ${ERROR_MESSAGE}!`);
+        this.UserAPILogger.error(`Could not add User Data Storage Config: ${ERROR_MESSAGE}!`);
         return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
     sendAccountStorageBackendAvailabilityChanged: (isUserAccountStorageAvailable: boolean): void => {
-      this.IPCUserAPILogger.debug(
+      this.UserAPILogger.debug(
         `Sending window User Account Storage Backend availability after change: "${isUserAccountStorageAvailable.toString()}".`
       );
       if (this.window === null) {
-        this.IPCUserAPILogger.debug('Window is "null". No-op.');
+        this.UserAPILogger.debug('Window is "null". No-op.');
         return;
       }
-      this.IPCUserAPILogger.debug(`Messaging renderer on channel: "${USER_API_IPC_CHANNELS.onAccountStorageBackendAvailabilityChanged}".`);
+      this.UserAPILogger.debug(`Messaging renderer on channel: "${USER_API_IPC_CHANNELS.onAccountStorageBackendAvailabilityChanged}".`);
       this.window.webContents.send(USER_API_IPC_CHANNELS.onAccountStorageBackendAvailabilityChanged, isUserAccountStorageAvailable);
     },
     sendCurrentlySignedInUserChanged: (newCurrentlySignedInUser: ICurrentlySignedInUser | null): void => {
-      this.IPCUserAPILogger.debug(`Sending window currently signed in user after change: ${JSON.stringify(newCurrentlySignedInUser, null, 2)}.`);
+      this.UserAPILogger.debug(`Sending window currently signed in user after change: ${JSON.stringify(newCurrentlySignedInUser, null, 2)}.`);
       if (this.window === null) {
-        this.IPCUserAPILogger.debug('Window is "null". No-op.');
+        this.UserAPILogger.debug('Window is "null". No-op.');
         return;
       }
-      this.IPCUserAPILogger.debug(`Messaging renderer on channel: "${USER_API_IPC_CHANNELS.onCurrentlySignedInUserChanged}".`);
+      this.UserAPILogger.debug(`Messaging renderer on channel: "${USER_API_IPC_CHANNELS.onCurrentlySignedInUserChanged}".`);
       this.window.webContents.send(USER_API_IPC_CHANNELS.onCurrentlySignedInUserChanged, newCurrentlySignedInUser);
     }
   };
@@ -438,7 +448,9 @@ export class App {
     // Initialise AJV
     this.AJV = new Ajv({ strict: true });
     addFormats(this.AJV);
-    // Initialise JSON Schema validate functions
+    // Initialise JSON Schema validate functions\
+    this.USER_SIGN_UP_DTO_VALIDATE_FUNCTION = this.AJV.compile<IUserSignInDTO>(USER_SIGN_UP_DTO_JSON_SCHEMA);
+    this.USER_SIGN_IN_DTO_VALIDATE_FUNCTION = this.AJV.compile<IUserSignInDTO>(USER_SIGN_IN_DTO_JSON_SCHEMA);
     this.USER_DATA_STORAGE_CONFIG_CREATE_DTO_VALIDATE_FUNCTION = this.AJV.compile<IUserDataStorageConfigCreateDTO>(
       USER_DATA_STORAGE_CONFIG_CREATE_DTO_JSON_SCHEMA
     );
@@ -763,37 +775,37 @@ export class App {
   private registerUserAPIIPCHandlers(): void {
     this.windowLogger.debug("Registering User API IPC handlers.");
     ipcMain.on(USER_API_IPC_CHANNELS.isAccountStorageBackendAvailable, (event: IpcMainEvent): void => {
-      this.IPCUserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.isAccountStorageBackendAvailable}".`);
+      this.UserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.isAccountStorageBackendAvailable}".`);
       event.returnValue = this.USER_API_HANDLERS.handleIsAccountStorageBackendAvailable();
     });
     ipcMain.on(USER_API_IPC_CHANNELS.isUsernameAvailable, (event: IpcMainEvent, username: string): void => {
-      this.IPCUserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.isUsernameAvailable}".`);
+      this.UserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.isUsernameAvailable}".`);
       event.returnValue = this.USER_API_HANDLERS.handleIsUsernameAvailable(username);
     });
-    ipcMain.on(USER_API_IPC_CHANNELS.signUp, (event: IpcMainEvent, encryptedUserSignUpData: EncryptedUserSignUpData): void => {
-      this.IPCUserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.signUp}".`);
+    ipcMain.on(USER_API_IPC_CHANNELS.signUp, (event: IpcMainEvent, encryptedUserSignUpData: EncryptedUserSignUpDTO): void => {
+      this.UserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.signUp}".`);
       event.returnValue = this.USER_API_HANDLERS.handleSignUp(encryptedUserSignUpData);
     });
     ipcMain.on(USER_API_IPC_CHANNELS.getUserCount, (event: IpcMainEvent): void => {
-      this.IPCUserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.getUserCount}".`);
+      this.UserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.getUserCount}".`);
       event.returnValue = this.USER_API_HANDLERS.handleGetUserCount();
     });
-    ipcMain.on(USER_API_IPC_CHANNELS.signIn, (event: IpcMainEvent, encryptedUserSignInData: EncryptedUserSignInData): void => {
-      this.IPCUserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.signIn}".`);
+    ipcMain.on(USER_API_IPC_CHANNELS.signIn, (event: IpcMainEvent, encryptedUserSignInData: EncryptedUserSignInDTO): void => {
+      this.UserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.signIn}".`);
       event.returnValue = this.USER_API_HANDLERS.handleSignIn(encryptedUserSignInData);
     });
     ipcMain.on(USER_API_IPC_CHANNELS.signOut, (event: IpcMainEvent): void => {
-      this.IPCUserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.signOut}".`);
+      this.UserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.signOut}".`);
       event.returnValue = this.USER_API_HANDLERS.handleSignOut();
     });
     ipcMain.on(USER_API_IPC_CHANNELS.getCurrentlySignedInUser, (event: IpcMainEvent): void => {
-      this.IPCUserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.getCurrentlySignedInUser}".`);
+      this.UserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.getCurrentlySignedInUser}".`);
       event.returnValue = this.USER_API_HANDLERS.handleGetCurrentlySignedInUser();
     });
     ipcMain.on(
       USER_API_IPC_CHANNELS.addUserDataStorageConfigToUser,
       (event: IpcMainEvent, encryptedUserDataStorageConfigCreateDTO: EncryptedUserDataStorageConfigCreateDTO): void => {
-        this.IPCUserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.addUserDataStorageConfigToUser}".`);
+        this.UserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.addUserDataStorageConfigToUser}".`);
         event.returnValue = this.USER_API_HANDLERS.handleAddUserDataStorageConfigToUser(encryptedUserDataStorageConfigCreateDTO);
       }
     );

@@ -1,11 +1,8 @@
 import { JSONSchemaType } from "ajv";
-import {
-  USER_DATA_STORAGE_BACKEND_TYPES,
-  UserDataStorageBackendTypes
-} from "../../../../../../../shared/user/data/storage/backend/UserDataStorageBackendType";
 import { IBaseUserDataStorageBackendConfigCreateInput } from "../../config/create/input/BaseUserDataStorageBackendConfigCreateInput";
-import { LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS } from "../../../../../../../shared/user/data/storage/backend/implementations/LocalSQLite/LocalSQLiteUserDataStorageBackendConfigConstants";
 import { UiSchema } from "@rjsf/utils";
+import { LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/backend/implementations/LocalSQLite/LocalSQLiteUserDataStorageBackendConfigConstants";
+import { USER_DATA_STORAGE_BACKEND_TYPES, UserDataStorageBackendTypes } from "@shared/user/data/storage/backend/UserDataStorageBackendType";
 
 export interface ILocalSQLiteUserDataStorageBackendConfigCreateInput extends IBaseUserDataStorageBackendConfigCreateInput {
   type: UserDataStorageBackendTypes["LocalSQLite"];

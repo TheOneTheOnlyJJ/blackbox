@@ -22,7 +22,6 @@ export default defineConfig({
   preload: {
     resolve: {
       alias: {
-        "@main": PATH_ALIASES.main,
         "@preload": PATH_ALIASES.preload,
         "@shared": PATH_ALIASES.shared
       }

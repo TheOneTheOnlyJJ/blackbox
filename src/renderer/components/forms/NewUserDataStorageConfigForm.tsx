@@ -15,7 +15,7 @@ import { IUserDataStorageConfigCreateDTO } from "@shared/user/data/storage/confi
 import { EncryptedUserDataStorageConfigCreateDTO } from "@shared/user/account/encrypted/EncryptedUserDataStorageConfigCreateDTO";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
-import { userDataStorageConfigCreateInputToUserDataStorageConfigCreateDTO } from "@renderer/user/data/storage/config/create/input/userDataStorageConfigCreateInputToUserDataStorageConfigCreateDTO";
+import { userDataStorageConfigCreateInputToUserDataStorageConfigCreateDTO } from "@renderer/user/data/storage/config/create/input/utils/userDataStorageConfigCreateInputToUserDataStorageConfigCreateDTO";
 
 const MUIForm = withTheme<IUserDataStorageConfigCreateInput>(Theme);
 

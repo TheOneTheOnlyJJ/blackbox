@@ -14,21 +14,10 @@ export const USER_DATA_STORAGE_CONFIG_JSON_SCHEMA: JSONSchemaType<IUserDataStora
   $schema: "http://json-schema.org/draft-07/schema#",
   type: "object",
   properties: {
-    configId: {
-      type: "string",
-      format: "uuid"
-    },
-    userId: {
-      type: "string",
-      format: "uuid"
-    },
-    name: {
-      type: "string"
-    },
-    visibilityPassword: {
-      type: "string",
-      nullable: true
-    },
+    configId: { type: "string", format: "uuid" },
+    userId: { type: "string", format: "uuid" },
+    name: { type: "string" },
+    visibilityPassword: { type: "string", nullable: true },
     backendConfig: USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA
   },
   required: ["configId", "userId", "name", "backendConfig"],

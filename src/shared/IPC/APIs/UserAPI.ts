@@ -1,8 +1,8 @@
 import { ICurrentlySignedInUser } from "@shared/user/account/CurrentlySignedInUser";
-import { EncryptedUserSignUpData } from "@shared/user/account/encrypted/EncryptedUserSignUpData";
+import { EncryptedUserSignUpDTO } from "@shared/user/account/encrypted/EncryptedUserSignUpDTO";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { EncryptedUserDataStorageConfigCreateDTO } from "@shared/user/account/encrypted/EncryptedUserDataStorageConfigCreateDTO";
-import { EncryptedUserSignInData } from "@shared/user/account/encrypted/EncryptedUserSignInData";
+import { EncryptedUserSignInDTO } from "@shared/user/account/encrypted/EncryptedUserSignInDTO";
 
 // Utility types
 export type UserAccountStorageBackendAvailabilityChangedCallback = (isUserAccountStorageBackendAvailable: boolean) => void;
@@ -10,8 +10,8 @@ export type CurrentlySignedInUserChangedCallback = (newCurrentlySignedInUser: IC
 
 // API
 export interface IUserAPI {
-  signUp: (encryptedUserSignUpData: EncryptedUserSignUpData) => IPCAPIResponse<boolean>;
-  signIn: (encryptedUserSignInData: EncryptedUserSignInData) => IPCAPIResponse<boolean>;
+  signUp: (encryptedUserSignUpDTO: EncryptedUserSignUpDTO) => IPCAPIResponse<boolean>;
+  signIn: (encryptedUserSignInDTO: EncryptedUserSignInDTO) => IPCAPIResponse<boolean>;
   signOut: () => IPCAPIResponse;
   isAccountStorageBackendAvailable: () => IPCAPIResponse<boolean>;
   isUsernameAvailable: (username: string) => IPCAPIResponse<boolean>;

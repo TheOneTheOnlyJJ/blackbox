@@ -1,9 +1,9 @@
-import { IUserDataStorageBackendConfigMap, UserDataStorageBackendConfig } from "./UserDataStorageBackendConfig";
+import { IUserDataStorageBackendConfigMap, UserDataStorageBackendConfig } from "../UserDataStorageBackendConfig";
 import { LogFunctions } from "electron-log";
 import { USER_DATA_STORAGE_BACKEND_TYPES, UserDataStorageBackendType } from "@shared/user/data/storage/backend/UserDataStorageBackendType";
-import { IOptionBUserDataStorageBackendConfig } from "../implementations/optionB/optionB";
-import { IOptionCUserDataStorageBackendConfig } from "../implementations/optionC/optionC";
-import { ILocalSQLiteUserDataStorageBackendConfig } from "../implementations/LocalSQLite/LocalSQLiteUserDataStorageBackend";
+import { IOptionBUserDataStorageBackendConfig } from "../../implementations/optionB/optionB";
+import { IOptionCUserDataStorageBackendConfig } from "../../implementations/optionC/optionC";
+import { ILocalSQLiteUserDataStorageBackendConfig } from "../../implementations/LocalSQLite/LocalSQLiteUserDataStorageBackend";
 import {
   IUserDataStorageBackendConfigCreateDTOMap,
   UserDataStorageBackendConfigCreateDTO
@@ -70,7 +70,7 @@ export const userDataStorageBackendConfigCreateDTOToUserDataStorageBackendConfig
       break;
   }
   logger.debug(
-    `Done converting ${userDataStorageBackendConfigCreateDTO.type} User Data Storage Backend Config Create DTO to User Data Storage Backend Config.`
+    `Converted ${userDataStorageBackendConfigCreateDTO.type} User Data Storage Backend Config Create DTO to User Data Storage Backend Config.`
   );
   return CONVERTED_USER_DATA_STORAGE_BACKEND_CONFIG;
 };

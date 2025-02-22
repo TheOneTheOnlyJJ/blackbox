@@ -2,18 +2,18 @@ import { LogFunctions } from "electron-log";
 import { UserAccountStorageBackend } from "./account/storage/backend/UserAccountStorageBackend";
 import { userAccountStorageBackendFactory } from "./account/storage/backend/userAccountStorageBackendFactory";
 import { UserAccountStorageBackendType } from "./account/storage/backend/UserAccountStorageBackendType";
-import { USER_SIGN_UP_DATA_JSON_SCHEMA, IUserSignUpData } from "@shared/user/account/UserSignUpData";
 import { randomBytes, randomUUID, scryptSync, timingSafeEqual, UUID } from "node:crypto";
-import { ISecuredUserSignUpData } from "./account/SecuredUserSignUpData";
+import { ISecuredUserSignUpPayload } from "./account/SecuredUserSignUpPayload";
 import { CURRENTLY_SIGNED_IN_USER_JSON_SCHEMA, ICurrentlySignedInUser } from "@shared/user/account/CurrentlySignedInUser";
 import { CurrentlySignedInUserChangedCallback, UserAccountStorageBackendAvailabilityChangedCallback } from "@shared/IPC/APIs/UserAPI";
 import { isDeepStrictEqual } from "node:util";
 import Ajv, { ValidateFunction } from "ajv";
 import { UserAccountStorageBackendConfig } from "./account/storage/backend/config/UserAccountStorageBackendConfig";
 import { IUserDataStorageConfig } from "./data/storage/config/UserDataStorageConfig";
-import { IUserSignInData, USER_SIGN_IN_DATA_JSON_SCHEMA } from "@shared/user/account/UserSignInData";
 import { ISecuredUserDataStorageConfig } from "./data/storage/config/SecuredUserDataStorageConfig";
 import { ISecuredPasswordData } from "@main/utils/encryption/SecuredPasswordData";
+import { IUserSignInPayload, USER_SIGN_IN_PAYLOAD_JSON_SCHEMA } from "./account/UserSignInPayload";
+import { IUserSignUpPayload, USER_SIGN_UP_PAYLOAD_JSON_SCHEMA } from "./account/UserSignUpPayload";
 
 export class UserManager {
   private readonly logger: LogFunctions;
@@ -33,8 +33,8 @@ export class UserManager {
   // AJV insatnce
   private readonly AJV: Ajv;
   // AJV Validate functions
-  public readonly USER_SIGN_UP_DATA_VALIDATE_FUNCTION: ValidateFunction<IUserSignUpData>;
-  public readonly USER_SIGN_IN_DATA_VALIDATE_FUNCTION: ValidateFunction<IUserSignInData>;
+  public readonly USER_SIGN_UP_PAYLOAD_VALIDATE_FUNCTION: ValidateFunction<IUserSignUpPayload>;
+  public readonly USER_SIGN_IN_PAYLOAD_VALIDATE_FUNCTION: ValidateFunction<IUserSignInPayload>;
   public readonly CURRENTLY_SIGNED_IN_USER_VALIDATE_FUNCTION: ValidateFunction<ICurrentlySignedInUser>;
 
   public constructor(logger: LogFunctions, userAccountStorageBackendLogger: LogFunctions, ajv: Ajv) {
@@ -44,8 +44,8 @@ export class UserManager {
     this.userAccountStorageBackendLogger = userAccountStorageBackendLogger;
     // AJV and validators
     this.AJV = ajv;
-    this.USER_SIGN_UP_DATA_VALIDATE_FUNCTION = this.AJV.compile<IUserSignUpData>(USER_SIGN_UP_DATA_JSON_SCHEMA);
-    this.USER_SIGN_IN_DATA_VALIDATE_FUNCTION = this.AJV.compile<IUserSignInData>(USER_SIGN_IN_DATA_JSON_SCHEMA);
+    this.USER_SIGN_UP_PAYLOAD_VALIDATE_FUNCTION = this.AJV.compile<IUserSignUpPayload>(USER_SIGN_UP_PAYLOAD_JSON_SCHEMA);
+    this.USER_SIGN_IN_PAYLOAD_VALIDATE_FUNCTION = this.AJV.compile<IUserSignInPayload>(USER_SIGN_IN_PAYLOAD_JSON_SCHEMA);
     this.CURRENTLY_SIGNED_IN_USER_VALIDATE_FUNCTION = this.AJV.compile<ICurrentlySignedInUser>(CURRENTLY_SIGNED_IN_USER_JSON_SCHEMA);
     // Currently signed in user
     this.onCurrentlySignedInUserChangedCallback = (): void => {
@@ -117,12 +117,14 @@ export class UserManager {
     if (this.userAccountStorageBackend.value === null) {
       throw new Error("Null User Account Storage Backend");
     }
+    this.logger.debug(`User Account Storage Backend type: "${this.userAccountStorageBackend.value.config.type}".`);
     return this.userAccountStorageBackend.value.config.type;
   }
 
   public isUserAccountStorageBackendAvailable(): boolean {
-    this.logger.debug("Getting User Account Storage Backend availability.");
-    return this.userAccountStorageBackend.value !== null;
+    const IS_AVAILABLE: boolean = this.userAccountStorageBackend.value !== null;
+    this.logger.debug(`Getting User Account Storage Backend availability: ${IS_AVAILABLE.toString()}.`);
+    return IS_AVAILABLE;
   }
 
   public openUserAccountStorageBackend(config: UserAccountStorageBackendConfig): boolean {
@@ -190,6 +192,7 @@ export class UserManager {
   }
 
   public generateRandomUserId(): UUID {
+    this.logger.debug("Generating random User ID.");
     if (this.userAccountStorageBackend.value === null) {
       throw new Error("Null User Account Storage Backend");
     }
@@ -199,26 +202,28 @@ export class UserManager {
       this.logger.debug(`User ID "${userId}" not available. Generating a new random one.`);
       userId = randomUUID({ disableEntropyCache: true });
     }
-    this.logger.debug(`User ID "${userId}" available.`);
+    this.logger.debug(`Generated random User ID "${userId}".`);
     return userId;
   }
 
   // TODO: Move this out of here
-  public secureUserSignUpData(userId: UUID, userSignUpData: IUserSignUpData): ISecuredUserSignUpData {
-    this.logger.debug(`Securing user sign up data for user: "${userSignUpData.username}".`);
+  public secureUserSignUpData(userSignUpPayload: IUserSignUpPayload): ISecuredUserSignUpPayload {
+    this.logger.debug(`Securing user sign up data for user: "${userSignUpPayload.username}".`);
     const PASSWORD_SALT: Buffer = randomBytes(16);
-    const SECURED_USER_DATA: ISecuredUserSignUpData = {
-      userId: userId,
-      username: userSignUpData.username,
+    const SECURED_USER_SIGN_UP_PAYLOAD: ISecuredUserSignUpPayload = {
+      userId: userSignUpPayload.userId,
+      username: userSignUpPayload.username,
       securedPassword: {
-        hash: this.hashPassword(userSignUpData.password, PASSWORD_SALT, "user sign up").toString("base64"),
+        hash: this.hashPassword(userSignUpPayload.password, PASSWORD_SALT, "user sign up").toString("base64"),
         salt: PASSWORD_SALT.toString("base64")
       }
     };
-    return SECURED_USER_DATA;
+    this.logger.debug("Secured user sign up data.");
+    return SECURED_USER_SIGN_UP_PAYLOAD;
   }
 
   public generateRandomUserDataStorageConfigId(): UUID {
+    this.logger.debug("Generating random User Data Storage Config ID.");
     if (this.userAccountStorageBackend.value === null) {
       throw new Error("Null User Account Storage Backend");
     }
@@ -228,7 +233,7 @@ export class UserManager {
       this.logger.debug(`User Data Storage Config ID "${configId}" not available. Generating a new random one.`);
       configId = randomUUID({ disableEntropyCache: true });
     }
-    this.logger.debug(`User Data Storage Config ID "${configId}" available.`);
+    this.logger.debug(`Generated random User Data Storage Config ID "${configId}".`);
     return configId;
   }
 
@@ -249,12 +254,14 @@ export class UserManager {
       this.logger.debug("Config does not have a visibility password.");
       securedVisibilityPassword = undefined;
     }
-    return {
+    const SECURED_USER_DATA_STORAGE_CONFIG: ISecuredUserDataStorageConfig = {
       configId: userDataStorageConfig.configId,
       name: userDataStorageConfig.name,
       securedVisibilityPassword: securedVisibilityPassword,
       backendConfig: userDataStorageConfig.backendConfig
     };
+    this.logger.debug("Secured User Data Storage Config.");
+    return SECURED_USER_DATA_STORAGE_CONFIG;
   }
 
   public getUserCount(): number {
@@ -265,23 +272,27 @@ export class UserManager {
     return this.userAccountStorageBackend.value.getUserCount();
   }
 
-  public signUpUser(userSignUpData: IUserSignUpData): boolean {
-    this.logger.debug(`Signing up user: "${userSignUpData.username}".`);
+  public signUpUser(userSignUpPayload: IUserSignUpPayload): boolean {
+    this.logger.debug(`Signing up user: "${userSignUpPayload.username}".`);
     if (this.userAccountStorageBackend.value === null) {
       throw new Error("Null User Account Storage Backend");
     }
-    const USER_ID: UUID = this.generateRandomUserId();
-    const SECURED_USER_SIGN_UP_DATA: ISecuredUserSignUpData = this.secureUserSignUpData(USER_ID, userSignUpData);
-    this.logger.debug("Secured user sign up data.");
+    if (!this.USER_SIGN_UP_PAYLOAD_VALIDATE_FUNCTION(userSignUpPayload)) {
+      throw new Error("Invalid user sign up payload");
+    }
+    const SECURED_USER_SIGN_UP_DATA: ISecuredUserSignUpPayload = this.secureUserSignUpData(userSignUpPayload);
     return this.userAccountStorageBackend.value.addUser(SECURED_USER_SIGN_UP_DATA);
   }
 
-  public signInUser(userSignInData: IUserSignInData): boolean {
-    this.logger.debug(`Attempting sign in for user: "${userSignInData.username}".`);
+  public signInUser(userSignInPayload: IUserSignInPayload): boolean {
+    this.logger.debug(`Attempting sign in for user: "${userSignInPayload.username}".`);
     if (this.userAccountStorageBackend.value === null) {
       throw new Error("Null User Account Storage Backend");
     }
-    const USER_ID: UUID | null = this.userAccountStorageBackend.value.getUserId(userSignInData.username);
+    if (!this.USER_SIGN_IN_PAYLOAD_VALIDATE_FUNCTION(userSignInPayload)) {
+      throw new Error("Invalid user sign in payload");
+    }
+    const USER_ID: UUID | null = this.userAccountStorageBackend.value.getUserId(userSignInPayload.username);
     if (USER_ID === null) {
       this.logger.debug("No user ID for given username. Username must be missing from storage. Sign in failed.");
       return false;
@@ -291,13 +302,13 @@ export class UserManager {
       throw new Error(`No password hash and salt for user: "${USER_ID}"`);
     }
     const SIGN_IN_PASSWORD_HASH: Buffer = this.hashPassword(
-      userSignInData.password,
+      userSignInPayload.password,
       Buffer.from(SECURED_USER_PASSWORD_DATA.salt, "base64"),
       "user sign in"
     );
     if (timingSafeEqual(SIGN_IN_PASSWORD_HASH, Buffer.from(SECURED_USER_PASSWORD_DATA.hash, "base64"))) {
       this.logger.debug("Password hashes matched! Signing in.");
-      this.currentlySignedInUser.value = { userId: USER_ID, username: userSignInData.username };
+      this.currentlySignedInUser.value = { userId: USER_ID, username: userSignInPayload.username };
       return true;
     }
     this.logger.debug("Password hashes do not match. Sign in failed.");
@@ -328,7 +339,6 @@ export class UserManager {
       throw new Error(`Cannot add User Data Storage to user "${userDataStorageConfig.userId}" because it does not exist`);
     }
     const SECURED_USER_DATA_STORAGE_CONFIG: ISecuredUserDataStorageConfig = this.secureUserDataStorageConfig(userDataStorageConfig);
-    this.logger.debug("Secured User Data Storage Config.");
     return this.userAccountStorageBackend.value.addUserDataStorageConfigToUser(userDataStorageConfig.userId, SECURED_USER_DATA_STORAGE_CONFIG);
   }
 

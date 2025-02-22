@@ -1,41 +1,48 @@
 import { FC, useCallback, useState } from "react";
-import { IUserSignUpData } from "@shared/user/account/UserSignUpData";
-import { IUserSignUpInputData, USER_SIGN_UP_INPUT_DATA_JSON_SCHEMA } from "@shared/user/account/input/UserSignUpInputData";
+import { IUserSignUpInput, USER_SIGN_UP_INPUT_JSON_SCHEMA, USER_SIGN_UP_INPUT_UI_SCHEMA } from "@renderer/user/account/UserSignUpInput";
 import { Theme } from "@rjsf/mui";
 import { customizeValidator } from "@rjsf/validator-ajv8";
 import { withTheme, IChangeEvent } from "@rjsf/core";
 import { CustomValidator, ErrorTransformer, FormValidation, RJSFSchema, RJSFValidationError } from "@rjsf/utils";
 import { appLogger } from "@renderer/utils/loggers";
-import { EncryptedUserSignUpData } from "@shared/user/account/encrypted/EncryptedUserSignUpData";
+import { EncryptedUserSignUpDTO } from "@shared/user/account/encrypted/EncryptedUserSignUpDTO";
 import SuccessfulUserSignUpDialog, { ISuccessfulUserSignUpDialogProps } from "@renderer/components/dialogs/SuccessfulUserSignUpDialog";
 import Button from "@mui/material/Button/Button";
-import { IUserSignInData } from "@shared/user/account/UserSignInData";
-import { EncryptedUserSignInData } from "@shared/user/account/encrypted/EncryptedUserSignInData";
+import { EncryptedUserSignInDTO } from "@shared/user/account/encrypted/EncryptedUserSignInDTO";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { enqueueSnackbar } from "notistack";
 import { errorCapitalizerErrorTransformer } from "@renderer/utils/RJSF/errorTransformers/errorCapitalizerErrorTransformer";
-import { USER_SIGN_UP_INPUT_DATA_UI_SCHEMA } from "@renderer/user/account/uiSchemas/UserSignUpInputDataUiSchema";
+import { userSignUpInputToUserSignUpDTO } from "@renderer/user/account/utils/userSignUpInputToUserSignUpDTO";
+import { userSignUpInputToUserSignInDTO } from "@renderer/user/account/utils/userSignUpInputToUserSignInDTO";
 
-const MUIForm = withTheme<IUserSignUpInputData>(Theme);
+const MUIForm = withTheme<IUserSignUpInput>(Theme);
 
-const USER_SIGN_UP_INPUT_DATA_VALIDATOR = customizeValidator<IUserSignUpInputData>();
+const USER_SIGN_UP_INPUT_VALIDATOR = customizeValidator<IUserSignUpInput>();
 
 const userSignUpFormErrorTransformer: ErrorTransformer = (errors: RJSFValidationError[]): RJSFValidationError[] => {
   return errorCapitalizerErrorTransformer(
     errors.map((error: RJSFValidationError) => {
       if (error.name === "required" && error.property !== undefined) {
-        error.message = `Must provide ${error.property.charAt(0).toUpperCase()}${error.property.slice(1)}`;
+        if (error.property === "confirmPassword") {
+          error.message = "Must confirm Password";
+        } else {
+          // TODO: Extract title from error: https://github.com/rjsf-team/react-jsonschema-form/issues/4504
+          error.message = `Must provide ${error.property.charAt(0).toUpperCase()}${error.property.slice(1)}`;
+        }
+      }
+      if (error.name === "pattern" && error.property === ".username") {
+        error.message = "Username must only use letters, digits and underlines";
       }
       return error;
     })
   );
 };
 
-const userSignUpFormValidator: CustomValidator<IUserSignUpInputData> = (
-  formData: IUserSignUpInputData | undefined,
-  errors: FormValidation<IUserSignUpInputData>
-): FormValidation<IUserSignUpInputData> => {
+const userSignUpFormValidator: CustomValidator<IUserSignUpInput> = (
+  formData: IUserSignUpInput | undefined,
+  errors: FormValidation<IUserSignUpInput>
+): FormValidation<IUserSignUpInput> => {
   // Skip if no form data or errors
   if (formData === undefined || errors.username === undefined || errors.confirmPassword === undefined) {
     return errors;
@@ -59,55 +66,46 @@ const UserSignUpForm: FC = () => {
     open: false,
     username: "",
     userCount: null,
-    encryptedNewUserSignInData: null
+    encryptedNewUserSignInDTO: null
   });
-  const signUpUser = useCallback((data: IChangeEvent<IUserSignUpInputData>): void => {
+  const signUpUser = useCallback((data: IChangeEvent<IUserSignUpInput>): void => {
     appLogger.debug("Submitted user Sign Up form.");
     if (data.formData === undefined) {
       appLogger.error("Undefined sign up form data. No-op.");
       enqueueSnackbar({ message: "Missing form data.", variant: "error" });
       return;
     }
-    // Extract user sign up data from input data
-    const USER_SIGN_UP_DATA: IUserSignUpData = {
-      username: data.formData.username,
-      password: data.formData.password
-    };
-    window.IPCTLSAPI.encryptData(JSON.stringify(USER_SIGN_UP_DATA), "user sign up data")
+    const USERNAME: string = data.formData.username;
+    const FORM_DATA: IUserSignUpInput = data.formData;
+    window.IPCTLSAPI.encryptData(JSON.stringify(userSignUpInputToUserSignUpDTO(FORM_DATA, appLogger)), "user sign up data")
       .then(
-        (encryptedUserSignUpData: EncryptedUserSignUpData): void => {
-          const SIGN_UP_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.signUp(encryptedUserSignUpData satisfies EncryptedUserSignUpData);
+        (encryptedUserSignUpDTO: EncryptedUserSignUpDTO): void => {
+          const SIGN_UP_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.signUp(encryptedUserSignUpDTO satisfies EncryptedUserSignUpDTO);
           if (SIGN_UP_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
             appLogger.error(`Sign up error: ${SIGN_UP_RESPONSE.error}!`);
             enqueueSnackbar({ message: "Sign up error.", variant: "error" });
             return;
           }
           if (SIGN_UP_RESPONSE.data) {
-            appLogger.info(`Sign up successful for new user "${USER_SIGN_UP_DATA.username}".`);
+            appLogger.info(`Sign up successful for new user "${USERNAME}".`);
             // Extract sign in data from sign up user data
-            const NEW_USER_SIGN_IN_DATA: IUserSignInData = {
-              username: USER_SIGN_UP_DATA.username,
-              password: USER_SIGN_UP_DATA.password
-            };
-            let encryptedNewUserSignInData: EncryptedUserSignInData | null = null;
-            window.IPCTLSAPI.encryptData(JSON.stringify(NEW_USER_SIGN_IN_DATA), "new user sign in credentials")
+            let encryptedNewUserSignInDTO: EncryptedUserSignInDTO | null = null;
+            window.IPCTLSAPI.encryptData(JSON.stringify(userSignUpInputToUserSignInDTO(FORM_DATA, appLogger)), "new user sign in DTO")
               .then(
-                (encryptedUserSignInData: EncryptedUserSignInData): void => {
-                  encryptedNewUserSignInData = encryptedUserSignInData satisfies EncryptedUserSignInData;
+                (encryptedUserSignInDTO: EncryptedUserSignInDTO): void => {
+                  encryptedNewUserSignInDTO = encryptedUserSignInDTO satisfies EncryptedUserSignInDTO;
                 },
                 (reason: unknown): void => {
                   const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
-                  appLogger.error(
-                    `Could not encrypt new user sign in credentials for new user "${USER_SIGN_UP_DATA.username}". Reason: ${REASON_MESSAGE}.`
-                  );
-                  encryptedNewUserSignInData = null;
+                  appLogger.error(`Could not encrypt user sign in DTO for new user "${USERNAME}": ${REASON_MESSAGE}.`);
+                  encryptedNewUserSignInDTO = null;
                   enqueueSnackbar({ message: "Credentials encryption error.", variant: "error" });
                 }
               )
               .catch((err: unknown): void => {
                 const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-                appLogger.error(`Could not encrypt new user sign in credentials for new user "${USER_SIGN_UP_DATA.username}". ${ERROR_MESSAGE}.`);
-                encryptedNewUserSignInData = null;
+                appLogger.error(`Could not encrypt user sign in DTO for new user "${USERNAME}": ${ERROR_MESSAGE}.`);
+                encryptedNewUserSignInDTO = null;
                 enqueueSnackbar({ message: "Credentials encryption error.", variant: "error" });
               })
               .finally((): void => {
@@ -119,26 +117,26 @@ const UserSignUpForm: FC = () => {
                 }
                 setSuccessfulUserSignUpDialogProps({
                   open: true,
-                  username: USER_SIGN_UP_DATA.username,
+                  username: USERNAME,
                   userCount: userCount,
-                  encryptedNewUserSignInData: encryptedNewUserSignInData
+                  encryptedNewUserSignInDTO: encryptedNewUserSignInDTO
                 });
                 enqueueSnackbar({ message: "Signed up." });
               });
           } else {
-            appLogger.info(`Could not signup new user "${USER_SIGN_UP_DATA.username}".`);
+            appLogger.info(`Could not sign up new user "${USERNAME}".`);
             enqueueSnackbar({ message: "Sign up error.", variant: "error" });
           }
         },
         (reason: unknown): void => {
           const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
-          appLogger.error(`Could not encrypt sign up data for new user "${USER_SIGN_UP_DATA.username}". Reason: ${REASON_MESSAGE}.`);
+          appLogger.error(`Could not encrypt sign up DTO for new user "${USERNAME}": ${REASON_MESSAGE}.`);
           enqueueSnackbar({ message: "Account data encryption error.", variant: "error" });
         }
       )
       .catch((err: unknown): void => {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-        appLogger.error(`Could not encrypt sign up data for new user "${USER_SIGN_UP_DATA.username}". ${ERROR_MESSAGE}.`);
+        appLogger.error(`Could not encrypt sign up DTO for new user "${USERNAME}": ${ERROR_MESSAGE}.`);
         enqueueSnackbar({ message: "Account data encryption error.", variant: "error" });
       });
   }, []);
@@ -146,9 +144,9 @@ const UserSignUpForm: FC = () => {
   return (
     <>
       <MUIForm
-        schema={USER_SIGN_UP_INPUT_DATA_JSON_SCHEMA as RJSFSchema}
-        uiSchema={USER_SIGN_UP_INPUT_DATA_UI_SCHEMA}
-        validator={USER_SIGN_UP_INPUT_DATA_VALIDATOR}
+        schema={USER_SIGN_UP_INPUT_JSON_SCHEMA as RJSFSchema}
+        uiSchema={USER_SIGN_UP_INPUT_UI_SCHEMA}
+        validator={USER_SIGN_UP_INPUT_VALIDATOR}
         showErrorList={false}
         customValidate={userSignUpFormValidator}
         transformErrors={userSignUpFormErrorTransformer}

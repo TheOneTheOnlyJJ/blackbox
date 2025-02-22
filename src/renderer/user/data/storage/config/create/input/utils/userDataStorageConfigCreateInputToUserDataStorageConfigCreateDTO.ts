@@ -1,5 +1,5 @@
 import { IUserDataStorageConfigCreateDTO } from "@shared/user/data/storage/config/create/DTO/UserDataStorageConfigCreateDTO";
-import { userDataStorageBackendConfigCreateInputToUserDataStorageBackendConfigCreateDTO } from "../../../backend/config/create/input/userDataStorageBackendConfigCreateInputToUserDataStorageBackendConfigCreateDTO";
+import { userDataStorageBackendConfigCreateInputToUserDataStorageBackendConfigCreateDTO } from "../../../../backend/config/create/input/utils/userDataStorageBackendConfigCreateInputToUserDataStorageBackendConfigCreateDTO";
 import { IUserDataStorageConfigCreateInput } from "@renderer/user/data/storage/config/create/input/UserDataStorageConfigCreateInput";
 import { LogFunctions } from "electron-log";
 
@@ -18,6 +18,6 @@ export const userDataStorageConfigCreateInputToUserDataStorageConfigCreateDTO = 
       logger
     )
   };
-  logger.debug(`Done converting User Data Storage Config Create Input to User Data Storage Config Create DTO.`);
+  logger.debug(`Converted User Data Storage Config Create Input to User Data Storage Config Create DTO.`);
   return CONVERTED_USER_DATA_STORAGE_CONFIG_CREATE_DTO;
 };

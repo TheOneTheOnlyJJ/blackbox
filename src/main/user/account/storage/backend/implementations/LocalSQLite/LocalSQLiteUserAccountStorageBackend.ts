@@ -5,12 +5,12 @@ import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import Ajv, { JSONSchemaType } from "ajv";
 import { USER_ACCOUNT_STORAGE_BACKEND_TYPES, UserAccountStorageBackendTypes } from "../../UserAccountStorageBackendType";
-import { ISecuredUserSignUpData } from "@main/user/account/SecuredUserSignUpData";
+import { ISecuredUserSignUpPayload } from "@main/user/account/SecuredUserSignUpPayload";
 import { UUID } from "crypto";
 import { UserDataStorageBackendConfig } from "@main/user/data/storage/backend/config/UserDataStorageBackendConfig";
 import { ISecuredUserDataStorageConfig } from "@main/user/data/storage/config/SecuredUserDataStorageConfig";
 import { ISecuredPasswordData } from "@main/utils/encryption/SecuredPasswordData";
-import { LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS } from "@shared/user/account/storage/backend/implementations/constants/LocalSQLiteUserAccountStorageBackendConstants";
+import { LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS } from "@shared/user/account/storage/backend/implementations/LocalSQLite/LocalSQLiteUserAccountStorageBackendConstants";
 import { IBaseUserAccountStorageBackendConfig } from "../../config/BaseUserAccountStorageBackendConfig";
 
 export interface ILocalSQLiteUserAccountStorageBackendConfig extends IBaseUserAccountStorageBackendConfig {
@@ -137,7 +137,7 @@ export class LocalSQLiteUserAccountStorageBackend extends UserAccountStorageBack
     throw new Error(`Found multiple (${RESULT.count.toString()}) users with same username "${username}"`);
   }
 
-  public addUser(userData: ISecuredUserSignUpData): boolean {
+  public addUser(userData: ISecuredUserSignUpPayload): boolean {
     this.logger.debug(`Adding user: "${userData.username}".`);
     const ADD_USER_SQL =
       "INSERT INTO users (user_id, username, password_hash, password_salt) VALUES (@userId, @username, @passwordHash, @passwordSalt)";

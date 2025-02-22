@@ -7,8 +7,8 @@ import {
   UserAPIIPCChannel
 } from "@shared/IPC/APIs/UserAPI";
 import { ICurrentlySignedInUser } from "@shared/user/account/CurrentlySignedInUser";
-import { EncryptedUserSignInData } from "@shared/user/account/encrypted/EncryptedUserSignInData";
-import { EncryptedUserSignUpData } from "@shared/user/account/encrypted/EncryptedUserSignUpData";
+import { EncryptedUserSignInDTO } from "@shared/user/account/encrypted/EncryptedUserSignInDTO";
+import { EncryptedUserSignUpDTO } from "@shared/user/account/encrypted/EncryptedUserSignUpDTO";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { EncryptedUserDataStorageConfigCreateDTO } from "@shared/user/account/encrypted/EncryptedUserDataStorageConfigCreateDTO";
 import { IIPCTLSAPI, IPC_TLS_API_CHANNELS, IPCTLSAPIChannel, TLSReadinessChangedCallback } from "@shared/IPC/APIs/IPCTLSAPI";
@@ -225,15 +225,15 @@ const IPC_TLS_API: IIPCTLSAPI = {
 };
 
 const USER_API: IUserAPI = {
-  signUp: (encryptedUserSignUpData: EncryptedUserSignUpData): IPCAPIResponse<boolean> => {
+  signUp: (encryptedUserSignUpDTO: EncryptedUserSignUpDTO): IPCAPIResponse<boolean> => {
     const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.signUp;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
-    return ipcRenderer.sendSync(CHANNEL, encryptedUserSignUpData) as IPCAPIResponse<boolean>;
+    return ipcRenderer.sendSync(CHANNEL, encryptedUserSignUpDTO) as IPCAPIResponse<boolean>;
   },
-  signIn: (encryptedUserSignInData: EncryptedUserSignInData): IPCAPIResponse<boolean> => {
+  signIn: (encryptedUserSignInDTO: EncryptedUserSignInDTO): IPCAPIResponse<boolean> => {
     const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.signIn;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
-    return ipcRenderer.sendSync(CHANNEL, encryptedUserSignInData) as IPCAPIResponse<boolean>;
+    return ipcRenderer.sendSync(CHANNEL, encryptedUserSignInDTO) as IPCAPIResponse<boolean>;
   },
   signOut: (): IPCAPIResponse => {
     const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.signOut;

@@ -10,14 +10,14 @@ import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import Alert from "@mui/material/Alert/Alert";
 import AlertTitle from "@mui/material/AlertTitle/AlertTitle";
 import { enqueueSnackbar } from "notistack";
-import { USER_SIGN_IN_INPUT_DATA_UI_SCHEMA } from "@renderer/user/account/uiSchemas/UserSignInInputDataUiSchema";
 import { errorCapitalizerErrorTransformer } from "@renderer/utils/RJSF/errorTransformers/errorCapitalizerErrorTransformer";
-import { IUserSignInInputData, USER_SIGN_IN_INPUT_DATA_JSON_SCHEMA } from "@shared/user/account/input/UserSignInInputData";
-import { EncryptedUserSignInData } from "@shared/user/account/encrypted/EncryptedUserSignInData";
+import { IUserSignInInput, USER_SIGN_IN_INPUT_JSON_SCHEMA, USER_SIGN_IN_INPUT_UI_SCHEMA } from "@renderer/user/account/UserSignInInput";
+import { EncryptedUserSignInDTO } from "@shared/user/account/encrypted/EncryptedUserSignInDTO";
+import { userSignInInputToUserSignInDTO } from "@renderer/user/account/utils/userSignInInputToUserSignInDTO";
 
-const MUIForm = withTheme<IUserSignInInputData>(Theme);
+const MUIForm = withTheme<IUserSignInInput>(Theme);
 
-const USER_SIGN_IN_INPUT_DATA_VALIDATOR = customizeValidator<IUserSignInInputData>();
+const USER_SIGN_IN_INPUT_VALIDATOR = customizeValidator<IUserSignInInput>();
 
 const userSignInFormErrorTransformer: ErrorTransformer = (errors: RJSFValidationError[]): RJSFValidationError[] => {
   return errorCapitalizerErrorTransformer(
@@ -32,7 +32,7 @@ const userSignInFormErrorTransformer: ErrorTransformer = (errors: RJSFValidation
 
 const UserSignInForm: FC = () => {
   const [wasSignInSuccessful, setWasSignInSuccessful] = useState<boolean>(true);
-  const handleFormSubmit = useCallback((data: IChangeEvent<IUserSignInInputData>): void => {
+  const handleFormSubmit = useCallback((data: IChangeEvent<IUserSignInInput>): void => {
     appLogger.info("Submitted user Sign In form.");
     if (data.formData === undefined) {
       appLogger.error("Undefined sign in form data. No-op.");
@@ -40,10 +40,10 @@ const UserSignInForm: FC = () => {
       return;
     }
     const USERNAME: string = data.formData.username;
-    window.IPCTLSAPI.encryptData(JSON.stringify(data.formData), "user sign in credentials")
+    window.IPCTLSAPI.encryptData(JSON.stringify(userSignInInputToUserSignInDTO(data.formData, appLogger)), "user sign in credentials")
       .then(
-        (encryptedUserSignInData: EncryptedUserSignInData): void => {
-          const SIGN_IN_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.signIn(encryptedUserSignInData satisfies EncryptedUserSignInData);
+        (encryptedUserSignInDTO: EncryptedUserSignInDTO): void => {
+          const SIGN_IN_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.signIn(encryptedUserSignInDTO satisfies EncryptedUserSignInDTO);
           if (SIGN_IN_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
             if (SIGN_IN_RESPONSE.data) {
               setWasSignInSuccessful(true);
@@ -70,9 +70,9 @@ const UserSignInForm: FC = () => {
 
   return (
     <MUIForm
-      schema={USER_SIGN_IN_INPUT_DATA_JSON_SCHEMA as RJSFSchema}
-      uiSchema={USER_SIGN_IN_INPUT_DATA_UI_SCHEMA}
-      validator={USER_SIGN_IN_INPUT_DATA_VALIDATOR}
+      schema={USER_SIGN_IN_INPUT_JSON_SCHEMA as RJSFSchema}
+      uiSchema={USER_SIGN_IN_INPUT_UI_SCHEMA}
+      validator={USER_SIGN_IN_INPUT_VALIDATOR}
       showErrorList={false}
       transformErrors={userSignInFormErrorTransformer}
       onSubmit={handleFormSubmit}

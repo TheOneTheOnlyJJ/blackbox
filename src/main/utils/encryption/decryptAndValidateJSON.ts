@@ -45,6 +45,7 @@ export const decryptAndValidateJSON = <T>(
   // Parse the decrypted JSON string into an object
   const DECRYPTED_DATA_OBJECT: unknown = JSON.parse(DECRYPTED_DATA_TEXT);
 
+  logger.debug(`Decrypted ${dataTypeToLog}.`);
   // Validate
   if (JSONValidator(DECRYPTED_DATA_OBJECT)) {
     return DECRYPTED_DATA_OBJECT satisfies T;

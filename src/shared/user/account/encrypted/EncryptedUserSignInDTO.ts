@@ -1,3 +1,3 @@
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 
-export type EncryptedUserSignUpData = IEncryptedData;
+export type EncryptedUserSignInDTO = IEncryptedData;
