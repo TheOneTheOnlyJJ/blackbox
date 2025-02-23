@@ -33,7 +33,10 @@ const SignInPage: FC = () => {
         <Typography variant="h4">Sign In</Typography>
         <UserSignInForm />
         <Typography>
-          New to BlackBox? <Link to="/signup">Sign Up</Link>
+          New to BlackBox?{" "}
+          <Link to="/signup" replace={true}>
+            Sign Up
+          </Link>
         </Typography>
       </Paper>
     </Box>

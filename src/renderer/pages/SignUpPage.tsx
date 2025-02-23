@@ -32,7 +32,7 @@ const SignUpPage: FC = () => {
       >
         <Typography variant="h4">Sign Up</Typography>
         <UserSignUpForm />
-        <Link style={{ alignSelf: "start" }} to="/">
+        <Link style={{ alignSelf: "start" }} to="/" replace={true}>
           Back to Sign In
         </Link>
       </Paper>

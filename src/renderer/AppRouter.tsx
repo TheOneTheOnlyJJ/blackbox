@@ -26,13 +26,13 @@ const APP_ROUTER = createHashRouter([
         element: <SignUpPage />
       },
       {
+        path: "signout",
+        element: <SignOutPage />
+      },
+      {
         path: "users/:userId",
         element: <SignedInRoot />,
         children: [
-          {
-            path: "signout",
-            element: <SignOutPage />
-          },
           {
             element: <SignedInDashboardLayoutRoot />,
             children: [

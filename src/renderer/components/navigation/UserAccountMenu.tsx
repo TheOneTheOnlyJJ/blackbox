@@ -39,7 +39,7 @@ const UserAccountMenu: FC<UserAccountMenuProps> = (props: UserAccountMenuProps) 
       {
         name: "Sign Out",
         icon: LogoutOutlinedIcon,
-        path: `/users/${signedInRootContext.signedInUser.username}/signout`,
+        path: "/signout",
         divider: false
       }
     ];

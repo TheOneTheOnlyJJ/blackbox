@@ -5,24 +5,29 @@ import { FC, useEffect } from "react";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { enqueueSnackbar } from "notistack";
-import { appLogger } from "@renderer/utils/loggers";
-import { ISignedInRootContext, useSignedInRootContext } from "@renderer/components/roots/signedInRoot/SignedInRootContext";
+import { ISignedInUser } from "@shared/user/account/SignedInUser";
+import log, { LogFunctions } from "electron-log";
+
+const signOutPageLogger: LogFunctions = log.scope("renderer-sign-out-page");
 
 const SignOutPage: FC = () => {
-  const signedInRootContext: ISignedInRootContext = useSignedInRootContext();
   useEffect((): void => {
     // TODO: Remove this
     setTimeout(() => {
-      const USERNAME: string = signedInRootContext.signedInUser.username;
-      appLogger.debug(`Signing out user ${USERNAME}.`);
-      const SIGN_OUT_RESPONSE: IPCAPIResponse = window.userAPI.signOut();
+      const SIGN_OUT_RESPONSE: IPCAPIResponse<ISignedInUser | null> = window.userAPI.signOut();
       if (SIGN_OUT_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
-        enqueueSnackbar({ message: `${USERNAME} signed out.` });
+        if (SIGN_OUT_RESPONSE.data === null) {
+          signOutPageLogger.warn("No user was signed in.");
+        } else {
+          signOutPageLogger.info(`Signed out user: ${JSON.stringify(SIGN_OUT_RESPONSE.data, null, 2)}.`);
+          enqueueSnackbar({ message: `${SIGN_OUT_RESPONSE.data.username} signed out.` });
+        }
       } else {
+        signOutPageLogger.error("Sign out error!");
         enqueueSnackbar({ message: "Sign out error.", variant: "error" });
       }
-    }, 5_000);
-  }, [signedInRootContext]);
+    }, 2_500);
+  }, []);
   return (
     <Box
       sx={{

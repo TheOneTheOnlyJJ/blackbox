@@ -47,18 +47,20 @@ const SignedInAppBar = forwardRef<HTMLDivElement, ISignedInAppBarProps>(function
   const [isBackDisabled, setIsBackDisabled] = useState<boolean>(false);
   const [isForwardDisabled, setIsForwardDisabled] = useState<boolean>(false);
   const updateButtonStates = useCallback((): void => {
-    const STATE = window.history.state as { idx?: number } | null;
-    setIsBackDisabled(location.key === "default" || STATE?.idx === 0);
     // TODO: Remove @types/dom-navigation once it becomes Baseline widely available
+    if (window.navigation.currentEntry === null) {
+      appLogger.error("Window DOM navigation API current entry is null! Not updating back button disabled state!");
+    } else {
+      setIsBackDisabled(signedInRootContext.signedInNavigationEntryIndex === window.navigation.currentEntry.index);
+    }
     setIsForwardDisabled(!window.navigation.canGoForward);
-  }, [location]);
+  }, [signedInRootContext.signedInNavigationEntryIndex]);
 
   useEffect((): (() => void) => {
     updateButtonStates();
-    // Listen for popstate events
-    window.addEventListener("popstate", updateButtonStates);
+    window.navigation.addEventListener("currententrychange", updateButtonStates);
     return (): void => {
-      window.removeEventListener("popstate", updateButtonStates);
+      window.navigation.removeEventListener("currententrychange", updateButtonStates);
     };
   }, [updateButtonStates, location]);
 

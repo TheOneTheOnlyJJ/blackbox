@@ -33,7 +33,7 @@ const SignedInRoot: FC = () => {
       }
     />
   ) : (
-    <Navigate to={`/forbidden/must-be-signed-in-to-access-${forbiddenLocationName}`} />
+    <Navigate to={`/forbidden/must-be-signed-in-to-access-${forbiddenLocationName}SHORTCIRCUITTED`} />
   );
 };
 

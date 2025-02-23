@@ -237,10 +237,10 @@ const USER_API: IUserAPI = {
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL, encryptedUserSignInDTO) as IPCAPIResponse<boolean>;
   },
-  signOut: (): IPCAPIResponse => {
+  signOut: (): IPCAPIResponse<ISignedInUser | null> => {
     const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.signOut;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
-    return ipcRenderer.sendSync(CHANNEL) as IPCAPIResponse;
+    return ipcRenderer.sendSync(CHANNEL) as IPCAPIResponse<ISignedInUser | null>;
   },
   isUserAccountStorageOpen: (): IPCAPIResponse<boolean> => {
     const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.isUserAccountStorageOpen;

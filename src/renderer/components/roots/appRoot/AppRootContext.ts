@@ -4,6 +4,7 @@ import { ICurrentUserAccountStorage } from "@shared/user/account/storage/Current
 
 export interface IAppRootContext {
   signedInUser: ISignedInUser | null;
+  signedInNavigationEntryIndex: number;
   currentUserAccountStorage: ICurrentUserAccountStorage | null;
   isIPCTLSReady: {
     main: boolean;

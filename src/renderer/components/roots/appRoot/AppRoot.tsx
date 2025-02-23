@@ -24,25 +24,37 @@ const AppRoot: FC = () => {
   // User
   const [currentUserAccountStorage, setCurrentUserAccountStorage] = useState<ICurrentUserAccountStorage | null>(null);
   const [signedInUser, setSignedInUser] = useState<ISignedInUser | null>(null);
+  // Navigation
+  const [signedInNavigationEntryIndex, setSignedInNavigationEntryIndex] = useState<number>(0);
 
-  // Log every location change
+  // Monitor location
   useEffect((): void => {
     appLogger.debug(`Navigated to: "${location.pathname}".`);
   }, [location]);
 
+  // Monitor signed in navigation entry index
+  useEffect((): void => {
+    appLogger.info(`Signed in navigation entry index: ${signedInNavigationEntryIndex.toString()}.`);
+  }, [signedInNavigationEntryIndex]);
+
   // Monitor signed in user; Navigate on sign in/out
-  // TODO: Fix signout page
   useEffect((): void => {
     appLogger.debug(`Signed in user changed: ${JSON.stringify(signedInUser, null, 2)}.`);
     let navigationPath: string;
     if (signedInUser === null) {
       navigationPath = "/";
+      setSignedInNavigationEntryIndex(0);
     } else {
       navigationPath = `/users/${signedInUser.userId}/dashboard`;
+      if (window.navigation.currentEntry === null) {
+        appLogger.error("Window DOM navigation API current entry is null!");
+        setSignedInNavigationEntryIndex(0);
+      } else {
+        setSignedInNavigationEntryIndex(window.navigation.currentEntry.index);
+      }
     }
     // Wipe the history stack and navigate to the required path
     appLogger.debug("Wiping window navigation history.");
-    window.history.replaceState({ idx: 0 }, "", navigationPath); // TODO: Replace this with a history limit or something to be safer, expose it in app context
     navigate(navigationPath, { replace: true });
   }, [navigate, signedInUser]);
 
@@ -146,6 +158,7 @@ const AppRoot: FC = () => {
         context={
           {
             signedInUser: signedInUser,
+            signedInNavigationEntryIndex: signedInNavigationEntryIndex,
             currentUserAccountStorage: currentUserAccountStorage,
             isIPCTLSReady: {
               main: isMainIPCTLSReady,

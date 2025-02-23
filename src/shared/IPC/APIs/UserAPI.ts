@@ -14,7 +14,7 @@ export type SignedInUserChangedCallback = (signedInUser: ISignedInUser | null) =
 export interface IUserAPI {
   signUp: (encryptedUserSignUpDTO: EncryptedUserSignUpDTO) => IPCAPIResponse<boolean>;
   signIn: (encryptedUserSignInDTO: EncryptedUserSignInDTO) => IPCAPIResponse<boolean>;
-  signOut: () => IPCAPIResponse;
+  signOut: () => IPCAPIResponse<ISignedInUser | null>;
   isUserAccountStorageOpen: () => IPCAPIResponse<boolean>;
   isUsernameAvailable: (username: string) => IPCAPIResponse<boolean>;
   getUserCount: () => IPCAPIResponse<number>;

@@ -341,10 +341,9 @@ export class App {
         return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
-    handleSignOut: (): IPCAPIResponse => {
+    handleSignOut: (): IPCAPIResponse<ISignedInUser | null> => {
       try {
-        this.userManager.signOutUser();
-        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS };
+        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userManager.signOutUser() };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
         this.UserAPILogger.error(`Sign out error: ${ERROR_MESSAGE}!`);

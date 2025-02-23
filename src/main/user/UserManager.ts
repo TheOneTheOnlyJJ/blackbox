@@ -299,6 +299,9 @@ export class UserManager {
 
   public signInUser(userSignInPayload: IUserSignInPayload): boolean {
     this.logger.debug(`Attempting sign in for user: "${userSignInPayload.username}".`);
+    if (this.signedInUser.value !== null) {
+      this.logger.warn(`A user is already signed is: ${JSON.stringify(this.signedInUser.value, null, 2)}.`);
+    }
     if (this.userAccountStorage.value === null) {
       throw new Error("Null User Account Storage");
     }
@@ -328,14 +331,16 @@ export class UserManager {
     return false;
   }
 
-  public signOutUser(): void {
+  public signOutUser(): ISignedInUser | null {
     this.logger.debug("Attempting sign out.");
     if (this.signedInUser.value === null) {
-      this.logger.debug("No signed in user. No-op.");
-      return;
+      this.logger.debug("No signed in user.");
+      return null;
     }
     this.logger.debug(`Signing out user: "${this.signedInUser.value.username}".`);
+    const SIGNED_OUT_USER: ISignedInUser = this.signedInUser.value;
     this.signedInUser.value = null;
+    return SIGNED_OUT_USER;
   }
 
   public getSignedInUser(): ISignedInUser | null {
