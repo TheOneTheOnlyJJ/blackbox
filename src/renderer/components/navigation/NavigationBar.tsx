@@ -33,13 +33,13 @@ const NavigationBar = forwardRef<HTMLDivElement, INavigationBarProps>(function N
       {
         name: "Dashboard",
         icon: DashboardOutlinedIcon,
-        path: `/users/${signedInRootContext.currentlySignedInUser.username}/dashboard`,
+        path: `/users/${signedInRootContext.signedInUser.userId}/dashboard`,
         divider: false
       },
       {
         name: "Data Storages",
         icon: Inventory2OutlinedIcon,
-        path: `/users/${signedInRootContext.currentlySignedInUser.username}/userDataStorages`,
+        path: `/users/${signedInRootContext.signedInUser.userId}/userDataStorages`,
         divider: false
       }
     ];

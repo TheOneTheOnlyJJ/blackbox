@@ -1,8 +1,8 @@
-import { ISecuredPasswordData } from "@main/utils/encryption/SecuredPasswordData";
+import { ISecuredPassword } from "@main/utils/encryption/SecuredPassword";
 import { UUID } from "crypto";
 
 export interface ISecuredUserSignUpPayload {
   userId: UUID;
   username: string;
-  securedPassword: ISecuredPasswordData;
+  securedPassword: ISecuredPassword;
 }

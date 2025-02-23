@@ -2,11 +2,12 @@ import { FC, useEffect, useState } from "react";
 import { appLogger } from "@renderer/utils/loggers";
 import { Outlet, useLocation, Location, useNavigate, NavigateFunction } from "react-router-dom";
 import { IAppRootContext } from "./AppRootContext";
-import { ICurrentlySignedInUser } from "@shared/user/account/CurrentlySignedInUser";
+import { ISignedInUser } from "@shared/user/account/SignedInUser";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { enqueueSnackbar, SnackbarProvider } from "notistack";
 import Box from "@mui/material/Box/Box";
+import { ICurrentUserAccountStorage } from "@shared/user/account/storage/CurrentUserAccountStorage";
 
 export interface IOpenNotificationSnackbarProps {
   autoHideDuration?: number;
@@ -17,85 +18,120 @@ const AppRoot: FC = () => {
   // General
   const location: Location = useLocation();
   const navigate: NavigateFunction = useNavigate();
+  // IPC TLS
+  const [isMainIPCTLSReady, setIsMainIPCTLSReady] = useState<boolean>(false);
+  const [isRendererIPCTLSReady, setIsRendererIPCTLSReady] = useState<boolean>(false);
   // User
-  const [isUserAccountStorageBackendAvailable, setIsUserAccountStorageBackendAvailable] = useState<boolean>(false);
-  const [currentlySignedInUser, setCurrentlySignedInUser] = useState<ICurrentlySignedInUser | null>(null);
+  const [currentUserAccountStorage, setCurrentUserAccountStorage] = useState<ICurrentUserAccountStorage | null>(null);
+  const [signedInUser, setSignedInUser] = useState<ISignedInUser | null>(null);
 
   // Log every location change
   useEffect((): void => {
     appLogger.debug(`Navigated to: "${location.pathname}".`);
   }, [location]);
 
-  // Navigate on sign in/out
+  // Monitor signed in user; Navigate on sign in/out
+  // TODO: Fix signout page
   useEffect((): void => {
-    appLogger.debug(`Currently signed in user state changed: ${JSON.stringify(currentlySignedInUser, null, 2)}.`);
+    appLogger.debug(`Signed in user changed: ${JSON.stringify(signedInUser, null, 2)}.`);
     let navigationPath: string;
-    if (currentlySignedInUser === null) {
+    if (signedInUser === null) {
       navigationPath = "/";
     } else {
-      navigationPath = `/users/${currentlySignedInUser.username}/dashboard`;
+      navigationPath = `/users/${signedInUser.userId}/dashboard`;
     }
     // Wipe the history stack and navigate to the required path
     appLogger.debug("Wiping window navigation history.");
-    window.history.replaceState({ idx: 0 }, "", navigationPath);
+    window.history.replaceState({ idx: 0 }, "", navigationPath); // TODO: Replace this with a history limit or something to be safer, expose it in app context
     navigate(navigationPath, { replace: true });
-  }, [navigate, currentlySignedInUser]);
+  }, [navigate, signedInUser]);
 
-  // Log User Account Storage Backend availability changes
+  // Monitor IPC TLS API readiness
   useEffect((): void => {
-    appLogger.debug(`User Account Storage Backend availability changed: ${isUserAccountStorageBackendAvailable.toString()}.`);
-  }, [isUserAccountStorageBackendAvailable]);
+    appLogger.info(`Main IPC TLS readiness changed: ${isMainIPCTLSReady.toString()}.`);
+    if (isMainIPCTLSReady) {
+      enqueueSnackbar({ message: "Main IPC TLS ready.", variant: "info" });
+    } else {
+      enqueueSnackbar({ message: "Main IPC TLS not ready.", variant: "warning" });
+    }
+  }, [isMainIPCTLSReady]);
+  useEffect((): void => {
+    appLogger.info(`Renderer IPC TLS readiness changed: ${isRendererIPCTLSReady.toString()}.`);
+    if (isRendererIPCTLSReady) {
+      enqueueSnackbar({ message: "Renderer IPC TLS ready.", variant: "info" });
+    } else {
+      enqueueSnackbar({ message: "Renderer IPC TLS not ready.", variant: "warning" });
+    }
+  }, [isRendererIPCTLSReady]);
+
+  // Monitor User Account Storage changes
+  useEffect((): void => {
+    appLogger.info(`Current User Account Storage changed: ${JSON.stringify(currentUserAccountStorage, null, 2)}.`);
+  }, [currentUserAccountStorage]);
 
   useEffect((): (() => void) => {
     appLogger.debug("Rendering App Root component.");
-    const IS_USER_ACCOUNT_STORAGE_BACKEND_AVAILABLE_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.isAccountStorageBackendAvailable();
-    if (IS_USER_ACCOUNT_STORAGE_BACKEND_AVAILABLE_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
-      enqueueSnackbar({ message: "Error getting User Account Storage Backend availability.", variant: "error" });
-      setIsUserAccountStorageBackendAvailable(false);
+    // Get initial app root context
+    const GET_CURRENT_USER_ACCOUNT_STORAGE_RESPONSE: IPCAPIResponse<ICurrentUserAccountStorage | null> =
+      window.userAPI.getCurrentUserAccountStorage();
+    if (GET_CURRENT_USER_ACCOUNT_STORAGE_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
+      enqueueSnackbar({ message: "Error getting current User Account Storage.", variant: "error" });
+      setCurrentUserAccountStorage(null);
     } else {
-      setIsUserAccountStorageBackendAvailable(IS_USER_ACCOUNT_STORAGE_BACKEND_AVAILABLE_RESPONSE.data);
+      setCurrentUserAccountStorage(GET_CURRENT_USER_ACCOUNT_STORAGE_RESPONSE.data);
     }
-    const GET_CURRENTLY_SIGNED_IN_USER_RESPONSE: IPCAPIResponse<ICurrentlySignedInUser | null> = window.userAPI.getCurrentlySignedInUser();
-    if (GET_CURRENTLY_SIGNED_IN_USER_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
-      enqueueSnackbar({ message: "Error getting currently signed in user.", variant: "error" });
-      setCurrentlySignedInUser(null);
+    const GET_SIGNED_IN_USER_RESPONSE: IPCAPIResponse<ISignedInUser | null> = window.userAPI.getSignedInUser();
+    if (GET_SIGNED_IN_USER_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
+      enqueueSnackbar({ message: "Error getting signed in user.", variant: "error" });
+      setSignedInUser(null);
     } else {
-      setCurrentlySignedInUser(GET_CURRENTLY_SIGNED_IN_USER_RESPONSE.data);
+      setSignedInUser(GET_SIGNED_IN_USER_RESPONSE.data);
     }
-    // Monitor changes to renderer IPC TLS readiness
-    const removeRendererTLSReadinessChangedListener: () => void = window.IPCTLSAPI.onRendererReadinessChanged((isRendererTLSReady: boolean): void => {
-      if (isRendererTLSReady) {
-        enqueueSnackbar({ message: "Renderer IPC TLS ready.", variant: "info" });
-      } else {
-        enqueueSnackbar({ message: "Renderer IPC TLS not ready.", variant: "warning" });
-      }
-    });
+    setIsMainIPCTLSReady(window.IPCTLSAPI.getMainReadiness());
+    setIsRendererIPCTLSReady(window.IPCTLSAPI.getRendererReadiness());
     // Monitor changes to main IPC TLS readiness
-    const removeMainTLSReadinessChangedListener: () => void = window.IPCTLSAPI.onMainReadinessChanged((isMainTLSReady: boolean): void => {
-      if (isMainTLSReady) {
-        enqueueSnackbar({ message: "Main IPC TLS ready.", variant: "info" });
-      } else {
-        enqueueSnackbar({ message: "Main IPC TLS not ready.", variant: "warning" });
-      }
+    const removeOnMainIPCTLSReadinessChangedListener: () => void = window.IPCTLSAPI.onMainReadinessChanged((newIsMainIPCTLSReady: boolean): void => {
+      setIsMainIPCTLSReady(newIsMainIPCTLSReady);
     });
-    // Monitor changes to currently signed in user
-    const removeOnCurrentlySignedInUserChangedListener: () => void = window.userAPI.onCurrentlySignedInUserChanged(
-      (newCurrentlySignedInUser: ICurrentlySignedInUser | null): void => {
-        setCurrentlySignedInUser(newCurrentlySignedInUser);
+    // Monitor changes to renderer IPC TLS readiness
+    const removeOnRendererIPCTLSReadinessChangedListener: () => void = window.IPCTLSAPI.onRendererReadinessChanged(
+      (newIsRendererIPCTLSReady: boolean): void => {
+        setIsRendererIPCTLSReady(newIsRendererIPCTLSReady);
       }
     );
-    // Monitor changes to User Account Storage Backend availability status
-    const removeOnUserAccountStorageBackendAvailabilityChangedListener: () => void = window.userAPI.onAccountStorageBackendAvailabilityChanged(
-      (isUserAccountStorageBackendAvailable: boolean): void => {
-        setIsUserAccountStorageBackendAvailable(isUserAccountStorageBackendAvailable);
+    // Monitor changes to signed in user
+    const removeOnSignedInUserChangedListener: () => void = window.userAPI.onSignedInUserChanged((newSignedInUser: ISignedInUser | null): void => {
+      setSignedInUser(newSignedInUser);
+    });
+    // Monitor changes to User Account Storage set status
+    const removeOnCurrentUserAccountStorageChangedListener: () => void = window.userAPI.onCurrentUserAccountStorageChanged(
+      (newCurrentUserAccountStorage: ICurrentUserAccountStorage | null): void => {
+        setCurrentUserAccountStorage(newCurrentUserAccountStorage);
+      }
+    );
+    // Monitor changes to User Account Storage open status
+    const removeOnUserAccountStorageOpenChangedListener: () => void = window.userAPI.onUserAccountStorageOpenChanged(
+      (isUserAccountStorageOpen: boolean): void => {
+        setCurrentUserAccountStorage((prevCurrentUserAccountStorage: ICurrentUserAccountStorage | null): ICurrentUserAccountStorage | null => {
+          if (prevCurrentUserAccountStorage === null) {
+            appLogger.warn("Current User Account Storage open state changed callback invoked with no current User Account Storage set! No-op.");
+            enqueueSnackbar({ message: "Current User Account Storage open state received without being set.", variant: "warning" });
+            return null;
+          }
+          return {
+            ...prevCurrentUserAccountStorage,
+            isOpen: isUserAccountStorageOpen
+          };
+        });
       }
     );
     return (): void => {
       appLogger.debug("Removing App Root event listeners.");
-      removeRendererTLSReadinessChangedListener();
-      removeMainTLSReadinessChangedListener();
-      removeOnCurrentlySignedInUserChangedListener();
-      removeOnUserAccountStorageBackendAvailabilityChangedListener();
+      removeOnMainIPCTLSReadinessChangedListener();
+      removeOnRendererIPCTLSReadinessChangedListener();
+      removeOnSignedInUserChangedListener();
+      removeOnCurrentUserAccountStorageChangedListener();
+      removeOnUserAccountStorageOpenChangedListener();
     };
   }, []);
 
@@ -109,8 +145,12 @@ const AppRoot: FC = () => {
       <Outlet
         context={
           {
-            currentlySignedInUser: currentlySignedInUser,
-            isUserAccountStorageBackendAvailable: isUserAccountStorageBackendAvailable
+            signedInUser: signedInUser,
+            currentUserAccountStorage: currentUserAccountStorage,
+            isIPCTLSReady: {
+              main: isMainIPCTLSReady,
+              renderer: isRendererIPCTLSReady
+            }
           } satisfies IAppRootContext
         }
       />

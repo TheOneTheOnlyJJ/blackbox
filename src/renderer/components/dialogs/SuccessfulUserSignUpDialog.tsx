@@ -25,7 +25,7 @@ export interface ISuccessfulUserSignUpDialogProps {
 
 const SuccessfulUserSignUpDialog: FC<ISuccessfulUserSignUpDialogProps> = (props: ISuccessfulUserSignUpDialogProps) => {
   const navigate: NavigateFunction = useNavigate();
-  const [signInError, setSignInError] = useState<string | undefined>(undefined);
+  const [signInError, setSignInError] = useState<boolean>(false);
   const handleDialogClose = useCallback((): void => {
     // This ensures no backdrop click or escape keypress closes the dialog
     return;
@@ -37,7 +37,7 @@ const SuccessfulUserSignUpDialog: FC<ISuccessfulUserSignUpDialogProps> = (props:
   const handleStartExploringButtonClick = useCallback((): void => {
     appLogger.debug("Start exploring button clicked.");
     if (props.encryptedNewUserSignInDTO === null) {
-      appLogger.debug("Null encrypted new user sign in credentials. No-op.");
+      appLogger.debug("Null encrypted new user sign in DTO. No-op.");
       enqueueSnackbar({ message: "Missing encrypted sign in credentials.", variant: "error" });
       return;
     }
@@ -45,20 +45,20 @@ const SuccessfulUserSignUpDialog: FC<ISuccessfulUserSignUpDialogProps> = (props:
     // Automatic sign in should always work for a newly signed up account
     if (SIGN_IN_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
       if (SIGN_IN_RESPONSE.data) {
-        appLogger.debug("Sign in successful.");
-        setSignInError(undefined);
-        enqueueSnackbar({ message: "Signed in." });
+        appLogger.info("Automatic sign in successful.");
+        setSignInError(false);
+        enqueueSnackbar({ message: `${props.username} signed in.` });
       } else {
-        appLogger.debug("Sign in unsuccessful.");
-        setSignInError("Automatic sign in unsuccessful");
-        enqueueSnackbar({ message: "Automatic sign in unsuccessful.", variant: "error" });
+        appLogger.error("Automatic sign in unsuccessful!");
+        setSignInError(true);
+        enqueueSnackbar({ message: `Failed signing ${props.username} in.`, variant: "error" });
       }
     } else {
-      appLogger.debug("Sign in error.");
-      setSignInError(SIGN_IN_RESPONSE.error);
-      enqueueSnackbar({ message: "Sign in error.", variant: "error" });
+      appLogger.error(`Automatic sign in error: ${SIGN_IN_RESPONSE.error}!`);
+      setSignInError(true);
+      enqueueSnackbar({ message: "Automatic sign in error.", variant: "error" });
     }
-  }, [props.encryptedNewUserSignInDTO]);
+  }, [props.encryptedNewUserSignInDTO, props.username]);
 
   return (
     <Dialog maxWidth="xl" open={props.open} onClose={handleDialogClose}>
@@ -76,7 +76,7 @@ const SuccessfulUserSignUpDialog: FC<ISuccessfulUserSignUpDialogProps> = (props:
             Sign up successful
           </Typography>
           <Alert severity="success" sx={{ marginBottom: "1vw" }}>
-            <AlertTitle>Congratulations {props.username}!</AlertTitle>
+            <AlertTitle>Welcome, {props.username}!</AlertTitle>
             {props.userCount !== null
               ? `You're the ${ordinalize(props.userCount.toString())} registered BlackBox user!`
               : "You're now a registered BlackBox user!"}
@@ -84,7 +84,6 @@ const SuccessfulUserSignUpDialog: FC<ISuccessfulUserSignUpDialogProps> = (props:
           {signInError && (
             <Alert severity="error">
               <AlertTitle>Automatic sign in failed!</AlertTitle>
-              {signInError}!
             </Alert>
           )}
         </Box>

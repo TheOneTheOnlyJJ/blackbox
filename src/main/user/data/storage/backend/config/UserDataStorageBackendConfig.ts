@@ -4,8 +4,8 @@ import {
   ILocalSQLiteUserDataStorageBackendConfig
 } from "../implementations/LocalSQLite/LocalSQLiteUserDataStorageBackend";
 import { USER_DATA_STORAGE_BACKEND_TYPES, UserDataStorageBackendType } from "@shared/user/data/storage/backend/UserDataStorageBackendType";
-import { IOptionBUserDataStorageBackendConfig, OPTION_B_USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA } from "../implementations/optionB/optionB";
-import { IOptionCUserDataStorageBackendConfig, OPTION_C_USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA } from "../implementations/optionC/optionC";
+import { IOptionBUserDataStorageBackendConfig, OptionBUserDataStorageBackend } from "../implementations/optionB/optionB";
+import { IOptionCUserDataStorageBackendConfig, OptionCUserDataStorageBackend } from "../implementations/optionC/optionC";
 
 // Map of every user data storage backend type to its corresponding config type
 export interface IUserDataStorageBackendConfigMap {
@@ -21,8 +21,8 @@ type UserDataStorageBackendConfigJSONSchemaMap = {
 };
 export const USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_MAP: UserDataStorageBackendConfigJSONSchemaMap = {
   [USER_DATA_STORAGE_BACKEND_TYPES.LocalSQLite]: LocalSQLiteUserDataStorageBackend.CONFIG_JSON_SCHEMA,
-  [USER_DATA_STORAGE_BACKEND_TYPES.OptionB]: OPTION_B_USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA,
-  [USER_DATA_STORAGE_BACKEND_TYPES.OptionC]: OPTION_C_USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA
+  [USER_DATA_STORAGE_BACKEND_TYPES.OptionB]: OptionBUserDataStorageBackend.CONFIG_JSON_SCHEMA,
+  [USER_DATA_STORAGE_BACKEND_TYPES.OptionC]: OptionCUserDataStorageBackend.CONFIG_JSON_SCHEMA
 } as const;
 
 export const USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA: JSONSchemaType<UserDataStorageBackendConfig> = {
@@ -31,9 +31,7 @@ export const USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA: JSONSchemaType<UserDa
   anyOf: Object.keys(USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_MAP)
     .sort()
     .reduce<JSONSchemaType<UserDataStorageBackendConfig>[]>((accumulator: JSONSchemaType<UserDataStorageBackendConfig>[], currentValue: string) => {
-      accumulator.push(
-        USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_MAP[currentValue as keyof typeof USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_MAP]
-      );
+      accumulator.push(USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_MAP[currentValue as keyof UserDataStorageBackendConfigJSONSchemaMap]);
       return accumulator;
     }, [])
 } as const;

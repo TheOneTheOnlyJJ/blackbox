@@ -102,7 +102,7 @@ const SignedInAppBar = forwardRef<HTMLDivElement, ISignedInAppBarProps>(function
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             {props.title}
           </Typography>
-          <Tooltip title={signedInRootContext.currentlySignedInUser.username}>
+          <Tooltip title={signedInRootContext.signedInUser.username}>
             <IconButton
               size="large"
               aria-label="account of current user"

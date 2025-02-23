@@ -14,6 +14,7 @@ const UserDataStoragesPage: FC = () => {
   // User data storage config form dialog
   const [isNewUserDataStorageConfigFormDialogOpen, setIsNewUserDataStorageConfigFormDialogOpen] = useState<boolean>(false);
   const isInitialMount = useRef(true);
+  // TODO: This does not work properly
   useEffect((): void => {
     if (isInitialMount.current) {
       // Skip logging on the initial render
@@ -56,7 +57,7 @@ const UserDataStoragesPage: FC = () => {
         </Button>
       </Box>
       <NewUserDataStorageConfigFormDialog
-        userIdToAddTo={signedInDashboardLayoutRootContext.currentlySignedInUser.userId}
+        userIdToAddTo={signedInDashboardLayoutRootContext.signedInUser.userId}
         onAddedSuccessfully={handleNewUserDataStorageConfigFormDialogClose}
         open={isNewUserDataStorageConfigFormDialogOpen}
         onClose={handleNewUserDataStorageConfigFormDialogClose}

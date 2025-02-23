@@ -16,11 +16,11 @@ export class WindowPositionWatcher {
   private updateWindowPositionTimeout: null | NodeJS.Timeout;
   private readonly UPDATE_WINDOW_POSITION_TIMEOUT_DELAY_MS: number;
 
-  public constructor(logger: LogFunctions, timeoutDelay = 500) {
+  public constructor(logger: LogFunctions, timeoutDelayMs = 500) {
     this.logger = logger;
-    this.logger.debug(`Initialising new Window Position Watcher with timeout delay: "${timeoutDelay.toString()}".`);
+    this.logger.debug(`Initialising new Window Position Watcher with timeout delay: ${timeoutDelayMs.toString()} ms.`);
     this.updateWindowPositionTimeout = null;
-    this.UPDATE_WINDOW_POSITION_TIMEOUT_DELAY_MS = timeoutDelay;
+    this.UPDATE_WINDOW_POSITION_TIMEOUT_DELAY_MS = timeoutDelayMs;
   }
 
   public watchWindowPosition(window: BrowserWindow, onWindowPositionChange: (position: WindowPosition) => void): void {

@@ -1,11 +1,11 @@
 import { JSONSchemaType } from "ajv";
 
-export interface ISecuredPasswordData {
+export interface ISecuredPassword {
   hash: string;
   salt: string;
 }
 
-export const SECURED_PASSWORD_DATA_JSON_SCHEMA: JSONSchemaType<ISecuredPasswordData> = {
+export const SECURED_PASSWORD_JSON_SCHEMA: JSONSchemaType<ISecuredPassword> = {
   $schema: "http://json-schema.org/draft-07/schema#",
   type: "object",
   properties: {

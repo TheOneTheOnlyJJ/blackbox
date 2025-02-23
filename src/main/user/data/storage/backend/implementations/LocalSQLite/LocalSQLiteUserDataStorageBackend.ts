@@ -1,5 +1,5 @@
 import { LogFunctions } from "electron-log";
-import { UserDataStorageBackend } from "../../UserDataStorageBackend";
+import { BaseUserDataStorageBackend } from "../../BaseUserDataStorageBackend";
 import { USER_DATA_STORAGE_BACKEND_TYPES, UserDataStorageBackendTypes } from "@shared/user/data/storage/backend/UserDataStorageBackendType";
 import Ajv, { JSONSchemaType } from "ajv";
 import { LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/backend/implementations/LocalSQLite/LocalSQLiteUserDataStorageBackendConfigConstants";
@@ -11,7 +11,7 @@ export interface ILocalSQLiteUserDataStorageBackendConfig extends IBaseUserDataS
   dbFileName: string;
 }
 
-export class LocalSQLiteUserDataStorageBackend extends UserDataStorageBackend<ILocalSQLiteUserDataStorageBackendConfig> {
+export class LocalSQLiteUserDataStorageBackend extends BaseUserDataStorageBackend<ILocalSQLiteUserDataStorageBackendConfig> {
   public static readonly CONFIG_JSON_SCHEMA: JSONSchemaType<ILocalSQLiteUserDataStorageBackendConfig> = {
     $schema: "http://json-schema.org/draft-07/schema#",
     type: "object",

@@ -43,9 +43,7 @@ export const USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_JSON_SCHEMA: JSONSche
     .reduce<JSONSchemaType<UserDataStorageBackendConfigCreateInput>[]>(
       (accumulator: JSONSchemaType<UserDataStorageBackendConfigCreateInput>[], currentValue: string) => {
         accumulator.push(
-          USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_JSON_SCHEMA_MAP[
-            currentValue as keyof typeof USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_JSON_SCHEMA_MAP
-          ]
+          USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_JSON_SCHEMA_MAP[currentValue as keyof UserDataStorageBackendConfigCreateInputJSONSchemaMap]
         );
         return accumulator;
       },
@@ -71,8 +69,8 @@ export const USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_UI_SCHEMA: UiSchema<U
       (accumulator: UiSchema<UserDataStorageBackendConfigCreateInput>[], currentValue: string) => {
         accumulator.push(
           USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_UI_SCHEMA_MAP[
-            currentValue as keyof typeof USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_UI_SCHEMA_MAP
-          ] as UiSchema<UserDataStorageBackendConfigCreateInput> // Type cast required here due to generic invariance
+            currentValue as keyof UserDataStorageBackendConfigCreateInputUiSchemaMap
+          ] as UiSchema<UserDataStorageBackendConfigCreateInput> // Apparently this is required here
         );
         return accumulator;
       },

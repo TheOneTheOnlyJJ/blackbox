@@ -40,30 +40,32 @@ const UserSignInForm: FC = () => {
       return;
     }
     const USERNAME: string = data.formData.username;
-    window.IPCTLSAPI.encryptData(JSON.stringify(userSignInInputToUserSignInDTO(data.formData, appLogger)), "user sign in credentials")
+    window.IPCTLSAPI.encryptData(JSON.stringify(userSignInInputToUserSignInDTO(data.formData, appLogger)), "user sign in DTO")
       .then(
         (encryptedUserSignInDTO: EncryptedUserSignInDTO): void => {
           const SIGN_IN_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.signIn(encryptedUserSignInDTO satisfies EncryptedUserSignInDTO);
           if (SIGN_IN_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
+            setWasSignInSuccessful(SIGN_IN_RESPONSE.data);
             if (SIGN_IN_RESPONSE.data) {
-              setWasSignInSuccessful(true);
-              enqueueSnackbar({ message: "Signed in." });
+              appLogger.info(`Sign in successful.`);
+              enqueueSnackbar({ message: `${USERNAME} signed in.`, variant: "info" });
             } else {
-              setWasSignInSuccessful(false);
+              appLogger.info(`Sign in unsuccessful.`);
             }
           } else {
+            appLogger.error("Sign in error!");
             enqueueSnackbar({ message: "Sign in error.", variant: "error" });
           }
         },
         (reason: unknown): void => {
           const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
-          appLogger.error(`Could not encrypt user sign in credentials for user "${USERNAME}". Reason: ${REASON_MESSAGE}.`);
+          appLogger.error(`Could not encrypt user sign in DTO for user "${USERNAME}". Reason: ${REASON_MESSAGE}.`);
           enqueueSnackbar({ message: "Credentials encryption error.", variant: "error" });
         }
       )
       .catch((err: unknown): void => {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-        appLogger.error(`Could not encrypt user sign in credentials for user "${USERNAME}". Reason: ${ERROR_MESSAGE}.`);
+        appLogger.error(`Could not encrypt user sign in DTO for user "${USERNAME}". Reason: ${ERROR_MESSAGE}.`);
         enqueueSnackbar({ message: "Credentials encryption error.", variant: "error" });
       });
   }, []);

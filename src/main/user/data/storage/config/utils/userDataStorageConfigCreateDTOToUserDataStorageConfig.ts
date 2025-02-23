@@ -6,17 +6,15 @@ import { LogFunctions } from "electron-log";
 
 export function userDataStorageConfigCreateDTOToUserDataStorageConfig(
   userDataStorageConfigCreateDTO: IUserDataStorageConfigCreateDTO,
-  configId: UUID,
+  storageId: UUID,
   logger: LogFunctions
 ): IUserDataStorageConfig {
   logger.debug(`Converting User Data Storage Config Create DTO to User Data Storage Config.`);
-  const CONVERTED_USER_DATA_STORAGE_CONFIG: IUserDataStorageConfig = {
-    configId: configId,
+  return {
+    storageId: storageId,
     userId: userDataStorageConfigCreateDTO.userId as UUID,
     name: userDataStorageConfigCreateDTO.name,
     visibilityPassword: userDataStorageConfigCreateDTO.visibilityPassword,
     backendConfig: userDataStorageBackendConfigCreateDTOToUserDataStorageBackendConfig(userDataStorageConfigCreateDTO.backendConfigCreateDTO, logger)
   };
-  logger.debug(`Converted User Data Storage Config Create DTO to User Data Storage Config.`);
-  return CONVERTED_USER_DATA_STORAGE_CONFIG;
 }

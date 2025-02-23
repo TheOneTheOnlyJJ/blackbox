@@ -1,10 +1,10 @@
 import { useOutletContext } from "react-router-dom";
-import { ICurrentlySignedInUser } from "@shared/user/account/CurrentlySignedInUser";
+import { ISignedInUser } from "@shared/user/account/SignedInUser";
 import { IAppRootContext } from "@renderer/components/roots/appRoot/AppRootContext";
 import { Dispatch, SetStateAction } from "react";
 
 export interface ISignedInRootContext extends IAppRootContext {
-  currentlySignedInUser: ICurrentlySignedInUser;
+  signedInUser: ISignedInUser;
   setForbiddenLocationName: Dispatch<SetStateAction<string>>;
 }
 

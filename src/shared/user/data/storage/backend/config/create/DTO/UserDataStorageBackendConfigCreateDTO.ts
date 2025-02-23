@@ -39,9 +39,7 @@ export const USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_DTO_JSON_SCHEMA: JSONSchema
     .reduce<JSONSchemaType<UserDataStorageBackendConfigCreateDTO>[]>(
       (accumulator: JSONSchemaType<UserDataStorageBackendConfigCreateDTO>[], currentValue: string) => {
         accumulator.push(
-          USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_DTO_JSON_SCHEMA_MAP[
-            currentValue as keyof typeof USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_DTO_JSON_SCHEMA_MAP
-          ]
+          USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_DTO_JSON_SCHEMA_MAP[currentValue as keyof UserDataStorageBackendConfigCreateDTOJSONSchemaMap]
         );
         return accumulator;
       },

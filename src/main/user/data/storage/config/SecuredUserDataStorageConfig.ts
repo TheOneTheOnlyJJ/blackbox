@@ -1,12 +1,12 @@
 import { UUID } from "node:crypto";
 import { USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA, UserDataStorageBackendConfig } from "../backend/config/UserDataStorageBackendConfig";
-import { ISecuredPasswordData, SECURED_PASSWORD_DATA_JSON_SCHEMA } from "@main/utils/encryption/SecuredPasswordData";
+import { ISecuredPassword, SECURED_PASSWORD_JSON_SCHEMA } from "@main/utils/encryption/SecuredPassword";
 import { JSONSchemaType } from "ajv";
 
 export interface ISecuredUserDataStorageConfig {
-  configId: UUID;
+  storageId: UUID;
   name: string;
-  securedVisibilityPassword?: ISecuredPasswordData;
+  securedVisibilityPassword?: ISecuredPassword;
   backendConfig: UserDataStorageBackendConfig;
 }
 
@@ -14,11 +14,11 @@ export const SECURED_USER_DATA_STORAGE_CONFIG_JSON_SCHEMA: JSONSchemaType<ISecur
   $schema: "http://json-schema.org/draft-07/schema#",
   type: "object",
   properties: {
-    configId: { type: "string", format: "uuid" },
+    storageId: { type: "string", format: "uuid" },
     name: { type: "string" },
-    securedVisibilityPassword: { ...SECURED_PASSWORD_DATA_JSON_SCHEMA, nullable: true },
+    securedVisibilityPassword: { ...SECURED_PASSWORD_JSON_SCHEMA, nullable: true },
     backendConfig: USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA
   },
-  required: ["configId", "name", "backendConfig"],
+  required: ["storageId", "name", "backendConfig"],
   additionalProperties: false
 } as const;

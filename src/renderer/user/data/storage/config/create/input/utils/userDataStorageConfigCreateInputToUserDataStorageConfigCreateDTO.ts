@@ -9,7 +9,7 @@ export const userDataStorageConfigCreateInputToUserDataStorageConfigCreateDTO = 
   logger: LogFunctions
 ): IUserDataStorageConfigCreateDTO => {
   logger.debug(`Converting User Data Storage Config Create Input to User Data Storage Config Create DTO.`);
-  const CONVERTED_USER_DATA_STORAGE_CONFIG_CREATE_DTO: IUserDataStorageConfigCreateDTO = {
+  return {
     userId: userIdToAddTo,
     name: userDataStorageConfigCreateInput.name,
     visibilityPassword: userDataStorageConfigCreateInput.visibilityPassword,
@@ -18,6 +18,4 @@ export const userDataStorageConfigCreateInputToUserDataStorageConfigCreateDTO = 
       logger
     )
   };
-  logger.debug(`Converted User Data Storage Config Create Input to User Data Storage Config Create DTO.`);
-  return CONVERTED_USER_DATA_STORAGE_CONFIG_CREATE_DTO;
 };

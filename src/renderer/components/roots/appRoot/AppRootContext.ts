@@ -1,9 +1,14 @@
 import { useOutletContext } from "react-router-dom";
-import { ICurrentlySignedInUser } from "@shared/user/account/CurrentlySignedInUser";
+import { ISignedInUser } from "@shared/user/account/SignedInUser";
+import { ICurrentUserAccountStorage } from "@shared/user/account/storage/CurrentUserAccountStorage";
 
 export interface IAppRootContext {
-  currentlySignedInUser: ICurrentlySignedInUser | null;
-  isUserAccountStorageBackendAvailable: boolean;
+  signedInUser: ISignedInUser | null;
+  currentUserAccountStorage: ICurrentUserAccountStorage | null;
+  isIPCTLSReady: {
+    main: boolean;
+    renderer: boolean;
+  };
 }
 
 export const useAppRootContext = (): IAppRootContext => {

@@ -5,7 +5,7 @@ import SignInPage from "@renderer/pages/SignInPage";
 import SignUpPage from "@renderer/pages/SignUpPage";
 import AccountDashboardPage from "@renderer/pages/AccountDashboardPage";
 import ForbiddenPage from "@renderer/pages/ForbiddenPage";
-import SigningOutPage from "@renderer/pages/SigningOutPage";
+import SignOutPage from "@renderer/pages/SignOutPage";
 import SignedInRoot from "@renderer/components/roots/signedInRoot/SignedInRoot";
 import UserDataStoragesPage from "@renderer/pages/UserDataStoragesPage";
 import ProfilePage from "@renderer/pages/ProfilePage";
@@ -26,13 +26,13 @@ const APP_ROUTER = createHashRouter([
         element: <SignUpPage />
       },
       {
-        path: "signing-out",
-        element: <SigningOutPage />
-      },
-      {
-        path: "users/:username",
+        path: "users/:userId",
         element: <SignedInRoot />,
         children: [
+          {
+            path: "signout",
+            element: <SignOutPage />
+          },
           {
             element: <SignedInDashboardLayoutRoot />,
             children: [

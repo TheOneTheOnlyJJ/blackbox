@@ -77,54 +77,52 @@ const UserSignUpForm: FC = () => {
     }
     const USERNAME: string = data.formData.username;
     const FORM_DATA: IUserSignUpInput = data.formData;
-    window.IPCTLSAPI.encryptData(JSON.stringify(userSignUpInputToUserSignUpDTO(FORM_DATA, appLogger)), "user sign up data")
+    window.IPCTLSAPI.encryptData(JSON.stringify(userSignUpInputToUserSignUpDTO(FORM_DATA, appLogger)), "user sign up DTO")
       .then(
         (encryptedUserSignUpDTO: EncryptedUserSignUpDTO): void => {
           const SIGN_UP_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.signUp(encryptedUserSignUpDTO satisfies EncryptedUserSignUpDTO);
-          if (SIGN_UP_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
-            appLogger.error(`Sign up error: ${SIGN_UP_RESPONSE.error}!`);
-            enqueueSnackbar({ message: "Sign up error.", variant: "error" });
-            return;
-          }
-          if (SIGN_UP_RESPONSE.data) {
-            appLogger.info(`Sign up successful for new user "${USERNAME}".`);
-            // Extract sign in data from sign up user data
-            let encryptedNewUserSignInDTO: EncryptedUserSignInDTO | null = null;
-            window.IPCTLSAPI.encryptData(JSON.stringify(userSignUpInputToUserSignInDTO(FORM_DATA, appLogger)), "new user sign in DTO")
-              .then(
-                (encryptedUserSignInDTO: EncryptedUserSignInDTO): void => {
-                  encryptedNewUserSignInDTO = encryptedUserSignInDTO satisfies EncryptedUserSignInDTO;
-                },
-                (reason: unknown): void => {
-                  const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
-                  appLogger.error(`Could not encrypt user sign in DTO for new user "${USERNAME}": ${REASON_MESSAGE}.`);
-                  encryptedNewUserSignInDTO = null;
+          if (SIGN_UP_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
+            if (SIGN_UP_RESPONSE.data) {
+              appLogger.info(`Signed up new user "${USERNAME}".`);
+              enqueueSnackbar({ message: `${USERNAME} signed up.`, variant: "info" });
+              // Extract sign in data from sign up user data
+              let encryptedNewUserSignInDTO: EncryptedUserSignInDTO | null = null;
+              window.IPCTLSAPI.encryptData(JSON.stringify(userSignUpInputToUserSignInDTO(FORM_DATA, appLogger)), "new user sign in DTO")
+                .then(
+                  (encryptedUserSignInDTO: EncryptedUserSignInDTO): void => {
+                    encryptedNewUserSignInDTO = encryptedUserSignInDTO satisfies EncryptedUserSignInDTO;
+                  },
+                  (reason: unknown): void => {
+                    const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
+                    appLogger.error(`Could not encrypt user sign in DTO for new user "${USERNAME}": ${REASON_MESSAGE}.`);
+                    enqueueSnackbar({ message: "Credentials encryption error.", variant: "error" });
+                  }
+                )
+                .catch((err: unknown): void => {
+                  const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+                  appLogger.error(`Could not encrypt user sign in DTO for new user "${USERNAME}": ${ERROR_MESSAGE}.`);
                   enqueueSnackbar({ message: "Credentials encryption error.", variant: "error" });
-                }
-              )
-              .catch((err: unknown): void => {
-                const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-                appLogger.error(`Could not encrypt user sign in DTO for new user "${USERNAME}": ${ERROR_MESSAGE}.`);
-                encryptedNewUserSignInDTO = null;
-                enqueueSnackbar({ message: "Credentials encryption error.", variant: "error" });
-              })
-              .finally((): void => {
-                appLogger.debug("Opening successful user sign up dialog.");
-                let userCount: number | null = null;
-                const GET_USER_COUNT_RESPONSE: IPCAPIResponse<number> = window.userAPI.getUserCount();
-                if (GET_USER_COUNT_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
-                  userCount = GET_USER_COUNT_RESPONSE.data;
-                }
-                setSuccessfulUserSignUpDialogProps({
-                  open: true,
-                  username: USERNAME,
-                  userCount: userCount,
-                  encryptedNewUserSignInDTO: encryptedNewUserSignInDTO
+                })
+                .finally((): void => {
+                  appLogger.debug("Opening successful user sign up dialog.");
+                  let userCount: number | null = null;
+                  const GET_USER_COUNT_RESPONSE: IPCAPIResponse<number> = window.userAPI.getUserCount();
+                  if (GET_USER_COUNT_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
+                    userCount = GET_USER_COUNT_RESPONSE.data;
+                  }
+                  setSuccessfulUserSignUpDialogProps({
+                    open: true,
+                    username: USERNAME,
+                    userCount: userCount,
+                    encryptedNewUserSignInDTO: encryptedNewUserSignInDTO
+                  });
                 });
-                enqueueSnackbar({ message: "Signed up." });
-              });
+            } else {
+              appLogger.info(`Could not sign up new user "${USERNAME}".`);
+              enqueueSnackbar({ message: "Sign up error.", variant: "error" });
+            }
           } else {
-            appLogger.info(`Could not sign up new user "${USERNAME}".`);
+            appLogger.error(`Sign up error: ${SIGN_UP_RESPONSE.error}!`);
             enqueueSnackbar({ message: "Sign up error.", variant: "error" });
           }
         },

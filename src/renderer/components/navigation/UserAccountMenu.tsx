@@ -27,19 +27,19 @@ const UserAccountMenu: FC<UserAccountMenuProps> = (props: UserAccountMenuProps) 
       {
         name: "Profile",
         icon: PersonOutlineOutlinedIcon,
-        path: `/users/${signedInRootContext.currentlySignedInUser.username}/profile`,
+        path: `/users/${signedInRootContext.signedInUser.username}/profile`,
         divider: false
       },
       {
         name: "Settings",
         icon: SettingsOutlinedIcon,
-        path: `/users/${signedInRootContext.currentlySignedInUser.username}/settings`,
+        path: `/users/${signedInRootContext.signedInUser.username}/settings`,
         divider: true
       },
       {
         name: "Sign Out",
         icon: LogoutOutlinedIcon,
-        path: "/signing-out",
+        path: `/users/${signedInRootContext.signedInUser.username}/signout`,
         divider: false
       }
     ];

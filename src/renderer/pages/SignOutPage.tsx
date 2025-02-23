@@ -6,20 +6,23 @@ import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { enqueueSnackbar } from "notistack";
 import { appLogger } from "@renderer/utils/loggers";
+import { ISignedInRootContext, useSignedInRootContext } from "@renderer/components/roots/signedInRoot/SignedInRootContext";
 
-const SigningOutPage: FC = () => {
+const SignOutPage: FC = () => {
+  const signedInRootContext: ISignedInRootContext = useSignedInRootContext();
   useEffect((): void => {
     // TODO: Remove this
-    //setTimeout(() => {
-    appLogger.debug("Signing out page reached.");
-    const SIGN_OUT_RESPONSE: IPCAPIResponse = window.userAPI.signOut();
-    if (SIGN_OUT_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
-      enqueueSnackbar({ message: "Signed out." });
-    } else {
-      enqueueSnackbar({ message: "Sign out error.", variant: "error" });
-    }
-    //}, 5_000);
-  }, []);
+    setTimeout(() => {
+      const USERNAME: string = signedInRootContext.signedInUser.username;
+      appLogger.debug(`Signing out user ${USERNAME}.`);
+      const SIGN_OUT_RESPONSE: IPCAPIResponse = window.userAPI.signOut();
+      if (SIGN_OUT_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
+        enqueueSnackbar({ message: `${USERNAME} signed out.` });
+      } else {
+        enqueueSnackbar({ message: "Sign out error.", variant: "error" });
+      }
+    }, 5_000);
+  }, [signedInRootContext]);
   return (
     <Box
       sx={{
@@ -50,4 +53,4 @@ const SigningOutPage: FC = () => {
   );
 };
 
-export default SigningOutPage;
+export default SignOutPage;

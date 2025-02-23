@@ -1,20 +1,22 @@
 import { contextBridge, ipcRenderer, IpcRendererEvent } from "electron";
 import {
-  CurrentlySignedInUserChangedCallback,
+  SignedInUserChangedCallback,
   IUserAPI,
   USER_API_IPC_CHANNELS,
-  UserAccountStorageBackendAvailabilityChangedCallback,
+  CurrentUserAccountStorageChangedCallback,
+  UserAccountStorageOpenChangedCallback,
   UserAPIIPCChannel
 } from "@shared/IPC/APIs/UserAPI";
-import { ICurrentlySignedInUser } from "@shared/user/account/CurrentlySignedInUser";
+import { ISignedInUser } from "@shared/user/account/SignedInUser";
 import { EncryptedUserSignInDTO } from "@shared/user/account/encrypted/EncryptedUserSignInDTO";
 import { EncryptedUserSignUpDTO } from "@shared/user/account/encrypted/EncryptedUserSignUpDTO";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { EncryptedUserDataStorageConfigCreateDTO } from "@shared/user/account/encrypted/EncryptedUserDataStorageConfigCreateDTO";
-import { IIPCTLSAPI, IPC_TLS_API_CHANNELS, IPCTLSAPIChannel, TLSReadinessChangedCallback } from "@shared/IPC/APIs/IPCTLSAPI";
+import { IIPCTLSAPI, IPC_TLS_API_CHANNELS, IPCTLSAPIChannel, IPCTLSReadinessChangedCallback } from "@shared/IPC/APIs/IPCTLSAPI";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 import { IIPCTLSBootstrapAPI, IIPCTLSBootstrapProgress, IPC_TLS_BOOTSTRAP_API_CHANNELS } from "@shared/IPC/APIs/IPCTLSBootstrapAPI";
 import { LogLevel, LogMessage } from "electron-log";
+import { ICurrentUserAccountStorage } from "@shared/user/account/storage/CurrentUserAccountStorage";
 
 // Variables
 const TEXT_ENCODER: TextEncoder = new TextEncoder();
@@ -33,8 +35,8 @@ const sendLogToMainProcess = (scope: string, level: LogLevel, message: string): 
   } satisfies LogMessage);
 };
 
-const RENDERER_TLS_READINESS_CHANGE_CALLBACKS: Map<string, TLSReadinessChangedCallback> = new Map<string, TLSReadinessChangedCallback>();
-let isRendererTLSReady = false;
+const RENDERER_IPC_TLS_READINESS_CHANGE_CALLBACKS: Map<string, IPCTLSReadinessChangedCallback> = new Map<string, IPCTLSReadinessChangedCallback>();
+let isRendererIPCTLSReady = false;
 const IPC_TLS_AES_KEY: { value: CryptoKey | null } = new Proxy<{ value: CryptoKey | null }>(
   { value: null },
   {
@@ -46,10 +48,10 @@ const IPC_TLS_AES_KEY: { value: CryptoKey | null } = new Proxy<{ value: CryptoKe
         throw new Error(`Value must be "null" or a valid CryptoKey object! No-op set.`);
       }
       target[property] = value;
-      isRendererTLSReady = value !== null;
-      sendLogToMainProcess(PRELOAD_IPC_TLS_API_LOG_SCOPE, "debug", `Updated renderer IPC TLS readiness: "${isRendererTLSReady.toString()}".`);
-      RENDERER_TLS_READINESS_CHANGE_CALLBACKS.forEach((val: TLSReadinessChangedCallback): void => {
-        val(isRendererTLSReady);
+      isRendererIPCTLSReady = value !== null;
+      sendLogToMainProcess(PRELOAD_IPC_TLS_API_LOG_SCOPE, "debug", `Updated renderer IPC TLS readiness: ${isRendererIPCTLSReady.toString()}.`);
+      RENDERER_IPC_TLS_READINESS_CHANGE_CALLBACKS.forEach((val: IPCTLSReadinessChangedCallback): void => {
+        val(isRendererIPCTLSReady);
       });
       return true;
     }
@@ -173,17 +175,17 @@ bootstrapIPCTLS();
 // }, 5_000);
 
 const IPC_TLS_API: IIPCTLSAPI = {
-  isMainReady: (): boolean => {
-    const CHANNEL: IPCTLSAPIChannel = IPC_TLS_API_CHANNELS.isMainReady;
+  getMainReadiness: (): boolean => {
+    const CHANNEL: IPCTLSAPIChannel = IPC_TLS_API_CHANNELS.getMainReadiness;
     sendLogToMainProcess(PRELOAD_IPC_TLS_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL) as boolean;
   },
-  onMainReadinessChanged: (callback: TLSReadinessChangedCallback): (() => void) => {
+  onMainReadinessChanged: (callback: IPCTLSReadinessChangedCallback): (() => void) => {
     const CHANNEL: IPCTLSAPIChannel = IPC_TLS_API_CHANNELS.onMainReadinessChanged;
     sendLogToMainProcess(PRELOAD_IPC_TLS_API_LOG_SCOPE, "debug", `Adding listener from main on channel: "${CHANNEL}".`);
-    const LISTENER = (_: IpcRendererEvent, isMainTLSReady: boolean): void => {
+    const LISTENER = (_: IpcRendererEvent, isMainIPCTLSReady: boolean): void => {
       sendLogToMainProcess(PRELOAD_IPC_TLS_API_LOG_SCOPE, "debug", `Received message from main on channel: "${CHANNEL}".`);
-      callback(isMainTLSReady);
+      callback(isMainIPCTLSReady);
     };
     ipcRenderer.on(CHANNEL, LISTENER);
     return (): void => {
@@ -191,22 +193,22 @@ const IPC_TLS_API: IIPCTLSAPI = {
       ipcRenderer.removeListener(CHANNEL, LISTENER);
     };
   },
-  isRendererReady: (): boolean => {
-    sendLogToMainProcess(PRELOAD_IPC_TLS_API_LOG_SCOPE, "debug", `Getting renderer IPC TLS readiness: "${isRendererTLSReady.toString()}".`);
-    return isRendererTLSReady;
+  getRendererReadiness: (): boolean => {
+    sendLogToMainProcess(PRELOAD_IPC_TLS_API_LOG_SCOPE, "debug", `Getting renderer IPC TLS readiness: ${isRendererIPCTLSReady.toString()}.`);
+    return isRendererIPCTLSReady;
   },
-  onRendererReadinessChanged: (callback: TLSReadinessChangedCallback): (() => void) => {
+  onRendererReadinessChanged: (callback: IPCTLSReadinessChangedCallback): (() => void) => {
     sendLogToMainProcess(PRELOAD_IPC_TLS_API_LOG_SCOPE, "debug", "Adding listener for renderer IPC TLS readiness.");
     // Generate random ID and ensure it is unique
     let callbackId: string = Math.random().toString();
-    while (RENDERER_TLS_READINESS_CHANGE_CALLBACKS.has(callbackId)) {
+    while (RENDERER_IPC_TLS_READINESS_CHANGE_CALLBACKS.has(callbackId)) {
       sendLogToMainProcess(PRELOAD_IPC_TLS_API_LOG_SCOPE, "warn", "Prevented ID collision between listeners for renderer IPC TLS readiness.");
       callbackId = Math.random().toString();
     }
-    RENDERER_TLS_READINESS_CHANGE_CALLBACKS.set(callbackId, callback);
+    RENDERER_IPC_TLS_READINESS_CHANGE_CALLBACKS.set(callbackId, callback);
     return (): void => {
       sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", "Removing listener for renderer IPC TLS readiness.");
-      RENDERER_TLS_READINESS_CHANGE_CALLBACKS.delete(callbackId);
+      RENDERER_IPC_TLS_READINESS_CHANGE_CALLBACKS.delete(callbackId);
     };
   },
   encryptData: async (data: string, dataPurposeToLog?: string): Promise<IEncryptedData> => {
@@ -240,8 +242,8 @@ const USER_API: IUserAPI = {
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL) as IPCAPIResponse;
   },
-  isAccountStorageBackendAvailable: (): IPCAPIResponse<boolean> => {
-    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.isAccountStorageBackendAvailable;
+  isUserAccountStorageOpen: (): IPCAPIResponse<boolean> => {
+    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.isUserAccountStorageOpen;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL) as IPCAPIResponse<boolean>;
   },
@@ -255,22 +257,27 @@ const USER_API: IUserAPI = {
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL) as IPCAPIResponse<number>;
   },
-  getCurrentlySignedInUser: (): IPCAPIResponse<ICurrentlySignedInUser | null> => {
-    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.getCurrentlySignedInUser;
+  getSignedInUser: (): IPCAPIResponse<ISignedInUser | null> => {
+    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.getSignedInUser;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
-    return ipcRenderer.sendSync(CHANNEL) as IPCAPIResponse<ICurrentlySignedInUser | null>;
+    return ipcRenderer.sendSync(CHANNEL) as IPCAPIResponse<ISignedInUser | null>;
   },
   addUserDataStorageConfigToUser: (encryptedUserDataStorageConfigCreateDTO: EncryptedUserDataStorageConfigCreateDTO): IPCAPIResponse<boolean> => {
     const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.addUserDataStorageConfigToUser;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL, encryptedUserDataStorageConfigCreateDTO) as IPCAPIResponse<boolean>;
   },
-  onAccountStorageBackendAvailabilityChanged: (callback: UserAccountStorageBackendAvailabilityChangedCallback): (() => void) => {
-    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.onAccountStorageBackendAvailabilityChanged;
+  getCurrentUserAccountStorage: (): IPCAPIResponse<ICurrentUserAccountStorage | null> => {
+    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.getCurrentUserAccountStorage;
+    sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
+    return ipcRenderer.sendSync(CHANNEL) as IPCAPIResponse<ICurrentUserAccountStorage | null>;
+  },
+  onCurrentUserAccountStorageChanged: (callback: CurrentUserAccountStorageChangedCallback): (() => void) => {
+    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.onCurrentUserAccountStorageChanged;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Adding listener from main on channel: "${CHANNEL}".`);
-    const LISTENER = (_: IpcRendererEvent, isUserAccountStorageBackendAvailable: boolean): void => {
+    const LISTENER = (_: IpcRendererEvent, currentUserAccountStorage: ICurrentUserAccountStorage | null): void => {
       sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Received message from main on channel: "${CHANNEL}".`);
-      callback(isUserAccountStorageBackendAvailable);
+      callback(currentUserAccountStorage);
     };
     ipcRenderer.on(CHANNEL, LISTENER);
     return (): void => {
@@ -278,12 +285,25 @@ const USER_API: IUserAPI = {
       ipcRenderer.removeListener(CHANNEL, LISTENER);
     };
   },
-  onCurrentlySignedInUserChanged: (callback: CurrentlySignedInUserChangedCallback): (() => void) => {
-    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.onCurrentlySignedInUserChanged;
+  onUserAccountStorageOpenChanged: (callback: UserAccountStorageOpenChangedCallback): (() => void) => {
+    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.onUserAccountStorageOpenChanged;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Adding listener from main on channel: "${CHANNEL}".`);
-    const LISTENER = (_: IpcRendererEvent, newCurrentlySignedInUser: ICurrentlySignedInUser | null): void => {
+    const LISTENER = (_: IpcRendererEvent, isUserAccountStorageOpen: boolean): void => {
       sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Received message from main on channel: "${CHANNEL}".`);
-      callback(newCurrentlySignedInUser);
+      callback(isUserAccountStorageOpen);
+    };
+    ipcRenderer.on(CHANNEL, LISTENER);
+    return (): void => {
+      sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Removing listener from main on channel: "${CHANNEL}".`);
+      ipcRenderer.removeListener(CHANNEL, LISTENER);
+    };
+  },
+  onSignedInUserChanged: (callback: SignedInUserChangedCallback): (() => void) => {
+    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.onSignedInUserChanged;
+    sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Adding listener from main on channel: "${CHANNEL}".`);
+    const LISTENER = (_: IpcRendererEvent, signedInUser: ISignedInUser | null): void => {
+      sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Received message from main on channel: "${CHANNEL}".`);
+      callback(signedInUser);
     };
     ipcRenderer.on(CHANNEL, LISTENER);
     return (): void => {

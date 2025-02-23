@@ -22,12 +22,12 @@ const SignedInRoot: FC = () => {
     appLogger.debug("Rendering Signed In Root component.");
   }, []);
 
-  return appRootContext.currentlySignedInUser !== null ? (
+  return appRootContext.signedInUser !== null ? (
     <Outlet
       context={
         {
           ...appRootContext,
-          currentlySignedInUser: appRootContext.currentlySignedInUser,
+          signedInUser: appRootContext.signedInUser,
           setForbiddenLocationName: setForbiddenLocationName
         } satisfies ISignedInRootContext
       }
