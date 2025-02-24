@@ -272,6 +272,7 @@ export class UserManager {
     const SECURED_USER_DATA_STORAGE_CONFIG: ISecuredUserDataStorageConfig = {
       storageId: userDataStorageConfig.storageId,
       name: userDataStorageConfig.name,
+      description: userDataStorageConfig.description,
       securedVisibilityPassword: securedVisibilityPassword,
       backendConfig: userDataStorageConfig.backendConfig
     };

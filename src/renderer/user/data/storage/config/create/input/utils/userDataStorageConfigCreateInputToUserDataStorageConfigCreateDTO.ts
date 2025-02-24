@@ -12,6 +12,7 @@ export const userDataStorageConfigCreateInputToUserDataStorageConfigCreateDTO = 
   return {
     userId: userIdToAddTo,
     name: userDataStorageConfigCreateInput.name,
+    description: userDataStorageConfigCreateInput.description,
     visibilityPassword: userDataStorageConfigCreateInput.visibilityPassword,
     backendConfigCreateDTO: userDataStorageBackendConfigCreateInputToUserDataStorageBackendConfigCreateDTO(
       userDataStorageConfigCreateInput.backendConfigCreateInput,

@@ -6,6 +6,7 @@ import { JSONSchemaType } from "ajv";
 export interface ISecuredUserDataStorageConfig {
   storageId: UUID;
   name: string;
+  description?: string;
   securedVisibilityPassword?: ISecuredPassword;
   backendConfig: UserDataStorageBackendConfig;
 }
@@ -16,6 +17,7 @@ export const SECURED_USER_DATA_STORAGE_CONFIG_JSON_SCHEMA: JSONSchemaType<ISecur
   properties: {
     storageId: { type: "string", format: "uuid" },
     name: { type: "string" },
+    description: { type: "string", nullable: true },
     securedVisibilityPassword: { ...SECURED_PASSWORD_JSON_SCHEMA, nullable: true },
     backendConfig: USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA
   },

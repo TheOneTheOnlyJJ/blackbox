@@ -14,6 +14,7 @@ export function userDataStorageConfigCreateDTOToUserDataStorageConfig(
     storageId: storageId,
     userId: userDataStorageConfigCreateDTO.userId as UUID,
     name: userDataStorageConfigCreateDTO.name,
+    description: userDataStorageConfigCreateDTO.description,
     visibilityPassword: userDataStorageConfigCreateDTO.visibilityPassword,
     backendConfig: userDataStorageBackendConfigCreateDTOToUserDataStorageBackendConfig(userDataStorageConfigCreateDTO.backendConfigCreateDTO, logger)
   };

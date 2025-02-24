@@ -7,6 +7,7 @@ import {
 export interface IUserDataStorageConfigCreateDTO {
   userId: string;
   name: string;
+  description?: string;
   visibilityPassword?: string;
   backendConfigCreateDTO: UserDataStorageBackendConfigCreateDTO;
 }
@@ -17,6 +18,7 @@ export const USER_DATA_STORAGE_CONFIG_CREATE_DTO_JSON_SCHEMA: JSONSchemaType<IUs
   properties: {
     userId: { type: "string", title: "User ID", format: "uuid" },
     name: { type: "string", title: "Name" },
+    description: { type: "string", title: "Description", nullable: true },
     visibilityPassword: { type: "string", title: "Visibility Password", nullable: true },
     backendConfigCreateDTO: USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_DTO_JSON_SCHEMA
   },

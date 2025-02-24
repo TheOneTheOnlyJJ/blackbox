@@ -13,20 +13,20 @@ const signOutPageLogger: LogFunctions = log.scope("renderer-sign-out-page");
 const SignOutPage: FC = () => {
   useEffect((): void => {
     // TODO: Remove this
-    setTimeout(() => {
-      const SIGN_OUT_RESPONSE: IPCAPIResponse<ISignedInUser | null> = window.userAPI.signOut();
-      if (SIGN_OUT_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
-        if (SIGN_OUT_RESPONSE.data === null) {
-          signOutPageLogger.warn("No user was signed in.");
-        } else {
-          signOutPageLogger.info(`Signed out user: ${JSON.stringify(SIGN_OUT_RESPONSE.data, null, 2)}.`);
-          enqueueSnackbar({ message: `${SIGN_OUT_RESPONSE.data.username} signed out.` });
-        }
+    // setTimeout(() => {
+    const SIGN_OUT_RESPONSE: IPCAPIResponse<ISignedInUser | null> = window.userAPI.signOut();
+    if (SIGN_OUT_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
+      if (SIGN_OUT_RESPONSE.data === null) {
+        signOutPageLogger.warn("No user was signed in.");
       } else {
-        signOutPageLogger.error("Sign out error!");
-        enqueueSnackbar({ message: "Sign out error.", variant: "error" });
+        signOutPageLogger.info(`Signed out user: ${JSON.stringify(SIGN_OUT_RESPONSE.data, null, 2)}.`);
+        enqueueSnackbar({ message: `${SIGN_OUT_RESPONSE.data.username} signed out.`, variant: "info" });
       }
-    }, 2_500);
+    } else {
+      signOutPageLogger.error("Sign out error!");
+      enqueueSnackbar({ message: "Sign out error.", variant: "error" });
+    }
+    // }, 2_500);
   }, []);
   return (
     <Box

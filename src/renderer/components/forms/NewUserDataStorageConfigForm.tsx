@@ -1,7 +1,7 @@
 import { FC, useCallback } from "react";
 import { FormProps, IChangeEvent, withTheme } from "@rjsf/core";
 import { Theme } from "@rjsf/mui";
-import { ErrorTransformer, RJSFSchema, RJSFValidationError } from "@rjsf/utils";
+import { CustomValidator, ErrorTransformer, FormValidation, RJSFSchema, RJSFValidationError } from "@rjsf/utils";
 import { customizeValidator } from "@rjsf/validator-ajv8";
 import { appLogger } from "@renderer/utils/loggers";
 import { errorCapitalizerErrorTransformer } from "@renderer/utils/RJSF/errorTransformers/errorCapitalizerErrorTransformer";
@@ -39,6 +39,20 @@ const newUserDataStorageConfigFormErrorTransformer: ErrorTransformer<IUserDataSt
       return true;
     })
   );
+};
+
+const newUserDataStorageConfigFormValidator: CustomValidator<IUserDataStorageConfigCreateInput> = (
+  formData: IUserDataStorageConfigCreateInput | undefined,
+  errors: FormValidation<IUserDataStorageConfigCreateInput>
+): FormValidation<IUserDataStorageConfigCreateInput> => {
+  // Skip if no form data or errors
+  if (formData === undefined || errors.visibilityPassword === undefined || errors.confirmVisibilityPassword === undefined) {
+    return errors;
+  }
+  if (formData.visibilityPassword !== formData.confirmVisibilityPassword) {
+    errors.confirmVisibilityPassword.addError("Does not match Visibility Password.");
+  }
+  return errors;
 };
 
 export interface INewUserDataStorageConfigFormProps {
@@ -107,6 +121,7 @@ const NewUserDataStorageConfigForm: FC<INewUserDataStorageConfigFormProps> = (pr
       omitExtraData={true}
       liveOmit={true}
       showErrorList={false}
+      customValidate={newUserDataStorageConfigFormValidator}
       transformErrors={newUserDataStorageConfigFormErrorTransformer}
       onSubmit={handleFormSubmit}
       noHtml5Validate={true}

@@ -1,6 +1,6 @@
 import Box from "@mui/material/Box/Box";
 import Typography from "@mui/material/Typography/Typography";
-import { FC, useCallback, useEffect, useRef, useState } from "react";
+import { FC, MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
 import {
   ISignedInDashboardLayoutRootContext,
   useSignedInDashboardLayoutRootContext
@@ -13,16 +13,7 @@ const UserDataStoragesPage: FC = () => {
   const signedInDashboardLayoutRootContext: ISignedInDashboardLayoutRootContext = useSignedInDashboardLayoutRootContext();
   // User data storage config form dialog
   const [isNewUserDataStorageConfigFormDialogOpen, setIsNewUserDataStorageConfigFormDialogOpen] = useState<boolean>(false);
-  const isInitialMount = useRef(true);
-  // TODO: This does not work properly
-  useEffect((): void => {
-    if (isInitialMount.current) {
-      // Skip logging on the initial render
-      isInitialMount.current = false;
-      return;
-    }
-    appLogger.debug(`${isNewUserDataStorageConfigFormDialogOpen ? "Opened" : "Closed"} new User Data Storage Config form dialog.`);
-  }, [isNewUserDataStorageConfigFormDialogOpen]);
+  const isInitialMount: MutableRefObject<boolean> = useRef<boolean>(true);
 
   const handleNewUserDataStorageConfigFormDialogClose = useCallback((): void => {
     setIsNewUserDataStorageConfigFormDialogOpen(false);
@@ -32,6 +23,15 @@ const UserDataStoragesPage: FC = () => {
     appLogger.debug("New User Data Storage button clicked.");
     setIsNewUserDataStorageConfigFormDialogOpen(true);
   }, []);
+
+  useEffect((): void => {
+    if (isInitialMount.current) {
+      // Skip logging on the initial render
+      isInitialMount.current = false;
+      return;
+    }
+    appLogger.debug(`${isNewUserDataStorageConfigFormDialogOpen ? "Opened" : "Closed"} new User Data Storage Config form dialog.`);
+  }, [isNewUserDataStorageConfigFormDialogOpen]);
 
   useEffect((): void => {
     signedInDashboardLayoutRootContext.setAppBarTitle("Data Storages");

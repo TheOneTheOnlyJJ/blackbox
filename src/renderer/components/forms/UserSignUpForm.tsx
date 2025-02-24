@@ -52,11 +52,11 @@ const userSignUpFormValidator: CustomValidator<IUserSignUpInput> = (
     errors.username.addError("Could not get username availability.");
   } else {
     if (!IS_USERNAME_AVAILABLE_RESPONSE.data) {
-      errors.username.addError("This username is not available.");
+      errors.username.addError(`Username "${formData.username}" is not available.`);
     }
   }
   if (formData.password !== formData.confirmPassword) {
-    errors.confirmPassword.addError("Does not match password.");
+    errors.confirmPassword.addError("Does not match Password.");
   }
   return errors;
 };

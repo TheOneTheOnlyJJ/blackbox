@@ -29,6 +29,7 @@ interface ISQLiteVersion {
 interface IRawSecuredUserDataStorageConfig {
   storageId: UUID;
   name: string;
+  description: string | null;
   visibilityPasswordHash: string | null;
   visibilityPasswordSalt: string | null;
   config: string;
@@ -272,15 +273,16 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     this.logger.debug("Valid User Data Storage Config. Attempting to add to database.");
     const ADD_USER_DATA_STORAGE_CONFIG_SQL = `
     INSERT INTO user_data_storage_configs (
-      storage_id, user_id, name, visibility_password_hash, visibility_password_salt, config
+      storage_id, user_id, name, description, visibility_password_hash, visibility_password_salt, config
     ) VALUES (
-      @storageId, @userId, @name, @visibilityPasswordHash, @visibilityPasswordSalt, jsonb(@config)
+      @storageId, @userId, @name, @description, @visibilityPasswordHash, @visibilityPasswordSalt, jsonb(@config)
     )`;
     try {
       const RUN_RESULT: RunResult = this.db.prepare(ADD_USER_DATA_STORAGE_CONFIG_SQL).run({
         storageId: securedUserDataStorageConfig.storageId,
         userId: userId,
         name: securedUserDataStorageConfig.name,
+        description: securedUserDataStorageConfig.description ?? null,
         visibilityPasswordHash: securedUserDataStorageConfig.securedVisibilityPassword?.hash ?? null,
         visibilityPasswordSalt: securedUserDataStorageConfig.securedVisibilityPassword?.salt ?? null,
         config: STRINGIFIED_USER_DATA_STORAGE_CONFIG
@@ -304,6 +306,7 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     SELECT
       storage_id AS storageId,
       name,
+      description,
       visibility_password_hash AS visibilityPasswordHash,
       visibility_password_salt AS visibilityPasswordSalt,
       json(config) AS config
@@ -342,6 +345,7 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
         SECURED_USER_DATA_STORAGE_CONFIGS.push({
           storageId: rawSecuredUserDataStorageConfig.storageId,
           name: rawSecuredUserDataStorageConfig.name,
+          description: rawSecuredUserDataStorageConfig.description ?? undefined,
           securedVisibilityPassword: SECURED_VISIBILITY_PASSWORD,
           backendConfig: PARSED_USER_DATA_STORAGE_BACKEND_CONFIG
         });
@@ -395,6 +399,7 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
         storage_id TEXT NOT NULL PRIMARY KEY,
         user_id TEXT NOT NULL REFERENCES users(user_id) ON UPDATE CASCADE ON DELETE CASCADE,
         name TEXT NOT NULL,
+        description TEXT,
         visibility_password_hash TEXT,
         visibility_password_salt TEXT,
         config BLOB NOT NULL
