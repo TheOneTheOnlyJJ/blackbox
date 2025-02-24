@@ -14,9 +14,10 @@ import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { EncryptedUserDataStorageConfigCreateDTO } from "@shared/user/account/encrypted/EncryptedUserDataStorageConfigCreateDTO";
 import { IIPCTLSAPI, IPC_TLS_API_CHANNELS, IPCTLSAPIChannel, IPCTLSReadinessChangedCallback } from "@shared/IPC/APIs/IPCTLSAPI";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
-import { IIPCTLSBootstrapAPI, IIPCTLSBootstrapProgress, IPC_TLS_BOOTSTRAP_API_CHANNELS } from "@shared/IPC/APIs/IPCTLSBootstrapAPI";
+import { IIPCTLSBootstrapAPI, IPC_TLS_BOOTSTRAP_API_CHANNELS } from "@shared/IPC/APIs/IPCTLSBootstrapAPI";
 import { LogLevel, LogMessage } from "electron-log";
 import { ICurrentUserAccountStorage } from "@shared/user/account/storage/CurrentUserAccountStorage";
+import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 
 // Variables
 const TEXT_ENCODER: TextEncoder = new TextEncoder();
@@ -58,108 +59,58 @@ const IPC_TLS_AES_KEY: { value: CryptoKey | null } = new Proxy<{ value: CryptoKe
   }
 );
 
-// This cannot use await because preload does not support top-level awaits
-const bootstrapIPCTLS = (): void => {
+const bootstrapIPCTLS = async (): Promise<void> => {
+  sendLogToMainProcess(PRELOAD_IPC_TLS_API_BOOTSTRAP_LOG_SCOPE, "info", "Bootstrapping IPC TLS.");
   const IPC_TLS_BOOTSTRAP_API: IIPCTLSBootstrapAPI = {
-    getPublicRSAKeyDER: (): ArrayBuffer => {
+    generateAndGetMainProcessIPCTLSPublicRSAKeyDER: (): Promise<IPCAPIResponse<ArrayBuffer>> => {
       sendLogToMainProcess(
         PRELOAD_IPC_TLS_API_BOOTSTRAP_LOG_SCOPE,
         "debug",
-        `Messaging main on channel: "${IPC_TLS_BOOTSTRAP_API_CHANNELS.getPublicRSAKeyDER}".`
+        `Messaging main on channel: "${IPC_TLS_BOOTSTRAP_API_CHANNELS.generateAndGetMainProcessIPCTLSPublicRSAKeyDER}".`
       );
-      return ipcRenderer.sendSync(IPC_TLS_BOOTSTRAP_API_CHANNELS.getPublicRSAKeyDER) as ArrayBuffer;
+      return ipcRenderer.invoke(IPC_TLS_BOOTSTRAP_API_CHANNELS.generateAndGetMainProcessIPCTLSPublicRSAKeyDER) as Promise<
+        IPCAPIResponse<ArrayBuffer>
+      >;
     },
-    sendProgress: (progress: IIPCTLSBootstrapProgress): void => {
+    sendWrappedIPCTLSAESKey: (wrappedAESKey: IPCAPIResponse<ArrayBuffer>): void => {
       sendLogToMainProcess(
         PRELOAD_IPC_TLS_API_BOOTSTRAP_LOG_SCOPE,
         "debug",
-        `Messaging main on channel: "${IPC_TLS_BOOTSTRAP_API_CHANNELS.sendProgress}".`
+        `Messaging main on channel: "${IPC_TLS_BOOTSTRAP_API_CHANNELS.sendWrappedIPCTLSAESKey}".`
       );
-      ipcRenderer.send(IPC_TLS_BOOTSTRAP_API_CHANNELS.sendProgress, progress);
-    },
-    sendWrappedAESKey: (wrappedAESKey: ArrayBuffer): void => {
-      sendLogToMainProcess(
-        PRELOAD_IPC_TLS_API_BOOTSTRAP_LOG_SCOPE,
-        "debug",
-        `Messaging main on channel: "${IPC_TLS_BOOTSTRAP_API_CHANNELS.sendWrappedAESKey}".`
-      );
-      ipcRenderer.send(IPC_TLS_BOOTSTRAP_API_CHANNELS.sendWrappedAESKey, wrappedAESKey);
+      ipcRenderer.send(IPC_TLS_BOOTSTRAP_API_CHANNELS.sendWrappedIPCTLSAESKey, wrappedAESKey);
     }
   };
-  // Get main process public RSA key
-  let mainProcessPublicRSAKeyImportProgress: IIPCTLSBootstrapProgress;
-  sendLogToMainProcess(PRELOAD_IPC_TLS_API_BOOTSTRAP_LOG_SCOPE, "debug", `Initialising IPC TLS.`);
-  const MAIN_PROCESS_PUBLIC_RSA_KEY_DER_ARRAY_BUFFER = IPC_TLS_BOOTSTRAP_API.getPublicRSAKeyDER();
-  // Import the main process public RSA key in the WebCryptoAPI CryptoKey format
-  crypto.subtle
-    .importKey("spki", MAIN_PROCESS_PUBLIC_RSA_KEY_DER_ARRAY_BUFFER, { name: "RSA-OAEP", hash: "SHA-256" }, false, ["encrypt", "wrapKey"])
-    .then(
-      (mainProcessPublicRSAKey: CryptoKey): void => {
-        mainProcessPublicRSAKeyImportProgress = { wasSuccessful: true, message: "Main process public RSA key imported successfully" };
-        let IPCTLSAESKeyGenerationProgress: IIPCTLSBootstrapProgress;
-        // Generate IPC TLS AES key
-        crypto.subtle
-          .generateKey({ name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"])
-          .then(
-            (AESKey: CryptoKey): void => {
-              IPC_TLS_AES_KEY.value = AESKey;
-              IPCTLSAESKeyGenerationProgress = { wasSuccessful: true, message: "IPC TLS AES key generated successfully" };
-              let IPCTLSAESKeyWrappingProgress: IIPCTLSBootstrapProgress;
-              let didSendWrappingProgress = false;
-              // Wrap the generated IPC TLS AES key with the main process' public RSA key
-              crypto.subtle
-                .wrapKey("raw", IPC_TLS_AES_KEY.value, mainProcessPublicRSAKey, { name: "RSA-OAEP" })
-                .then(
-                  (wrappedIPCTLSAESKey: ArrayBuffer): void => {
-                    IPCTLSAESKeyWrappingProgress = { wasSuccessful: true, message: "IPC TLS AES key wrapped successfully" };
-                    IPC_TLS_BOOTSTRAP_API.sendProgress(IPCTLSAESKeyWrappingProgress);
-                    didSendWrappingProgress = true;
-                    // Send wrapped key to main process
-                    IPC_TLS_BOOTSTRAP_API.sendWrappedAESKey(wrappedIPCTLSAESKey);
-                  },
-                  (reason: unknown): void => {
-                    const REASON_MESSAGE: string = reason instanceof Error ? reason.message : String(reason);
-                    IPCTLSAESKeyWrappingProgress = { wasSuccessful: false, message: REASON_MESSAGE };
-                  }
-                )
-                .catch((reason: unknown): void => {
-                  const REASON_MESSAGE: string = reason instanceof Error ? reason.message : String(reason);
-                  IPCTLSAESKeyWrappingProgress = { wasSuccessful: false, message: REASON_MESSAGE };
-                })
-                .finally((): void => {
-                  if (!didSendWrappingProgress) {
-                    IPC_TLS_BOOTSTRAP_API.sendProgress(IPCTLSAESKeyWrappingProgress);
-                  }
-                });
-            },
-            (reason: unknown): void => {
-              const REASON_MESSAGE: string = reason instanceof Error ? reason.message : String(reason);
-              IPCTLSAESKeyGenerationProgress = { wasSuccessful: false, message: REASON_MESSAGE };
-            }
-          )
-          .catch((reason: unknown): void => {
-            const REASON_MESSAGE: string = reason instanceof Error ? reason.message : String(reason);
-            IPCTLSAESKeyGenerationProgress = { wasSuccessful: false, message: REASON_MESSAGE };
-          })
-          .finally((): void => {
-            IPC_TLS_BOOTSTRAP_API.sendProgress(IPCTLSAESKeyGenerationProgress);
-          });
-      },
-      (reason: unknown): void => {
-        const REASON_MESSAGE: string = reason instanceof Error ? reason.message : String(reason);
-        mainProcessPublicRSAKeyImportProgress = { wasSuccessful: false, message: REASON_MESSAGE };
-      }
-    )
-    .catch((reason: unknown): void => {
-      const REASON_MESSAGE: string = reason instanceof Error ? reason.message : String(reason);
-      mainProcessPublicRSAKeyImportProgress = { wasSuccessful: false, message: REASON_MESSAGE };
-    })
-    .finally((): void => {
-      IPC_TLS_BOOTSTRAP_API.sendProgress(mainProcessPublicRSAKeyImportProgress);
+  // Get and import main process IPC TLS public RSA key, generate and wrap IPC TLS AES key
+  try {
+    const GENERATE_AND_GET_MAIN_PROCESS_IPC_TLS_PUBLIC_RSA_KEY_DER_RESPONSE: IPCAPIResponse<ArrayBuffer> =
+      await IPC_TLS_BOOTSTRAP_API.generateAndGetMainProcessIPCTLSPublicRSAKeyDER();
+    if (GENERATE_AND_GET_MAIN_PROCESS_IPC_TLS_PUBLIC_RSA_KEY_DER_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
+      throw new Error(GENERATE_AND_GET_MAIN_PROCESS_IPC_TLS_PUBLIC_RSA_KEY_DER_RESPONSE.error);
+    }
+    const MAIN_PROCESS_IPC_TLS_PUBLIC_RSA_KEY: CryptoKey = await crypto.subtle.importKey(
+      "spki",
+      GENERATE_AND_GET_MAIN_PROCESS_IPC_TLS_PUBLIC_RSA_KEY_DER_RESPONSE.data,
+      { name: "RSA-OAEP", hash: "SHA-256" },
+      false,
+      ["encrypt", "wrapKey"]
+    );
+    IPC_TLS_AES_KEY.value = await crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]);
+    const WRAPPED_IPC_TLS_AES_KEY: ArrayBuffer = await crypto.subtle.wrapKey("raw", IPC_TLS_AES_KEY.value, MAIN_PROCESS_IPC_TLS_PUBLIC_RSA_KEY, {
+      name: "RSA-OAEP"
     });
+    IPC_TLS_BOOTSTRAP_API.sendWrappedIPCTLSAESKey({ status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: WRAPPED_IPC_TLS_AES_KEY });
+  } catch (error: unknown) {
+    IPC_TLS_AES_KEY.value = null;
+    const ERROR_MESSAGE: string = error instanceof Error ? error.message : String(error);
+    IPC_TLS_BOOTSTRAP_API.sendWrappedIPCTLSAESKey({
+      status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR,
+      error: `IPC TLS bootstrap failed! Error: ${ERROR_MESSAGE}`
+    });
+  }
 };
 
-bootstrapIPCTLS();
+void bootstrapIPCTLS();
 
 // TODO: Remove this
 // TEST

@@ -1,4 +1,4 @@
-import { FC, useEffect, useState } from "react";
+import { FC, MutableRefObject, useEffect, useMemo, useRef, useState } from "react";
 import { appLogger } from "@renderer/utils/loggers";
 import { Outlet, useLocation, Location, useNavigate, NavigateFunction } from "react-router-dom";
 import { IAppRootContext } from "./AppRootContext";
@@ -14,6 +14,8 @@ export interface IOpenNotificationSnackbarProps {
   message: string;
 }
 
+const IS_IPC_TLS_READY_UPDATE_TIMEOUT_DELAY_MS = 1_000;
+
 const AppRoot: FC = () => {
   // General
   const location: Location = useLocation();
@@ -21,11 +23,16 @@ const AppRoot: FC = () => {
   // IPC TLS
   const [isMainIPCTLSReady, setIsMainIPCTLSReady] = useState<boolean>(false);
   const [isRendererIPCTLSReady, setIsRendererIPCTLSReady] = useState<boolean>(false);
+  const isIPCTLSReady: boolean = useMemo<boolean>((): boolean => {
+    return isMainIPCTLSReady && isRendererIPCTLSReady;
+  }, [isMainIPCTLSReady, isRendererIPCTLSReady]);
   // User
   const [currentUserAccountStorage, setCurrentUserAccountStorage] = useState<ICurrentUserAccountStorage | null>(null);
   const [signedInUser, setSignedInUser] = useState<ISignedInUser | null>(null);
   // Navigation
   const [signedInNavigationEntryIndex, setSignedInNavigationEntryIndex] = useState<number>(0);
+  // Timeouts
+  const isIPCTLSReadyUpdateTimeoutRef: MutableRefObject<ReturnType<typeof setTimeout> | null> = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Monitor location
   useEffect((): void => {
@@ -61,20 +68,27 @@ const AppRoot: FC = () => {
   // Monitor IPC TLS API readiness
   useEffect((): void => {
     appLogger.info(`Main IPC TLS readiness changed: ${isMainIPCTLSReady.toString()}.`);
-    if (isMainIPCTLSReady) {
-      enqueueSnackbar({ message: "Main IPC TLS ready.", variant: "info" });
-    } else {
-      enqueueSnackbar({ message: "Main IPC TLS not ready.", variant: "warning" });
-    }
   }, [isMainIPCTLSReady]);
   useEffect((): void => {
     appLogger.info(`Renderer IPC TLS readiness changed: ${isRendererIPCTLSReady.toString()}.`);
-    if (isRendererIPCTLSReady) {
-      enqueueSnackbar({ message: "Renderer IPC TLS ready.", variant: "info" });
-    } else {
-      enqueueSnackbar({ message: "Renderer IPC TLS not ready.", variant: "warning" });
-    }
   }, [isRendererIPCTLSReady]);
+  useEffect((): (() => void) => {
+    isIPCTLSReadyUpdateTimeoutRef.current = window.setTimeout((): void => {
+      if (isIPCTLSReady) {
+        enqueueSnackbar({ message: "Secure connection established.", variant: "success" });
+      } else {
+        enqueueSnackbar({ message: "Secure connection lost.", variant: "warning" });
+      }
+      isIPCTLSReadyUpdateTimeoutRef.current = null;
+    }, IS_IPC_TLS_READY_UPDATE_TIMEOUT_DELAY_MS);
+    return (): void => {
+      if (isIPCTLSReadyUpdateTimeoutRef.current !== null) {
+        clearTimeout(isIPCTLSReadyUpdateTimeoutRef.current);
+        isIPCTLSReadyUpdateTimeoutRef.current = null;
+        appLogger.debug("Cleared yet unran IPC TLS readiness change timeout.");
+      }
+    };
+  }, [isIPCTLSReady]);
 
   // Monitor User Account Storage changes
   useEffect((): void => {
@@ -162,7 +176,8 @@ const AppRoot: FC = () => {
             currentUserAccountStorage: currentUserAccountStorage,
             isIPCTLSReady: {
               main: isMainIPCTLSReady,
-              renderer: isRendererIPCTLSReady
+              renderer: isRendererIPCTLSReady,
+              both: isIPCTLSReady
             }
           } satisfies IAppRootContext
         }

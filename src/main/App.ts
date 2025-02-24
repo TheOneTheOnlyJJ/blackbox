@@ -4,7 +4,7 @@ import { join, resolve } from "node:path";
 import log, { LogFunctions } from "electron-log";
 import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 import { JSONSchemaType } from "ajv/dist/types/json-schema";
-import { IIPCTLSBootstrapAPI, IIPCTLSBootstrapProgress, IPC_TLS_BOOTSTRAP_API_CHANNELS } from "@shared/IPC/APIs/IPCTLSBootstrapAPI";
+import { IIPCTLSBootstrapAPI, IPC_TLS_BOOTSTRAP_API_CHANNELS } from "@shared/IPC/APIs/IPCTLSBootstrapAPI";
 import { USER_API_IPC_CHANNELS } from "@shared/IPC/APIs/UserAPI";
 import { UserManager } from "@main/user/UserManager";
 import { USER_ACCOUNT_STORAGE_BACKEND_TYPES } from "@main/user/account/storage/backend/UserAccountStorageBackendType";
@@ -14,7 +14,7 @@ import { IUserAPI } from "@shared/IPC/APIs/UserAPI";
 import { MainProcessIPCAPIHandlers } from "@main/utils/IPC/MainProcessIPCAPIHandlers";
 import { IUserSignUpDTO, USER_SIGN_UP_DTO_JSON_SCHEMA } from "@shared/user/account/UserSignUpDTO";
 import { generateKeyPairSync, webcrypto } from "node:crypto";
-import { testAESKey } from "@main/utils/encryption/testAESKey";
+import { isAESKeyValid } from "@main/utils/encryption/isAESKeyValid";
 import { bufferToArrayBuffer } from "@main/utils/typeConversions/bufferToArrayBuffer";
 import { decryptAndValidateJSON } from "@main/utils/encryption/decryptAndValidateJSON";
 import { EncryptedUserSignUpDTO } from "@shared/user/account/encrypted/EncryptedUserSignUpDTO";
@@ -165,9 +165,7 @@ export class App {
   } as const;
 
   // Security
-  // Will get initialised in the class constructor
-  private readonly MAIN_PROCESS_PUBLIC_RSA_KEY_DER: Buffer;
-  private readonly MAIN_PROCESS_PRIVATE_RSA_KEY_DER: Buffer;
+  private IPCTLSBootstrapPrivateRSAKey: CryptoKey | null;
   // Renderer process will send this over when it is ready
   private isMainTLSReady = false;
   private readonly IPC_TLS_AES_KEY: { value: Buffer | null } = new Proxy<{ value: Buffer | null }>(
@@ -179,6 +177,9 @@ export class App {
         }
         if (value !== null && !Buffer.isBuffer(value)) {
           throw new Error(`Value must be "null" or a valid Buffer object! No-op set.`);
+        }
+        if (value !== null && !isAESKeyValid(value, this.IPCTLSBootstrapAPILogger, "IPC TLS")) {
+          throw new Error("Invalid AES key given! No-op set.");
         }
         target[property] = value;
         this.isMainTLSReady = value !== null;
@@ -198,77 +199,50 @@ export class App {
 
   // IPC API handlers
   private readonly IPC_TLS_BOOTSTRAP_API_HANDLERS: MainProcessIPCTLSBootstrapAPIIPCHandlers = {
-    handleGetPublicRSAKeyDER: (): ArrayBuffer => {
-      return bufferToArrayBuffer(this.MAIN_PROCESS_PUBLIC_RSA_KEY_DER);
-    },
-    handleSendProgress: (progress: IIPCTLSBootstrapProgress): void => {
-      if (progress.wasSuccessful) {
-        this.IPCTLSBootstrapAPILogger.info(`Received IPC TLS initialisation progress: ${progress.message}.`);
-      } else {
-        this.IPCTLSBootstrapAPILogger.error(`Received IPC TLS initialisation error: ${progress.message}!`);
+    handleGenerateAndGetMainProcessIPCTLSPublicRSAKeyDER: async (): Promise<IPCAPIResponse<ArrayBuffer>> => {
+      try {
+        const { publicKey, privateKey } = generateKeyPairSync("rsa", {
+          modulusLength: 4096,
+          publicKeyEncoding: { type: "spki", format: "der" },
+          privateKeyEncoding: { type: "pkcs8", format: "der" }
+        });
+        this.IPCTLSBootstrapPrivateRSAKey = await webcrypto.subtle.importKey("pkcs8", privateKey, { name: "RSA-OAEP", hash: "SHA-256" }, true, [
+          "unwrapKey"
+        ]);
+        this.IPCTLSBootstrapAPILogger.info("Generated IPC TLS bootstrap RSA key pair.");
+        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: bufferToArrayBuffer(publicKey) };
+      } catch (error: unknown) {
+        const ERROR_MESSAGE: string = error instanceof Error ? error.message : String(error);
+        this.IPCTLSBootstrapAPILogger.error(`Main process IPC TLS RSA key generation error: ${ERROR_MESSAGE}!`);
+        return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: ERROR_MESSAGE };
       }
     },
-    handleSendWrappedAESKey: (wrappedAESKey: ArrayBuffer): void => {
+    handleSendWrappedIPCTLSAESKey: async (wrappedIPCTLSAESKeyIPCAPIResponse: IPCAPIResponse<ArrayBuffer>): Promise<void> => {
       this.IPCTLSBootstrapAPILogger.info("Received wrapped IPC TLS AES key.");
-      // Import the main process private RSA key in the WebCryptoAPI format
-      webcrypto.subtle
-        .importKey("pkcs8", this.MAIN_PROCESS_PRIVATE_RSA_KEY_DER, { name: "RSA-OAEP", hash: "SHA-256" }, true, ["unwrapKey"])
-        .then(
-          (mainProcessPrivateRSAKey: CryptoKey): void => {
-            this.IPCTLSBootstrapAPILogger.info("Imported main process private RSA key in CryptoKey format.");
-            // And use it to unwrap the IPC TLS AES key
-            webcrypto.subtle
-              .unwrapKey("raw", wrappedAESKey, mainProcessPrivateRSAKey, { name: "RSA-OAEP" }, { name: "AES-GCM", length: 256 }, true, [
-                "encrypt",
-                "decrypt"
-              ])
-              .then(
-                (IPCTLSAESKey: CryptoKey): void => {
-                  this.IPCTLSBootstrapAPILogger.info("Unwrapped IPC TLS AES key.");
-                  // Extract the IPC TLS AES key to a Buffer for easier synchronous manipulation in the main process
-                  webcrypto.subtle
-                    .exportKey("raw", IPCTLSAESKey)
-                    .then(
-                      (IPCTLSAESKeyArrayBuffer: ArrayBuffer): void => {
-                        this.IPCTLSBootstrapAPILogger.info("Exported unwrapped IPC TLS AES key to ArrayBuffer.");
-                        const IPC_TLS_AES_KEY_BUFFER: Buffer = Buffer.from(IPCTLSAESKeyArrayBuffer);
-                        if (!testAESKey(IPC_TLS_AES_KEY_BUFFER, this.IPCTLSBootstrapAPILogger)) {
-                          this.IPCTLSBootstrapAPILogger.error("Unwrapped IPC TLS AES key failed test!");
-                          this.IPC_TLS_AES_KEY.value = null;
-                        } else {
-                          this.IPCTLSBootstrapAPILogger.info("Unwrapped IPC TLS AES key passed test!");
-                          this.IPC_TLS_AES_KEY.value = Buffer.from(IPC_TLS_AES_KEY_BUFFER);
-                        }
-                      },
-                      (reason: unknown): void => {
-                        const REASON_MESSAGE: string = reason instanceof Error ? reason.message : String(reason);
-                        this.IPCTLSBootstrapAPILogger.error(`Could not export IPC TLS AES key to ArrayBuffer: ${REASON_MESSAGE}!`);
-                      }
-                    )
-                    .catch((reason: unknown): void => {
-                      const REASON_MESSAGE: string = reason instanceof Error ? reason.message : String(reason);
-                      this.IPCTLSBootstrapAPILogger.error(`Could not export IPC TLS AES key to ArrayBuffer: ${REASON_MESSAGE}!`);
-                    });
-                },
-                (reason: unknown): void => {
-                  const REASON_MESSAGE: string = reason instanceof Error ? reason.message : String(reason);
-                  this.IPCTLSBootstrapAPILogger.error(`Could not unwrap IPC TLS AES key with main process private RSA key: ${REASON_MESSAGE}!`);
-                }
-              )
-              .catch((reason: unknown): void => {
-                const REASON_MESSAGE: string = reason instanceof Error ? reason.message : String(reason);
-                this.IPCTLSBootstrapAPILogger.error(`Could not unwrap IPC TLS AES key with main process private RSA key: ${REASON_MESSAGE}!`);
-              });
-          },
-          (reason: unknown): void => {
-            const REASON_MESSAGE: string = reason instanceof Error ? reason.message : String(reason);
-            this.IPCTLSBootstrapAPILogger.error(`Could not import main process private RSA key in WebCryptoAPI format: ${REASON_MESSAGE}!`);
-          }
-        )
-        .catch((reason: unknown): void => {
-          const REASON_MESSAGE: string = reason instanceof Error ? reason.message : String(reason);
-          this.IPCTLSBootstrapAPILogger.error(`Could not import main process private RSA key in WebCryptoAPI format: ${REASON_MESSAGE}!`);
-        });
+      if (wrappedIPCTLSAESKeyIPCAPIResponse.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
+        this.IPCTLSBootstrapPrivateRSAKey = null;
+        throw new Error(wrappedIPCTLSAESKeyIPCAPIResponse.error);
+      }
+      if (this.IPCTLSBootstrapPrivateRSAKey === null) {
+        throw new Error("Null IPC TLS bootstrap private RSA key!");
+      }
+      try {
+        const UNWRAPPED_IPO_TLS_AES_KEY: CryptoKey = await webcrypto.subtle.unwrapKey(
+          "raw",
+          wrappedIPCTLSAESKeyIPCAPIResponse.data,
+          this.IPCTLSBootstrapPrivateRSAKey,
+          { name: "RSA-OAEP" },
+          { name: "AES-GCM", length: 256 },
+          true,
+          ["encrypt", "decrypt"]
+        );
+        const EXPORTED_IPC_TLS_AES_KEY: ArrayBuffer = await webcrypto.subtle.exportKey("raw", UNWRAPPED_IPO_TLS_AES_KEY);
+        this.IPC_TLS_AES_KEY.value = Buffer.from(EXPORTED_IPC_TLS_AES_KEY);
+      } catch (error: unknown) {
+        this.IPCTLSBootstrapPrivateRSAKey = null;
+        const ERROR_MESSAGE: string = error instanceof Error ? error.message : String(error);
+        this.IPCTLSBootstrapAPILogger.error(`Could not obtain IPC TLS AES key: ${ERROR_MESSAGE}!`);
+      }
     }
   };
 
@@ -504,15 +478,7 @@ export class App {
       this.USER_API_HANDLERS.sendSignedInUserChanged,
       this.USER_API_HANDLERS.sendCurrentUserAccountStorageChanged
     );
-    // Generate IPC encryption keys
-    this.bootstrapLogger.debug(`Generating main process RSA encryption keys.`);
-    const { publicKey, privateKey } = generateKeyPairSync("rsa", {
-      modulusLength: 4096,
-      publicKeyEncoding: { type: "spki", format: "der" },
-      privateKeyEncoding: { type: "pkcs8", format: "der" }
-    });
-    this.MAIN_PROCESS_PUBLIC_RSA_KEY_DER = publicKey;
-    this.MAIN_PROCESS_PRIVATE_RSA_KEY_DER = privateKey;
+    this.IPCTLSBootstrapPrivateRSAKey = null;
     this.bootstrapLogger.debug("App constructor done.");
   }
 
@@ -780,18 +746,21 @@ export class App {
 
   private registerIPCTLSBootstrapIPCHandlers(): void {
     this.windowLogger.debug("Registering IPC TLS Bootstrap IPC handlers.");
-    ipcMain.on(IPC_TLS_BOOTSTRAP_API_CHANNELS.getPublicRSAKeyDER, (event: IpcMainEvent): void => {
-      this.IPCTLSBootstrapAPILogger.debug(`Received message from renderer on channel: "${IPC_TLS_BOOTSTRAP_API_CHANNELS.getPublicRSAKeyDER}".`);
-      event.returnValue = this.IPC_TLS_BOOTSTRAP_API_HANDLERS.handleGetPublicRSAKeyDER();
+    ipcMain.handle(IPC_TLS_BOOTSTRAP_API_CHANNELS.generateAndGetMainProcessIPCTLSPublicRSAKeyDER, async (): Promise<IPCAPIResponse<ArrayBuffer>> => {
+      this.IPCTLSBootstrapAPILogger.debug(
+        `Handling message from renderer on channel: "${IPC_TLS_BOOTSTRAP_API_CHANNELS.generateAndGetMainProcessIPCTLSPublicRSAKeyDER}".`
+      );
+      return await this.IPC_TLS_BOOTSTRAP_API_HANDLERS.handleGenerateAndGetMainProcessIPCTLSPublicRSAKeyDER();
     });
-    ipcMain.on(IPC_TLS_BOOTSTRAP_API_CHANNELS.sendProgress, (_: IpcMainEvent, progress: IIPCTLSBootstrapProgress): void => {
-      this.IPCTLSBootstrapAPILogger.debug(`Received message from renderer on channel: "${IPC_TLS_BOOTSTRAP_API_CHANNELS.sendProgress}".`);
-      this.IPC_TLS_BOOTSTRAP_API_HANDLERS.handleSendProgress(progress);
-    });
-    ipcMain.on(IPC_TLS_BOOTSTRAP_API_CHANNELS.sendWrappedAESKey, (_: IpcMainEvent, wrappedIPCTLSAESKey: ArrayBuffer): void => {
-      this.IPCTLSBootstrapAPILogger.debug(`Received message from renderer on channel: "${IPC_TLS_BOOTSTRAP_API_CHANNELS.sendWrappedAESKey}".`);
-      this.IPC_TLS_BOOTSTRAP_API_HANDLERS.handleSendWrappedAESKey(wrappedIPCTLSAESKey);
-    });
+    ipcMain.on(
+      IPC_TLS_BOOTSTRAP_API_CHANNELS.sendWrappedIPCTLSAESKey,
+      (_: IpcMainEvent, wrappedIPCTLSAESKeyIPCAPIResponse: IPCAPIResponse<ArrayBuffer>): void => {
+        this.IPCTLSBootstrapAPILogger.debug(
+          `Received message from renderer on channel: "${IPC_TLS_BOOTSTRAP_API_CHANNELS.sendWrappedIPCTLSAESKey}".`
+        );
+        void this.IPC_TLS_BOOTSTRAP_API_HANDLERS.handleSendWrappedIPCTLSAESKey(wrappedIPCTLSAESKeyIPCAPIResponse);
+      }
+    );
   }
 
   private registerIPCTLSAPIIPCHandlers(): void {

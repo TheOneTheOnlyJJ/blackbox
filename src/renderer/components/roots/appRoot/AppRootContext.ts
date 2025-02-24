@@ -9,6 +9,7 @@ export interface IAppRootContext {
   isIPCTLSReady: {
     main: boolean;
     renderer: boolean;
+    both: boolean;
   };
 }
 

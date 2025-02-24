@@ -1,7 +1,8 @@
 import { LogFunctions } from "electron-log";
 import { randomBytes, createCipheriv, createDecipheriv, CipherGCM, DecipherGCM } from "node:crypto";
 
-export const testAESKey = (AESKey: Buffer, logger: LogFunctions): boolean => {
+export const isAESKeyValid = (AESKey: Buffer, logger: LogFunctions, keyPurposeToLog?: string): boolean => {
+  logger.debug(`Validating ${keyPurposeToLog !== undefined ? `${keyPurposeToLog} ` : ""}AES key.`);
   try {
     const TEST_DATA = "Test Data";
     const IV: Buffer = randomBytes(12); // AES-GCM requires a 12-byte IV
@@ -20,7 +21,7 @@ export const testAESKey = (AESKey: Buffer, logger: LogFunctions): boolean => {
     return DECRYPTED.toString("utf8") === TEST_DATA;
   } catch (err: unknown) {
     const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-    logger.error(`AES key test failed: ${ERROR_MESSAGE}.`);
+    logger.error(`Invalid AES key: ${ERROR_MESSAGE}!`);
     return false;
   }
 };

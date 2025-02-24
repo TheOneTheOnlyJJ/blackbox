@@ -4,7 +4,7 @@ type TransformToMainProcessIPCAPIHandler<T> = T extends (callback: (...args: inf
   : T extends (...args: infer CallbackArgsType) => Promise<infer CallbackReturnType>
   ? (...args: CallbackArgsType) => CallbackReturnType | Promise<CallbackReturnType>
   : T extends (...args: infer CallbackArgsType) => infer CallbackReturnType
-  ? (...args: CallbackArgsType) => CallbackReturnType
+  ? (...args: CallbackArgsType) => CallbackReturnType | Promise<CallbackReturnType>
   : never;
 
 // Extract the part of the key after "on" or "once"

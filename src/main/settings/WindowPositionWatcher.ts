@@ -45,6 +45,7 @@ export class WindowPositionWatcher {
         `New window position: ${typeof NEW_WINDOW_POSITION === "string" ? `"${NEW_WINDOW_POSITION}"` : JSON.stringify(NEW_WINDOW_POSITION, null, 2)}.`
       );
       onWindowPositionChange(NEW_WINDOW_POSITION);
+      this.updateWindowPositionTimeout = null;
     }, this.UPDATE_WINDOW_POSITION_TIMEOUT_DELAY_MS);
   }
 
