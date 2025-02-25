@@ -318,16 +318,14 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
       RESULT.map((rawSecuredUserDataStorageConfig: IRawSecuredUserDataStorageConfig) => {
         this.logger.debug("Determining visibility password.");
         // TODO: Make this a separate function
-        const SECURED_VISIBILITY_PASSWORD: ISecuredPassword | undefined =
+        const SECURED_VISIBILITY_PASSWORD: ISecuredPassword | null =
           rawSecuredUserDataStorageConfig.visibilityPasswordHash !== null && rawSecuredUserDataStorageConfig.visibilityPasswordSalt !== null
             ? {
                 hash: rawSecuredUserDataStorageConfig.visibilityPasswordHash,
                 salt: rawSecuredUserDataStorageConfig.visibilityPasswordSalt
               }
-            : undefined;
-        this.logger.silly(
-          SECURED_VISIBILITY_PASSWORD !== undefined ? "Config has visibility password." : "Config does not have visibility password."
-        );
+            : null;
+        this.logger.silly(SECURED_VISIBILITY_PASSWORD !== null ? "Config has visibility password." : "Config does not have visibility password.");
         this.logger.debug("Parsing User Data Storage Config.");
         const PARSED_USER_DATA_STORAGE_BACKEND_CONFIG: UserDataStorageBackendConfig = JSON.parse(
           rawSecuredUserDataStorageConfig.config
@@ -345,7 +343,7 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
         SECURED_USER_DATA_STORAGE_CONFIGS.push({
           storageId: rawSecuredUserDataStorageConfig.storageId,
           name: rawSecuredUserDataStorageConfig.name,
-          description: rawSecuredUserDataStorageConfig.description ?? undefined,
+          description: rawSecuredUserDataStorageConfig.description,
           securedVisibilityPassword: SECURED_VISIBILITY_PASSWORD,
           backendConfig: PARSED_USER_DATA_STORAGE_BACKEND_CONFIG
         });

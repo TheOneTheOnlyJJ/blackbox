@@ -7,8 +7,8 @@ import {
 export interface IUserDataStorageConfigCreateDTO {
   userId: string;
   name: string;
-  description?: string;
-  visibilityPassword?: string;
+  description: string | null;
+  visibilityPassword: string | null;
   backendConfigCreateDTO: UserDataStorageBackendConfigCreateDTO;
 }
 
@@ -18,10 +18,18 @@ export const USER_DATA_STORAGE_CONFIG_CREATE_DTO_JSON_SCHEMA: JSONSchemaType<IUs
   properties: {
     userId: { type: "string", title: "User ID", format: "uuid" },
     name: { type: "string", title: "Name" },
-    description: { type: "string", title: "Description", nullable: true },
-    visibilityPassword: { type: "string", title: "Visibility Password", nullable: true },
+    description: {
+      type: "string",
+      title: "Description",
+      nullable: true as false // https://github.com/ajv-validator/ajv/issues/2163#issuecomment-2085689455
+    },
+    visibilityPassword: {
+      type: "string",
+      title: "Visibility Password",
+      nullable: true as false // https://github.com/ajv-validator/ajv/issues/2163#issuecomment-2085689455
+    },
     backendConfigCreateDTO: USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_DTO_JSON_SCHEMA
   },
-  required: ["userId", "name", "backendConfigCreateDTO"],
+  required: ["userId", "name", "description", "visibilityPassword", "backendConfigCreateDTO"],
   additionalProperties: false
 } as const;

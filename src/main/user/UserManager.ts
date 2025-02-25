@@ -255,8 +255,8 @@ export class UserManager {
   // TODO: Move this out of here? NO, this will become the function that encrypts for storage
   public secureUserDataStorageConfig(userDataStorageConfig: IUserDataStorageConfig): ISecuredUserDataStorageConfig {
     this.logger.debug(`Securing User Data Storage Config with ID: "${userDataStorageConfig.storageId}".`);
-    let securedVisibilityPassword: ISecuredPassword | undefined;
-    if (userDataStorageConfig.visibilityPassword !== undefined) {
+    let securedVisibilityPassword: ISecuredPassword | null;
+    if (userDataStorageConfig.visibilityPassword !== null) {
       this.logger.debug("Config has a visibility password.");
       const VISIBILITY_PASSWORD_SALT: Buffer = randomBytes(16);
       securedVisibilityPassword = {
@@ -267,7 +267,7 @@ export class UserManager {
       };
     } else {
       this.logger.debug("Config does not have a visibility password.");
-      securedVisibilityPassword = undefined;
+      securedVisibilityPassword = null;
     }
     const SECURED_USER_DATA_STORAGE_CONFIG: ISecuredUserDataStorageConfig = {
       storageId: userDataStorageConfig.storageId,

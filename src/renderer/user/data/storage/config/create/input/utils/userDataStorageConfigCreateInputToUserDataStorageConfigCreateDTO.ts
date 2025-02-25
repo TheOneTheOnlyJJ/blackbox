@@ -12,8 +12,8 @@ export const userDataStorageConfigCreateInputToUserDataStorageConfigCreateDTO = 
   return {
     userId: userIdToAddTo,
     name: userDataStorageConfigCreateInput.name,
-    description: userDataStorageConfigCreateInput.description,
-    visibilityPassword: userDataStorageConfigCreateInput.visibilityPassword,
+    description: userDataStorageConfigCreateInput.description ?? null,
+    visibilityPassword: userDataStorageConfigCreateInput.visibilityPassword ?? null,
     backendConfigCreateDTO: userDataStorageBackendConfigCreateInputToUserDataStorageBackendConfigCreateDTO(
       userDataStorageConfigCreateInput.backendConfigCreateInput,
       logger

@@ -9,11 +9,6 @@ import { enqueueSnackbar, SnackbarProvider } from "notistack";
 import Box from "@mui/material/Box/Box";
 import { ICurrentUserAccountStorage } from "@shared/user/account/storage/CurrentUserAccountStorage";
 
-export interface IOpenNotificationSnackbarProps {
-  autoHideDuration?: number;
-  message: string;
-}
-
 const IS_IPC_TLS_READY_UPDATE_TIMEOUT_DELAY_MS = 1_000;
 
 const AppRoot: FC = () => {
