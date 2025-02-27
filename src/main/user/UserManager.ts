@@ -1,7 +1,6 @@
 import { LogFunctions } from "electron-log";
 import { UserAccountStorageBackendType } from "./account/storage/backend/UserAccountStorageBackendType";
-import { randomBytes, randomUUID, scryptSync, timingSafeEqual, UUID } from "node:crypto";
-import { ISecuredUserSignUpPayload } from "./account/SecuredUserSignUpPayload";
+import { randomUUID, scryptSync, timingSafeEqual, UUID } from "node:crypto";
 import { ISignedInUser, isSignedInUserValid } from "@main/user/account/SignedInUser";
 import { SignedInUserChangedCallback, CurrentUserAccountStorageChangedCallback } from "@shared/IPC/APIs/UserAPI";
 import { isDeepStrictEqual } from "node:util";
@@ -17,6 +16,7 @@ import { IPublicSignedInUser } from "@shared/user/account/PublicSignedInUser";
 import { IStorageSecuredUserDataStorageConfig } from "./data/storage/config/StorageSecuredUserDataStorageConfig";
 import { userDataStorageConfigToSecuredUserDataStorageConfig } from "./data/storage/config/utils/userDataStorageConfigToSecuredUserDataStorageConfig";
 import { securedUserDataStorageConfigToStorageSecuredUserDataStorageConfig } from "./data/storage/config/utils/securedUserDataStorageConfigToStorageSecuredUserDataStorageConfig";
+import { userSignUpPayloadToSecuredUserSignUpPayload } from "./account/utils/userSignUpPayloadToSecuredUserSignUpPayload";
 
 export class UserManager {
   private readonly logger: LogFunctions;
@@ -238,23 +238,6 @@ export class UserManager {
     return userId;
   }
 
-  // TODO: Move this out of here; Maybe not for consistency with the other one?
-  public secureUserSignUpPayload(userSignUpPayload: IUserSignUpPayload): ISecuredUserSignUpPayload {
-    this.logger.debug(`Securing user sign up payload for user: "${userSignUpPayload.username}".`);
-    const PASSWORD_SALT: Buffer = randomBytes(this.PASSWORD_SALT_LENGTH);
-    const DATA_ENCRYPTION_KEY_SALT: Buffer = randomBytes(this.PASSWORD_SALT_LENGTH);
-    const SECURED_USER_SIGN_UP_PAYLOAD: ISecuredUserSignUpPayload = {
-      userId: userSignUpPayload.userId,
-      username: userSignUpPayload.username,
-      securedPassword: {
-        hash: this.hashPassword(userSignUpPayload.password, PASSWORD_SALT, "user sign up").toString("base64"),
-        salt: PASSWORD_SALT.toString("base64")
-      },
-      dataEncryptionAESKeySalt: DATA_ENCRYPTION_KEY_SALT.toString("base64")
-    };
-    return SECURED_USER_SIGN_UP_PAYLOAD;
-  }
-
   public generateRandomUserDataStorageId(): UUID {
     this.logger.debug("Generating random User Data Storage ID.");
     if (this.userAccountStorage.value === null) {
@@ -286,7 +269,16 @@ export class UserManager {
     if (!this.USER_SIGN_UP_PAYLOAD_VALIDATE_FUNCTION(userSignUpPayload)) {
       throw new Error("Invalid user sign up payload");
     }
-    return this.userAccountStorage.value.addUser(this.secureUserSignUpPayload(userSignUpPayload));
+    return this.userAccountStorage.value.addUser(
+      userSignUpPayloadToSecuredUserSignUpPayload(
+        userSignUpPayload,
+        this.PASSWORD_SALT_LENGTH,
+        (userPassword: string, userPasswordSalt: Buffer): string => {
+          return this.hashPassword(userPassword, userPasswordSalt, "user sign up").toString("base64");
+        },
+        this.logger
+      )
+    );
   }
 
   public signInUser(userSignInPayload: IUserSignInPayload): boolean {

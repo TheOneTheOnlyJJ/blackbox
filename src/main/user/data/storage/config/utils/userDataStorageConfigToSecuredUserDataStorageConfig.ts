@@ -6,7 +6,7 @@ import { randomBytes } from "node:crypto";
 
 export const userDataStorageConfigToSecuredUserDataStorageConfig = (
   userDataStorageConfig: IUserDataStorageConfig,
-  saltLength: number,
+  visibilityPasswordSaltLength: number,
   hashVisibilityPasswordFunction: (visibilityPassword: string, visibilityPasswordSalt: Buffer) => string,
   logger: LogFunctions
 ): ISecuredUserDataStorageConfig => {
@@ -17,7 +17,7 @@ export const userDataStorageConfigToSecuredUserDataStorageConfig = (
     securedVisibilityPassword = null;
   } else {
     logger.debug("Config has a visibility password.");
-    const VISIBILITY_PASSWORD_SALT: Buffer = randomBytes(saltLength);
+    const VISIBILITY_PASSWORD_SALT: Buffer = randomBytes(visibilityPasswordSaltLength);
     securedVisibilityPassword = {
       hash: hashVisibilityPasswordFunction(userDataStorageConfig.visibilityPassword, VISIBILITY_PASSWORD_SALT),
       salt: VISIBILITY_PASSWORD_SALT.toString("base64")
