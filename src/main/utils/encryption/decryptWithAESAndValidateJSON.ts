@@ -15,7 +15,7 @@ export const decryptWithAESAndValidateJSON = <T>(
 ): T => {
   logger.debug(`Decrypting ${dataTypeToLog}.`);
 
-  const ENCRYPTED_DATA: Buffer = Buffer.from(encryptedData.data);
+  const ENCRYPTED_DATA: Buffer = Buffer.from(new Uint8Array(encryptedData.data));
 
   // Check if the encrypted data length is sufficient to contain the tag
   if (ENCRYPTED_DATA.length < TAG_LENGTH) {
@@ -29,7 +29,7 @@ export const decryptWithAESAndValidateJSON = <T>(
   const ENCRYPTED_DATA_PAYLOAD: Buffer = Buffer.from(ENCRYPTED_DATA.buffer, ENCRYPTED_DATA.byteOffset, ENCRYPTED_DATA.length - TAG_LENGTH);
 
   // Create a decipher instance for AES-GCM
-  const DECIPHER: DecipherGCM = createDecipheriv("aes-256-gcm", AESKey, encryptedData.iv);
+  const DECIPHER: DecipherGCM = createDecipheriv("aes-256-gcm", AESKey, Buffer.from(encryptedData.iv));
 
   // Set the authentication tag
   DECIPHER.setAuthTag(AUTH_TAG);

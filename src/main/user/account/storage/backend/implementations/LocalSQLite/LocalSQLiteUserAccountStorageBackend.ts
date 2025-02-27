@@ -14,7 +14,6 @@ import {
   IStorageSecuredUserDataStorageConfig,
   isStorageSecuredUserDataStorageConfigValid
 } from "@main/user/data/storage/config/StorageSecuredUserDataStorageConfig";
-import { bufferToArrayBuffer } from "@main/utils/typeConversions/bufferToArrayBuffer";
 
 export interface ILocalSQLiteUserAccountStorageBackendConfig extends IBaseUserAccountStorageBackendConfig {
   type: UserAccountStorageBackendTypes["LocalSQLite"];
@@ -317,12 +316,12 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
           userDataStorageConfigData: Buffer;
         },
         idx: number
-      ) => {
+      ): void => {
         const STORAGE_SECURED_USER_DATA_STORAGE_CONFIG: IStorageSecuredUserDataStorageConfig = {
           storageId: rawStorageSecuredUserDataStorageConfig.storageId,
           userId: userId,
           encryptedPrivateStorageSecuredUserDataStorageConfig: {
-            data: bufferToArrayBuffer(rawStorageSecuredUserDataStorageConfig.userDataStorageConfigData),
+            data: rawStorageSecuredUserDataStorageConfig.userDataStorageConfigData,
             iv: rawStorageSecuredUserDataStorageConfig.userDataStorageConfigIV
           }
         };

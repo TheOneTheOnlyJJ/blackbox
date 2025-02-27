@@ -17,6 +17,12 @@ import { IStorageSecuredUserDataStorageConfig } from "./data/storage/config/Stor
 import { userDataStorageConfigToSecuredUserDataStorageConfig } from "./data/storage/config/utils/userDataStorageConfigToSecuredUserDataStorageConfig";
 import { securedUserDataStorageConfigToStorageSecuredUserDataStorageConfig } from "./data/storage/config/utils/securedUserDataStorageConfigToStorageSecuredUserDataStorageConfig";
 import { userSignUpPayloadToSecuredUserSignUpPayload } from "./account/utils/userSignUpPayloadToSecuredUserSignUpPayload";
+import { ISecuredUserDataStorageConfig } from "./data/storage/config/SecuredUserDataStorageConfig";
+import { storageSecuredUserDataStorageConfigToSecuredUserDataStorageConfig } from "./data/storage/config/utils/storageSecuredUserDataStorageConfigToSecuredUserDataStorageConfig";
+import {
+  IPrivateStorageSecuredUserDataStorageConfig,
+  PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_CONFIG_JSON_SCHEMA
+} from "./data/storage/config/PrivateStorageSecuredUserDataStorageConfig";
 
 export class UserManager {
   private readonly logger: LogFunctions;
@@ -36,6 +42,7 @@ export class UserManager {
   // AJV Validate functions
   public readonly USER_SIGN_UP_PAYLOAD_VALIDATE_FUNCTION: ValidateFunction<IUserSignUpPayload>;
   public readonly USER_SIGN_IN_PAYLOAD_VALIDATE_FUNCTION: ValidateFunction<IUserSignInPayload>;
+  public readonly PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION: ValidateFunction<IPrivateStorageSecuredUserDataStorageConfig>;
   private readonly PASSWORD_SALT_LENGTH = 32;
 
   public constructor(
@@ -51,6 +58,9 @@ export class UserManager {
     this.AJV = ajv;
     this.USER_SIGN_UP_PAYLOAD_VALIDATE_FUNCTION = this.AJV.compile<IUserSignUpPayload>(USER_SIGN_UP_PAYLOAD_JSON_SCHEMA);
     this.USER_SIGN_IN_PAYLOAD_VALIDATE_FUNCTION = this.AJV.compile<IUserSignInPayload>(USER_SIGN_IN_PAYLOAD_JSON_SCHEMA);
+    this.PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION = this.AJV.compile<IPrivateStorageSecuredUserDataStorageConfig>(
+      PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_CONFIG_JSON_SCHEMA
+    );
     // Currently signed in user
     this.onSignedInUserChangedCallback =
       onSignedInUserChangedCallback ??
@@ -75,10 +85,10 @@ export class UserManager {
           }
           // Corrupt data encryption key previous value was a signed in user
           if (target[property] !== null) {
-            this.logger.info("Corrupting previous user data encryption AES key buffer.");
-            crypto.getRandomValues(target[property].userDataEncryptionAESKey);
+            this.logger.info("Corrupting previous user data AES key buffer.");
+            crypto.getRandomValues(target[property].userDataAESKey);
           } else {
-            this.logger.info("No previous user data encryption key buffer to corrupt.");
+            this.logger.info("No previous user data key buffer to corrupt.");
           }
           target[property] = value;
           if (value === null) {
@@ -318,7 +328,7 @@ export class UserManager {
     this.signedInUser.value = {
       userId: USER_ID,
       username: userSignInPayload.username,
-      userDataEncryptionAESKey: this.deriveUserDataEncryptionAESKey(userSignInPayload.password, Buffer.from(DATA_ENCRYPTION_KEY_SALT, "base64"))
+      userDataAESKey: this.deriveUserDataEncryptionAESKey(userSignInPayload.password, Buffer.from(DATA_ENCRYPTION_KEY_SALT, "base64"))
     };
     return true;
   }
@@ -371,17 +381,36 @@ export class UserManager {
           },
           this.logger
         ),
-        this.signedInUser.value.userDataEncryptionAESKey,
+        this.signedInUser.value.userDataAESKey,
         this.logger
       )
     );
   }
 
-  public getAllEncryptedStorageSecuredUserDataStorageConfigs(userId: UUID): IStorageSecuredUserDataStorageConfig[] {
-    this.logger.debug(`Getting all Encrypted Storage Secured User Data Storage Configs owned by user: "${userId}".`);
+  public getAllSecuredUserDataStorageConfigs(): ISecuredUserDataStorageConfig[] {
+    this.logger.debug("Getting all Secured User Data Storage Configs.");
     if (this.userAccountStorage.value === null) {
       throw new Error("Null User Account Storage");
     }
-    return this.userAccountStorage.value.getAllStorageSecuredUserDataStorageConfigs(userId);
+    if (this.signedInUser.value === null) {
+      throw new Error("Cannot decrypt Storage Secured User Data Storage Configs with no signed in user");
+    }
+    const STORAGE_SECURED_USER_DATA_STORAGE_CONFIGS: IStorageSecuredUserDataStorageConfig[] =
+      this.userAccountStorage.value.getAllStorageSecuredUserDataStorageConfigs(this.signedInUser.value.userId);
+    const SECURED_USER_DATA_STORAGE_CONFIGS: ISecuredUserDataStorageConfig[] = [];
+    STORAGE_SECURED_USER_DATA_STORAGE_CONFIGS.map((storageSecuredUserDataStorageConfig: IStorageSecuredUserDataStorageConfig): void => {
+      if (this.signedInUser.value === null) {
+        throw new Error("Cannot decrypt Storage Secured User Data Storage Configs with no signed in user");
+      }
+      SECURED_USER_DATA_STORAGE_CONFIGS.push(
+        storageSecuredUserDataStorageConfigToSecuredUserDataStorageConfig(
+          storageSecuredUserDataStorageConfig,
+          this.PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION,
+          this.signedInUser.value.userDataAESKey,
+          this.logger
+        )
+      );
+    });
+    return SECURED_USER_DATA_STORAGE_CONFIGS;
   }
 }

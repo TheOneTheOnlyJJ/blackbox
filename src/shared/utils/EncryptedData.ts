@@ -3,7 +3,7 @@
 import { IV_LENGTH } from "@shared/encryption/constants";
 
 export interface IEncryptedData {
-  data: ArrayBuffer;
+  data: Uint8Array;
   iv: Uint8Array;
 }
 
@@ -13,7 +13,7 @@ export const isEncryptedDataValid = (data: any): data is IEncryptedData => {
     data !== null &&
     "data" in data &&
     "iv" in data &&
-    data.data instanceof ArrayBuffer &&
+    data.data instanceof Uint8Array &&
     data.iv instanceof Uint8Array &&
     data.iv.length === IV_LENGTH
   );

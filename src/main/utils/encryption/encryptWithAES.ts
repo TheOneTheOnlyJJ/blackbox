@@ -21,7 +21,7 @@ export const encryptWithAES = (data: string, AESKey: Buffer, logger: LogFunction
   const AUTH_TAG: Buffer = CIPHER.getAuthTag();
 
   // Combine encrypted data with authentication tag
-  const ENCRYPTED_DATA: ArrayBuffer = Buffer.concat([ENCRYPTED_PAYLOAD, AUTH_TAG]).buffer;
+  const ENCRYPTED_DATA: Buffer = Buffer.concat([ENCRYPTED_PAYLOAD, AUTH_TAG]);
 
   return {
     data: ENCRYPTED_DATA,

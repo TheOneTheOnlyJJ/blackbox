@@ -1,7 +1,9 @@
+import { UUID } from "node:crypto";
+
 export interface ISignedInUser {
-  userId: string;
+  userId: UUID;
   username: string;
-  userDataEncryptionAESKey: Buffer;
+  userDataAESKey: Buffer;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -11,12 +13,12 @@ export const isSignedInUserValid = (data: any): data is ISignedInUser => {
     data !== null &&
     "userId" in data &&
     "username" in data &&
-    "userDataEncryptionAESKey" in data &&
+    "userDataAESKey" in data &&
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     typeof data.userId === "string" &&
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     typeof data.username === "string" &&
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    Buffer.isBuffer(data.userDataEncryptionAESKey)
+    Buffer.isBuffer(data.userDataAESKey)
   );
 };

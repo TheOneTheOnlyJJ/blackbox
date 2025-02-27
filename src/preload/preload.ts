@@ -170,7 +170,7 @@ const IPC_TLS_API: IIPCTLSAPI = {
     }
     const IV: Uint8Array = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
     const ENCRYPTED_DATA: IEncryptedData = {
-      data: await crypto.subtle.encrypt({ name: "AES-GCM", iv: IV }, IPC_TLS_AES_KEY.value, TEXT_ENCODER.encode(data)),
+      data: new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv: IV }, IPC_TLS_AES_KEY.value, TEXT_ENCODER.encode(data))),
       iv: IV
     };
     sendLogToMainProcess(PRELOAD_IPC_TLS_API_LOG_SCOPE, "debug", `Done encrypting ${dataPurposeToLog ?? "data"}.`);
