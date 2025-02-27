@@ -5,4 +5,5 @@ export interface ISecuredUserSignUpPayload {
   userId: UUID;
   username: string;
   securedPassword: ISecuredPassword;
+  dataEncryptionAESKeySalt: string;
 }

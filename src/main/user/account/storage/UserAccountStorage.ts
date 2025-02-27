@@ -8,7 +8,8 @@ import { UserAccountStorageBackendType } from "./backend/UserAccountStorageBacke
 import { UserAccountStorageOpenChangedCallback } from "@shared/IPC/APIs/UserAPI";
 import { ISecuredUserSignUpPayload } from "../SecuredUserSignUpPayload";
 import { ISecuredPassword } from "@main/utils/encryption/SecuredPassword";
-import { ISecuredUserDataStorageConfig } from "@main/user/data/storage/config/SecuredUserDataStorageConfig";
+import { IPublicUserAccountStorage } from "@shared/user/account/storage/PublicUserAccountStorage";
+import { IStorageSecuredUserDataStorageConfig } from "@main/user/data/storage/config/StorageSecuredUserDataStorageConfig";
 
 export class UserAccountStorage {
   private readonly logger: LogFunctions;
@@ -52,6 +53,15 @@ export class UserAccountStorage {
     this.logger.info(`Closing User Account Storage "${this.name}" with ID "${this.storageId}".`);
     this.backend.close();
     this.onUserAccountStorageOpenChangedCallback(false);
+  }
+
+  public getPublicUserAccountStorage(): IPublicUserAccountStorage {
+    this.logger.info("Getting public user account storage.");
+    return {
+      storageId: this.storageId,
+      name: this.name,
+      isOpen: this.isOpen()
+    };
   }
 
   public getBackendType(): UserAccountStorageBackendType {
@@ -98,17 +108,24 @@ export class UserAccountStorage {
     return this.backend.getSecuredUserPassword(userId);
   }
 
-  public addUserDataStorageConfigToUser(userId: UUID, securedUserDataStorageConfig: ISecuredUserDataStorageConfig): boolean {
+  public getUserDataEncryptionAESKeySalt(userId: UUID): string | null {
     this.logger.info(
-      `Adding secured User Data Storage Config to user with ID "${userId}" to User Account Storage "${this.name}" with ID "${this.storageId}".`
+      `Getting user data encryption AES key salt for user with ID "${userId}" from User Account Storage "${this.name}" with ID "${this.storageId}".`
     );
-    return this.backend.addUserDataStorageConfigToUser(userId, securedUserDataStorageConfig);
+    return this.backend.getUserDataEncryptionAESKeySalt(userId);
   }
 
-  public getAllUserDataStorageConfigs(userId: UUID): ISecuredUserDataStorageConfig[] {
+  public addStorageSecuredUserDataStorageConfig(storageSecuredUserDataStorageConfig: IStorageSecuredUserDataStorageConfig): boolean {
     this.logger.info(
-      `Getting all User Data Storage Configs for user with ID "${userId}" from User Account Storage "${this.name}" with ID "${this.storageId}".`
+      `Adding Storage Secured User Data Storage Config to user with ID "${storageSecuredUserDataStorageConfig.userId}" to User Account Storage "${this.name}" with ID "${this.storageId}".`
     );
-    return this.backend.getAllUserDataStorageConfigs(userId);
+    return this.backend.addStorageSecuredUserDataStorageConfig(storageSecuredUserDataStorageConfig);
+  }
+
+  public getAllStorageSecuredUserDataStorageConfigs(userId: UUID): IStorageSecuredUserDataStorageConfig[] {
+    this.logger.info(
+      `Getting all Storage Secured User Data Storage Configs for user with ID "${userId}" from User Account Storage "${this.name}" with ID "${this.storageId}".`
+    );
+    return this.backend.getAllStorageSecuredUserDataStorageConfigs(userId);
   }
 }

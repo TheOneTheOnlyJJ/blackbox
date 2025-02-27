@@ -1,11 +1,11 @@
+import { IPublicSignedInUser } from "@shared/user/account/PublicSignedInUser";
+import { IPublicUserAccountStorage } from "@shared/user/account/storage/PublicUserAccountStorage";
 import { useOutletContext } from "react-router-dom";
-import { ISignedInUser } from "@shared/user/account/SignedInUser";
-import { ICurrentUserAccountStorage } from "@shared/user/account/storage/CurrentUserAccountStorage";
 
 export interface IAppRootContext {
-  signedInUser: ISignedInUser | null;
+  signedInUser: IPublicSignedInUser | null;
   signedInNavigationEntryIndex: number;
-  currentUserAccountStorage: ICurrentUserAccountStorage | null;
+  currentUserAccountStorage: IPublicUserAccountStorage | null;
   isIPCTLSReady: {
     main: boolean;
     renderer: boolean;

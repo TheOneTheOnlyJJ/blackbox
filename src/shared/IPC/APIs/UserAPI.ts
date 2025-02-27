@@ -1,26 +1,26 @@
-import { ISignedInUser } from "@shared/user/account/SignedInUser";
 import { EncryptedUserSignUpDTO } from "@shared/user/account/encrypted/EncryptedUserSignUpDTO";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { EncryptedUserDataStorageConfigCreateDTO } from "@shared/user/account/encrypted/EncryptedUserDataStorageConfigCreateDTO";
 import { EncryptedUserSignInDTO } from "@shared/user/account/encrypted/EncryptedUserSignInDTO";
-import { ICurrentUserAccountStorage } from "@shared/user/account/storage/CurrentUserAccountStorage";
+import { IPublicUserAccountStorage } from "@shared/user/account/storage/PublicUserAccountStorage";
+import { IPublicSignedInUser } from "@shared/user/account/PublicSignedInUser";
 
 // Utility types
-export type CurrentUserAccountStorageChangedCallback = (currentUserAccountStorage: ICurrentUserAccountStorage | null) => void;
+export type CurrentUserAccountStorageChangedCallback = (currentUserAccountStorage: IPublicUserAccountStorage | null) => void;
 export type UserAccountStorageOpenChangedCallback = (isUserAccountStorageOpen: boolean) => void;
-export type SignedInUserChangedCallback = (signedInUser: ISignedInUser | null) => void;
+export type SignedInUserChangedCallback = (publicSignedInUser: IPublicSignedInUser | null) => void;
 
 // API
 export interface IUserAPI {
   signUp: (encryptedUserSignUpDTO: EncryptedUserSignUpDTO) => IPCAPIResponse<boolean>;
   signIn: (encryptedUserSignInDTO: EncryptedUserSignInDTO) => IPCAPIResponse<boolean>;
-  signOut: () => IPCAPIResponse<ISignedInUser | null>;
+  signOut: () => IPCAPIResponse<IPublicSignedInUser | null>;
   isUserAccountStorageOpen: () => IPCAPIResponse<boolean>;
   isUsernameAvailable: (username: string) => IPCAPIResponse<boolean>;
   getUserCount: () => IPCAPIResponse<number>;
-  getSignedInUser: () => IPCAPIResponse<ISignedInUser | null>;
+  getSignedInUser: () => IPCAPIResponse<IPublicSignedInUser | null>;
   addUserDataStorageConfigToUser: (encryptedUserDataStorageConfigCreateDTO: EncryptedUserDataStorageConfigCreateDTO) => IPCAPIResponse<boolean>;
-  getCurrentUserAccountStorage: () => IPCAPIResponse<ICurrentUserAccountStorage | null>;
+  getCurrentUserAccountStorage: () => IPCAPIResponse<IPublicUserAccountStorage | null>;
   onCurrentUserAccountStorageChanged: (callback: CurrentUserAccountStorageChangedCallback) => () => void;
   onUserAccountStorageOpenChanged: (callback: UserAccountStorageOpenChangedCallback) => () => void;
   onSignedInUserChanged: (callback: SignedInUserChangedCallback) => () => void;

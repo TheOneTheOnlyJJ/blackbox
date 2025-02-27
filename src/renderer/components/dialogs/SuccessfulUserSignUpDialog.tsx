@@ -47,7 +47,7 @@ const SuccessfulUserSignUpDialog: FC<ISuccessfulUserSignUpDialogProps> = (props:
       if (SIGN_IN_RESPONSE.data) {
         appLogger.info("Automatic sign in successful.");
         setSignInError(false);
-        enqueueSnackbar({ message: `${props.username} signed in.` });
+        enqueueSnackbar({ message: `${props.username} signed in.`, variant: "info" });
       } else {
         appLogger.error("Automatic sign in unsuccessful!");
         setSignInError(true);

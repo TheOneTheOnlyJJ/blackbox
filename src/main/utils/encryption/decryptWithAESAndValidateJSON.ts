@@ -2,12 +2,11 @@ import { ValidateFunction } from "ajv";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 import { createDecipheriv, DecipherGCM } from "node:crypto";
 import { LogFunctions } from "electron-log";
+import { TAG_LENGTH } from "@shared/encryption/constants";
 
 const DECODER: TextDecoder = new TextDecoder();
-// The tag is the last 16 bytes of the encrypted data
-const TAG_LENGTH = 16;
 
-export const decryptAndValidateJSON = <T>(
+export const decryptWithAESAndValidateJSON = <T>(
   encryptedData: IEncryptedData,
   JSONValidator: ValidateFunction<T>,
   AESKey: Buffer,
@@ -16,7 +15,6 @@ export const decryptAndValidateJSON = <T>(
 ): T => {
   logger.debug(`Decrypting ${dataTypeToLog}.`);
 
-  const IV: Buffer = Buffer.from(encryptedData.iv);
   const ENCRYPTED_DATA: Buffer = Buffer.from(encryptedData.data);
 
   // Check if the encrypted data length is sufficient to contain the tag
@@ -25,16 +23,16 @@ export const decryptAndValidateJSON = <T>(
   }
 
   // Extract the authentication tag from the end of the encrypted data
-  const TAG: Buffer = Buffer.from(ENCRYPTED_DATA.buffer, ENCRYPTED_DATA.byteOffset + ENCRYPTED_DATA.length - TAG_LENGTH, TAG_LENGTH);
+  const AUTH_TAG: Buffer = Buffer.from(ENCRYPTED_DATA.buffer, ENCRYPTED_DATA.byteOffset + ENCRYPTED_DATA.length - TAG_LENGTH, TAG_LENGTH);
 
   // Extract the actual encrypted data (excluding the tag)
   const ENCRYPTED_DATA_PAYLOAD: Buffer = Buffer.from(ENCRYPTED_DATA.buffer, ENCRYPTED_DATA.byteOffset, ENCRYPTED_DATA.length - TAG_LENGTH);
 
   // Create a decipher instance for AES-GCM
-  const DECIPHER: DecipherGCM = createDecipheriv("aes-256-gcm", AESKey, IV);
+  const DECIPHER: DecipherGCM = createDecipheriv("aes-256-gcm", AESKey, encryptedData.iv);
 
   // Set the authentication tag
-  DECIPHER.setAuthTag(TAG);
+  DECIPHER.setAuthTag(AUTH_TAG);
 
   // Decrypt the data
   const DECRYPTED_DATA_PAYLOAD: Buffer = Buffer.concat([DECIPHER.update(ENCRYPTED_DATA_PAYLOAD), DECIPHER.final()]);

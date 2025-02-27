@@ -1,23 +1,22 @@
-import { UUID } from "node:crypto";
 import { USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA, UserDataStorageBackendConfig } from "../backend/config/UserDataStorageBackendConfig";
 import { ISecuredPassword, SECURED_PASSWORD_JSON_SCHEMA } from "@main/utils/encryption/SecuredPassword";
+import { IEncryptedData } from "@shared/utils/EncryptedData";
 import { JSONSchemaType } from "ajv";
 
-export interface ISecuredUserDataStorageConfig {
-  storageId: UUID;
-  userId: UUID;
+// This is the type User Account Storage should accept and return when storing User Data Storage Configs
+export interface IPrivateStorageSecuredUserDataStorageConfig {
   name: string;
   description: string | null;
   securedVisibilityPassword: ISecuredPassword | null;
   backendConfig: UserDataStorageBackendConfig;
 }
 
-export const SECURED_USER_DATA_STORAGE_CONFIG_JSON_SCHEMA: JSONSchemaType<ISecuredUserDataStorageConfig> = {
+export type EncryptedPrivateStorageSecuredUserDataStorageConfig = IEncryptedData;
+
+export const PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_CONFIG_JSON_SCHEMA: JSONSchemaType<IPrivateStorageSecuredUserDataStorageConfig> = {
   $schema: "http://json-schema.org/draft-07/schema#",
   type: "object",
   properties: {
-    storageId: { type: "string", format: "uuid" },
-    userId: { type: "string", format: "uuid" },
     name: { type: "string" },
     description: {
       type: "string",
@@ -29,6 +28,6 @@ export const SECURED_USER_DATA_STORAGE_CONFIG_JSON_SCHEMA: JSONSchemaType<ISecur
     },
     backendConfig: USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA
   },
-  required: ["storageId", "userId", "name", "description", "securedVisibilityPassword", "backendConfig"],
+  required: ["name", "description", "securedVisibilityPassword", "backendConfig"],
   additionalProperties: false
 } as const;

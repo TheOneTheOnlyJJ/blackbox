@@ -16,9 +16,8 @@ import { IUserSignUpDTO, USER_SIGN_UP_DTO_JSON_SCHEMA } from "@shared/user/accou
 import { generateKeyPairSync, webcrypto } from "node:crypto";
 import { isAESKeyValid } from "@main/utils/encryption/isAESKeyValid";
 import { bufferToArrayBuffer } from "@main/utils/typeConversions/bufferToArrayBuffer";
-import { decryptAndValidateJSON } from "@main/utils/encryption/decryptAndValidateJSON";
+import { decryptWithAESAndValidateJSON } from "@main/utils/encryption/decryptWithAESAndValidateJSON";
 import { EncryptedUserSignUpDTO } from "@shared/user/account/encrypted/EncryptedUserSignUpDTO";
-import { ISignedInUser } from "@shared/user/account/SignedInUser";
 import { IUserSignInDTO, USER_SIGN_IN_DTO_JSON_SCHEMA } from "@shared/user/account/UserSignInDTO";
 import { EncryptedUserSignInDTO } from "@shared/user/account/encrypted/EncryptedUserSignInDTO";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
@@ -39,10 +38,11 @@ import { userSignInDTOToUserSignInPayload } from "./user/account/utils/userSignI
 import { userSignUpDTOToUserSignUpPayload } from "./user/account/utils/userSignUpDTOToUserSignUpPayload";
 import { IUserAccountStorageConfig } from "./user/account/storage/config/UserAccountStorageConfig";
 import { UserAccountStorage } from "./user/account/storage/UserAccountStorage";
-import { ICurrentUserAccountStorage } from "@shared/user/account/storage/CurrentUserAccountStorage";
+import { IPublicUserAccountStorage } from "@shared/user/account/storage/PublicUserAccountStorage";
 import { SettingsManager } from "./settings/SettingsManager";
 import { BaseSettings } from "./settings/BaseSettings";
 import { SettingsManagerConfig } from "./settings/SettingsManagerConfig";
+import { IPublicSignedInUser } from "@shared/user/account/PublicSignedInUser";
 
 type WindowPositionSetting = Rectangle | WindowStates["FullScreen"] | WindowStates["Maximized"];
 
@@ -176,7 +176,7 @@ export class App {
           throw new Error(`Cannot set property "${String(property)}" on IPC TLS AES key. Only "value" property can be set! No-op set.`);
         }
         if (value !== null && !Buffer.isBuffer(value)) {
-          throw new Error(`Value must be "null" or a valid Buffer object! No-op set.`);
+          throw new Error(`Value must be null or a valid Buffer object! No-op set.`);
         }
         if (value !== null && !isAESKeyValid(value, this.IPCTLSBootstrapAPILogger, "IPC TLS")) {
           throw new Error("Invalid AES key given! No-op set.");
@@ -271,7 +271,7 @@ export class App {
           status: IPC_API_RESPONSE_STATUSES.SUCCESS,
           data: this.userManager.signUpUser(
             userSignUpDTOToUserSignUpPayload(
-              decryptAndValidateJSON<IUserSignUpDTO>(
+              decryptWithAESAndValidateJSON<IUserSignUpDTO>(
                 encryptedUserSignUpDTO,
                 this.USER_SIGN_UP_DTO_VALIDATE_FUNCTION,
                 this.IPC_TLS_AES_KEY.value,
@@ -298,7 +298,7 @@ export class App {
           status: IPC_API_RESPONSE_STATUSES.SUCCESS,
           data: this.userManager.signInUser(
             userSignInDTOToUserSignInPayload(
-              decryptAndValidateJSON<IUserSignInDTO>(
+              decryptWithAESAndValidateJSON<IUserSignInDTO>(
                 encryptedUserSignInDTO,
                 this.USER_SIGN_IN_DTO_VALIDATE_FUNCTION,
                 this.IPC_TLS_AES_KEY.value,
@@ -315,7 +315,7 @@ export class App {
         return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
-    handleSignOut: (): IPCAPIResponse<ISignedInUser | null> => {
+    handleSignOut: (): IPCAPIResponse<IPublicSignedInUser | null> => {
       try {
         return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userManager.signOutUser() };
       } catch (err: unknown) {
@@ -351,9 +351,9 @@ export class App {
         return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
-    handleGetSignedInUser: (): IPCAPIResponse<ISignedInUser | null> => {
+    handleGetSignedInUser: (): IPCAPIResponse<IPublicSignedInUser | null> => {
       try {
-        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userManager.getSignedInUser() };
+        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userManager.getPublicSignedInUser() };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
         this.UserAPILogger.error(`Get signed in user error: ${ERROR_MESSAGE}!`);
@@ -369,9 +369,9 @@ export class App {
         }
         return {
           status: IPC_API_RESPONSE_STATUSES.SUCCESS,
-          data: this.userManager.addUserDataStorageConfigToUser(
+          data: this.userManager.addUserDataStorageConfig(
             userDataStorageConfigCreateDTOToUserDataStorageConfig(
-              decryptAndValidateJSON<IUserDataStorageConfigCreateDTO>(
+              decryptWithAESAndValidateJSON<IUserDataStorageConfigCreateDTO>(
                 encryptedUserDataStorageConfigCreateDTO,
                 this.USER_DATA_STORAGE_CONFIG_CREATE_DTO_VALIDATE_FUNCTION,
                 this.IPC_TLS_AES_KEY.value,
@@ -389,7 +389,7 @@ export class App {
         return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
-    handleGetCurrentUserAccountStorage: (): IPCAPIResponse<ICurrentUserAccountStorage | null> => {
+    handleGetCurrentUserAccountStorage: (): IPCAPIResponse<IPublicUserAccountStorage | null> => {
       try {
         return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userManager.getCurrentUserAccountStorage() };
       } catch (err: unknown) {
@@ -398,8 +398,10 @@ export class App {
         return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
-    sendCurrentUserAccountStorageChanged: (currentUserAccountStorage: ICurrentUserAccountStorage | null): void => {
-      this.UserAPILogger.debug(`Sending window current User Account Storage after change: ${JSON.stringify(currentUserAccountStorage, null, 2)}.`);
+    sendCurrentUserAccountStorageChanged: (currentUserAccountStorage: IPublicUserAccountStorage | null): void => {
+      this.UserAPILogger.debug(
+        `Sending window public current User Account Storage after change: ${JSON.stringify(currentUserAccountStorage, null, 2)}.`
+      );
       if (this.window === null) {
         this.UserAPILogger.debug("Window is null. No-op.");
         return;
@@ -416,14 +418,14 @@ export class App {
       this.UserAPILogger.debug(`Messaging renderer on channel: "${USER_API_IPC_CHANNELS.onUserAccountStorageOpenChanged}".`);
       this.window.webContents.send(USER_API_IPC_CHANNELS.onUserAccountStorageOpenChanged, isUserAccountStorageOpen);
     },
-    sendSignedInUserChanged: (signedInUser: ISignedInUser | null): void => {
-      this.UserAPILogger.debug(`Sending window signed in user after change: ${JSON.stringify(signedInUser, null, 2)}.`);
+    sendSignedInUserChanged: (publicSignedInUser: IPublicSignedInUser | null): void => {
+      this.UserAPILogger.debug(`Sending window public signed in user after change: ${JSON.stringify(publicSignedInUser, null, 2)}.`);
       if (this.window === null) {
         this.UserAPILogger.debug("Window is null. No-op.");
         return;
       }
       this.UserAPILogger.debug(`Messaging renderer on channel: "${USER_API_IPC_CHANNELS.onSignedInUserChanged}".`);
-      this.window.webContents.send(USER_API_IPC_CHANNELS.onSignedInUserChanged, signedInUser);
+      this.window.webContents.send(USER_API_IPC_CHANNELS.onSignedInUserChanged, publicSignedInUser);
     }
   };
 
@@ -726,6 +728,7 @@ export class App {
 
   private onceAppWillQuit(): void {
     this.appLogger.info("App will quit.");
+    this.userManager.signOutUser();
     this.appLogger.debug("Unregistering all global shortcuts.");
     globalShortcut.unregisterAll();
     if (this.userManager.isUserAccountStorageOpen()) {

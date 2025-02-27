@@ -2,12 +2,12 @@ import { FC, MutableRefObject, useEffect, useMemo, useRef, useState } from "reac
 import { appLogger } from "@renderer/utils/loggers";
 import { Outlet, useLocation, Location, useNavigate, NavigateFunction } from "react-router-dom";
 import { IAppRootContext } from "./AppRootContext";
-import { ISignedInUser } from "@shared/user/account/SignedInUser";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { enqueueSnackbar, SnackbarProvider } from "notistack";
 import Box from "@mui/material/Box/Box";
-import { ICurrentUserAccountStorage } from "@shared/user/account/storage/CurrentUserAccountStorage";
+import { IPublicUserAccountStorage } from "@shared/user/account/storage/PublicUserAccountStorage";
+import { IPublicSignedInUser } from "@shared/user/account/PublicSignedInUser";
 
 const IS_IPC_TLS_READY_UPDATE_TIMEOUT_DELAY_MS = 1_000;
 
@@ -22,8 +22,8 @@ const AppRoot: FC = () => {
     return isMainIPCTLSReady && isRendererIPCTLSReady;
   }, [isMainIPCTLSReady, isRendererIPCTLSReady]);
   // User
-  const [currentUserAccountStorage, setCurrentUserAccountStorage] = useState<ICurrentUserAccountStorage | null>(null);
-  const [signedInUser, setSignedInUser] = useState<ISignedInUser | null>(null);
+  const [currentUserAccountStorage, setCurrentUserAccountStorage] = useState<IPublicUserAccountStorage | null>(null);
+  const [signedInUser, setSignedInUser] = useState<IPublicSignedInUser | null>(null);
   // Navigation
   const [signedInNavigationEntryIndex, setSignedInNavigationEntryIndex] = useState<number>(0);
   // Timeouts
@@ -93,15 +93,14 @@ const AppRoot: FC = () => {
   useEffect((): (() => void) => {
     appLogger.debug("Rendering App Root component.");
     // Get initial app root context
-    const GET_CURRENT_USER_ACCOUNT_STORAGE_RESPONSE: IPCAPIResponse<ICurrentUserAccountStorage | null> =
-      window.userAPI.getCurrentUserAccountStorage();
+    const GET_CURRENT_USER_ACCOUNT_STORAGE_RESPONSE: IPCAPIResponse<IPublicUserAccountStorage | null> = window.userAPI.getCurrentUserAccountStorage();
     if (GET_CURRENT_USER_ACCOUNT_STORAGE_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
       enqueueSnackbar({ message: "Error getting current User Account Storage.", variant: "error" });
       setCurrentUserAccountStorage(null);
     } else {
       setCurrentUserAccountStorage(GET_CURRENT_USER_ACCOUNT_STORAGE_RESPONSE.data);
     }
-    const GET_SIGNED_IN_USER_RESPONSE: IPCAPIResponse<ISignedInUser | null> = window.userAPI.getSignedInUser();
+    const GET_SIGNED_IN_USER_RESPONSE: IPCAPIResponse<IPublicSignedInUser | null> = window.userAPI.getSignedInUser();
     if (GET_SIGNED_IN_USER_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
       enqueueSnackbar({ message: "Error getting signed in user.", variant: "error" });
       setSignedInUser(null);
@@ -121,19 +120,21 @@ const AppRoot: FC = () => {
       }
     );
     // Monitor changes to signed in user
-    const removeOnSignedInUserChangedListener: () => void = window.userAPI.onSignedInUserChanged((newSignedInUser: ISignedInUser | null): void => {
-      setSignedInUser(newSignedInUser);
-    });
+    const removeOnSignedInUserChangedListener: () => void = window.userAPI.onSignedInUserChanged(
+      (newSignedInUser: IPublicSignedInUser | null): void => {
+        setSignedInUser(newSignedInUser);
+      }
+    );
     // Monitor changes to User Account Storage set status
     const removeOnCurrentUserAccountStorageChangedListener: () => void = window.userAPI.onCurrentUserAccountStorageChanged(
-      (newCurrentUserAccountStorage: ICurrentUserAccountStorage | null): void => {
+      (newCurrentUserAccountStorage: IPublicUserAccountStorage | null): void => {
         setCurrentUserAccountStorage(newCurrentUserAccountStorage);
       }
     );
     // Monitor changes to User Account Storage open status
     const removeOnUserAccountStorageOpenChangedListener: () => void = window.userAPI.onUserAccountStorageOpenChanged(
       (isUserAccountStorageOpen: boolean): void => {
-        setCurrentUserAccountStorage((prevCurrentUserAccountStorage: ICurrentUserAccountStorage | null): ICurrentUserAccountStorage | null => {
+        setCurrentUserAccountStorage((prevCurrentUserAccountStorage: IPublicUserAccountStorage | null): IPublicUserAccountStorage | null => {
           if (prevCurrentUserAccountStorage === null) {
             appLogger.warn("Current User Account Storage open state changed callback invoked with no current User Account Storage set! No-op.");
             enqueueSnackbar({ message: "Current User Account Storage open state received without being set.", variant: "warning" });

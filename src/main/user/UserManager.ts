@@ -2,17 +2,21 @@ import { LogFunctions } from "electron-log";
 import { UserAccountStorageBackendType } from "./account/storage/backend/UserAccountStorageBackendType";
 import { randomBytes, randomUUID, scryptSync, timingSafeEqual, UUID } from "node:crypto";
 import { ISecuredUserSignUpPayload } from "./account/SecuredUserSignUpPayload";
-import { SIGNED_IN_USER_JSON_SCHEMA, ISignedInUser } from "@shared/user/account/SignedInUser";
+import { ISignedInUser, isSignedInUserValid } from "@main/user/account/SignedInUser";
 import { SignedInUserChangedCallback, CurrentUserAccountStorageChangedCallback } from "@shared/IPC/APIs/UserAPI";
 import { isDeepStrictEqual } from "node:util";
 import Ajv, { ValidateFunction } from "ajv";
 import { IUserDataStorageConfig } from "./data/storage/config/UserDataStorageConfig";
-import { ISecuredUserDataStorageConfig } from "./data/storage/config/SecuredUserDataStorageConfig";
 import { ISecuredPassword } from "@main/utils/encryption/SecuredPassword";
 import { IUserSignInPayload, USER_SIGN_IN_PAYLOAD_JSON_SCHEMA } from "./account/UserSignInPayload";
 import { IUserSignUpPayload, USER_SIGN_UP_PAYLOAD_JSON_SCHEMA } from "./account/UserSignUpPayload";
 import { UserAccountStorage } from "./account/storage/UserAccountStorage";
-import { ICurrentUserAccountStorage } from "@shared/user/account/storage/CurrentUserAccountStorage";
+import { IPublicUserAccountStorage } from "@shared/user/account/storage/PublicUserAccountStorage";
+import { signedInUserToPublicSignedInUser } from "./account/utils/signedInUserToPublicSignedInUser";
+import { IPublicSignedInUser } from "@shared/user/account/PublicSignedInUser";
+import { IStorageSecuredUserDataStorageConfig } from "./data/storage/config/StorageSecuredUserDataStorageConfig";
+import { userDataStorageConfigToSecuredUserDataStorageConfig } from "./data/storage/config/utils/userDataStorageConfigToSecuredUserDataStorageConfig";
+import { securedUserDataStorageConfigToStorageSecuredUserDataStorageConfig } from "./data/storage/config/utils/securedUserDataStorageConfigToStorageSecuredUserDataStorageConfig";
 
 export class UserManager {
   private readonly logger: LogFunctions;
@@ -32,7 +36,7 @@ export class UserManager {
   // AJV Validate functions
   public readonly USER_SIGN_UP_PAYLOAD_VALIDATE_FUNCTION: ValidateFunction<IUserSignUpPayload>;
   public readonly USER_SIGN_IN_PAYLOAD_VALIDATE_FUNCTION: ValidateFunction<IUserSignInPayload>;
-  public readonly CURRENTLY_SIGNED_IN_USER_VALIDATE_FUNCTION: ValidateFunction<ISignedInUser>;
+  private readonly PASSWORD_SALT_LENGTH = 32;
 
   public constructor(
     logger: LogFunctions,
@@ -47,7 +51,6 @@ export class UserManager {
     this.AJV = ajv;
     this.USER_SIGN_UP_PAYLOAD_VALIDATE_FUNCTION = this.AJV.compile<IUserSignUpPayload>(USER_SIGN_UP_PAYLOAD_JSON_SCHEMA);
     this.USER_SIGN_IN_PAYLOAD_VALIDATE_FUNCTION = this.AJV.compile<IUserSignInPayload>(USER_SIGN_IN_PAYLOAD_JSON_SCHEMA);
-    this.CURRENTLY_SIGNED_IN_USER_VALIDATE_FUNCTION = this.AJV.compile<ISignedInUser>(SIGNED_IN_USER_JSON_SCHEMA);
     // Currently signed in user
     this.onSignedInUserChangedCallback =
       onSignedInUserChangedCallback ??
@@ -60,22 +63,30 @@ export class UserManager {
       {
         set: (target: { value: ISignedInUser | null }, property: string | symbol, value: unknown): boolean => {
           if (property !== "value") {
-            throw new Error(`Cannot set property "${String(property)}" on currently signed in user. Only "value" property can be set! No-op set.`);
+            throw new Error(`Cannot set property "${String(property)}" on currently signed in user. Only "value" property can be set! No-op set`);
           }
-          if (value !== null && !this.CURRENTLY_SIGNED_IN_USER_VALIDATE_FUNCTION(value)) {
-            throw new Error(`Value must be "null" or a valid currently signed in user object! No-op set.`);
+          if (value !== null && !isSignedInUserValid(value)) {
+            throw new Error(`Value must be null or a valid currently signed in user object! No-op set`);
           }
+          const NEW_PUBLIC_SIGNED_IN_USER: IPublicSignedInUser | null = value === null ? null : signedInUserToPublicSignedInUser(value, this.logger);
           if (isDeepStrictEqual(target[property], value)) {
-            this.logger.warn(`Currently signed in user already had this value: ${JSON.stringify(value, null, 2)}. No-op set.`);
+            this.logger.warn(`Currently signed in user already had this value: ${JSON.stringify(NEW_PUBLIC_SIGNED_IN_USER, null, 2)}. No-op set.`);
             return false;
+          }
+          // Corrupt data encryption key previous value was a signed in user
+          if (target[property] !== null) {
+            this.logger.info("Corrupting previous user data encryption AES key buffer.");
+            crypto.getRandomValues(target[property].userDataEncryptionAESKey);
+          } else {
+            this.logger.info("No previous user data encryption key buffer to corrupt.");
           }
           target[property] = value;
           if (value === null) {
-            this.logger.info('Set currently signed in user to "null" (signed out).');
+            this.logger.info("Set currently signed in user to null (signed out).");
           } else {
-            this.logger.info(`Set currently signed in user to: ${JSON.stringify(value, null, 2)} (signed in).`);
+            this.logger.info(`Set currently signed in user to: ${JSON.stringify(NEW_PUBLIC_SIGNED_IN_USER, null, 2)} (signed in).`);
           }
-          this.onSignedInUserChangedCallback(value);
+          this.onSignedInUserChangedCallback(NEW_PUBLIC_SIGNED_IN_USER);
           return true;
         }
       }
@@ -95,11 +106,11 @@ export class UserManager {
             throw new Error(`Cannot set property "${String(property)}" on User Account Storage. Only "value" property can be set! No-op set.`);
           }
           if (value !== null && !(value instanceof UserAccountStorage)) {
-            throw new Error(`Value must be "null" or an instance of User Account Storage! No-op set.`);
+            throw new Error(`Value must be null or an instance of User Account Storage! No-op set.`);
           }
           target[property] = value;
           if (value === null) {
-            this.logger.info('Set User Account Storage to "null" (unavailable).');
+            this.logger.info("Set User Account Storage to null (unavailable).");
             this.onUserAccountStorageChangedCallback(null);
           } else {
             this.logger.info(`Set "${value.name}" User Account Storage (ID "${value.storageId}") (available).`);
@@ -207,6 +218,11 @@ export class UserManager {
     return scryptSync(plainTextPassword, salt, 64);
   }
 
+  private deriveUserDataEncryptionAESKey(plainTextPassword: string, salt: Buffer): Buffer {
+    this.logger.debug("Deriving user data encryption AES key.");
+    return scryptSync(plainTextPassword, salt, 32);
+  }
+
   public generateRandomUserId(): UUID {
     this.logger.debug("Generating random User ID.");
     if (this.userAccountStorage.value === null) {
@@ -225,14 +241,16 @@ export class UserManager {
   // TODO: Move this out of here; Maybe not for consistency with the other one?
   public secureUserSignUpPayload(userSignUpPayload: IUserSignUpPayload): ISecuredUserSignUpPayload {
     this.logger.debug(`Securing user sign up payload for user: "${userSignUpPayload.username}".`);
-    const PASSWORD_SALT: Buffer = randomBytes(16);
+    const PASSWORD_SALT: Buffer = randomBytes(this.PASSWORD_SALT_LENGTH);
+    const DATA_ENCRYPTION_KEY_SALT: Buffer = randomBytes(this.PASSWORD_SALT_LENGTH);
     const SECURED_USER_SIGN_UP_PAYLOAD: ISecuredUserSignUpPayload = {
       userId: userSignUpPayload.userId,
       username: userSignUpPayload.username,
       securedPassword: {
         hash: this.hashPassword(userSignUpPayload.password, PASSWORD_SALT, "user sign up").toString("base64"),
         salt: PASSWORD_SALT.toString("base64")
-      }
+      },
+      dataEncryptionAESKeySalt: DATA_ENCRYPTION_KEY_SALT.toString("base64")
     };
     return SECURED_USER_SIGN_UP_PAYLOAD;
   }
@@ -250,33 +268,6 @@ export class UserManager {
     }
     this.logger.debug(`Generated random User Data Storage ID "${storageId}".`);
     return storageId;
-  }
-
-  // TODO: Move this out of here? NO, this will become the function that encrypts for storage
-  public secureUserDataStorageConfig(userDataStorageConfig: IUserDataStorageConfig): ISecuredUserDataStorageConfig {
-    this.logger.debug(`Securing User Data Storage Config with ID: "${userDataStorageConfig.storageId}".`);
-    let securedVisibilityPassword: ISecuredPassword | null;
-    if (userDataStorageConfig.visibilityPassword !== null) {
-      this.logger.debug("Config has a visibility password.");
-      const VISIBILITY_PASSWORD_SALT: Buffer = randomBytes(16);
-      securedVisibilityPassword = {
-        hash: this.hashPassword(userDataStorageConfig.visibilityPassword, VISIBILITY_PASSWORD_SALT, "user data storage visibility").toString(
-          "base64"
-        ),
-        salt: VISIBILITY_PASSWORD_SALT.toString("base64")
-      };
-    } else {
-      this.logger.debug("Config does not have a visibility password.");
-      securedVisibilityPassword = null;
-    }
-    const SECURED_USER_DATA_STORAGE_CONFIG: ISecuredUserDataStorageConfig = {
-      storageId: userDataStorageConfig.storageId,
-      name: userDataStorageConfig.name,
-      description: userDataStorageConfig.description,
-      securedVisibilityPassword: securedVisibilityPassword,
-      backendConfig: userDataStorageConfig.backendConfig
-    };
-    return SECURED_USER_DATA_STORAGE_CONFIG;
   }
 
   public getUserCount(): number {
@@ -323,61 +314,82 @@ export class UserManager {
       Buffer.from(SECURED_USER_PASSWORD.salt, "base64"),
       "user sign in"
     );
-    if (timingSafeEqual(SIGN_IN_PASSWORD_HASH, Buffer.from(SECURED_USER_PASSWORD.hash, "base64"))) {
-      this.logger.debug("Password hashes matched!");
-      this.signedInUser.value = { userId: USER_ID, username: userSignInPayload.username };
-      return true;
+    if (!timingSafeEqual(SIGN_IN_PASSWORD_HASH, Buffer.from(SECURED_USER_PASSWORD.hash, "base64"))) {
+      this.logger.debug("Password hashes do not match.");
+      return false;
     }
-    this.logger.debug("Password hashes do not match.");
-    return false;
+    this.logger.debug("Password hashes matched!");
+    const DATA_ENCRYPTION_KEY_SALT: string | null = this.userAccountStorage.value.getUserDataEncryptionAESKeySalt(USER_ID);
+    if (DATA_ENCRYPTION_KEY_SALT === null) {
+      throw new Error(`No data encryption key salt for given user ID: "${USER_ID}"`);
+    }
+    this.signedInUser.value = {
+      userId: USER_ID,
+      username: userSignInPayload.username,
+      userDataEncryptionAESKey: this.deriveUserDataEncryptionAESKey(userSignInPayload.password, Buffer.from(DATA_ENCRYPTION_KEY_SALT, "base64"))
+    };
+    return true;
   }
 
-  public signOutUser(): ISignedInUser | null {
+  public signOutUser(): IPublicSignedInUser | null {
     this.logger.debug("Attempting sign out.");
     if (this.signedInUser.value === null) {
       this.logger.debug("No signed in user.");
       return null;
     }
     this.logger.debug(`Signing out user: "${this.signedInUser.value.username}".`);
-    const SIGNED_OUT_USER: ISignedInUser = this.signedInUser.value;
-    this.signedInUser.value = null;
-    return SIGNED_OUT_USER;
+    const PUBLIC_SIGNED_OUT_USER: IPublicSignedInUser = signedInUserToPublicSignedInUser(this.signedInUser.value, this.logger);
+    this.signedInUser.value = null; // Encryption key gets corrupted in proxy
+    return PUBLIC_SIGNED_OUT_USER;
   }
 
-  public getSignedInUser(): ISignedInUser | null {
-    return this.signedInUser.value;
+  public getPublicSignedInUser(): IPublicSignedInUser | null {
+    if (this.signedInUser.value === null) {
+      return null;
+    }
+    return signedInUserToPublicSignedInUser(this.signedInUser.value, this.logger);
   }
 
-  // TODO: Move this maybe? Or do something about it being more related to the front end? It is in userManager though, so maybe should be here?
-  public getCurrentUserAccountStorage(): ICurrentUserAccountStorage | null {
+  public getCurrentUserAccountStorage(): IPublicUserAccountStorage | null {
     if (this.userAccountStorage.value === null) {
       return null;
     }
-    return {
-      storageId: this.userAccountStorage.value.storageId,
-      name: this.userAccountStorage.value.name,
-      isOpen: this.userAccountStorage.value.isOpen()
-    };
+    return this.userAccountStorage.value.getPublicUserAccountStorage();
   }
 
-  public addUserDataStorageConfigToUser(userDataStorageConfig: IUserDataStorageConfig): boolean {
+  public addUserDataStorageConfig(userDataStorageConfig: IUserDataStorageConfig): boolean {
+    // TODO: Check that logged in user is the same as the config owner
     this.logger.debug(`Adding User Data Storage Config to user: "${userDataStorageConfig.userId}".`);
     if (this.userAccountStorage.value === null) {
       throw new Error("Null User Account Storage");
     }
-    // TODO: Encrypt the config with a KDF derived from the user's password
+    if (this.signedInUser.value === null) {
+      throw new Error("Cannot encrypt Secured User Data Storage Config with no signed in user");
+    }
     if (this.userAccountStorage.value.isUserIdAvailable(userDataStorageConfig.userId)) {
       throw new Error(`Cannot add User Data Storage to user "${userDataStorageConfig.userId}" because it does not exist`);
     }
-    const SECURED_USER_DATA_STORAGE_CONFIG: ISecuredUserDataStorageConfig = this.secureUserDataStorageConfig(userDataStorageConfig);
-    return this.userAccountStorage.value.addUserDataStorageConfigToUser(userDataStorageConfig.userId, SECURED_USER_DATA_STORAGE_CONFIG);
+    return this.userAccountStorage.value.addStorageSecuredUserDataStorageConfig(
+      securedUserDataStorageConfigToStorageSecuredUserDataStorageConfig(
+        userDataStorageConfigToSecuredUserDataStorageConfig(
+          userDataStorageConfig,
+          this.PASSWORD_SALT_LENGTH,
+          (visibilityPassword: string, visibilityPasswordSalt: Buffer): string => {
+            return this.hashPassword(visibilityPassword, visibilityPasswordSalt, "user data storage visibility").toString("base64");
+          },
+          this.logger
+        ),
+        this.signedInUser.value.userDataEncryptionAESKey,
+        this.logger
+      )
+    );
   }
 
-  public getAllUserDataStorageConfigs(userId: UUID): ISecuredUserDataStorageConfig[] {
-    this.logger.debug(`Getting all User Data Storage Configs owned by user: "${userId}".`);
+  public getAllEncryptedStorageSecuredUserDataStorageConfigs(userId: UUID): IStorageSecuredUserDataStorageConfig[] {
+    this.logger.debug(`Getting all Encrypted Storage Secured User Data Storage Configs owned by user: "${userId}".`);
     if (this.userAccountStorage.value === null) {
       throw new Error("Null User Account Storage");
     }
-    return this.userAccountStorage.value.getAllUserDataStorageConfigs(userId);
+    return this.userAccountStorage.value.getAllStorageSecuredUserDataStorageConfigs(userId);
   }
 }

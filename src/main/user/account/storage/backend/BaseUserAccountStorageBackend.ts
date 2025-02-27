@@ -2,19 +2,14 @@ import { LogFunctions } from "electron-log";
 import Ajv, { JSONSchemaType, ValidateFunction } from "ajv";
 import { ISecuredUserSignUpPayload } from "../../SecuredUserSignUpPayload";
 import { UUID } from "node:crypto";
-import {
-  ISecuredUserDataStorageConfig,
-  SECURED_USER_DATA_STORAGE_CONFIG_JSON_SCHEMA
-} from "@main/user/data/storage/config/SecuredUserDataStorageConfig";
 import { ISecuredPassword } from "@main/utils/encryption/SecuredPassword";
 import { IBaseUserAccountStorageBackendConfig } from "./config/BaseUserAccountStorageBackendConfig";
+import { IStorageSecuredUserDataStorageConfig } from "@main/user/data/storage/config/StorageSecuredUserDataStorageConfig";
 
 export abstract class BaseUserAccountStorageBackend<T extends IBaseUserAccountStorageBackendConfig> {
   protected readonly logger: LogFunctions;
   public readonly config: T;
   private readonly USER_ACCOUNT_STORAGE_BACKEND_CONFIG_VALIDATE_FUNCTION: ValidateFunction<T>;
-  // TODO: Remove this once data storage config is encrypted? Maybe have a different type for encrypted configs?
-  protected readonly SECURED_USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION: ValidateFunction<ISecuredUserDataStorageConfig>;
 
   public constructor(config: T, configSchema: JSONSchemaType<T>, logger: LogFunctions, ajv: Ajv) {
     this.logger = logger;
@@ -25,9 +20,6 @@ export abstract class BaseUserAccountStorageBackend<T extends IBaseUserAccountSt
     if (!this.isConfigValid()) {
       throw new Error(`Could not initialise User Acount Storage Backend`);
     }
-    this.SECURED_USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION = ajv.compile<ISecuredUserDataStorageConfig>(
-      SECURED_USER_DATA_STORAGE_CONFIG_JSON_SCHEMA
-    );
   }
 
   public abstract open(): void; // Returns isOpen
@@ -39,10 +31,11 @@ export abstract class BaseUserAccountStorageBackend<T extends IBaseUserAccountSt
   public abstract addUser(securedUserSignInPayload: ISecuredUserSignUpPayload): boolean;
   public abstract getUserId(username: string): UUID | null;
   public abstract getSecuredUserPassword(userId: UUID): ISecuredPassword | null;
+  public abstract getUserDataEncryptionAESKeySalt(userId: UUID): string | null;
   public abstract getUserCount(): number;
   public abstract isUserDataStorageIdAvailable(storageId: UUID): boolean;
-  public abstract addUserDataStorageConfigToUser(userId: UUID, securedUserDataStorageConfig: ISecuredUserDataStorageConfig): boolean;
-  public abstract getAllUserDataStorageConfigs(userId: UUID): ISecuredUserDataStorageConfig[];
+  public abstract addStorageSecuredUserDataStorageConfig(encryptedStorageSecuredUserDataStorageConfig: IStorageSecuredUserDataStorageConfig): boolean;
+  public abstract getAllStorageSecuredUserDataStorageConfigs(userId: UUID): IStorageSecuredUserDataStorageConfig[];
 
   private isConfigValid(): boolean {
     this.logger.debug("Validating User Acount Storage Backend Config.");
