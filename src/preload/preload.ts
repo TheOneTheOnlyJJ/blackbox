@@ -15,10 +15,11 @@ import { IIPCTLSAPI, IPC_TLS_API_CHANNELS, IPCTLSAPIChannel, IPCTLSReadinessChan
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 import { IIPCTLSBootstrapAPI, IPC_TLS_BOOTSTRAP_API_CHANNELS } from "@shared/IPC/APIs/IPCTLSBootstrapAPI";
 import { LogLevel, LogMessage } from "electron-log";
-import { IPublicUserAccountStorage } from "@shared/user/account/storage/PublicUserAccountStorage";
+import { IPublicUserAccountStorageConfig } from "@shared/user/account/storage/PublicUserAccountStorageConfig";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { IPublicSignedInUser } from "@shared/user/account/PublicSignedInUser";
 import { IV_LENGTH } from "@shared/encryption/constants";
+import { IPublicUserDataStorageConfig } from "@shared/user/data/storage/PublicUserDataStorageConfig";
 
 // Variables
 const TEXT_ENCODER: TextEncoder = new TextEncoder();
@@ -214,20 +215,25 @@ const USER_API: IUserAPI = {
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL) as IPCAPIResponse<IPublicSignedInUser | null>;
   },
-  addUserDataStorageConfigToUser: (encryptedUserDataStorageConfigCreateDTO: EncryptedUserDataStorageConfigCreateDTO): IPCAPIResponse<boolean> => {
-    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.addUserDataStorageConfigToUser;
+  addUserDataStorageConfig: (encryptedUserDataStorageConfigCreateDTO: EncryptedUserDataStorageConfigCreateDTO): IPCAPIResponse<boolean> => {
+    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.addUserDataStorageConfig;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL, encryptedUserDataStorageConfigCreateDTO) as IPCAPIResponse<boolean>;
   },
-  getCurrentUserAccountStorage: (): IPCAPIResponse<IPublicUserAccountStorage | null> => {
-    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.getCurrentUserAccountStorage;
+  getCurrentUserAccountStorageConfig: (): IPCAPIResponse<IPublicUserAccountStorageConfig | null> => {
+    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.getCurrentUserAccountStorageConfig;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
-    return ipcRenderer.sendSync(CHANNEL) as IPCAPIResponse<IPublicUserAccountStorage | null>;
+    return ipcRenderer.sendSync(CHANNEL) as IPCAPIResponse<IPublicUserAccountStorageConfig | null>;
+  },
+  getAllSignedInUserUserDataStorageConfigs: (): IPCAPIResponse<IPublicUserDataStorageConfig[]> => {
+    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.getAllSignedInUserUserDataStorageConfigs;
+    sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
+    return ipcRenderer.sendSync(CHANNEL) as IPCAPIResponse<IPublicUserDataStorageConfig[]>;
   },
   onCurrentUserAccountStorageChanged: (callback: CurrentUserAccountStorageChangedCallback): (() => void) => {
     const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.onCurrentUserAccountStorageChanged;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Adding listener from main on channel: "${CHANNEL}".`);
-    const LISTENER = (_: IpcRendererEvent, currentUserAccountStorage: IPublicUserAccountStorage | null): void => {
+    const LISTENER = (_: IpcRendererEvent, currentUserAccountStorage: IPublicUserAccountStorageConfig | null): void => {
       sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Received message from main on channel: "${CHANNEL}".`);
       callback(currentUserAccountStorage);
     };

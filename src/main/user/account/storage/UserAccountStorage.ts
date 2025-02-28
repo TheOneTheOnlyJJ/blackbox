@@ -8,7 +8,7 @@ import { UserAccountStorageBackendType } from "./backend/UserAccountStorageBacke
 import { UserAccountStorageOpenChangedCallback } from "@shared/IPC/APIs/UserAPI";
 import { ISecuredUserSignUpPayload } from "../SecuredUserSignUpPayload";
 import { ISecuredPassword } from "@main/utils/encryption/SecuredPassword";
-import { IPublicUserAccountStorage } from "@shared/user/account/storage/PublicUserAccountStorage";
+import { IPublicUserAccountStorageConfig } from "@shared/user/account/storage/PublicUserAccountStorageConfig";
 import { IStorageSecuredUserDataStorageConfig } from "@main/user/data/storage/config/StorageSecuredUserDataStorageConfig";
 
 export class UserAccountStorage {
@@ -55,8 +55,8 @@ export class UserAccountStorage {
     this.onUserAccountStorageOpenChangedCallback(false);
   }
 
-  public getPublicUserAccountStorage(): IPublicUserAccountStorage {
-    this.logger.info("Getting public user account storage.");
+  public getPublicUserAccountStorageConfig(): IPublicUserAccountStorageConfig {
+    this.logger.info("Getting Public User Account Storage Config.");
     return {
       storageId: this.storageId,
       name: this.name,

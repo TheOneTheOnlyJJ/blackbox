@@ -10,7 +10,7 @@ import { ISecuredPassword } from "@main/utils/encryption/SecuredPassword";
 import { IUserSignInPayload, USER_SIGN_IN_PAYLOAD_JSON_SCHEMA } from "./account/UserSignInPayload";
 import { IUserSignUpPayload, USER_SIGN_UP_PAYLOAD_JSON_SCHEMA } from "./account/UserSignUpPayload";
 import { UserAccountStorage } from "./account/storage/UserAccountStorage";
-import { IPublicUserAccountStorage } from "@shared/user/account/storage/PublicUserAccountStorage";
+import { IPublicUserAccountStorageConfig } from "@shared/user/account/storage/PublicUserAccountStorageConfig";
 import { signedInUserToPublicSignedInUser } from "./account/utils/signedInUserToPublicSignedInUser";
 import { IPublicSignedInUser } from "@shared/user/account/PublicSignedInUser";
 import { IStorageSecuredUserDataStorageConfig } from "./data/storage/config/StorageSecuredUserDataStorageConfig";
@@ -352,11 +352,11 @@ export class UserManager {
     return signedInUserToPublicSignedInUser(this.signedInUser.value, this.logger);
   }
 
-  public getCurrentUserAccountStorage(): IPublicUserAccountStorage | null {
+  public getCurrentUserAccountStorageConfig(): IPublicUserAccountStorageConfig | null {
     if (this.userAccountStorage.value === null) {
       return null;
     }
-    return this.userAccountStorage.value.getPublicUserAccountStorage();
+    return this.userAccountStorage.value.getPublicUserAccountStorageConfig();
   }
 
   public addUserDataStorageConfig(userDataStorageConfig: IUserDataStorageConfig): boolean {
@@ -387,8 +387,8 @@ export class UserManager {
     );
   }
 
-  public getAllSecuredUserDataStorageConfigs(): ISecuredUserDataStorageConfig[] {
-    this.logger.debug("Getting all Secured User Data Storage Configs.");
+  public getAllSignedInUserSecuredUserDataStorageConfigs(): ISecuredUserDataStorageConfig[] {
+    this.logger.debug("Getting all signed in user Secured User Data Storage Configs.");
     if (this.userAccountStorage.value === null) {
       throw new Error("Null User Account Storage");
     }
