@@ -22,7 +22,7 @@ export interface IUserAPI {
   getSignedInUser: () => IPCAPIResponse<IPublicSignedInUser | null>;
   addUserDataStorageConfig: (encryptedUserDataStorageConfigCreateDTO: EncryptedUserDataStorageConfigCreateDTO) => IPCAPIResponse<boolean>; // TODO: Move to data API?
   getCurrentUserAccountStorageConfig: () => IPCAPIResponse<IPublicUserAccountStorageConfig | null>;
-  getAllSignedInUserUserDataStorageConfigs: () => IPCAPIResponse<IPublicUserDataStorageConfig[]>; // TODO: Move to data API?
+  getAllSignedInUserUserDataStorageConfigs: () => IPCAPIResponse<IPublicUserDataStorageConfig[]>; // TODO: Move to data API? & ENCRYPT BEFORE SENDING
   onCurrentUserAccountStorageChanged: (callback: CurrentUserAccountStorageChangedCallback) => () => void;
   onUserAccountStorageOpenChanged: (callback: UserAccountStorageOpenChangedCallback) => () => void;
   onSignedInUserChanged: (callback: SignedInUserChangedCallback) => () => void;

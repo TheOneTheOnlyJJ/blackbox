@@ -19,6 +19,7 @@ const UserDataStoragesPage: FC = () => {
   const [isNewUserDataStorageConfigFormDialogOpen, setIsNewUserDataStorageConfigFormDialogOpen] = useState<boolean>(false);
   const isInitialMount: MutableRefObject<boolean> = useRef<boolean>(true);
   // Public User Data Storage Configs
+  // TODO: Make this available in signedInContext instead of here
   const [publicUserDataStorageConfigs, setPublicUserDataStorageConfigs] = useState<IPublicUserDataStorageConfig[]>([]);
 
   const getAllSignedInUserUserDataStorageConfigs = useCallback((): void => {
@@ -86,6 +87,7 @@ const UserDataStoragesPage: FC = () => {
         <Typography>{JSON.stringify(publicUserDataStorageConfigs, null, 2)}</Typography>{" "}
         {
           // TODO Make this a proper MUI X Data Grid & Clear logs by making them optional
+          // TODO: Add edit config & delete config (with optional delete resources)
         }
       </Box>
       <NewUserDataStorageConfigFormDialog

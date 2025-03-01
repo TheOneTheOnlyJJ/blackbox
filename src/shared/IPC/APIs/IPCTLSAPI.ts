@@ -20,4 +20,5 @@ export interface IIPCTLSAPI extends IIPCTLSAPIMain {
   getRendererReadiness: () => boolean;
   onRendererReadinessChanged: (callback: IPCTLSReadinessChangedCallback) => () => void;
   encryptData: (data: string, dataPurposeToLog?: string) => Promise<IEncryptedData>;
+  // TODO: Add decrypt data function
 }
