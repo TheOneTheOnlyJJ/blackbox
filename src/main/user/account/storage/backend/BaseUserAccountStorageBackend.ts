@@ -1,29 +1,30 @@
 import { LogFunctions } from "electron-log";
-import Ajv, { JSONSchemaType, ValidateFunction } from "ajv";
+import { JSONSchemaType, ValidateFunction } from "ajv";
 import { ISecuredUserSignUpPayload } from "../../SecuredUserSignUpPayload";
 import { UUID } from "node:crypto";
 import { ISecuredPassword } from "@main/utils/encryption/SecuredPassword";
 import { IBaseUserAccountStorageBackendConfig } from "./config/BaseUserAccountStorageBackendConfig";
 import { IStorageSecuredUserDataStorageConfig } from "@main/user/data/storage/config/StorageSecuredUserDataStorageConfig";
+import { AJV } from "@shared/utils/AJVJSONValidator";
 
 export abstract class BaseUserAccountStorageBackend<T extends IBaseUserAccountStorageBackendConfig> {
   protected readonly logger: LogFunctions;
   public readonly config: T;
   private readonly USER_ACCOUNT_STORAGE_BACKEND_CONFIG_VALIDATE_FUNCTION: ValidateFunction<T>;
 
-  public constructor(config: T, configSchema: JSONSchemaType<T>, logger: LogFunctions, ajv: Ajv) {
+  public constructor(config: T, configSchema: JSONSchemaType<T>, logger: LogFunctions) {
     this.logger = logger;
     this.logger.info("Initialising User Acount Storage Backend.");
     this.config = config;
     this.logger.silly(`Config: ${JSON.stringify(this.config, null, 2)}.`);
-    this.USER_ACCOUNT_STORAGE_BACKEND_CONFIG_VALIDATE_FUNCTION = ajv.compile<T>(configSchema);
+    this.USER_ACCOUNT_STORAGE_BACKEND_CONFIG_VALIDATE_FUNCTION = AJV.compile<T>(configSchema);
     if (!this.isConfigValid()) {
       throw new Error(`Could not initialise User Acount Storage Backend`);
     }
   }
 
-  public abstract open(): void; // Returns isOpen
-  public abstract close(): void; // Returns isOpen
+  public abstract open(): boolean;
+  public abstract close(): boolean;
   public abstract isOpen(): boolean;
   public abstract isLocal(): boolean;
   public abstract isUserIdAvailable(userId: UUID): boolean;

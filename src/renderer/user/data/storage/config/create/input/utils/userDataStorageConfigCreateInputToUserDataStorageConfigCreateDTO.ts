@@ -6,9 +6,9 @@ import { LogFunctions } from "electron-log";
 export const userDataStorageConfigCreateInputToUserDataStorageConfigCreateDTO = (
   userIdToAddTo: string,
   userDataStorageConfigCreateInput: IUserDataStorageConfigCreateInput,
-  logger: LogFunctions
+  logger: LogFunctions | null
 ): IUserDataStorageConfigCreateDTO => {
-  logger.debug(`Converting User Data Storage Config Create Input to User Data Storage Config Create DTO.`);
+  logger?.debug(`Converting User Data Storage Config Create Input to User Data Storage Config Create DTO.`);
   return {
     userId: userIdToAddTo,
     name: userDataStorageConfigCreateInput.name,

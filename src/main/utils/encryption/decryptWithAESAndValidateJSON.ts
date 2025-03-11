@@ -7,13 +7,13 @@ import { TAG_LENGTH } from "@shared/encryption/constants";
 const DECODER: TextDecoder = new TextDecoder();
 
 export const decryptWithAESAndValidateJSON = <T>(
-  encryptedData: IEncryptedData,
+  encryptedData: IEncryptedData<T>,
   JSONValidator: ValidateFunction<T>,
   AESKey: Buffer,
-  logger: LogFunctions,
-  dataTypeToLog: string
+  logger: LogFunctions | null,
+  dataTypeToLog?: string
 ): T => {
-  logger.debug(`Decrypting ${dataTypeToLog}.`);
+  logger?.debug(`Decrypting ${dataTypeToLog ?? "data"}.`);
 
   const ENCRYPTED_DATA: Buffer = Buffer.from(new Uint8Array(encryptedData.data));
 
@@ -38,10 +38,10 @@ export const decryptWithAESAndValidateJSON = <T>(
   const DECRYPTED_DATA_PAYLOAD: Buffer = Buffer.concat([DECIPHER.update(ENCRYPTED_DATA_PAYLOAD), DECIPHER.final()]);
 
   // Decode the decrypted data
-  const DECRYPTED_DATA_TEXT: string = DECODER.decode(DECRYPTED_DATA_PAYLOAD);
+  const DECRYPTED_DATA_STRING: string = DECODER.decode(DECRYPTED_DATA_PAYLOAD);
 
   // Parse the decrypted JSON string into an object
-  const DECRYPTED_DATA_OBJECT: unknown = JSON.parse(DECRYPTED_DATA_TEXT);
+  const DECRYPTED_DATA_OBJECT: unknown = JSON.parse(DECRYPTED_DATA_STRING);
 
   // Validate
   if (JSONValidator(DECRYPTED_DATA_OBJECT)) {

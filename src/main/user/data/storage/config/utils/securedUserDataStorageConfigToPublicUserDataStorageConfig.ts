@@ -1,12 +1,12 @@
-import { IPublicUserDataStorageConfig } from "@shared/user/data/storage/PublicUserDataStorageConfig";
+import { IPublicUserDataStorageConfig } from "@shared/user/data/storage/config/public/PublicUserDataStorageConfig";
 import { ISecuredUserDataStorageConfig } from "../SecuredUserDataStorageConfig";
 import { LogFunctions } from "electron-log";
 
 export const securedUserDataStorageConfigToPublicUserDataStorageConfig = (
   securedUserDataStorageConfig: ISecuredUserDataStorageConfig,
-  logger: LogFunctions
+  logger: LogFunctions | null
 ): IPublicUserDataStorageConfig => {
-  logger.debug(`Converting Secured User Data Storage Config to Public User Data Storage Config.`); // TODO: Make logger optional in all of these
+  logger?.debug(`Converting Secured User Data Storage Config to Public User Data Storage Config.`); // TODO: Make logger optional in all of these
   return {
     storageId: securedUserDataStorageConfig.storageId,
     name: securedUserDataStorageConfig.name,

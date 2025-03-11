@@ -14,6 +14,7 @@ export interface IForbiddenPageParams extends Record<string, string> {
 }
 
 // TODO: Investigate bug when previous path is also forbidden
+// TODO: Add a returnPath argument/prop to return to, which can be set by pages as navigation happens
 const ForbiddenPage: FC = () => {
   const navigate: NavigateFunction = useNavigate();
   const params: Readonly<Partial<IForbiddenPageParams>> = useParams<IForbiddenPageParams>();

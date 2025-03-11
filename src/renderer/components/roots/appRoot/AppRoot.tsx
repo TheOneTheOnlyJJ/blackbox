@@ -31,7 +31,7 @@ const AppRoot: FC = () => {
 
   // Monitor location
   useEffect((): void => {
-    appLogger.debug(`Navigated to: "${location.pathname}".`);
+    appLogger.info(`Navigated to: "${location.pathname}".`);
   }, [location]);
 
   // Monitor signed in navigation entry index
@@ -41,7 +41,7 @@ const AppRoot: FC = () => {
 
   // Monitor signed in user; Navigate on sign in/out
   useEffect((): void => {
-    appLogger.debug(`Signed in user changed: ${JSON.stringify(signedInUser, null, 2)}.`);
+    appLogger.info(`Signed in user changed: ${JSON.stringify(signedInUser, null, 2)}.`);
     let navigationPath: string;
     if (signedInUser === null) {
       navigationPath = "/";
@@ -134,7 +134,7 @@ const AppRoot: FC = () => {
     );
     // Monitor changes to User Account Storage open status
     const removeOnUserAccountStorageOpenChangedListener: () => void = window.userAPI.onUserAccountStorageOpenChanged(
-      (isUserAccountStorageOpen: boolean): void => {
+      (newIsUserAccountStorageOpen: boolean): void => {
         setCurrentUserAccountStorageConfig(
           (prevCurrentUserAccountStorageConfig: IPublicUserAccountStorageConfig | null): IPublicUserAccountStorageConfig | null => {
             if (prevCurrentUserAccountStorageConfig === null) {
@@ -144,7 +144,7 @@ const AppRoot: FC = () => {
             }
             return {
               ...prevCurrentUserAccountStorageConfig,
-              isOpen: isUserAccountStorageOpen
+              isOpen: newIsUserAccountStorageOpen
             };
           }
         );

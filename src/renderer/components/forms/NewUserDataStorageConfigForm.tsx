@@ -12,10 +12,10 @@ import {
 } from "@renderer/user/data/storage/config/create/input/UserDataStorageConfigCreateInput";
 import { enqueueSnackbar } from "notistack";
 import { IUserDataStorageConfigCreateDTO } from "@shared/user/data/storage/config/create/DTO/UserDataStorageConfigCreateDTO";
-import { EncryptedUserDataStorageConfigCreateDTO } from "@shared/user/account/encrypted/EncryptedUserDataStorageConfigCreateDTO";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { userDataStorageConfigCreateInputToUserDataStorageConfigCreateDTO } from "@renderer/user/data/storage/config/create/input/utils/userDataStorageConfigCreateInputToUserDataStorageConfigCreateDTO";
+import { IEncryptedData } from "@shared/utils/EncryptedData";
 
 const MUIForm = withTheme<IUserDataStorageConfigCreateInput>(Theme);
 
@@ -77,11 +77,11 @@ const NewUserDataStorageConfigForm: FC<INewUserDataStorageConfigFormProps> = (pr
         data.formData,
         appLogger
       );
-      window.IPCTLSAPI.encryptData(JSON.stringify(USER_DATA_STORAGE_CONFIG_CREATE_DTO), "User Data Storage Config Create DTO")
+      window.IPCTLSAPI.encrypt<IUserDataStorageConfigCreateDTO>(USER_DATA_STORAGE_CONFIG_CREATE_DTO, "User Data Storage Config Create DTO")
         .then(
-          (encryptedUserDataStorageConfigCreateDTO: EncryptedUserDataStorageConfigCreateDTO): void => {
+          (encryptedUserDataStorageConfigCreateDTO: IEncryptedData<IUserDataStorageConfigCreateDTO>): void => {
             const ADD_USER_DATA_STORAGE_CONFIG_TO_USER_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.addUserDataStorageConfig(
-              encryptedUserDataStorageConfigCreateDTO satisfies EncryptedUserDataStorageConfigCreateDTO
+              encryptedUserDataStorageConfigCreateDTO
             );
             if (ADD_USER_DATA_STORAGE_CONFIG_TO_USER_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
               if (ADD_USER_DATA_STORAGE_CONFIG_TO_USER_RESPONSE.data) {

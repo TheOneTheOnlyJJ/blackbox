@@ -12,8 +12,9 @@ import AlertTitle from "@mui/material/AlertTitle/AlertTitle";
 import { enqueueSnackbar } from "notistack";
 import { errorCapitalizerErrorTransformer } from "@renderer/utils/RJSF/errorTransformers/errorCapitalizerErrorTransformer";
 import { IUserSignInInput, USER_SIGN_IN_INPUT_JSON_SCHEMA, USER_SIGN_IN_INPUT_UI_SCHEMA } from "@renderer/user/account/UserSignInInput";
-import { EncryptedUserSignInDTO } from "@shared/user/account/encrypted/EncryptedUserSignInDTO";
 import { userSignInInputToUserSignInDTO } from "@renderer/user/account/utils/userSignInInputToUserSignInDTO";
+import { IUserSignInDTO } from "@shared/user/account/UserSignInDTO";
+import { IEncryptedData } from "@shared/utils/EncryptedData";
 
 const MUIForm = withTheme<IUserSignInInput>(Theme);
 
@@ -40,10 +41,10 @@ const UserSignInForm: FC = () => {
       return;
     }
     const USERNAME: string = data.formData.username;
-    window.IPCTLSAPI.encryptData(JSON.stringify(userSignInInputToUserSignInDTO(data.formData, appLogger)), "user sign in DTO")
+    window.IPCTLSAPI.encrypt<IUserSignInDTO>(userSignInInputToUserSignInDTO(data.formData, appLogger), "user sign in DTO")
       .then(
-        (encryptedUserSignInDTO: EncryptedUserSignInDTO): void => {
-          const SIGN_IN_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.signIn(encryptedUserSignInDTO satisfies EncryptedUserSignInDTO);
+        (encryptedUserSignInDTO: IEncryptedData<IUserSignInDTO>): void => {
+          const SIGN_IN_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.signIn(encryptedUserSignInDTO);
           if (SIGN_IN_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
             setWasSignInSuccessful(SIGN_IN_RESPONSE.data);
             if (SIGN_IN_RESPONSE.data) {

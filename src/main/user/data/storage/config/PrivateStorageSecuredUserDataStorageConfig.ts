@@ -1,7 +1,7 @@
 import { USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA, UserDataStorageBackendConfig } from "../backend/config/UserDataStorageBackendConfig";
 import { ISecuredPassword, SECURED_PASSWORD_JSON_SCHEMA } from "@main/utils/encryption/SecuredPassword";
-import { IEncryptedData } from "@shared/utils/EncryptedData";
-import { JSONSchemaType } from "ajv";
+import { AJV } from "@shared/utils/AJVJSONValidator";
+import { JSONSchemaType, ValidateFunction } from "ajv";
 
 // This is the type User Account Storage should accept and return when storing User Data Storage Configs
 export interface IPrivateStorageSecuredUserDataStorageConfig {
@@ -10,8 +10,6 @@ export interface IPrivateStorageSecuredUserDataStorageConfig {
   securedVisibilityPassword: ISecuredPassword | null;
   backendConfig: UserDataStorageBackendConfig;
 }
-
-export type EncryptedPrivateStorageSecuredUserDataStorageConfig = IEncryptedData;
 
 export const PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_CONFIG_JSON_SCHEMA: JSONSchemaType<IPrivateStorageSecuredUserDataStorageConfig> = {
   $schema: "http://json-schema.org/draft-07/schema#",
@@ -31,3 +29,6 @@ export const PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_CONFIG_JSON_SCHEMA: JSONS
   required: ["name", "description", "securedVisibilityPassword", "backendConfig"],
   additionalProperties: false
 } as const;
+
+export const PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION: ValidateFunction<IPrivateStorageSecuredUserDataStorageConfig> =
+  AJV.compile(PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_CONFIG_JSON_SCHEMA);

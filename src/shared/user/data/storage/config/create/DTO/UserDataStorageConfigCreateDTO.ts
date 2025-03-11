@@ -1,8 +1,9 @@
-import { JSONSchemaType } from "ajv";
+import { JSONSchemaType, ValidateFunction } from "ajv";
 import {
   USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_DTO_JSON_SCHEMA,
   UserDataStorageBackendConfigCreateDTO
 } from "../../../backend/config/create/DTO/UserDataStorageBackendConfigCreateDTO";
+import { AJV } from "@shared/utils/AJVJSONValidator";
 
 export interface IUserDataStorageConfigCreateDTO {
   userId: string;
@@ -33,3 +34,7 @@ export const USER_DATA_STORAGE_CONFIG_CREATE_DTO_JSON_SCHEMA: JSONSchemaType<IUs
   required: ["userId", "name", "description", "visibilityPassword", "backendConfigCreateDTO"],
   additionalProperties: false
 } as const;
+
+export const USER_DATA_STORAGE_CONFIG_CREATE_DTO_VALIDATE_FUNCTION: ValidateFunction<IUserDataStorageConfigCreateDTO> = AJV.compile(
+  USER_DATA_STORAGE_CONFIG_CREATE_DTO_JSON_SCHEMA
+);

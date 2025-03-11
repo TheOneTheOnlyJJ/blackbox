@@ -2,13 +2,16 @@ import { LogFunctions } from "electron-log";
 import { UserAccountStorageBackendType } from "./account/storage/backend/UserAccountStorageBackendType";
 import { randomUUID, scryptSync, timingSafeEqual, UUID } from "node:crypto";
 import { ISignedInUser, isSignedInUserValid } from "@main/user/account/SignedInUser";
-import { SignedInUserChangedCallback, CurrentUserAccountStorageChangedCallback } from "@shared/IPC/APIs/UserAPI";
+import {
+  SignedInUserChangedCallback,
+  CurrentUserAccountStorageChangedCallback,
+  UserAccountStorageOpenChangedCallback
+} from "@shared/IPC/APIs/UserAPI";
 import { isDeepStrictEqual } from "node:util";
-import Ajv, { ValidateFunction } from "ajv";
 import { IUserDataStorageConfig } from "./data/storage/config/UserDataStorageConfig";
 import { ISecuredPassword } from "@main/utils/encryption/SecuredPassword";
-import { IUserSignInPayload, USER_SIGN_IN_PAYLOAD_JSON_SCHEMA } from "./account/UserSignInPayload";
-import { IUserSignUpPayload, USER_SIGN_UP_PAYLOAD_JSON_SCHEMA } from "./account/UserSignUpPayload";
+import { IUserSignInPayload, USER_SIGN_IN_PAYLOAD_VALIDATE_FUNCTION } from "./account/UserSignInPayload";
+import { IUserSignUpPayload, USER_SIGN_UP_PAYLOAD_VALIDATE_FUNCTION } from "./account/UserSignUpPayload";
 import { UserAccountStorage } from "./account/storage/UserAccountStorage";
 import { IPublicUserAccountStorageConfig } from "@shared/user/account/storage/PublicUserAccountStorageConfig";
 import { signedInUserToPublicSignedInUser } from "./account/utils/signedInUserToPublicSignedInUser";
@@ -19,10 +22,9 @@ import { securedUserDataStorageConfigToStorageSecuredUserDataStorageConfig } fro
 import { userSignUpPayloadToSecuredUserSignUpPayload } from "./account/utils/userSignUpPayloadToSecuredUserSignUpPayload";
 import { ISecuredUserDataStorageConfig } from "./data/storage/config/SecuredUserDataStorageConfig";
 import { storageSecuredUserDataStorageConfigToSecuredUserDataStorageConfig } from "./data/storage/config/utils/storageSecuredUserDataStorageConfigToSecuredUserDataStorageConfig";
-import {
-  IPrivateStorageSecuredUserDataStorageConfig,
-  PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_CONFIG_JSON_SCHEMA
-} from "./data/storage/config/PrivateStorageSecuredUserDataStorageConfig";
+import { IPublicUserDataStorageConfig } from "@shared/user/data/storage/config/public/PublicUserDataStorageConfig";
+import { securedUserDataStorageConfigToPublicUserDataStorageConfig } from "./data/storage/config/utils/securedUserDataStorageConfigToPublicUserDataStorageConfig";
+import { IPublicUserDataStoragesChangedDiff } from "@shared/user/data/storage/config/public/PublicUserDataStoragesChangedDiff";
 
 export class UserManager {
   private readonly logger: LogFunctions;
@@ -36,31 +38,23 @@ export class UserManager {
   // Must be wrapped in an object because it too is a proxy
   private userAccountStorage: { value: UserAccountStorage | null };
   public onUserAccountStorageChangedCallback: CurrentUserAccountStorageChangedCallback;
+  private onUserAccountStorageOpenChangedCallback: UserAccountStorageOpenChangedCallback;
 
-  // AJV insatnce
-  private readonly AJV: Ajv;
-  // AJV Validate functions
-  public readonly USER_SIGN_UP_PAYLOAD_VALIDATE_FUNCTION: ValidateFunction<IUserSignUpPayload>;
-  public readonly USER_SIGN_IN_PAYLOAD_VALIDATE_FUNCTION: ValidateFunction<IUserSignInPayload>;
-  public readonly PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION: ValidateFunction<IPrivateStorageSecuredUserDataStorageConfig>;
+  // User Data Storage
+  private onUserDataStoragesChangedCallback: (publicUserDataStoragesChangedDiff: IPublicUserDataStoragesChangedDiff) => void;
+
   private readonly PASSWORD_SALT_LENGTH = 32;
 
   public constructor(
     logger: LogFunctions,
-    ajv: Ajv,
     onSignedInUserChangedCallback?: SignedInUserChangedCallback,
-    onUserAccountStorageChangedCallback?: CurrentUserAccountStorageChangedCallback
+    onUserAccountStorageChangedCallback?: CurrentUserAccountStorageChangedCallback,
+    onUserAccountStorageOpenChangedCallback?: UserAccountStorageOpenChangedCallback,
+    onUserDataStoragesChangedCallback?: (publicUserDataStoragesChangedDiff: IPublicUserDataStoragesChangedDiff) => void
   ) {
     // Loggers
     this.logger = logger;
     this.logger.debug("Initialising new User Manager.");
-    // AJV and validators
-    this.AJV = ajv;
-    this.USER_SIGN_UP_PAYLOAD_VALIDATE_FUNCTION = this.AJV.compile<IUserSignUpPayload>(USER_SIGN_UP_PAYLOAD_JSON_SCHEMA);
-    this.USER_SIGN_IN_PAYLOAD_VALIDATE_FUNCTION = this.AJV.compile<IUserSignInPayload>(USER_SIGN_IN_PAYLOAD_JSON_SCHEMA);
-    this.PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION = this.AJV.compile<IPrivateStorageSecuredUserDataStorageConfig>(
-      PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_CONFIG_JSON_SCHEMA
-    );
     // Currently signed in user
     this.onSignedInUserChangedCallback =
       onSignedInUserChangedCallback ??
@@ -107,6 +101,11 @@ export class UserManager {
       ((): void => {
         this.logger.silly("No User Account Storage changed callback set.");
       });
+    this.onUserAccountStorageOpenChangedCallback =
+      onUserAccountStorageOpenChangedCallback ??
+      ((): void => {
+        this.logger.silly("No User Account Storage open status changed callback set.");
+      });
     // User Account Storage proxy that performs validation and calls the change callback when required
     this.userAccountStorage = new Proxy<{ value: UserAccountStorage | null }>(
       { value: null },
@@ -130,6 +129,13 @@ export class UserManager {
         }
       }
     );
+
+    // User Data Storage
+    this.onUserDataStoragesChangedCallback =
+      onUserDataStoragesChangedCallback ??
+      ((): void => {
+        this.logger.silly("No User Data Storages changed callback set.");
+      });
   }
 
   public getUserAccountStorageBackendType(): UserAccountStorageBackendType {
@@ -143,7 +149,10 @@ export class UserManager {
   }
 
   public isUserAccountStorageOpen(): boolean {
-    const IS_OPEN = Boolean(this.userAccountStorage.value?.isOpen());
+    if (this.userAccountStorage.value === null) {
+      throw new Error("Null User Account Storage");
+    }
+    const IS_OPEN: boolean = this.userAccountStorage.value.isOpen();
     this.logger.debug(`Getting User Account Storage open status: ${IS_OPEN.toString()}.`);
     return IS_OPEN;
   }
@@ -154,64 +163,56 @@ export class UserManager {
     return IS_AVAILABLE;
   }
 
-  public setUserAccountStorage(accountStorage: UserAccountStorage): void {
+  public setUserAccountStorage(accountStorage: UserAccountStorage): boolean {
     this.logger.debug(`Setting "${accountStorage.name}" User Account Storage (ID "${accountStorage.storageId}").`);
     if (this.userAccountStorage.value !== null) {
       if (this.userAccountStorage.value.storageId === accountStorage.storageId) {
         this.logger.warn("User Account Storage with same ID is already set. No-op.");
-        return;
+        return true;
       }
       this.logger.warn(`Already set "${this.userAccountStorage.value.name}" User Account Storage. Unsetting.`);
       this.unsetUserAccountStorage();
       if (this.isUserAccountStorageSet()) {
         this.logger.warn(`Could not unset previous "${this.userAccountStorage.value.name}" User Account Storage. No-op set.`);
-        return;
+        return false;
       }
     }
     this.userAccountStorage.value = accountStorage;
+    return true;
   }
 
-  public unsetUserAccountStorage(): void {
+  public unsetUserAccountStorage(): boolean {
     this.logger.debug("Unsetting User Account Storage.");
     if (this.userAccountStorage.value === null) {
       throw new Error("Null User Account Storage");
     }
-    if (this.isUserAccountStorageOpen()) {
-      this.closeUserAccountStorage();
-    }
-    if (this.isUserAccountStorageOpen()) {
+    if (this.isUserAccountStorageOpen() && !this.closeUserAccountStorage()) {
       this.logger.warn("No-op unset.");
-    } else {
-      this.userAccountStorage.value = null;
-      this.logger.debug("Unset User Account Storage.");
+      return false;
     }
+    this.userAccountStorage.value = null;
+    this.logger.debug("Unset User Account Storage.");
+    return true;
   }
 
-  public openUserAccountStorage(): void {
+  public openUserAccountStorage(): boolean {
     this.logger.debug("Opening User Account Storage.");
     if (this.userAccountStorage.value === null) {
       throw new Error("Null User Account Storage");
     }
-    try {
-      this.userAccountStorage.value.open();
-    } catch (err: unknown) {
-      const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-      this.logger.error(`Could not open "${this.userAccountStorage.value.name}" User Account Storage: ${ERROR_MESSAGE}!`);
-    }
+    const IS_OPEN: boolean = this.userAccountStorage.value.open();
+    this.onUserAccountStorageOpenChangedCallback(IS_OPEN);
+    return IS_OPEN;
   }
 
-  public closeUserAccountStorage(): void {
+  public closeUserAccountStorage(): boolean {
     this.logger.debug("Closing User Account Storage.");
     if (this.userAccountStorage.value === null) {
       throw new Error("Null User Account Storage");
     }
-    try {
-      this.userAccountStorage.value.close();
-      this.logger.debug(`Closed "${this.userAccountStorage.value.name}" User Account Storage.`);
-    } catch (err: unknown) {
-      const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-      this.logger.error(`Could not close "${this.userAccountStorage.value.name}" User Account Storage: ${ERROR_MESSAGE}!`);
-    }
+    const IS_CLOSED: boolean = this.userAccountStorage.value.close();
+    this.onUserAccountStorageOpenChangedCallback(!IS_CLOSED); // IS_OPEN
+    return IS_CLOSED;
   }
 
   public isUsernameAvailable(username: string): boolean {
@@ -276,7 +277,7 @@ export class UserManager {
     if (this.userAccountStorage.value === null) {
       throw new Error("Null User Account Storage");
     }
-    if (!this.USER_SIGN_UP_PAYLOAD_VALIDATE_FUNCTION(userSignUpPayload)) {
+    if (!USER_SIGN_UP_PAYLOAD_VALIDATE_FUNCTION(userSignUpPayload)) {
       throw new Error("Invalid user sign up payload");
     }
     return this.userAccountStorage.value.addUser(
@@ -299,7 +300,7 @@ export class UserManager {
     if (this.userAccountStorage.value === null) {
       throw new Error("Null User Account Storage");
     }
-    if (!this.USER_SIGN_IN_PAYLOAD_VALIDATE_FUNCTION(userSignInPayload)) {
+    if (!USER_SIGN_IN_PAYLOAD_VALIDATE_FUNCTION(userSignInPayload)) {
       throw new Error("Invalid user sign in payload");
     }
     const USER_ID: UUID | null = this.userAccountStorage.value.getUserId(userSignInPayload.username);
@@ -360,7 +361,6 @@ export class UserManager {
   }
 
   public addUserDataStorageConfig(userDataStorageConfig: IUserDataStorageConfig): boolean {
-    // TODO: Check that logged in user is the same as the config owner
     this.logger.debug(`Adding User Data Storage Config to user: "${userDataStorageConfig.userId}".`);
     if (this.userAccountStorage.value === null) {
       throw new Error("Null User Account Storage");
@@ -368,23 +368,34 @@ export class UserManager {
     if (this.signedInUser.value === null) {
       throw new Error("Cannot encrypt Secured User Data Storage Config with no signed in user");
     }
+    if (this.signedInUser.value.userId !== userDataStorageConfig.userId) {
+      throw new Error(`Config user ID "${userDataStorageConfig.userId}" does not match signed in user ID "${this.signedInUser.value.userId}"`);
+    }
     if (this.userAccountStorage.value.isUserIdAvailable(userDataStorageConfig.userId)) {
       throw new Error(`Cannot add User Data Storage to user "${userDataStorageConfig.userId}" because it does not exist`);
     }
-    return this.userAccountStorage.value.addStorageSecuredUserDataStorageConfig(
+    const NEW_SECURED_USER_DATA_STORAGE_CONFIG: ISecuredUserDataStorageConfig = userDataStorageConfigToSecuredUserDataStorageConfig(
+      userDataStorageConfig,
+      this.PASSWORD_SALT_LENGTH,
+      (visibilityPassword: string, visibilityPasswordSalt: Buffer): string => {
+        return this.hashPassword(visibilityPassword, visibilityPasswordSalt, "user data storage visibility").toString("base64");
+      },
+      this.logger
+    );
+    const IS_ADDED_SUCCESSFULLY: boolean = this.userAccountStorage.value.addStorageSecuredUserDataStorageConfig(
       securedUserDataStorageConfigToStorageSecuredUserDataStorageConfig(
-        userDataStorageConfigToSecuredUserDataStorageConfig(
-          userDataStorageConfig,
-          this.PASSWORD_SALT_LENGTH,
-          (visibilityPassword: string, visibilityPasswordSalt: Buffer): string => {
-            return this.hashPassword(visibilityPassword, visibilityPasswordSalt, "user data storage visibility").toString("base64");
-          },
-          this.logger
-        ),
+        NEW_SECURED_USER_DATA_STORAGE_CONFIG,
         this.signedInUser.value.userDataAESKey,
         this.logger
       )
     );
+    if (IS_ADDED_SUCCESSFULLY) {
+      this.onUserDataStoragesChangedCallback({
+        deleted: [],
+        added: [securedUserDataStorageConfigToPublicUserDataStorageConfig(NEW_SECURED_USER_DATA_STORAGE_CONFIG, this.logger)]
+      } satisfies IPublicUserDataStoragesChangedDiff);
+    }
+    return IS_ADDED_SUCCESSFULLY;
   }
 
   public getAllSignedInUserSecuredUserDataStorageConfigs(): ISecuredUserDataStorageConfig[] {
@@ -405,12 +416,21 @@ export class UserManager {
       SECURED_USER_DATA_STORAGE_CONFIGS.push(
         storageSecuredUserDataStorageConfigToSecuredUserDataStorageConfig(
           storageSecuredUserDataStorageConfig,
-          this.PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION,
           this.signedInUser.value.userDataAESKey,
-          this.logger
+          null
         )
       );
     });
     return SECURED_USER_DATA_STORAGE_CONFIGS;
+  }
+
+  public getAllSignedInUserPublicUserDataStorageConfigs(): IPublicUserDataStorageConfig[] {
+    this.logger.debug("Getting all signed in user Public User Data Storage Configs.");
+    const ALL_SECURED_USER_DATA_STORAGE_CONFIGS: ISecuredUserDataStorageConfig[] = this.getAllSignedInUserSecuredUserDataStorageConfigs();
+    const ALL_PUBLIC_USER_DATA_STORAGE_CONFIGS: IPublicUserDataStorageConfig[] = [];
+    ALL_SECURED_USER_DATA_STORAGE_CONFIGS.map((securedUserDataStorageConfig: ISecuredUserDataStorageConfig): void => {
+      ALL_PUBLIC_USER_DATA_STORAGE_CONFIGS.push(securedUserDataStorageConfigToPublicUserDataStorageConfig(securedUserDataStorageConfig, null));
+    });
+    return ALL_PUBLIC_USER_DATA_STORAGE_CONFIGS;
   }
 }

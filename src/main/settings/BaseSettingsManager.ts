@@ -1,7 +1,8 @@
 import { LogFunctions } from "electron-log";
 import { SettingsManagerType } from "./SettingsManagerType";
-import Ajv, { JSONSchemaType, ValidateFunction } from "ajv";
+import { JSONSchemaType, ValidateFunction } from "ajv";
 import { BaseSettings } from "./BaseSettings";
+import { AJV } from "@shared/utils/AJVJSONValidator";
 
 export interface IBaseSettingsManagerConfig {
   type: SettingsManagerType;
@@ -30,18 +31,17 @@ export abstract class BaseSettingsManager<SettingsType extends BaseSettings, Con
     config: ConfigType,
     configSchema: JSONSchemaType<ConfigType>,
     settingsSchema: JSONSchemaType<SettingsType>,
-    logger: LogFunctions,
-    ajv: Ajv
+    logger: LogFunctions
   ) {
     this.logger = logger;
     this.logger.info("Initialising new Settings Manager.");
     this.config = config;
     this.logger.silly(`Config: ${JSON.stringify(this.config, null, 2)}.`);
-    this.SETTINGS_MANAGER_CONFIG_VALIDATE_FUNCTION = ajv.compile<ConfigType>(configSchema);
+    this.SETTINGS_MANAGER_CONFIG_VALIDATE_FUNCTION = AJV.compile<ConfigType>(configSchema);
     if (!this.isConfigValid()) {
       throw new Error("Could not initialise Settings Manager");
     }
-    this.SETTINGS_VALIDATE_FUNCTION = ajv.compile<SettingsType>(settingsSchema);
+    this.SETTINGS_VALIDATE_FUNCTION = AJV.compile<SettingsType>(settingsSchema);
     this.settings = null;
     this.doSaveOnUpdate = config.doSaveOnUpdate;
   }

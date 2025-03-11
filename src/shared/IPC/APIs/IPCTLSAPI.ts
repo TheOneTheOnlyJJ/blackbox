@@ -1,4 +1,5 @@
 import { IEncryptedData } from "@shared/utils/EncryptedData";
+import { ValidateFunction } from "ajv";
 
 export type IPCTLSReadinessChangedCallback = (isIPCTLSReady: boolean) => void;
 
@@ -19,6 +20,6 @@ export type IPCTLSAPIChannel = IPCTLSAPIChannels[keyof IPCTLSAPIChannels];
 export interface IIPCTLSAPI extends IIPCTLSAPIMain {
   getRendererReadiness: () => boolean;
   onRendererReadinessChanged: (callback: IPCTLSReadinessChangedCallback) => () => void;
-  encryptData: (data: string, dataPurposeToLog?: string) => Promise<IEncryptedData>;
-  // TODO: Add decrypt data function
+  encrypt: <T>(data: T, dataPurposeToLog?: string) => Promise<IEncryptedData<T>>;
+  decryptAndValidateJSON: <T>(encryptedData: IEncryptedData<T>, JSONValidator: ValidateFunction<T>, dataPurposeToLog?: string) => Promise<T>;
 }

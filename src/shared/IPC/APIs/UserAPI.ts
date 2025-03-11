@@ -1,31 +1,37 @@
-import { EncryptedUserSignUpDTO } from "@shared/user/account/encrypted/EncryptedUserSignUpDTO";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
-import { EncryptedUserDataStorageConfigCreateDTO } from "@shared/user/account/encrypted/EncryptedUserDataStorageConfigCreateDTO";
-import { EncryptedUserSignInDTO } from "@shared/user/account/encrypted/EncryptedUserSignInDTO";
 import { IPublicUserAccountStorageConfig } from "@shared/user/account/storage/PublicUserAccountStorageConfig";
 import { IPublicSignedInUser } from "@shared/user/account/PublicSignedInUser";
-import { IPublicUserDataStorageConfig } from "@shared/user/data/storage/PublicUserDataStorageConfig";
+import { IEncryptedData } from "@shared/utils/EncryptedData";
+import { IUserSignUpDTO } from "@shared/user/account/UserSignUpDTO";
+import { IUserSignInDTO } from "@shared/user/account/UserSignInDTO";
+import { IUserDataStorageConfigCreateDTO } from "@shared/user/data/storage/config/create/DTO/UserDataStorageConfigCreateDTO";
+import { IPublicUserDataStorageConfig } from "@shared/user/data/storage/config/public/PublicUserDataStorageConfig";
+import { IPublicUserDataStoragesChangedDiff } from "@shared/user/data/storage/config/public/PublicUserDataStoragesChangedDiff";
 
 // Utility types
-export type CurrentUserAccountStorageChangedCallback = (currentUserAccountStorage: IPublicUserAccountStorageConfig | null) => void;
-export type UserAccountStorageOpenChangedCallback = (isUserAccountStorageOpen: boolean) => void;
-export type SignedInUserChangedCallback = (publicSignedInUser: IPublicSignedInUser | null) => void;
+export type CurrentUserAccountStorageChangedCallback = (newCurrentUserAccountStorage: IPublicUserAccountStorageConfig | null) => void;
+export type UserAccountStorageOpenChangedCallback = (newIsUserAccountStorageOpen: boolean) => void;
+export type SignedInUserChangedCallback = (newPublicSignedInUser: IPublicSignedInUser | null) => void;
+export type UserDataStoragesChangedCallback = (
+  encryptedPublicUserDataStoragesChangedDiff: IEncryptedData<IPublicUserDataStoragesChangedDiff>
+) => void;
 
 // API
 export interface IUserAPI {
-  signUp: (encryptedUserSignUpDTO: EncryptedUserSignUpDTO) => IPCAPIResponse<boolean>;
-  signIn: (encryptedUserSignInDTO: EncryptedUserSignInDTO) => IPCAPIResponse<boolean>;
+  signUp: (encryptedUserSignUpDTO: IEncryptedData<IUserSignUpDTO>) => IPCAPIResponse<boolean>;
+  signIn: (encryptedUserSignInDTO: IEncryptedData<IUserSignInDTO>) => IPCAPIResponse<boolean>;
   signOut: () => IPCAPIResponse<IPublicSignedInUser | null>;
   isUserAccountStorageOpen: () => IPCAPIResponse<boolean>;
   isUsernameAvailable: (username: string) => IPCAPIResponse<boolean>;
   getUserCount: () => IPCAPIResponse<number>;
   getSignedInUser: () => IPCAPIResponse<IPublicSignedInUser | null>;
-  addUserDataStorageConfig: (encryptedUserDataStorageConfigCreateDTO: EncryptedUserDataStorageConfigCreateDTO) => IPCAPIResponse<boolean>; // TODO: Move to data API?
+  addUserDataStorageConfig: (encryptedUserDataStorageConfigCreateDTO: IEncryptedData<IUserDataStorageConfigCreateDTO>) => IPCAPIResponse<boolean>;
   getCurrentUserAccountStorageConfig: () => IPCAPIResponse<IPublicUserAccountStorageConfig | null>;
-  getAllSignedInUserUserDataStorageConfigs: () => IPCAPIResponse<IPublicUserDataStorageConfig[]>; // TODO: Move to data API? & ENCRYPT BEFORE SENDING
+  getAllSignedInUserPublicUserDataStorageConfigs: () => IPCAPIResponse<IEncryptedData<IPublicUserDataStorageConfig[]>>; // TODO: ENCRYPT BEFORE SENDING
   onCurrentUserAccountStorageChanged: (callback: CurrentUserAccountStorageChangedCallback) => () => void;
   onUserAccountStorageOpenChanged: (callback: UserAccountStorageOpenChangedCallback) => () => void;
   onSignedInUserChanged: (callback: SignedInUserChangedCallback) => () => void;
+  onUserDataStoragesChanged: (callback: UserDataStoragesChangedCallback) => () => void; // TODO: Encrypt
 }
 
 export const USER_API_IPC_CHANNELS = {
@@ -38,10 +44,11 @@ export const USER_API_IPC_CHANNELS = {
   getSignedInUser: "userAPI:getSignedInUser",
   addUserDataStorageConfig: "userAPI:addUserDataStorageConfig",
   getCurrentUserAccountStorageConfig: "userAPI:getCurrentUserAccountStorageConfig",
-  getAllSignedInUserUserDataStorageConfigs: "userAPI:getAllSignedInUserUserDataStorageConfigs",
+  getAllSignedInUserPublicUserDataStorageConfigs: "userAPI:getAllSignedInUserPublicUserDataStorageConfigs",
   onCurrentUserAccountStorageChanged: "userAPI:onCurrentUserAccountStorageChanged",
   onUserAccountStorageOpenChanged: "userAPI:onUserAccountStorageOpenChanged",
-  onSignedInUserChanged: "userAPI:onSignedInUserChanged"
+  onSignedInUserChanged: "userAPI:onSignedInUserChanged",
+  onUserDataStoragesChanged: "userAPI:onUserDataStoragesChanged"
 } as const;
 export type UserAPIIPCChannels = typeof USER_API_IPC_CHANNELS;
 export type UserAPIIPCChannel = UserAPIIPCChannels[keyof UserAPIIPCChannels];

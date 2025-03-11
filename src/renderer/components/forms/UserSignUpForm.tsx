@@ -5,16 +5,17 @@ import { customizeValidator } from "@rjsf/validator-ajv8";
 import { withTheme, IChangeEvent } from "@rjsf/core";
 import { CustomValidator, ErrorTransformer, FormValidation, RJSFSchema, RJSFValidationError } from "@rjsf/utils";
 import { appLogger } from "@renderer/utils/loggers";
-import { EncryptedUserSignUpDTO } from "@shared/user/account/encrypted/EncryptedUserSignUpDTO";
 import SuccessfulUserSignUpDialog, { ISuccessfulUserSignUpDialogProps } from "@renderer/components/dialogs/SuccessfulUserSignUpDialog";
 import Button from "@mui/material/Button/Button";
-import { EncryptedUserSignInDTO } from "@shared/user/account/encrypted/EncryptedUserSignInDTO";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { enqueueSnackbar } from "notistack";
 import { errorCapitalizerErrorTransformer } from "@renderer/utils/RJSF/errorTransformers/errorCapitalizerErrorTransformer";
 import { userSignUpInputToUserSignUpDTO } from "@renderer/user/account/utils/userSignUpInputToUserSignUpDTO";
 import { userSignUpInputToUserSignInDTO } from "@renderer/user/account/utils/userSignUpInputToUserSignInDTO";
+import { IUserSignUpDTO } from "@shared/user/account/UserSignUpDTO";
+import { IUserSignInDTO } from "@shared/user/account/UserSignInDTO";
+import { IEncryptedData } from "@shared/utils/EncryptedData";
 
 const MUIForm = withTheme<IUserSignUpInput>(Theme);
 
@@ -77,20 +78,20 @@ const UserSignUpForm: FC = () => {
     }
     const USERNAME: string = data.formData.username;
     const FORM_DATA: IUserSignUpInput = data.formData;
-    window.IPCTLSAPI.encryptData(JSON.stringify(userSignUpInputToUserSignUpDTO(FORM_DATA, appLogger)), "user sign up DTO")
+    window.IPCTLSAPI.encrypt<IUserSignUpDTO>(userSignUpInputToUserSignUpDTO(FORM_DATA, appLogger), "user sign up DTO")
       .then(
-        (encryptedUserSignUpDTO: EncryptedUserSignUpDTO): void => {
-          const SIGN_UP_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.signUp(encryptedUserSignUpDTO satisfies EncryptedUserSignUpDTO);
+        (encryptedUserSignUpDTO: IEncryptedData<IUserSignUpDTO>): void => {
+          const SIGN_UP_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.signUp(encryptedUserSignUpDTO);
           if (SIGN_UP_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
             if (SIGN_UP_RESPONSE.data) {
               appLogger.info(`Signed up new user "${USERNAME}".`);
               enqueueSnackbar({ message: `${USERNAME} signed up.`, variant: "info" });
               // Extract sign in data from sign up user data
-              let encryptedNewUserSignInDTO: EncryptedUserSignInDTO | null = null;
-              window.IPCTLSAPI.encryptData(JSON.stringify(userSignUpInputToUserSignInDTO(FORM_DATA, appLogger)), "new user sign in DTO")
+              let encryptedNewUserSignInDTO: IEncryptedData<IUserSignInDTO> | null = null;
+              window.IPCTLSAPI.encrypt<IUserSignInDTO>(userSignUpInputToUserSignInDTO(FORM_DATA, appLogger), "new user sign in DTO")
                 .then(
-                  (encryptedUserSignInDTO: EncryptedUserSignInDTO): void => {
-                    encryptedNewUserSignInDTO = encryptedUserSignInDTO satisfies EncryptedUserSignInDTO;
+                  (encryptedUserSignInDTO: IEncryptedData<IUserSignInDTO>): void => {
+                    encryptedNewUserSignInDTO = encryptedUserSignInDTO;
                   },
                   (reason: unknown): void => {
                     const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);

@@ -8,15 +8,15 @@ export const userDataStorageConfigToSecuredUserDataStorageConfig = (
   userDataStorageConfig: IUserDataStorageConfig,
   visibilityPasswordSaltLength: number,
   hashVisibilityPasswordFunction: (visibilityPassword: string, visibilityPasswordSalt: Buffer) => string,
-  logger: LogFunctions
+  logger: LogFunctions | null
 ): ISecuredUserDataStorageConfig => {
-  logger.debug(`Converting User Data Storage Config to Secured User Data Storage Config.`);
+  logger?.debug(`Converting User Data Storage Config to Secured User Data Storage Config.`);
   let securedVisibilityPassword: ISecuredPassword | null;
   if (userDataStorageConfig.visibilityPassword === null) {
-    logger.debug("Config does not have a visibility password.");
+    logger?.debug("Config does not have a visibility password.");
     securedVisibilityPassword = null;
   } else {
-    logger.debug("Config has a visibility password.");
+    logger?.debug("Config has a visibility password.");
     const VISIBILITY_PASSWORD_SALT: Buffer = randomBytes(visibilityPasswordSaltLength);
     securedVisibilityPassword = {
       hash: hashVisibilityPasswordFunction(userDataStorageConfig.visibilityPassword, VISIBILITY_PASSWORD_SALT),

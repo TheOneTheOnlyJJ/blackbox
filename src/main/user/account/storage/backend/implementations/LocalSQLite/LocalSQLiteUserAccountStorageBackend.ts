@@ -3,7 +3,7 @@ import DatabaseConstructor, { Database, RunResult } from "better-sqlite3";
 import { LogFunctions } from "electron-log";
 import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
-import Ajv, { JSONSchemaType } from "ajv";
+import { JSONSchemaType } from "ajv";
 import { USER_ACCOUNT_STORAGE_BACKEND_TYPES, UserAccountStorageBackendTypes } from "../../UserAccountStorageBackendType";
 import { ISecuredUserSignUpPayload } from "@main/user/account/SecuredUserSignUpPayload";
 import { UUID } from "crypto";
@@ -53,8 +53,8 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
 
   private db: Database | null;
 
-  public constructor(config: ILocalSQLiteUserAccountStorageBackendConfig, logger: LogFunctions, ajv: Ajv) {
-    super(config, LocalSQLiteUserAccountStorageBackend.CONFIG_JSON_SCHEMA, logger, ajv);
+  public constructor(config: ILocalSQLiteUserAccountStorageBackendConfig, logger: LogFunctions) {
+    super(config, LocalSQLiteUserAccountStorageBackend.CONFIG_JSON_SCHEMA, logger);
     this.db = null;
   }
 
@@ -62,56 +62,70 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     return this.db !== null;
   }
 
-  public open(): void {
+  public open(): boolean {
     this.logger.info(`Opening "${this.config.type}" User Account Storage Backend.`);
     if (this.isOpen()) {
       this.logger.warn(`Already opened "${this.config.type}" User Account Storage Backend. No-op.`);
-      return;
+      return true;
     }
-    // Create db and directories
-    if (existsSync(this.config.dbDirPath)) {
-      this.logger.debug(`Found database directory path: "${this.config.dbDirPath}".`);
-    } else {
-      this.logger.debug(`No database directory path: "${this.config.dbDirPath}".`);
-      mkdirSync(this.config.dbDirPath, { recursive: true });
-      this.logger.debug(`Created database directory path: "${this.config.dbDirPath}".`);
+    try {
+      // Create db and directories
+      if (existsSync(this.config.dbDirPath)) {
+        this.logger.debug(`Found database directory path: "${this.config.dbDirPath}".`);
+      } else {
+        this.logger.debug(`No database directory path: "${this.config.dbDirPath}".`);
+        mkdirSync(this.config.dbDirPath, { recursive: true });
+        this.logger.debug(`Created database directory path: "${this.config.dbDirPath}".`);
+      }
+      const DB_FILE_PATH: string = join(this.config.dbDirPath, this.config.dbFileName);
+      if (existsSync(DB_FILE_PATH)) {
+        this.logger.debug(`Found existing database "${this.config.dbFileName}" at path: "${DB_FILE_PATH}".`);
+      } else {
+        this.logger.debug(`No existing database "${this.config.dbFileName}" at path: "${DB_FILE_PATH}".`);
+      }
+      this.db = new DatabaseConstructor(DB_FILE_PATH);
+      this.logger.debug("Created database.");
+      // Log SQLite version
+      this.logger.debug(`SQLite version: ${(this.db.prepare("SELECT sqlite_version() AS version").get() as ISQLiteVersion).version}.`);
+      // Journal mode
+      this.db.pragma("journal_mode = WAL");
+      const JOURNAL_MODE: SQLiteJournalModePragmaResult = this.db.pragma("journal_mode", { simple: true }) as SQLiteJournalModePragmaResult;
+      this.logger.debug(`Journal mode: "${String(JOURNAL_MODE)}".`);
+      // Foreign keys
+      this.db.pragma("foreign_keys = ON");
+      const FOREIGN_KEYS: SQLiteForeignKeysPragmaResult = this.db.pragma("foreign_keys", { simple: true }) as SQLiteForeignKeysPragmaResult;
+      this.logger.debug(`Foreign keys: ${String(FOREIGN_KEYS)}.`);
+      if (FOREIGN_KEYS !== 1) {
+        throw new Error("Could not enable foreign keys");
+      }
+      // Create tables
+      this.createUsersTable();
+      this.createUserDataStorageConfigsTable();
+      this.logger.info(`Opened "${this.config.type}" User Acount Storage Backend.`);
+      return true;
+    } catch (error: unknown) {
+      const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Could not open "${this.config.type}" User Acount Storage Backend: ${ERROR_MESSAGE}!`);
+      return false;
     }
-    const DB_FILE_PATH: string = join(this.config.dbDirPath, this.config.dbFileName);
-    if (existsSync(DB_FILE_PATH)) {
-      this.logger.debug(`Found existing database "${this.config.dbFileName}" at path: "${DB_FILE_PATH}".`);
-    } else {
-      this.logger.debug(`No existing database "${this.config.dbFileName}" at path: "${DB_FILE_PATH}".`);
-    }
-    this.db = new DatabaseConstructor(DB_FILE_PATH);
-    this.logger.debug("Created database.");
-    // Log SQLite version
-    this.logger.debug(`SQLite version: ${(this.db.prepare("SELECT sqlite_version() AS version").get() as ISQLiteVersion).version}.`);
-    // Journal mode
-    this.db.pragma("journal_mode = WAL");
-    const JOURNAL_MODE: SQLiteJournalModePragmaResult = this.db.pragma("journal_mode", { simple: true }) as SQLiteJournalModePragmaResult;
-    this.logger.debug(`Journal mode: "${String(JOURNAL_MODE)}".`);
-    // Foreign keys
-    this.db.pragma("foreign_keys = ON");
-    const FOREIGN_KEYS: SQLiteForeignKeysPragmaResult = this.db.pragma("foreign_keys", { simple: true }) as SQLiteForeignKeysPragmaResult;
-    this.logger.debug(`Foreign keys: ${String(FOREIGN_KEYS)}.`);
-    if (FOREIGN_KEYS !== 1) {
-      throw new Error("Could not enable foreign keys");
-    }
-    // Create tables
-    this.createUsersTable();
-    this.createUserDataStorageConfigsTable();
-    this.logger.info(`Opened "${this.config.type}" User Acount Storage Backend.`);
   }
 
-  public close(): void {
+  public close(): boolean {
     this.logger.info(`Closing "${this.config.type}" User Account Storage Backend.`);
     if (this.db === null) {
       this.logger.warn(`Already closed "${this.config.type}" User Account Storage Backend. No-op.`);
-      return;
+      return true;
     }
-    this.db.close();
-    this.db = null;
-    this.logger.info(`Closed "${this.config.type}" User Account Storage Backend.`);
+    try {
+      this.db.close();
+      this.db = null;
+      this.logger.info(`Closed "${this.config.type}" User Account Storage Backend.`);
+      return true;
+    } catch (error: unknown) {
+      const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Could not close "${this.config.type}" User Acount Storage Backend: ${ERROR_MESSAGE}!`);
+      return false;
+    }
   }
 
   public isLocal(): boolean {
@@ -324,7 +338,7 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
             data: rawStorageSecuredUserDataStorageConfig.userDataStorageConfigData,
             iv: rawStorageSecuredUserDataStorageConfig.userDataStorageConfigIV
           }
-        };
+        } satisfies IStorageSecuredUserDataStorageConfig;
         if (!isStorageSecuredUserDataStorageConfigValid(STORAGE_SECURED_USER_DATA_STORAGE_CONFIG)) {
           throw new Error(`Invalid Storage Secured User Data Storage Config at index: ${idx.toString()}`);
         }

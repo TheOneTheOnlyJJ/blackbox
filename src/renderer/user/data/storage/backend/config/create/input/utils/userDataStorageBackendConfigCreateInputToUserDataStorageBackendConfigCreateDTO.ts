@@ -41,9 +41,9 @@ const USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_TO_USER_DATA_STORAGE_BACKEND
 
 export const userDataStorageBackendConfigCreateInputToUserDataStorageBackendConfigCreateDTO = (
   userDataStorageBackendConfigCreateInput: UserDataStorageBackendConfigCreateInput,
-  logger: LogFunctions
+  logger: LogFunctions | null
 ): UserDataStorageBackendConfigCreateDTO => {
-  logger.debug(
+  logger?.debug(
     `Converting "${userDataStorageBackendConfigCreateInput.type}" User Data Storage Backend Config Create Input to User Data Storage Backend Config Create DTO.`
   );
   // TODO: Ocasionally check if TypeScript can manage not throwing a type error here (TS 5.8)

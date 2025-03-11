@@ -1,11 +1,11 @@
-import { isEncryptedDataValid } from "@shared/utils/EncryptedData";
+import { IEncryptedData, isEncryptedDataValid } from "@shared/utils/EncryptedData";
 import { UUID } from "node:crypto";
-import { EncryptedPrivateStorageSecuredUserDataStorageConfig } from "./PrivateStorageSecuredUserDataStorageConfig";
+import { IPrivateStorageSecuredUserDataStorageConfig } from "./PrivateStorageSecuredUserDataStorageConfig";
 
 export interface IStorageSecuredUserDataStorageConfig {
   storageId: UUID;
   userId: UUID;
-  encryptedPrivateStorageSecuredUserDataStorageConfig: EncryptedPrivateStorageSecuredUserDataStorageConfig;
+  encryptedPrivateStorageSecuredUserDataStorageConfig: IEncryptedData<IPrivateStorageSecuredUserDataStorageConfig>;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

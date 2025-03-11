@@ -1,7 +1,7 @@
 import { LogFunctions } from "electron-log";
 import { IBaseSettingsManagerConfig, BaseSettingsManager } from "../../BaseSettingsManager";
 import { SETTINGS_MANAGER_TYPE, SettingsManagerTypes } from "../../SettingsManagerType";
-import Ajv, { JSONSchemaType } from "ajv";
+import { JSONSchemaType } from "ajv";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
@@ -46,8 +46,8 @@ export class LocalJSONSettingsManager<SettingsType extends Record<string, unknow
   } as const;
   private readonly SETTINGS_FILE_PATH: string;
 
-  public constructor(config: ILocalJSONSettingsManagerConfig, settingsSchema: JSONSchemaType<SettingsType>, logger: LogFunctions, ajv: Ajv) {
-    super(config, LocalJSONSettingsManager.CONFIG_JSON_SCHEMA, settingsSchema, logger, ajv);
+  public constructor(config: ILocalJSONSettingsManagerConfig, settingsSchema: JSONSchemaType<SettingsType>, logger: LogFunctions) {
+    super(config, LocalJSONSettingsManager.CONFIG_JSON_SCHEMA, settingsSchema, logger);
     this.SETTINGS_FILE_PATH = resolve(join(this.config.fileDir, this.config.fileName));
   }
 

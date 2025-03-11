@@ -7,9 +7,9 @@ export const userSignUpPayloadToSecuredUserSignUpPayload = (
   userSignUpPayload: IUserSignUpPayload,
   userPasswordSaltLength: number,
   hashUserPasswordFunction: (userPassword: string, userPasswordSalt: Buffer) => string,
-  logger: LogFunctions
+  logger: LogFunctions | null
 ): ISecuredUserSignUpPayload => {
-  logger.info("Converting user sign up payload to secured user sign up payload.");
+  logger?.info("Converting user sign up payload to secured user sign up payload.");
   const PASSWORD_SALT: Buffer = randomBytes(userPasswordSaltLength);
   return {
     userId: userSignUpPayload.userId,

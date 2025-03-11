@@ -7,9 +7,9 @@ import { LogFunctions } from "electron-log";
 export function userDataStorageConfigCreateDTOToUserDataStorageConfig(
   userDataStorageConfigCreateDTO: IUserDataStorageConfigCreateDTO,
   storageId: UUID,
-  logger: LogFunctions
+  logger: LogFunctions | null
 ): IUserDataStorageConfig {
-  logger.debug(`Converting User Data Storage Config Create DTO to User Data Storage Config.`);
+  logger?.debug(`Converting User Data Storage Config Create DTO to User Data Storage Config.`);
   return {
     storageId: storageId,
     userId: userDataStorageConfigCreateDTO.userId as UUID,

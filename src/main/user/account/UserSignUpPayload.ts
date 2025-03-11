@@ -1,4 +1,5 @@
-import { JSONSchemaType } from "ajv";
+import { AJV } from "@shared/utils/AJVJSONValidator";
+import { JSONSchemaType, ValidateFunction } from "ajv";
 import { UUID } from "node:crypto";
 
 export interface IUserSignUpPayload {
@@ -18,3 +19,5 @@ export const USER_SIGN_UP_PAYLOAD_JSON_SCHEMA: JSONSchemaType<IUserSignUpPayload
   required: ["userId", "username", "password"],
   additionalProperties: false
 } as const;
+
+export const USER_SIGN_UP_PAYLOAD_VALIDATE_FUNCTION: ValidateFunction<IUserSignUpPayload> = AJV.compile(USER_SIGN_UP_PAYLOAD_JSON_SCHEMA);

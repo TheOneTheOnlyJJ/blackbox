@@ -2,10 +2,8 @@ import { UUID } from "node:crypto";
 import { IUserAccountStorageConfig } from "./config/UserAccountStorageConfig";
 import { userAccountStorageBackendFactory } from "./backend/userAccountStorageBackendFactory";
 import { LogFunctions } from "electron-log";
-import Ajv from "ajv";
 import { UserAccountStorageBackend } from "./backend/UserAccountStorageBackend";
 import { UserAccountStorageBackendType } from "./backend/UserAccountStorageBackendType";
-import { UserAccountStorageOpenChangedCallback } from "@shared/IPC/APIs/UserAPI";
 import { ISecuredUserSignUpPayload } from "../SecuredUserSignUpPayload";
 import { ISecuredPassword } from "@main/utils/encryption/SecuredPassword";
 import { IPublicUserAccountStorageConfig } from "@shared/user/account/storage/PublicUserAccountStorageConfig";
@@ -16,43 +14,29 @@ export class UserAccountStorage {
   public readonly storageId: UUID;
   public readonly name: string;
   private readonly backend: UserAccountStorageBackend;
-  public onUserAccountStorageOpenChangedCallback: UserAccountStorageOpenChangedCallback;
 
-  public constructor(
-    config: IUserAccountStorageConfig,
-    logger: LogFunctions,
-    backendLogger: LogFunctions,
-    ajv: Ajv,
-    onUserAccountStorageOpenChangedCallback?: UserAccountStorageOpenChangedCallback
-  ) {
+  public constructor(config: IUserAccountStorageConfig, logger: LogFunctions, backendLogger: LogFunctions) {
     this.logger = logger;
     this.logger.info(
       `Initialising User Account Storage "${config.name}" with ID "${config.storageId}" and backend type "${config.backendConfig.type}".`
     );
     this.storageId = config.storageId;
     this.name = config.name;
-    this.backend = userAccountStorageBackendFactory(config.backendConfig, backendLogger, ajv);
-    this.onUserAccountStorageOpenChangedCallback =
-      onUserAccountStorageOpenChangedCallback ??
-      ((): void => {
-        this.logger.silly("No User Account Storage open status changed callback set.");
-      });
+    this.backend = userAccountStorageBackendFactory(config.backendConfig, backendLogger);
   }
 
   public isOpen(): boolean {
     return this.backend.isOpen();
   }
 
-  public open(): void {
+  public open(): boolean {
     this.logger.info(`Opening User Account Storage "${this.name}" with ID "${this.storageId}".`);
-    this.backend.open();
-    this.onUserAccountStorageOpenChangedCallback(true);
+    return this.backend.open();
   }
 
-  public close(): void {
+  public close(): boolean {
     this.logger.info(`Closing User Account Storage "${this.name}" with ID "${this.storageId}".`);
-    this.backend.close();
-    this.onUserAccountStorageOpenChangedCallback(false);
+    return this.backend.close();
   }
 
   public getPublicUserAccountStorageConfig(): IPublicUserAccountStorageConfig {
@@ -61,7 +45,7 @@ export class UserAccountStorage {
       storageId: this.storageId,
       name: this.name,
       isOpen: this.isOpen()
-    };
+    } satisfies IPublicUserAccountStorageConfig;
   }
 
   public getBackendType(): UserAccountStorageBackendType {

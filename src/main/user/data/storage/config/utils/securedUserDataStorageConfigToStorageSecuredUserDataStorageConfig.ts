@@ -7,9 +7,9 @@ import { securedUserDataStorageConfigToPrivateStorageSecuredUserDataStorageConfi
 export const securedUserDataStorageConfigToStorageSecuredUserDataStorageConfig = (
   securedUserDataStorageConfig: ISecuredUserDataStorageConfig,
   encryptionAESKey: Buffer,
-  logger: LogFunctions
+  logger: LogFunctions | null
 ): IStorageSecuredUserDataStorageConfig => {
-  logger.debug(`Converting Secured User Data Storage Config to Storage Secured User Data Storage Config.`);
+  logger?.debug(`Converting Secured User Data Storage Config to Storage Secured User Data Storage Config.`);
   return {
     storageId: securedUserDataStorageConfig.storageId,
     userId: securedUserDataStorageConfig.userId,

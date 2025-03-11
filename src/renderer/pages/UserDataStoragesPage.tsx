@@ -8,32 +8,12 @@ import {
 import Button from "@mui/material/Button/Button";
 import { appLogger } from "@renderer/utils/loggers";
 import NewUserDataStorageConfigFormDialog from "@renderer/components/dialogs/NewUserDataStorageConfigFormDialog";
-import { IPublicUserDataStorageConfig } from "@shared/user/data/storage/PublicUserDataStorageConfig";
-import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
-import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
-import { enqueueSnackbar } from "notistack";
 
 const UserDataStoragesPage: FC = () => {
   const signedInDashboardLayoutRootContext: ISignedInDashboardLayoutRootContext = useSignedInDashboardLayoutRootContext();
   // User data storage config form dialog
   const [isNewUserDataStorageConfigFormDialogOpen, setIsNewUserDataStorageConfigFormDialogOpen] = useState<boolean>(false);
   const isInitialMount: MutableRefObject<boolean> = useRef<boolean>(true);
-  // Public User Data Storage Configs
-  // TODO: Make this available in signedInContext instead of here
-  const [publicUserDataStorageConfigs, setPublicUserDataStorageConfigs] = useState<IPublicUserDataStorageConfig[]>([]);
-
-  const getAllSignedInUserUserDataStorageConfigs = useCallback((): void => {
-    const GET_ALL_SIGNED_IN_USER_USER_DATA_STORAGE_CONFIGS: IPCAPIResponse<IPublicUserDataStorageConfig[]> =
-      window.userAPI.getAllSignedInUserUserDataStorageConfigs();
-    if (GET_ALL_SIGNED_IN_USER_USER_DATA_STORAGE_CONFIGS.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
-      appLogger.error(
-        `Could not get all signed in user User Data Storage Configs! Reason: ${GET_ALL_SIGNED_IN_USER_USER_DATA_STORAGE_CONFIGS.error}!`
-      );
-      enqueueSnackbar({ message: "Error getting Data Storage configurations.", variant: "error" });
-      return;
-    }
-    setPublicUserDataStorageConfigs(GET_ALL_SIGNED_IN_USER_USER_DATA_STORAGE_CONFIGS.data);
-  }, []);
 
   const handleNewDataStorageButtonClick = useCallback((): void => {
     appLogger.debug("New User Data Storage button clicked.");
@@ -45,9 +25,8 @@ const UserDataStoragesPage: FC = () => {
   }, []);
 
   const handleSuccessfullyAddedNewUserDataStorageConfig = useCallback((): void => {
-    getAllSignedInUserUserDataStorageConfigs();
     handleNewUserDataStorageConfigFormDialogClose();
-  }, [getAllSignedInUserUserDataStorageConfigs, handleNewUserDataStorageConfigFormDialogClose]);
+  }, [handleNewUserDataStorageConfigFormDialogClose]);
 
   useEffect((): void => {
     if (isInitialMount.current) {
@@ -62,10 +41,6 @@ const UserDataStoragesPage: FC = () => {
     signedInDashboardLayoutRootContext.setAppBarTitle("Data Storages");
     signedInDashboardLayoutRootContext.setForbiddenLocationName("Data Storages");
   }, [signedInDashboardLayoutRootContext]);
-
-  useEffect((): void => {
-    getAllSignedInUserUserDataStorageConfigs();
-  }, [getAllSignedInUserUserDataStorageConfigs]);
 
   return (
     <>
@@ -84,7 +59,7 @@ const UserDataStoragesPage: FC = () => {
         <Button variant="contained" size="large" onClick={handleNewDataStorageButtonClick}>
           New Data Storage
         </Button>
-        <Typography>{JSON.stringify(publicUserDataStorageConfigs, null, 2)}</Typography>{" "}
+        <Typography>{JSON.stringify(signedInDashboardLayoutRootContext.publicUserDataStorageConfigs, null, 2)}</Typography>
         {
           // TODO Make this a proper MUI X Data Grid & Clear logs by making them optional
           // TODO: Add edit config & delete config (with optional delete resources)

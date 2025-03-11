@@ -10,17 +10,18 @@ import Alert from "@mui/material/Alert/Alert";
 import AlertTitle from "@mui/material/AlertTitle/AlertTitle";
 import DialogActions from "@mui/material/DialogActions/DialogActions";
 import Button from "@mui/material/Button/Button";
-import { EncryptedUserSignInDTO } from "@shared/user/account/encrypted/EncryptedUserSignInDTO";
 import { appLogger } from "@renderer/utils/loggers";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { enqueueSnackbar } from "notistack";
+import { IEncryptedData } from "@shared/utils/EncryptedData";
+import { IUserSignInDTO } from "@shared/user/account/UserSignInDTO";
 
 export interface ISuccessfulUserSignUpDialogProps {
   open: DialogProps["open"];
   username: string;
   userCount: number | null;
-  encryptedNewUserSignInDTO: EncryptedUserSignInDTO | null;
+  encryptedNewUserSignInDTO: IEncryptedData<IUserSignInDTO> | null;
 }
 
 const SuccessfulUserSignUpDialog: FC<ISuccessfulUserSignUpDialogProps> = (props: ISuccessfulUserSignUpDialogProps) => {

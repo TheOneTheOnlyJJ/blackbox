@@ -1,4 +1,5 @@
-import { JSONSchemaType } from "ajv";
+import { AJV } from "@shared/utils/AJVJSONValidator";
+import { JSONSchemaType, ValidateFunction } from "ajv";
 
 export interface IUserSignInDTO {
   username: string;
@@ -15,3 +16,5 @@ export const USER_SIGN_IN_DTO_JSON_SCHEMA: JSONSchemaType<IUserSignInDTO> = {
   required: ["username", "password"],
   additionalProperties: false
 } as const;
+
+export const USER_SIGN_IN_DTO_VALIDATE_FUNCTION: ValidateFunction<IUserSignInDTO> = AJV.compile(USER_SIGN_IN_DTO_JSON_SCHEMA);
