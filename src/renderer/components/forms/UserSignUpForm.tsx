@@ -1,4 +1,4 @@
-import { FC, useCallback, useState } from "react";
+import { Dispatch, FC, SetStateAction, useCallback, useState } from "react";
 import { IUserSignUpInput, USER_SIGN_UP_INPUT_JSON_SCHEMA, USER_SIGN_UP_INPUT_UI_SCHEMA } from "@renderer/user/account/UserSignUpInput";
 import { Theme } from "@rjsf/mui";
 import { customizeValidator } from "@rjsf/validator-ajv8";
@@ -62,89 +62,106 @@ const userSignUpFormValidator: CustomValidator<IUserSignUpInput> = (
   return errors;
 };
 
-const UserSignUpForm: FC = () => {
+export interface IUserSignUpFormProps {
+  isSignUpPending: boolean;
+  setIsSignUpPending: Dispatch<SetStateAction<boolean>>;
+  renderSubmitButton: boolean;
+}
+
+const UserSignUpForm: FC<IUserSignUpFormProps> = (props: IUserSignUpFormProps) => {
   const [successfulUserSignUpDialogProps, setSuccessfulUserSignUpDialogProps] = useState<ISuccessfulUserSignUpDialogProps>({
     open: false,
     username: "",
     userCount: null,
     encryptedNewUserSignInDTO: null
   });
-  const signUpUser = useCallback((data: IChangeEvent<IUserSignUpInput>): void => {
-    appLogger.debug("Submitted user Sign Up form.");
-    if (data.formData === undefined) {
-      appLogger.error("Undefined sign up form data. No-op.");
-      enqueueSnackbar({ message: "Missing form data.", variant: "error" });
-      return;
-    }
-    const USERNAME: string = data.formData.username;
-    const FORM_DATA: IUserSignUpInput = data.formData;
-    window.IPCTLSAPI.encrypt<IUserSignUpDTO>(userSignUpInputToUserSignUpDTO(FORM_DATA, appLogger), "user sign up DTO")
-      .then(
-        (encryptedUserSignUpDTO: IEncryptedData<IUserSignUpDTO>): void => {
-          const SIGN_UP_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.signUp(encryptedUserSignUpDTO);
-          if (SIGN_UP_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
-            if (SIGN_UP_RESPONSE.data) {
-              appLogger.info(`Signed up new user "${USERNAME}".`);
-              enqueueSnackbar({ message: `${USERNAME} signed up.`, variant: "info" });
-              // Extract sign in data from sign up user data
-              let encryptedNewUserSignInDTO: IEncryptedData<IUserSignInDTO> | null = null;
-              window.IPCTLSAPI.encrypt<IUserSignInDTO>(userSignUpInputToUserSignInDTO(FORM_DATA, appLogger), "new user sign in DTO")
-                .then(
-                  (encryptedUserSignInDTO: IEncryptedData<IUserSignInDTO>): void => {
-                    encryptedNewUserSignInDTO = encryptedUserSignInDTO;
-                  },
-                  (reason: unknown): void => {
-                    const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
-                    appLogger.error(`Could not encrypt user sign in DTO for new user "${USERNAME}": ${REASON_MESSAGE}.`);
+  const signUpUser = useCallback(
+    (data: IChangeEvent<IUserSignUpInput>): void => {
+      appLogger.debug("Submitted user Sign Up form.");
+      if (props.isSignUpPending) {
+        appLogger.warn("Sign up pending. No-op form sumit.");
+        return;
+      }
+      props.setIsSignUpPending(true);
+      if (data.formData === undefined) {
+        appLogger.error("Undefined sign up form data. No-op.");
+        enqueueSnackbar({ message: "Missing form data.", variant: "error" });
+        return;
+      }
+      const USERNAME: string = data.formData.username;
+      const FORM_DATA: IUserSignUpInput = data.formData;
+      window.IPCTLSAPI.encrypt<IUserSignUpDTO>(userSignUpInputToUserSignUpDTO(FORM_DATA, appLogger), "user sign up DTO")
+        .then(
+          (encryptedUserSignUpDTO: IEncryptedData<IUserSignUpDTO>): void => {
+            const SIGN_UP_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.signUp(encryptedUserSignUpDTO);
+            if (SIGN_UP_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
+              if (SIGN_UP_RESPONSE.data) {
+                appLogger.info(`Signed up new user "${USERNAME}".`);
+                enqueueSnackbar({ message: `${USERNAME} signed up.`, variant: "info" });
+                // Extract sign in data from sign up user data
+                let encryptedNewUserSignInDTO: IEncryptedData<IUserSignInDTO> | null = null;
+                window.IPCTLSAPI.encrypt<IUserSignInDTO>(userSignUpInputToUserSignInDTO(FORM_DATA, appLogger), "new user sign in DTO")
+                  .then(
+                    (encryptedUserSignInDTO: IEncryptedData<IUserSignInDTO>): void => {
+                      encryptedNewUserSignInDTO = encryptedUserSignInDTO;
+                    },
+                    (reason: unknown): void => {
+                      const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
+                      appLogger.error(`Could not encrypt user sign in DTO for new user "${USERNAME}": ${REASON_MESSAGE}.`);
+                      enqueueSnackbar({ message: "Credentials encryption error.", variant: "error" });
+                    }
+                  )
+                  .catch((err: unknown): void => {
+                    const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+                    appLogger.error(`Could not encrypt user sign in DTO for new user "${USERNAME}": ${ERROR_MESSAGE}.`);
                     enqueueSnackbar({ message: "Credentials encryption error.", variant: "error" });
-                  }
-                )
-                .catch((err: unknown): void => {
-                  const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-                  appLogger.error(`Could not encrypt user sign in DTO for new user "${USERNAME}": ${ERROR_MESSAGE}.`);
-                  enqueueSnackbar({ message: "Credentials encryption error.", variant: "error" });
-                })
-                .finally((): void => {
-                  appLogger.debug("Opening successful user sign up dialog.");
-                  let userCount: number | null = null;
-                  const GET_USER_COUNT_RESPONSE: IPCAPIResponse<number> = window.userAPI.getUserCount();
-                  if (GET_USER_COUNT_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
-                    userCount = GET_USER_COUNT_RESPONSE.data;
-                  }
-                  setSuccessfulUserSignUpDialogProps({
-                    open: true,
-                    username: USERNAME,
-                    userCount: userCount,
-                    encryptedNewUserSignInDTO: encryptedNewUserSignInDTO
+                  })
+                  .finally((): void => {
+                    appLogger.debug("Opening successful user sign up dialog.");
+                    let userCount: number | null = null;
+                    const GET_USER_COUNT_RESPONSE: IPCAPIResponse<number> = window.userAPI.getUserCount();
+                    if (GET_USER_COUNT_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
+                      userCount = GET_USER_COUNT_RESPONSE.data;
+                    }
+                    setSuccessfulUserSignUpDialogProps({
+                      open: true,
+                      username: USERNAME,
+                      userCount: userCount,
+                      encryptedNewUserSignInDTO: encryptedNewUserSignInDTO
+                    });
                   });
-                });
+              } else {
+                appLogger.info(`Could not sign up new user "${USERNAME}".`);
+                enqueueSnackbar({ message: "Sign up error.", variant: "error" });
+              }
             } else {
-              appLogger.info(`Could not sign up new user "${USERNAME}".`);
+              appLogger.error(`Sign up error: ${SIGN_UP_RESPONSE.error}!`);
               enqueueSnackbar({ message: "Sign up error.", variant: "error" });
             }
-          } else {
-            appLogger.error(`Sign up error: ${SIGN_UP_RESPONSE.error}!`);
-            enqueueSnackbar({ message: "Sign up error.", variant: "error" });
+          },
+          (reason: unknown): void => {
+            const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
+            appLogger.error(`Could not encrypt sign up DTO for new user "${USERNAME}": ${REASON_MESSAGE}.`);
+            enqueueSnackbar({ message: "Account data encryption error.", variant: "error" });
           }
-        },
-        (reason: unknown): void => {
-          const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
-          appLogger.error(`Could not encrypt sign up DTO for new user "${USERNAME}": ${REASON_MESSAGE}.`);
+        )
+        .catch((err: unknown): void => {
+          const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+          appLogger.error(`Could not encrypt sign up DTO for new user "${USERNAME}": ${ERROR_MESSAGE}.`);
           enqueueSnackbar({ message: "Account data encryption error.", variant: "error" });
-        }
-      )
-      .catch((err: unknown): void => {
-        const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-        appLogger.error(`Could not encrypt sign up DTO for new user "${USERNAME}": ${ERROR_MESSAGE}.`);
-        enqueueSnackbar({ message: "Account data encryption error.", variant: "error" });
-      });
-  }, []);
+        })
+        .finally((): void => {
+          props.setIsSignUpPending(false);
+        });
+    },
+    [props]
+  );
 
   return (
     <>
       <MUIForm
         schema={USER_SIGN_UP_INPUT_JSON_SCHEMA as RJSFSchema}
-        uiSchema={USER_SIGN_UP_INPUT_UI_SCHEMA}
+        uiSchema={{ ...USER_SIGN_UP_INPUT_UI_SCHEMA, "ui:submitButtonOptions": { norender: !props.renderSubmitButton } }}
         validator={USER_SIGN_UP_INPUT_VALIDATOR}
         showErrorList={false}
         customValidate={userSignUpFormValidator}
@@ -152,9 +169,11 @@ const UserSignUpForm: FC = () => {
         onSubmit={signUpUser}
         noHtml5Validate={true}
       >
-        <Button type="submit" variant="contained" size="large" sx={{ marginTop: "1vw", marginBottom: "1vw" }}>
-          Sign Up
-        </Button>
+        {props.renderSubmitButton && (
+          <Button type="submit" disabled={props.isSignUpPending} variant="contained" size="large" sx={{ marginTop: "1vw", marginBottom: "1vw" }}>
+            {props.isSignUpPending ? "Signing Up..." : "Sign Up"}
+          </Button>
+        )}
       </MUIForm>
       <SuccessfulUserSignUpDialog {...successfulUserSignUpDialogProps} />
     </>

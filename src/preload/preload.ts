@@ -118,7 +118,7 @@ const bootstrapIPCTLS = async (): Promise<void> => {
 
 void bootstrapIPCTLS();
 
-// TODO: Remove this
+// TODO: Delete comment
 // TEST
 // let latestVal: CryptoKey | null = null;
 // setInterval(() => {
@@ -240,6 +240,11 @@ const USER_API: IUserAPI = {
     const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.getUserCount;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL) as IPCAPIResponse<number>;
+  },
+  getUsernameForUserId: (userId: string): IPCAPIResponse<string | null> => {
+    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.getUsernameForUserId;
+    sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
+    return ipcRenderer.sendSync(CHANNEL, userId) as IPCAPIResponse<string | null>;
   },
   getSignedInUser: (): IPCAPIResponse<IPublicSignedInUser | null> => {
     const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.getSignedInUser;

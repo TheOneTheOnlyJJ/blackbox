@@ -12,7 +12,7 @@ const signOutPageLogger: LogFunctions = log.scope("renderer-sign-out-page");
 
 const SignOutPage: FC = () => {
   useEffect((): void => {
-    // TODO: Remove this
+    // TODO: Delete comment
     // setTimeout(() => {
     const SIGN_OUT_RESPONSE: IPCAPIResponse<IPublicSignedInUser | null> = window.userAPI.signOut();
     if (SIGN_OUT_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {

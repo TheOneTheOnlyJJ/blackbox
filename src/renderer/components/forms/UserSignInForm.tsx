@@ -1,4 +1,4 @@
-import { FC, useCallback, useState } from "react";
+import { Dispatch, FC, SetStateAction, useCallback, useState } from "react";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IChangeEvent, withTheme } from "@rjsf/core";
 import { Theme } from "@rjsf/mui";
@@ -31,50 +31,67 @@ const userSignInFormErrorTransformer: ErrorTransformer = (errors: RJSFValidation
   );
 };
 
-const UserSignInForm: FC = () => {
+export interface IUserSignInFormProps {
+  isSignInPending: boolean;
+  setIsSignInPending: Dispatch<SetStateAction<boolean>>;
+  renderSubmitButton: boolean;
+}
+
+const UserSignInForm: FC<IUserSignInFormProps> = (props: IUserSignInFormProps) => {
   const [wasSignInSuccessful, setWasSignInSuccessful] = useState<boolean>(true);
-  const handleFormSubmit = useCallback((data: IChangeEvent<IUserSignInInput>): void => {
-    appLogger.info("Submitted user Sign In form.");
-    if (data.formData === undefined) {
-      appLogger.error("Undefined sign in form data. No-op.");
-      enqueueSnackbar({ message: "Missing form data.", variant: "error" });
-      return;
-    }
-    const USERNAME: string = data.formData.username;
-    window.IPCTLSAPI.encrypt<IUserSignInDTO>(userSignInInputToUserSignInDTO(data.formData, appLogger), "user sign in DTO")
-      .then(
-        (encryptedUserSignInDTO: IEncryptedData<IUserSignInDTO>): void => {
-          const SIGN_IN_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.signIn(encryptedUserSignInDTO);
-          if (SIGN_IN_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
-            setWasSignInSuccessful(SIGN_IN_RESPONSE.data);
-            if (SIGN_IN_RESPONSE.data) {
-              appLogger.info(`Sign in successful.`);
-              enqueueSnackbar({ message: `${USERNAME} signed in.`, variant: "info" });
+  const handleFormSubmit = useCallback(
+    (data: IChangeEvent<IUserSignInInput>): void => {
+      appLogger.info("Submitted user Sign In form.");
+      if (props.isSignInPending) {
+        appLogger.warn("Sign in pending. No-op form sumit.");
+        return;
+      }
+      props.setIsSignInPending(true);
+      if (data.formData === undefined) {
+        appLogger.error("Undefined sign in form data. No-op.");
+        enqueueSnackbar({ message: "Missing form data.", variant: "error" });
+        return;
+      }
+      const USERNAME: string = data.formData.username;
+      window.IPCTLSAPI.encrypt<IUserSignInDTO>(userSignInInputToUserSignInDTO(data.formData, appLogger), "user sign in DTO")
+        .then(
+          (encryptedUserSignInDTO: IEncryptedData<IUserSignInDTO>): void => {
+            const SIGN_IN_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.signIn(encryptedUserSignInDTO);
+            if (SIGN_IN_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
+              setWasSignInSuccessful(SIGN_IN_RESPONSE.data);
+              if (SIGN_IN_RESPONSE.data) {
+                appLogger.info(`Sign in successful.`);
+                enqueueSnackbar({ message: `${USERNAME} signed in.`, variant: "info" });
+              } else {
+                appLogger.info(`Sign in unsuccessful.`);
+              }
             } else {
-              appLogger.info(`Sign in unsuccessful.`);
+              appLogger.error("Sign in error!");
+              enqueueSnackbar({ message: "Sign in error.", variant: "error" });
             }
-          } else {
-            appLogger.error("Sign in error!");
-            enqueueSnackbar({ message: "Sign in error.", variant: "error" });
+          },
+          (reason: unknown): void => {
+            const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
+            appLogger.error(`Could not encrypt user sign in DTO for user "${USERNAME}". Reason: ${REASON_MESSAGE}.`);
+            enqueueSnackbar({ message: "Credentials encryption error.", variant: "error" });
           }
-        },
-        (reason: unknown): void => {
-          const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
-          appLogger.error(`Could not encrypt user sign in DTO for user "${USERNAME}". Reason: ${REASON_MESSAGE}.`);
+        )
+        .catch((err: unknown): void => {
+          const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+          appLogger.error(`Could not encrypt user sign in DTO for user "${USERNAME}". Reason: ${ERROR_MESSAGE}.`);
           enqueueSnackbar({ message: "Credentials encryption error.", variant: "error" });
-        }
-      )
-      .catch((err: unknown): void => {
-        const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-        appLogger.error(`Could not encrypt user sign in DTO for user "${USERNAME}". Reason: ${ERROR_MESSAGE}.`);
-        enqueueSnackbar({ message: "Credentials encryption error.", variant: "error" });
-      });
-  }, []);
+        })
+        .finally((): void => {
+          props.setIsSignInPending(false);
+        });
+    },
+    [props]
+  );
 
   return (
     <MUIForm
       schema={USER_SIGN_IN_INPUT_JSON_SCHEMA as RJSFSchema}
-      uiSchema={USER_SIGN_IN_INPUT_UI_SCHEMA}
+      uiSchema={{ ...USER_SIGN_IN_INPUT_UI_SCHEMA, "ui:submitButtonOptions": { norender: !props.renderSubmitButton } }}
       validator={USER_SIGN_IN_INPUT_VALIDATOR}
       showErrorList={false}
       transformErrors={userSignInFormErrorTransformer}
@@ -87,9 +104,11 @@ const UserSignInForm: FC = () => {
           The username or password you entered are incorrect!
         </Alert>
       )}
-      <Button type="submit" variant="contained" size="large" sx={{ marginTop: "1vw", marginBottom: "1vw" }}>
-        Sign In
-      </Button>
+      {props.renderSubmitButton && (
+        <Button type="submit" disabled={props.isSignInPending} variant="contained" size="large" sx={{ marginTop: "1vw", marginBottom: "1vw" }}>
+          {props.isSignInPending ? "Signing In..." : "Sign In"}
+        </Button>
+      )}
     </MUIForm>
   );
 };

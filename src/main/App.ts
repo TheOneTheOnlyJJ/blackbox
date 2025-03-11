@@ -13,7 +13,7 @@ import { IpcMainEvent } from "electron";
 import { IUserAPI } from "@shared/IPC/APIs/UserAPI";
 import { MainProcessIPCAPIHandlers } from "@main/utils/IPC/MainProcessIPCAPIHandlers";
 import { IUserSignUpDTO, USER_SIGN_UP_DTO_VALIDATE_FUNCTION } from "@shared/user/account/UserSignUpDTO";
-import { generateKeyPairSync, webcrypto } from "node:crypto";
+import { generateKeyPairSync, UUID, webcrypto } from "node:crypto";
 import { isAESKeyValid } from "@main/utils/encryption/isAESKeyValid";
 import { bufferToArrayBuffer } from "@main/utils/typeConversions/bufferToArrayBuffer";
 import { decryptWithAESAndValidateJSON } from "@main/utils/encryption/decryptWithAESAndValidateJSON";
@@ -344,6 +344,15 @@ export class App {
         return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
+    handleGetUsernameForUserId: (userId: string): IPCAPIResponse<string | null> => {
+      try {
+        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userManager.getUsernameForUserId(userId as UUID) };
+      } catch (err: unknown) {
+        const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+        this.UserAPILogger.error(`Get username for user ID error: ${ERROR_MESSAGE}!`);
+        return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
+      }
+    },
     handleGetSignedInUser: (): IPCAPIResponse<IPublicSignedInUser | null> => {
       try {
         return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userManager.getPublicSignedInUser() };
@@ -633,7 +642,7 @@ export class App {
     this.windowPositionWatcher.watchWindowPosition(this.window, this.updateWindowPositionSettings.bind(this));
 
     // TEMPORARY
-    // TODO: Remove this
+    // TODO: Delete comment
     // setInterval(() => {
     //   this.appLogger.warn("SIGNING OUT");
     //   this.userManager.signOutUser();
@@ -815,6 +824,10 @@ export class App {
     ipcMain.on(USER_API_IPC_CHANNELS.getUserCount, (event: IpcMainEvent): void => {
       this.UserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.getUserCount}".`);
       event.returnValue = this.USER_API_HANDLERS.handleGetUserCount();
+    });
+    ipcMain.on(USER_API_IPC_CHANNELS.getUsernameForUserId, (event: IpcMainEvent, userId: string): void => {
+      this.UserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.getUsernameForUserId}".`);
+      event.returnValue = this.USER_API_HANDLERS.handleGetUsernameForUserId(userId);
     });
     ipcMain.on(USER_API_IPC_CHANNELS.signIn, (event: IpcMainEvent, encryptedUserSignInData: IEncryptedData<IUserSignInDTO>): void => {
       this.UserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.signIn}".`);

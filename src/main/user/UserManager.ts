@@ -123,7 +123,7 @@ export class UserManager {
             this.onUserAccountStorageChangedCallback(null);
           } else {
             this.logger.info(`Set "${value.name}" User Account Storage (ID "${value.storageId}") (available).`);
-            this.onUserAccountStorageChangedCallback({ storageId: value.storageId, name: value.name, isOpen: value.isOpen() });
+            this.onUserAccountStorageChangedCallback(value.getPublicUserAccountStorageConfig());
           }
           return true;
         }
@@ -272,6 +272,14 @@ export class UserManager {
     return this.userAccountStorage.value.getUserCount();
   }
 
+  public getUsernameForUserId(userId: UUID): string | null {
+    this.logger.debug(`Getting username for user ID "${userId}".`);
+    if (this.userAccountStorage.value === null) {
+      throw new Error("Null User Account Storage");
+    }
+    return this.userAccountStorage.value.getUsernameForUserId(userId);
+  }
+
   public signUpUser(userSignUpPayload: IUserSignUpPayload): boolean {
     this.logger.debug(`Signing up user: "${userSignUpPayload.username}".`);
     if (this.userAccountStorage.value === null) {
@@ -295,7 +303,7 @@ export class UserManager {
   public signInUser(userSignInPayload: IUserSignInPayload): boolean {
     this.logger.debug(`Attempting sign in for user: "${userSignInPayload.username}".`);
     if (this.signedInUser.value !== null) {
-      this.logger.warn(`A user is already signed is: ${JSON.stringify(this.signedInUser.value, null, 2)}.`);
+      this.logger.warn(`A user is already signed in: "${JSON.stringify(this.getPublicSignedInUser())}".`);
     }
     if (this.userAccountStorage.value === null) {
       throw new Error("Null User Account Storage");

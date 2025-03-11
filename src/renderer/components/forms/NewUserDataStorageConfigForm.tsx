@@ -1,4 +1,4 @@
-import { FC, useCallback } from "react";
+import { Dispatch, FC, SetStateAction, useCallback } from "react";
 import { FormProps, IChangeEvent, withTheme } from "@rjsf/core";
 import { Theme } from "@rjsf/mui";
 import { CustomValidator, ErrorTransformer, FormValidation, RJSFSchema, RJSFValidationError } from "@rjsf/utils";
@@ -16,6 +16,7 @@ import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { userDataStorageConfigCreateInputToUserDataStorageConfigCreateDTO } from "@renderer/user/data/storage/config/create/input/utils/userDataStorageConfigCreateInputToUserDataStorageConfigCreateDTO";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
+import Button from "@mui/material/Button/Button";
 
 const MUIForm = withTheme<IUserDataStorageConfigCreateInput>(Theme);
 
@@ -59,7 +60,9 @@ export interface INewUserDataStorageConfigFormProps {
   formRef: FormProps["ref"];
   userIdToAddTo: string;
   onAddedSuccessfully: () => void;
-  noRenderSubmitButton: boolean;
+  renderSubmitButton: boolean;
+  isAddUserDataStorageConfigPending: boolean;
+  setIsAddUserDataStorageConfigPending: Dispatch<SetStateAction<boolean>>;
 }
 
 const NewUserDataStorageConfigForm: FC<INewUserDataStorageConfigFormProps> = (props: INewUserDataStorageConfigFormProps) => {
@@ -67,6 +70,11 @@ const NewUserDataStorageConfigForm: FC<INewUserDataStorageConfigFormProps> = (pr
   const handleFormSubmit = useCallback(
     (data: IChangeEvent<IUserDataStorageConfigCreateInput>): void => {
       appLogger.info("Submitted new User Data Storage form.");
+      if (props.isAddUserDataStorageConfigPending) {
+        appLogger.warn("Add User Data Storage Config pending. No-op form sumit.");
+        return;
+      }
+      props.setIsAddUserDataStorageConfigPending(true);
       if (data.formData === undefined) {
         appLogger.error("Undefined User Data Storage Config Create Input form data. No-op.");
         enqueueSnackbar({ message: "Missing form data.", variant: "error" });
@@ -104,9 +112,12 @@ const NewUserDataStorageConfigForm: FC<INewUserDataStorageConfigFormProps> = (pr
           const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
           appLogger.error(`Could not encrypt User Data Storage Config Create DTO. Reason: ${ERROR_MESSAGE}.`);
           enqueueSnackbar({ message: "User Data Storage Config encryption error.", variant: "error" });
+        })
+        .finally((): void => {
+          props.setIsAddUserDataStorageConfigPending(false);
         });
     },
-    [userIdToAddTo, onAddedSuccessfully]
+    [userIdToAddTo, onAddedSuccessfully, props]
   );
 
   return (
@@ -114,10 +125,7 @@ const NewUserDataStorageConfigForm: FC<INewUserDataStorageConfigFormProps> = (pr
       ref={props.formRef}
       schema={USER_DATA_STORAGE_CONFIG_CREATE_INPUT_JSON_SCHEMA as RJSFSchema}
       validator={USER_DATA_STORAGE_CONFIG_CREATE_INPUT_VALIDATOR}
-      uiSchema={{
-        ...USER_DATA_STORAGE_CONFIG_CREATE_INPUT_UI_SCHEMA,
-        "ui:submitButtonOptions": { norender: props.noRenderSubmitButton }
-      }}
+      uiSchema={{ ...USER_DATA_STORAGE_CONFIG_CREATE_INPUT_UI_SCHEMA, "ui:submitButtonOptions": { norender: !props.renderSubmitButton } }}
       omitExtraData={true}
       liveOmit={true}
       showErrorList={false}
@@ -125,7 +133,19 @@ const NewUserDataStorageConfigForm: FC<INewUserDataStorageConfigFormProps> = (pr
       transformErrors={newUserDataStorageConfigFormErrorTransformer}
       onSubmit={handleFormSubmit}
       noHtml5Validate={true}
-    />
+    >
+      {props.renderSubmitButton && (
+        <Button
+          type="submit"
+          disabled={props.isAddUserDataStorageConfigPending}
+          variant="contained"
+          size="large"
+          sx={{ marginTop: "1vw", marginBottom: "1vw" }}
+        >
+          {props.isAddUserDataStorageConfigPending ? "Submitting..." : "Submit"}
+        </Button>
+      )}
+    </MUIForm>
   );
 };
 

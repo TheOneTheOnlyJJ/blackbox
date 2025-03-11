@@ -33,7 +33,7 @@ export const LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_JSON_SCH
     required: ["type", "dbDirPath", "dbFileName"],
     additionalProperties: false
   } as const;
-
+// TODO: Add proper directory picker widget
 export const LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_UI_SCHEMA: UiSchema<ILocalSQLiteUserDataStorageBackendConfigCreateInput> = {
   "ui:title": "Local SQLite",
   "ui:options": {

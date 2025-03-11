@@ -2,10 +2,11 @@ import { Link } from "react-router-dom";
 import Box from "@mui/material/Box/Box";
 import Typography from "@mui/material/Typography/Typography";
 import Paper from "@mui/material/Paper/Paper";
-import { FC } from "react";
+import { FC, useState } from "react";
 import UserSignInForm from "@renderer/components/forms/UserSignInForm";
 
 const SignInPage: FC = () => {
+  const [isSignInPending, setIsSignInPending] = useState<boolean>(false);
   return (
     <Box
       sx={{
@@ -31,7 +32,7 @@ const SignInPage: FC = () => {
         }}
       >
         <Typography variant="h4">Sign In</Typography>
-        <UserSignInForm />
+        <UserSignInForm isSignInPending={isSignInPending} setIsSignInPending={setIsSignInPending} renderSubmitButton={true} />
         <Typography>
           New to BlackBox?{" "}
           <Link to="/signup" replace={true}>

@@ -58,6 +58,10 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     this.db = null;
   }
 
+  public getTypeTitle(): string {
+    return LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS.type.title;
+  }
+
   public isOpen(): boolean {
     return this.db !== null;
   }
@@ -132,7 +136,7 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     return true;
   }
 
-  // TODO: Delete this?
+  // TODO: Delete comment
   // private isJSONValidInSQLite(json: object | string, jsonPurposeToLog: string): boolean {
   //   if (typeof json === "object") {
   //     json = JSON.stringify(json, null, 2);
@@ -253,6 +257,21 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     const RESULT = this.db.prepare(USER_COUNT_SQL).get() as { count: number };
     this.logger.debug(`User count: ${RESULT.count.toString()}.`);
     return RESULT.count;
+  }
+
+  public getUsernameForUserId(userId: UUID): string | null {
+    this.logger.debug(`Getting username for user ID "${userId}".`);
+    if (this.db === null) {
+      throw new Error(`Closed "${this.config.type}" User Account Storage Backend`);
+    }
+    const GET_USERNAME_FOR_USER_ID_SQL = "SELECT username FROM users WHERE user_id = @userId";
+    const RESULT = this.db.prepare(GET_USERNAME_FOR_USER_ID_SQL).get({ userId: userId }) as { username: string } | undefined;
+    if (RESULT === undefined) {
+      this.logger.silly(`User with ID "${userId}" has no username (doers not exist).`);
+      return null;
+    }
+    this.logger.silly(`User with ID "${userId}" has username "${RESULT.username}".`);
+    return RESULT.username;
   }
 
   public isUserDataStorageIdAvailable(storageId: UUID): boolean {

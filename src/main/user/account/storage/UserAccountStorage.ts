@@ -44,6 +44,7 @@ export class UserAccountStorage {
     return {
       storageId: this.storageId,
       name: this.name,
+      type: this.getBackendTypeTitle(),
       isOpen: this.isOpen()
     } satisfies IPublicUserAccountStorageConfig;
   }
@@ -51,6 +52,11 @@ export class UserAccountStorage {
   public getBackendType(): UserAccountStorageBackendType {
     this.logger.info(`Getting User Account Storage "${this.name}" with ID "${this.storageId}" backend type.`);
     return this.backend.config.type;
+  }
+
+  public getBackendTypeTitle(): string {
+    this.logger.info(`Getting User Account Storage "${this.name}" with ID "${this.storageId}" backend type title.`);
+    return this.backend.getTypeTitle();
   }
 
   public isUsernameAvailable(username: string): boolean {
@@ -73,6 +79,11 @@ export class UserAccountStorage {
   public getUserCount(): number {
     this.logger.info(`Getting user count in User Account Storage "${this.name}" with ID "${this.storageId}".`);
     return this.backend.getUserCount();
+  }
+
+  public getUsernameForUserId(userId: UUID): string | null {
+    this.logger.info(`Getting username for user ID "${userId}" in User Account Storage "${this.name}" with ID "${this.storageId}".`);
+    return this.backend.getUsernameForUserId(userId);
   }
 
   public addUser(securedUserSignUpPayload: ISecuredUserSignUpPayload): boolean {

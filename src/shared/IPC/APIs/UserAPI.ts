@@ -24,14 +24,15 @@ export interface IUserAPI {
   isUserAccountStorageOpen: () => IPCAPIResponse<boolean>;
   isUsernameAvailable: (username: string) => IPCAPIResponse<boolean>;
   getUserCount: () => IPCAPIResponse<number>;
+  getUsernameForUserId: (userId: string) => IPCAPIResponse<string | null>;
   getSignedInUser: () => IPCAPIResponse<IPublicSignedInUser | null>;
   addUserDataStorageConfig: (encryptedUserDataStorageConfigCreateDTO: IEncryptedData<IUserDataStorageConfigCreateDTO>) => IPCAPIResponse<boolean>;
   getCurrentUserAccountStorageConfig: () => IPCAPIResponse<IPublicUserAccountStorageConfig | null>;
-  getAllSignedInUserPublicUserDataStorageConfigs: () => IPCAPIResponse<IEncryptedData<IPublicUserDataStorageConfig[]>>; // TODO: ENCRYPT BEFORE SENDING
+  getAllSignedInUserPublicUserDataStorageConfigs: () => IPCAPIResponse<IEncryptedData<IPublicUserDataStorageConfig[]>>;
   onCurrentUserAccountStorageChanged: (callback: CurrentUserAccountStorageChangedCallback) => () => void;
   onUserAccountStorageOpenChanged: (callback: UserAccountStorageOpenChangedCallback) => () => void;
   onSignedInUserChanged: (callback: SignedInUserChangedCallback) => () => void;
-  onUserDataStoragesChanged: (callback: UserDataStoragesChangedCallback) => () => void; // TODO: Encrypt
+  onUserDataStoragesChanged: (callback: UserDataStoragesChangedCallback) => () => void;
 }
 
 export const USER_API_IPC_CHANNELS = {
@@ -41,6 +42,7 @@ export const USER_API_IPC_CHANNELS = {
   isUserAccountStorageOpen: "userAPI:isUserAccountStorageOpen",
   isUsernameAvailable: "userAPI:isUsernameAvailable",
   getUserCount: "userAPI:getUserCount",
+  getUsernameForUserId: "userAPI:getUsernameForUserId",
   getSignedInUser: "userAPI:getSignedInUser",
   addUserDataStorageConfig: "userAPI:addUserDataStorageConfig",
   getCurrentUserAccountStorageConfig: "userAPI:getCurrentUserAccountStorageConfig",

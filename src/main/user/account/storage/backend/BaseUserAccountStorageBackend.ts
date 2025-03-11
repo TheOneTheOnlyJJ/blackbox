@@ -23,6 +23,7 @@ export abstract class BaseUserAccountStorageBackend<T extends IBaseUserAccountSt
     }
   }
 
+  public abstract getTypeTitle(): string;
   public abstract open(): boolean;
   public abstract close(): boolean;
   public abstract isOpen(): boolean;
@@ -34,6 +35,7 @@ export abstract class BaseUserAccountStorageBackend<T extends IBaseUserAccountSt
   public abstract getSecuredUserPassword(userId: UUID): ISecuredPassword | null;
   public abstract getUserDataEncryptionAESKeySalt(userId: UUID): string | null;
   public abstract getUserCount(): number;
+  public abstract getUsernameForUserId(userId: UUID): string | null;
   public abstract isUserDataStorageIdAvailable(storageId: UUID): boolean;
   public abstract addStorageSecuredUserDataStorageConfig(encryptedStorageSecuredUserDataStorageConfig: IStorageSecuredUserDataStorageConfig): boolean;
   public abstract getAllStorageSecuredUserDataStorageConfigs(userId: UUID): IStorageSecuredUserDataStorageConfig[];
