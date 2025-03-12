@@ -1,10 +1,12 @@
 import { IIPCTLSAPI } from "@shared/IPC/APIs/IPCTLSAPI";
 import { IUserAPI } from "@shared/IPC/APIs/UserAPI";
+import { IUtilsAPI } from "@shared/IPC/APIs/UtilsAPI";
 
 declare global {
   interface Window {
     IPCTLSAPI: IIPCTLSAPI;
     userAPI: IUserAPI;
+    utilsAPI: IUtilsAPI;
   }
 }
 

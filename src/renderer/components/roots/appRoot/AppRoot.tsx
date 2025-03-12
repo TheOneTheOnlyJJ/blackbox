@@ -54,6 +54,10 @@ const AppRoot: FC = () => {
       } else {
         setSignedInNavigationEntryIndex(window.navigation.currentEntry.index);
       }
+      // TODO: Delete this - test forbidden page
+      // setTimeout((): void => {
+      //   setSignedInUser(null);
+      // }, 3_000);
     }
     // Wipe the history stack and navigate to the required path
     appLogger.debug("Wiping window navigation history.");

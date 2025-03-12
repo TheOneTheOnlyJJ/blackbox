@@ -24,7 +24,6 @@ const NewUserDataStorageConfigFormDialog: FC<INewUserDataStorageConfigFormDialog
       appLogger.warn("Add User Data Storage Config pending. No-op form sumit.");
       return;
     }
-    setIsAddUserDataStorageConfigPending(true); // Will get set back to false in form
     if (!formRef.current?.validateForm()) {
       enqueueSnackbar({ message: "Invalid form data.", variant: "warning" });
       appLogger.warn("Invalid User Data Storage Config form data.");

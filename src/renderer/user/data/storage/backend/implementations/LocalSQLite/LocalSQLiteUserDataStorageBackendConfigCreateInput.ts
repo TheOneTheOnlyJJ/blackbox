@@ -3,6 +3,7 @@ import { IBaseUserDataStorageBackendConfigCreateInput } from "../../config/creat
 import { UiSchema } from "@rjsf/utils";
 import { LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/backend/implementations/LocalSQLite/LocalSQLiteUserDataStorageBackendConfigConstants";
 import { USER_DATA_STORAGE_BACKEND_TYPES, UserDataStorageBackendTypes } from "@shared/user/data/storage/backend/UserDataStorageBackendType";
+import RJSFDirectoryPickerWidget from "@renderer/components/RJSFWidgets/RJSFDirectoryPickerWidget";
 
 export interface ILocalSQLiteUserDataStorageBackendConfigCreateInput extends IBaseUserDataStorageBackendConfigCreateInput {
   type: UserDataStorageBackendTypes["LocalSQLite"];
@@ -33,7 +34,7 @@ export const LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_JSON_SCH
     required: ["type", "dbDirPath", "dbFileName"],
     additionalProperties: false
   } as const;
-// TODO: Add proper directory picker widget
+
 export const LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_UI_SCHEMA: UiSchema<ILocalSQLiteUserDataStorageBackendConfigCreateInput> = {
   "ui:title": "Local SQLite",
   "ui:options": {
@@ -41,5 +42,14 @@ export const LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_UI_SCHEM
   },
   type: {
     "ui:widget": "hidden"
+  },
+  dbDirPath: {
+    "ui:title": LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS.dbDirPath.title,
+    "ui:description": "The absolute directory path at which the SQLite file will be created",
+    "ui:widget": RJSFDirectoryPickerWidget
+  },
+  dbFileName: {
+    "ui:enableMarkdownInDescription": true,
+    "ui:description": "File extension **not** required"
   }
 } as const;

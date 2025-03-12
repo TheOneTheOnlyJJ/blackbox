@@ -16,16 +16,18 @@ import {
 } from "@shared/user/data/storage/config/public/PublicUserDataStoragesChangedDiff";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 
+const DEFAULT_FORBIDDEN_LOCATION_NAME = "this";
+
 const SignedInRoot: FC = () => {
   const appRootContext: IAppRootContext = useAppRootContext();
-  const [forbiddenLocationName, setForbiddenLocationName] = useState<string>("this-page");
+  const [forbiddenLocationName, setForbiddenLocationName] = useState<string>(DEFAULT_FORBIDDEN_LOCATION_NAME);
   const URIencodeAndSetForbiddenLocationName = useCallback((newForbiddenLocationname: string): void => {
     try {
       newForbiddenLocationname = encodeURIComponent(newForbiddenLocationname);
     } catch (err: unknown) {
       const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
       appLogger.error(`Could not set forbidden location name: ${ERROR_MESSAGE}!`);
-      newForbiddenLocationname = "this-page";
+      newForbiddenLocationname = DEFAULT_FORBIDDEN_LOCATION_NAME;
     } finally {
       setForbiddenLocationName(newForbiddenLocationname);
     }
@@ -119,7 +121,7 @@ const SignedInRoot: FC = () => {
       }
     />
   ) : (
-    <Navigate to={`/forbidden/must-be-signed-in-to-access-${forbiddenLocationName}`} />
+    <Navigate to={`/forbidden/you-must-be-signed-in-to-access-the-${forbiddenLocationName}-page`} />
   );
 };
 

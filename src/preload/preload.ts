@@ -9,9 +9,9 @@ import {
   UserDataStoragesChangedCallback
 } from "@shared/IPC/APIs/UserAPI";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
-import { IIPCTLSAPI, IPC_TLS_API_CHANNELS, IPCTLSAPIChannel, IPCTLSReadinessChangedCallback } from "@shared/IPC/APIs/IPCTLSAPI";
+import { IIPCTLSAPI, IPC_TLS_API_IPC_CHANNELS, IPCTLSAPIIPCChannel, IPCTLSReadinessChangedCallback } from "@shared/IPC/APIs/IPCTLSAPI";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
-import { IIPCTLSBootstrapAPI, IPC_TLS_BOOTSTRAP_API_CHANNELS } from "@shared/IPC/APIs/IPCTLSBootstrapAPI";
+import { IIPCTLSBootstrapAPI, IPC_TLS_BOOTSTRAP_API_IPC_CHANNELS } from "@shared/IPC/APIs/IPCTLSBootstrapAPI";
 import { LogLevel, LogMessage } from "electron-log";
 import { IPublicUserAccountStorageConfig } from "@shared/user/account/storage/PublicUserAccountStorageConfig";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
@@ -23,6 +23,12 @@ import { IUserSignInDTO } from "@shared/user/account/UserSignInDTO";
 import { IUserDataStorageConfigCreateDTO } from "@shared/user/data/storage/config/create/DTO/UserDataStorageConfigCreateDTO";
 import { IPublicUserDataStorageConfig } from "@shared/user/data/storage/config/public/PublicUserDataStorageConfig";
 import { IPublicUserDataStoragesChangedDiff } from "@shared/user/data/storage/config/public/PublicUserDataStoragesChangedDiff";
+import {
+  IGetDirectoryWithPickerOptions as IGetDirectoryPathWithPickerOptions,
+  IUtilsAPI,
+  UTILS_API_IPC_CHANNELS,
+  UtilsAPIIPCChannel
+} from "@shared/IPC/APIs/UtilsAPI";
 
 // Variables
 const TEXT_ENCODER: TextEncoder = new TextEncoder();
@@ -72,9 +78,9 @@ const bootstrapIPCTLS = async (): Promise<void> => {
       sendLogToMainProcess(
         PRELOAD_IPC_TLS_API_BOOTSTRAP_LOG_SCOPE,
         "debug",
-        `Messaging main on channel: "${IPC_TLS_BOOTSTRAP_API_CHANNELS.generateAndGetMainProcessIPCTLSPublicRSAKeyDER}".`
+        `Messaging main on channel: "${IPC_TLS_BOOTSTRAP_API_IPC_CHANNELS.generateAndGetMainProcessIPCTLSPublicRSAKeyDER}".`
       );
-      return ipcRenderer.invoke(IPC_TLS_BOOTSTRAP_API_CHANNELS.generateAndGetMainProcessIPCTLSPublicRSAKeyDER) as Promise<
+      return ipcRenderer.invoke(IPC_TLS_BOOTSTRAP_API_IPC_CHANNELS.generateAndGetMainProcessIPCTLSPublicRSAKeyDER) as Promise<
         IPCAPIResponse<ArrayBuffer>
       >;
     },
@@ -82,9 +88,9 @@ const bootstrapIPCTLS = async (): Promise<void> => {
       sendLogToMainProcess(
         PRELOAD_IPC_TLS_API_BOOTSTRAP_LOG_SCOPE,
         "debug",
-        `Messaging main on channel: "${IPC_TLS_BOOTSTRAP_API_CHANNELS.sendWrappedIPCTLSAESKey}".`
+        `Messaging main on channel: "${IPC_TLS_BOOTSTRAP_API_IPC_CHANNELS.sendWrappedIPCTLSAESKey}".`
       );
-      ipcRenderer.send(IPC_TLS_BOOTSTRAP_API_CHANNELS.sendWrappedIPCTLSAESKey, wrappedAESKey);
+      ipcRenderer.send(IPC_TLS_BOOTSTRAP_API_IPC_CHANNELS.sendWrappedIPCTLSAESKey, wrappedAESKey);
     }
   };
   // Get and import main process IPC TLS public RSA key, generate and wrap IPC TLS AES key
@@ -133,12 +139,12 @@ void bootstrapIPCTLS();
 
 const IPC_TLS_API: IIPCTLSAPI = {
   getMainReadiness: (): boolean => {
-    const CHANNEL: IPCTLSAPIChannel = IPC_TLS_API_CHANNELS.getMainReadiness;
+    const CHANNEL: IPCTLSAPIIPCChannel = IPC_TLS_API_IPC_CHANNELS.getMainReadiness;
     sendLogToMainProcess(PRELOAD_IPC_TLS_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL) as boolean;
   },
   onMainReadinessChanged: (callback: IPCTLSReadinessChangedCallback): (() => void) => {
-    const CHANNEL: IPCTLSAPIChannel = IPC_TLS_API_CHANNELS.onMainReadinessChanged;
+    const CHANNEL: IPCTLSAPIIPCChannel = IPC_TLS_API_IPC_CHANNELS.onMainReadinessChanged;
     sendLogToMainProcess(PRELOAD_IPC_TLS_API_LOG_SCOPE, "debug", `Adding listener from main on channel: "${CHANNEL}".`);
     const LISTENER = (_: IpcRendererEvent, isMainIPCTLSReady: boolean): void => {
       sendLogToMainProcess(PRELOAD_IPC_TLS_API_LOG_SCOPE, "debug", `Received message from main on channel: "${CHANNEL}".`);
@@ -320,7 +326,16 @@ const USER_API: IUserAPI = {
   }
 } as const;
 
+const UTILS_API: IUtilsAPI = {
+  getDirectoryPathWithPicker: async (options: IGetDirectoryPathWithPickerOptions): Promise<IPCAPIResponse<IEncryptedData<string[]> | null>> => {
+    const CHANNEL: UtilsAPIIPCChannel = UTILS_API_IPC_CHANNELS.getDirectoryPathWithPicker;
+    sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
+    return ipcRenderer.invoke(CHANNEL, options) as Promise<IPCAPIResponse<IEncryptedData<string[]> | null>>;
+  }
+} as const;
+
 // Expose the APIs in the renderer
 contextBridge.exposeInMainWorld("IPCTLSAPI", IPC_TLS_API);
 contextBridge.exposeInMainWorld("userAPI", USER_API);
+contextBridge.exposeInMainWorld("utilsAPI", UTILS_API);
 // Exposing these APIs to the global Window interface is done in the preload.d.ts file

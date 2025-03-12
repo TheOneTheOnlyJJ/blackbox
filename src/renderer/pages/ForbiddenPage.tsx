@@ -7,21 +7,18 @@ import { NavigateFunction, useNavigate, useParams } from "react-router-dom";
 import { appLogger } from "@renderer/utils/loggers";
 import Typography from "@mui/material/Typography/Typography";
 import Alert from "@mui/material/Alert/Alert";
-import AlertTitle from "@mui/material/AlertTitle/AlertTitle";
 
 export interface IForbiddenPageParams extends Record<string, string> {
   reason: string;
 }
 
-// TODO: Investigate bug when previous path is also forbidden
-// TODO: Add a returnPath argument/prop to return to, which can be set by pages as navigation happens
 const ForbiddenPage: FC = () => {
   const navigate: NavigateFunction = useNavigate();
   const params: Readonly<Partial<IForbiddenPageParams>> = useParams<IForbiddenPageParams>();
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
-  const handleBackButtonClick = useCallback((): void => {
-    appLogger.debug("Back button clicked.");
-    navigate(-1);
+  const handleBackToSignInButtonClick = useCallback((): void => {
+    appLogger.debug("Back to sign in button clicked.");
+    navigate("/", { replace: true });
   }, [navigate]);
 
   useEffect((): void => {
@@ -67,15 +64,10 @@ const ForbiddenPage: FC = () => {
         }}
       >
         <DangerousIcon color="error" sx={{ fontSize: 100 }} />
-        <Typography variant="h4">Forbidden</Typography>
-        {alertMessage && (
-          <Alert severity="error">
-            <AlertTitle>Reason</AlertTitle>
-            {alertMessage}.
-          </Alert>
-        )}
-        <Button variant="contained" size="large" onClick={handleBackButtonClick} sx={{ marginTop: "2%" }}>
-          Back
+        <Typography variant="h4">Access Denied</Typography>
+        {alertMessage && <Alert severity="error">{alertMessage}!</Alert>}
+        <Button variant="contained" size="large" onClick={handleBackToSignInButtonClick} sx={{ marginTop: "2%" }}>
+          Back to Sign In
         </Button>
       </Paper>
     </Box>

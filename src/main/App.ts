@@ -1,15 +1,15 @@
-import { app, globalShortcut, BrowserWindow, ipcMain, Rectangle, screen } from "electron/main";
+import { app, globalShortcut, BrowserWindow, ipcMain, Rectangle, screen, dialog } from "electron/main";
 import { BrowserWindowConstructorOptions, HandlerDetails, nativeImage, shell, WindowOpenHandlerResponse } from "electron/common";
 import { join, resolve } from "node:path";
 import log, { LogFunctions } from "electron-log";
 import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 import { JSONSchemaType } from "ajv/dist/types/json-schema";
-import { IIPCTLSBootstrapAPI, IPC_TLS_BOOTSTRAP_API_CHANNELS } from "@shared/IPC/APIs/IPCTLSBootstrapAPI";
+import { IIPCTLSBootstrapAPI, IPC_TLS_BOOTSTRAP_API_IPC_CHANNELS } from "@shared/IPC/APIs/IPCTLSBootstrapAPI";
 import { USER_API_IPC_CHANNELS, UserAPIIPCChannel } from "@shared/IPC/APIs/UserAPI";
 import { UserManager } from "@main/user/UserManager";
 import { USER_ACCOUNT_STORAGE_BACKEND_TYPES } from "@main/user/account/storage/backend/UserAccountStorageBackendType";
 import { adjustWindowBounds } from "@main/utils/window/adjustWindowBounds";
-import { IpcMainEvent } from "electron";
+import { IpcMainEvent, IpcMainInvokeEvent, OpenDialogReturnValue } from "electron";
 import { IUserAPI } from "@shared/IPC/APIs/UserAPI";
 import { MainProcessIPCAPIHandlers } from "@main/utils/IPC/MainProcessIPCAPIHandlers";
 import { IUserSignUpDTO, USER_SIGN_UP_DTO_VALIDATE_FUNCTION } from "@shared/user/account/UserSignUpDTO";
@@ -28,7 +28,7 @@ import {
   USER_DATA_STORAGE_CONFIG_CREATE_DTO_VALIDATE_FUNCTION
 } from "@shared/user/data/storage/config/create/DTO/UserDataStorageConfigCreateDTO";
 import { userDataStorageConfigCreateDTOToUserDataStorageConfig } from "./user/data/storage/config/utils/userDataStorageConfigCreateDTOToUserDataStorageConfig";
-import { IIPCTLSAPIMain, IPC_TLS_API_CHANNELS, IPCTLSAPIChannel } from "@shared/IPC/APIs/IPCTLSAPI";
+import { IIPCTLSAPIMain, IPC_TLS_API_IPC_CHANNELS, IPCTLSAPIIPCChannel } from "@shared/IPC/APIs/IPCTLSAPI";
 import { userSignInDTOToUserSignInPayload } from "./user/account/utils/userSignInDTOToUserSignInPayload";
 import { userSignUpDTOToUserSignUpPayload } from "./user/account/utils/userSignUpDTOToUserSignUpPayload";
 import { IUserAccountStorageConfig } from "./user/account/storage/config/UserAccountStorageConfig";
@@ -42,6 +42,7 @@ import { IPublicUserDataStoragesChangedDiff } from "@shared/user/data/storage/co
 import { encryptWithAES } from "./utils/encryption/encryptWithAES";
 import { IPublicUserDataStorageConfig } from "@shared/user/data/storage/config/public/PublicUserDataStorageConfig";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
+import { IGetDirectoryWithPickerOptions, IUtilsAPI, UTILS_API_IPC_CHANNELS } from "@shared/IPC/APIs/UtilsAPI";
 
 type WindowPositionSetting = Rectangle | WindowStates["FullScreen"] | WindowStates["Maximized"];
 
@@ -56,6 +57,7 @@ export interface IAppSettings extends BaseSettings {
 type MainProcessIPCTLSBootstrapAPIIPCHandlers = MainProcessIPCAPIHandlers<IIPCTLSBootstrapAPI>;
 type MainProcessIPCTLSAPIIPCHandlers = MainProcessIPCAPIHandlers<IIPCTLSAPIMain>;
 type MainProcessUserAPIIPCHandlers = MainProcessIPCAPIHandlers<IUserAPI>;
+type MainProcessUtilsAPIIPCHandlers = MainProcessIPCAPIHandlers<IUtilsAPI>;
 
 export class App {
   // Own singleton instance
@@ -79,6 +81,7 @@ export class App {
   private readonly IPCTLSBootstrapAPILogger: LogFunctions = log.scope("main-ipc-tls-bootstrap-api");
   private readonly IPCTLSAPILogger: LogFunctions = log.scope("main-ipc-tls-api");
   private readonly UserAPILogger: LogFunctions = log.scope("main-user-api");
+  private readonly UtilsAPILogger: LogFunctions = log.scope("main-utils-api");
   private readonly userManagerLogger: LogFunctions = log.scope("main-user-manager");
   private readonly userAccountStorageLogger: LogFunctions = log.scope("main-user-account-storage");
   private readonly userAccountStorageBackendLogger: LogFunctions = log.scope("main-user-account-storage-backend");
@@ -236,7 +239,7 @@ export class App {
         this.IPCTLSBootstrapAPILogger.error(`Could not obtain IPC TLS AES key: ${ERROR_MESSAGE}!`);
       }
     }
-  };
+  } as const;
 
   private readonly IPC_TLS_API_HANDLERS: MainProcessIPCTLSAPIIPCHandlers = {
     handleGetMainReadiness: (): boolean => {
@@ -248,11 +251,11 @@ export class App {
         this.IPCTLSAPILogger.debug("Window is null. No-op.");
         return;
       }
-      const CHANNEL: IPCTLSAPIChannel = IPC_TLS_API_CHANNELS.onMainReadinessChanged;
+      const CHANNEL: IPCTLSAPIIPCChannel = IPC_TLS_API_IPC_CHANNELS.onMainReadinessChanged;
       this.IPCTLSAPILogger.debug(`Messaging renderer on channel: "${CHANNEL}".`);
       this.window.webContents.send(CHANNEL, newIsMainTLSReady);
     }
-  };
+  } as const;
 
   private readonly USER_API_HANDLERS: MainProcessUserAPIIPCHandlers = {
     handleSignUp: (encryptedUserSignUpDTO: IEncryptedData<IUserSignUpDTO>): IPCAPIResponse<boolean> => {
@@ -467,15 +470,43 @@ export class App {
       this.UserAPILogger.debug(`Messaging renderer on channel: "${CHANNEL}".`);
       this.window.webContents.send(
         CHANNEL,
-        encryptWithAES(
-          JSON.stringify(publicUserDataStoragesChangedDiff),
+        encryptWithAES<IPublicUserDataStoragesChangedDiff>(
+          publicUserDataStoragesChangedDiff,
           this.IPC_TLS_AES_KEY.value,
           this.UserAPILogger,
           "Public User Data Storages Changed Diff"
         )
       );
     }
-  };
+  } as const;
+
+  private readonly UTILS_API_HANDLERS: MainProcessUtilsAPIIPCHandlers = {
+    handleGetDirectoryPathWithPicker: async (options: IGetDirectoryWithPickerOptions): Promise<IPCAPIResponse<IEncryptedData<string[]> | null>> => {
+      try {
+        if (this.window === null) {
+          throw new Error("Window is null");
+        }
+        const OPEN_DIALOG_RETURN_VALUE: OpenDialogReturnValue = await dialog.showOpenDialog(this.window, {
+          title: options.pickerTitle,
+          properties: options.multiple ? ["openDirectory", "multiSelections"] : ["openDirectory"]
+        });
+        if (OPEN_DIALOG_RETURN_VALUE.canceled) {
+          return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: null };
+        }
+        if (this.IPC_TLS_AES_KEY.value === null) {
+          throw new Error("Null IPC TLS AES key");
+        }
+        return {
+          status: IPC_API_RESPONSE_STATUSES.SUCCESS,
+          data: encryptWithAES<string[]>(OPEN_DIALOG_RETURN_VALUE.filePaths, this.IPC_TLS_AES_KEY.value, this.UtilsAPILogger, "picked directory path")
+        };
+      } catch (err: unknown) {
+        const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+        this.UtilsAPILogger.error(`Get directory with picker error: ${ERROR_MESSAGE}!`);
+        return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
+      }
+    }
+  } as const;
 
   // Private constructor to prevent direct instantiation
   private constructor() {
@@ -778,21 +809,25 @@ export class App {
     this.registerIPCTLSBootstrapIPCHandlers();
     this.registerIPCTLSAPIIPCHandlers();
     this.registerUserAPIIPCHandlers();
+    this.registerUtilsAPIIPCHandlers();
   }
 
   private registerIPCTLSBootstrapIPCHandlers(): void {
     this.windowLogger.debug("Registering IPC TLS Bootstrap IPC handlers.");
-    ipcMain.handle(IPC_TLS_BOOTSTRAP_API_CHANNELS.generateAndGetMainProcessIPCTLSPublicRSAKeyDER, async (): Promise<IPCAPIResponse<ArrayBuffer>> => {
-      this.IPCTLSBootstrapAPILogger.debug(
-        `Handling message from renderer on channel: "${IPC_TLS_BOOTSTRAP_API_CHANNELS.generateAndGetMainProcessIPCTLSPublicRSAKeyDER}".`
-      );
-      return await this.IPC_TLS_BOOTSTRAP_API_HANDLERS.handleGenerateAndGetMainProcessIPCTLSPublicRSAKeyDER();
-    });
+    ipcMain.handle(
+      IPC_TLS_BOOTSTRAP_API_IPC_CHANNELS.generateAndGetMainProcessIPCTLSPublicRSAKeyDER,
+      async (): Promise<IPCAPIResponse<ArrayBuffer>> => {
+        this.IPCTLSBootstrapAPILogger.debug(
+          `Handling message from renderer on channel: "${IPC_TLS_BOOTSTRAP_API_IPC_CHANNELS.generateAndGetMainProcessIPCTLSPublicRSAKeyDER}".`
+        );
+        return await this.IPC_TLS_BOOTSTRAP_API_HANDLERS.handleGenerateAndGetMainProcessIPCTLSPublicRSAKeyDER();
+      }
+    );
     ipcMain.on(
-      IPC_TLS_BOOTSTRAP_API_CHANNELS.sendWrappedIPCTLSAESKey,
+      IPC_TLS_BOOTSTRAP_API_IPC_CHANNELS.sendWrappedIPCTLSAESKey,
       (_: IpcMainEvent, wrappedIPCTLSAESKeyIPCAPIResponse: IPCAPIResponse<ArrayBuffer>): void => {
         this.IPCTLSBootstrapAPILogger.debug(
-          `Received message from renderer on channel: "${IPC_TLS_BOOTSTRAP_API_CHANNELS.sendWrappedIPCTLSAESKey}".`
+          `Received message from renderer on channel: "${IPC_TLS_BOOTSTRAP_API_IPC_CHANNELS.sendWrappedIPCTLSAESKey}".`
         );
         void this.IPC_TLS_BOOTSTRAP_API_HANDLERS.handleSendWrappedIPCTLSAESKey(wrappedIPCTLSAESKeyIPCAPIResponse);
       }
@@ -801,8 +836,8 @@ export class App {
 
   private registerIPCTLSAPIIPCHandlers(): void {
     this.windowLogger.debug("Registering IPC TLS IPC handlers.");
-    ipcMain.on(IPC_TLS_API_CHANNELS.getMainReadiness, (event: IpcMainEvent): void => {
-      this.IPCTLSBootstrapAPILogger.debug(`Received message from renderer on channel: "${IPC_TLS_API_CHANNELS.getMainReadiness}".`);
+    ipcMain.on(IPC_TLS_API_IPC_CHANNELS.getMainReadiness, (event: IpcMainEvent): void => {
+      this.IPCTLSBootstrapAPILogger.debug(`Received message from renderer on channel: "${IPC_TLS_API_IPC_CHANNELS.getMainReadiness}".`);
       event.returnValue = this.IPC_TLS_API_HANDLERS.handleGetMainReadiness();
     });
   }
@@ -858,5 +893,16 @@ export class App {
       );
       event.returnValue = this.USER_API_HANDLERS.handleGetAllSignedInUserPublicUserDataStorageConfigs();
     });
+  }
+
+  private registerUtilsAPIIPCHandlers(): void {
+    this.windowLogger.debug("Registering Utils API IPC handlers.");
+    ipcMain.handle(
+      UTILS_API_IPC_CHANNELS.getDirectoryPathWithPicker,
+      async (_: IpcMainInvokeEvent, options: IGetDirectoryWithPickerOptions): Promise<IPCAPIResponse<IEncryptedData<string> | null>> => {
+        this.UserAPILogger.debug(`Received message from renderer on channel: "${UTILS_API_IPC_CHANNELS.getDirectoryPathWithPicker}".`);
+        return await this.UTILS_API_HANDLERS.handleGetDirectoryPathWithPicker(options);
+      }
+    );
   }
 }

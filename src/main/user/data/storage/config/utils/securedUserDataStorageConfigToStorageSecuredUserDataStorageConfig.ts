@@ -3,6 +3,7 @@ import { LogFunctions } from "electron-log";
 import { encryptWithAES } from "@main/utils/encryption/encryptWithAES";
 import { ISecuredUserDataStorageConfig } from "../SecuredUserDataStorageConfig";
 import { securedUserDataStorageConfigToPrivateStorageSecuredUserDataStorageConfig } from "./securedUserDataStorageConfigToPrivateStorageSecuredUserDataStorageConfig";
+import { IPrivateStorageSecuredUserDataStorageConfig } from "../PrivateStorageSecuredUserDataStorageConfig";
 
 export const securedUserDataStorageConfigToStorageSecuredUserDataStorageConfig = (
   securedUserDataStorageConfig: ISecuredUserDataStorageConfig,
@@ -13,8 +14,8 @@ export const securedUserDataStorageConfigToStorageSecuredUserDataStorageConfig =
   return {
     storageId: securedUserDataStorageConfig.storageId,
     userId: securedUserDataStorageConfig.userId,
-    encryptedPrivateStorageSecuredUserDataStorageConfig: encryptWithAES(
-      JSON.stringify(securedUserDataStorageConfigToPrivateStorageSecuredUserDataStorageConfig(securedUserDataStorageConfig, logger)),
+    encryptedPrivateStorageSecuredUserDataStorageConfig: encryptWithAES<IPrivateStorageSecuredUserDataStorageConfig>(
+      securedUserDataStorageConfigToPrivateStorageSecuredUserDataStorageConfig(securedUserDataStorageConfig, logger),
       encryptionAESKey,
       logger,
       "Private Storage Secured User Data Storage Config"

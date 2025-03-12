@@ -75,7 +75,8 @@ export class UserManager {
           const NEW_PUBLIC_SIGNED_IN_USER: IPublicSignedInUser | null = value === null ? null : signedInUserToPublicSignedInUser(value, this.logger);
           if (isDeepStrictEqual(target[property], value)) {
             this.logger.warn(`Currently signed in user already had this value: ${JSON.stringify(NEW_PUBLIC_SIGNED_IN_USER, null, 2)}. No-op set.`);
-            return false;
+            this.onSignedInUserChangedCallback(NEW_PUBLIC_SIGNED_IN_USER);
+            return true;
           }
           // Corrupt data encryption key previous value was a signed in user
           if (target[property] !== null) {
