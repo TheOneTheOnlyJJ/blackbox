@@ -14,17 +14,21 @@ const PasswordWidget: FC<WidgetProps> = (props: WidgetProps) => {
   const theme: Theme = useTheme();
   const [doShowPassword, setDoShowPassword] = useState<boolean>(false);
 
-  const iconButtonOnClick = useCallback((): void => {
-    setDoShowPassword((prevShowPassword: boolean): boolean => !prevShowPassword);
-  }, []);
+  const tooltipText: string = useMemo<string>((): string => {
+    return doShowPassword ? "Hide Password" : "Show Password";
+  }, [doShowPassword]);
 
-  const hasError: boolean = useMemo((): boolean => {
+  const hasError: boolean = useMemo<boolean>((): boolean => {
     return rawErrors !== undefined && rawErrors.length > 0;
   }, [rawErrors]);
 
-  const iconColor: string = useMemo((): string => {
+  const showHidePasswordIconColor: string = useMemo<string>((): string => {
     return hasError ? theme.palette.error.main : theme.palette.text.secondary;
   }, [theme, hasError]);
+
+  const showHidePasswordIconButtonOnClick = useCallback((): void => {
+    setDoShowPassword((prevShowPassword: boolean): boolean => !prevShowPassword);
+  }, []);
 
   const _onChange = useCallback(
     ({ target: { value } }: ChangeEvent<HTMLInputElement>): void => {
@@ -64,10 +68,14 @@ const PasswordWidget: FC<WidgetProps> = (props: WidgetProps) => {
           readOnly: readonly,
           endAdornment: (
             <InputAdornment position="end">
-              <IconButton aria-label="toggle password visibility" onClick={iconButtonOnClick}>
-                <Tooltip title="Toggle Password Visibility" arrow={true}>
+              <IconButton aria-label="toggle password visibility" onClick={showHidePasswordIconButtonOnClick}>
+                <Tooltip title={tooltipText} arrow={true}>
                   {/* TODO: Open MUI issue because this flickers */}
-                  {doShowPassword ? <VisibilityIcon style={{ color: iconColor }} /> : <VisibilityOffIcon style={{ color: iconColor }} />}
+                  {doShowPassword ? (
+                    <VisibilityIcon style={{ color: showHidePasswordIconColor }} />
+                  ) : (
+                    <VisibilityOffIcon style={{ color: showHidePasswordIconColor }} />
+                  )}
                 </Tooltip>
               </IconButton>
             </InputAdornment>

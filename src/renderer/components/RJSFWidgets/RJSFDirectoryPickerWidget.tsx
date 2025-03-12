@@ -10,7 +10,7 @@ import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { JSONSchemaType, ValidateFunction } from "ajv";
 import { AJV } from "@shared/utils/AJVJSONValidator";
 
-const LIST_OF_STRINGS_VALIDATE_FUNCTION: ValidateFunction<string[]> = AJV.compile({
+const LIST_OF_STRINGS_JSON_VALIDATE_FUNCTION: ValidateFunction<string[]> = AJV.compile({
   $schema: "http://json-schema.org/draft-07/schema#",
   type: "array",
   items: { type: "string" }
@@ -21,7 +21,15 @@ const RJSFDirectoryPickerWidget: FC<WidgetProps> = (props: WidgetProps) => {
   const { id, value, uiSchema, required, disabled, readonly, options, rawErrors, onChange, onBlur, onFocus } = props;
   const theme: Theme = useTheme();
 
-  const iconButtonOnClick = useCallback((): void => {
+  const hasError: boolean = useMemo<boolean>((): boolean => {
+    return rawErrors !== undefined && rawErrors.length > 0;
+  }, [rawErrors]);
+
+  const openDirectoryPickerIconColor: string = useMemo<string>((): string => {
+    return hasError ? theme.palette.error.main : theme.palette.text.secondary;
+  }, [theme, hasError]);
+
+  const openDirectoryPickerIconButtonOnClick = useCallback((): void => {
     appLogger.debug("Open directory picker icon button clicked.");
     window.utilsAPI
       .getDirectoryPathWithPicker({ pickerTitle: "Choose Directory", multiple: false })
@@ -37,7 +45,7 @@ const RJSFDirectoryPickerWidget: FC<WidgetProps> = (props: WidgetProps) => {
             const CHOSEN_DIRECTORY_PATH: string = (
               await window.IPCTLSAPI.decryptAndValidateJSON<string[]>(
                 getDirectoryPathWithPickerResponse.data,
-                LIST_OF_STRINGS_VALIDATE_FUNCTION,
+                LIST_OF_STRINGS_JSON_VALIDATE_FUNCTION,
                 "chosen directory path"
               )
             )[0];
@@ -57,14 +65,6 @@ const RJSFDirectoryPickerWidget: FC<WidgetProps> = (props: WidgetProps) => {
         appLogger.error(`Get directory path with picker error: ${ERROR_MESSAGE}!`);
       });
   }, [onChange]);
-
-  const hasError: boolean = useMemo((): boolean => {
-    return rawErrors !== undefined && rawErrors.length > 0;
-  }, [rawErrors]);
-
-  const iconColor: string = useMemo((): string => {
-    return hasError ? theme.palette.error.main : theme.palette.text.secondary;
-  }, [theme, hasError]);
 
   const _onChange = useCallback(
     ({ target: { value } }: ChangeEvent<HTMLInputElement>): void => {
@@ -104,8 +104,8 @@ const RJSFDirectoryPickerWidget: FC<WidgetProps> = (props: WidgetProps) => {
           endAdornment: (
             <InputAdornment position="end">
               <Tooltip title="Open Directory Picker">
-                <IconButton aria-label="open directory picker" onClick={iconButtonOnClick}>
-                  <FolderOpenOutlinedIcon style={{ color: iconColor }} />
+                <IconButton aria-label="open directory picker" onClick={openDirectoryPickerIconButtonOnClick}>
+                  <FolderOpenOutlinedIcon style={{ color: openDirectoryPickerIconColor }} />
                 </IconButton>
               </Tooltip>
             </InputAdornment>
