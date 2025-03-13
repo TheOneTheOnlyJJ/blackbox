@@ -14,13 +14,16 @@ import ArrowBackOutlinedIcon from "@mui/icons-material/ArrowBackOutlined";
 import ArrowForwardOutlinedIcon from "@mui/icons-material/ArrowForwardOutlined";
 import { ISignedInRootContext, useSignedInRootContext } from "@renderer/components/roots/signedInRoot/SignedInRootContext";
 import UserAccountMenu from "../navigation/UserAccountMenu";
+import { DashboardNavigationArea } from "@renderer/navigationAreas/DashboardNavigationAreas";
 
-export interface ISignedInAppBarProps {
+export interface IDashboardAppBarProps {
   title: string;
+  signedInUserId: string;
+  dashboardNavigationArea: DashboardNavigationArea | null;
 }
 
-const SignedInAppBar = forwardRef<HTMLDivElement, ISignedInAppBarProps>(function SignedInAppBar(
-  props: ISignedInAppBarProps,
+const DashboardAppBar = forwardRef<HTMLDivElement, IDashboardAppBarProps>(function SignedInAppBar(
+  props: IDashboardAppBarProps,
   ref: ForwardedRef<HTMLDivElement>
 ) {
   const signedInRootContext: ISignedInRootContext = useSignedInRootContext();
@@ -39,7 +42,7 @@ const SignedInAppBar = forwardRef<HTMLDivElement, ISignedInAppBarProps>(function
   }, []);
   const handleNavigationArrowButtonClick = useCallback(
     (direction: "back" | "forward"): void => {
-      appLogger.debug(`Clicked ${direction} arrow from the App Bar.`);
+      appLogger.debug(`Clicked ${direction} arrow from the Dashboard App Bar.`);
       navigate(direction === "back" ? -1 : 1);
     },
     [navigate]
@@ -118,15 +121,16 @@ const SignedInAppBar = forwardRef<HTMLDivElement, ISignedInAppBarProps>(function
           </Tooltip>
         </Toolbar>
       </AppBar>
-      {/* User account menu */}
       <UserAccountMenu
         anchorEl={userAccountMenuAnchorElement}
         open={isUserAccountMenuOpen}
         onClick={handleUserAccountMenuClose}
         onClose={handleUserAccountMenuClose}
+        signedInUserId={props.signedInUserId}
+        dashboardNavigationArea={props.dashboardNavigationArea}
       />
     </>
   );
 });
 
-export default SignedInAppBar;
+export default DashboardAppBar;

@@ -6,34 +6,42 @@ import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import DebouncedLink from "./DebouncedLink";
-import { ISignedInRootContext, useSignedInRootContext } from "../roots/signedInRoot/SignedInRootContext";
 import { SvgIconComponent } from "@mui/icons-material";
-import { useLocation, Location } from "react-router-dom";
+import { DASHBOARD_NAVIGATION_AREAS, DashboardNavigationArea } from "@renderer/navigationAreas/DashboardNavigationAreas";
 
 interface IUserAccountMenuItem {
   name: string;
   icon: SvgIconComponent;
+  dashboardNavigationArea?: DashboardNavigationArea;
   path: string;
   divider: boolean;
 }
 
-type UserAccountMenuProps = Pick<MenuProps, "anchorEl" | "open" | "onClose" | "onClick">;
+export interface IUserAccountMenuProps {
+  anchorEl: MenuProps["anchorEl"];
+  open: MenuProps["open"];
+  onClose: MenuProps["onClose"];
+  onClick: MenuProps["onClick"];
+  signedInUserId: string;
+  dashboardNavigationArea: DashboardNavigationArea | null;
+}
 
-const UserAccountMenu: FC<UserAccountMenuProps> = (props: UserAccountMenuProps) => {
-  const signedInRootContext: ISignedInRootContext = useSignedInRootContext();
-  const location: Location = useLocation();
+const UserAccountMenu: FC<IUserAccountMenuProps> = (props: IUserAccountMenuProps) => {
+  const { signedInUserId, dashboardNavigationArea, ...menuProps } = props;
   const USER_ACCOUNT_MENU_ITEMS: IUserAccountMenuItem[] = useMemo<IUserAccountMenuItem[]>((): IUserAccountMenuItem[] => {
     return [
       {
         name: "Profile",
         icon: PersonOutlineOutlinedIcon,
-        path: `/users/${signedInRootContext.signedInUser.username}/profile`,
+        dashboardNavigationArea: DASHBOARD_NAVIGATION_AREAS.profile,
+        path: `/users/${signedInUserId}/profile`,
         divider: false
       },
       {
         name: "Settings",
         icon: SettingsOutlinedIcon,
-        path: `/users/${signedInRootContext.signedInUser.username}/settings`,
+        dashboardNavigationArea: DASHBOARD_NAVIGATION_AREAS.settings,
+        path: `/users/${signedInUserId}/settings`,
         divider: true
       },
       {
@@ -43,12 +51,19 @@ const UserAccountMenu: FC<UserAccountMenuProps> = (props: UserAccountMenuProps) 
         divider: false
       }
     ];
-  }, [signedInRootContext]);
+  }, [signedInUserId]);
+
   return (
-    <Menu id="account-menu" {...props}>
+    <Menu id="account-menu" {...menuProps}>
       {USER_ACCOUNT_MENU_ITEMS.map(
         (item: IUserAccountMenuItem, index: number): React.JSX.Element => (
-          <MenuItem key={index} component={DebouncedLink} to={item.path} selected={location.pathname === item.path} divider={item.divider}>
+          <MenuItem
+            key={index}
+            component={DebouncedLink}
+            to={item.path}
+            selected={dashboardNavigationArea === item.dashboardNavigationArea}
+            divider={item.divider}
+          >
             <ListItemIcon>
               <item.icon fontSize="small" />
             </ListItemIcon>

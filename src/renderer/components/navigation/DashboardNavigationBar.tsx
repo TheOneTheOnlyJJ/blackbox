@@ -9,45 +9,47 @@ import { ForwardedRef, forwardRef, useMemo } from "react";
 import { SvgIconComponent } from "@mui/icons-material";
 import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
-import { Location, useLocation } from "react-router-dom";
-import { ISignedInRootContext, useSignedInRootContext } from "@renderer/components/roots/signedInRoot/SignedInRootContext";
 import DebouncedLink from "./DebouncedLink";
+import { DASHBOARD_NAVIGATION_AREAS, DashboardNavigationArea } from "../../navigationAreas/DashboardNavigationAreas";
 
-interface IDrawerItem {
+interface IDashboardNavigationBarDrawerItem {
   name: string;
   icon: SvgIconComponent;
+  dashboardNavigationArea: DashboardNavigationArea;
   path: string;
   divider: boolean;
 }
 
-export interface INavigationBarProps {
+export interface IDashboardNavigationBarProps {
   width: number;
   heightOffset: number;
+  signedInUserId: string;
+  dashboardNavigationArea: DashboardNavigationArea | null;
 }
 
-const NavigationBar = forwardRef<HTMLDivElement, INavigationBarProps>(function NavigationBar(
-  props: INavigationBarProps,
+const DashboardNavigationBar = forwardRef<HTMLDivElement, IDashboardNavigationBarProps>(function NavigationBar(
+  props: IDashboardNavigationBarProps,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _: ForwardedRef<HTMLDivElement> // This is needed for some reason
+  _: ForwardedRef<HTMLDivElement> // This is needed
 ) {
-  const signedInRootContext: ISignedInRootContext = useSignedInRootContext();
-  const location: Location = useLocation();
-  const DRAWER_ITEMS: IDrawerItem[] = useMemo<IDrawerItem[]>((): IDrawerItem[] => {
+  const DRAWER_ITEMS: IDashboardNavigationBarDrawerItem[] = useMemo<IDashboardNavigationBarDrawerItem[]>((): IDashboardNavigationBarDrawerItem[] => {
     return [
       {
         name: "Dashboard",
         icon: DashboardOutlinedIcon,
-        path: `/users/${signedInRootContext.signedInUser.userId}/dashboard`,
+        dashboardNavigationArea: DASHBOARD_NAVIGATION_AREAS.dashboard,
+        path: `/users/${props.signedInUserId}/dashboard`,
         divider: false
       },
       {
         name: "Data Storages",
         icon: Inventory2OutlinedIcon,
-        path: `/users/${signedInRootContext.signedInUser.userId}/userDataStorages`,
+        dashboardNavigationArea: DASHBOARD_NAVIGATION_AREAS.userDataStorages,
+        path: `/users/${props.signedInUserId}/dataStorages`,
         divider: false
       }
     ];
-  }, [signedInRootContext]);
+  }, [props.signedInUserId]);
 
   return (
     <Drawer
@@ -64,9 +66,9 @@ const NavigationBar = forwardRef<HTMLDivElement, INavigationBarProps>(function N
       <Box sx={{ overflow: "auto" }}>
         <List>
           {DRAWER_ITEMS.map(
-            (item: IDrawerItem, index: number): React.JSX.Element => (
+            (item: IDashboardNavigationBarDrawerItem, index: number): React.JSX.Element => (
               <ListItem key={index} disablePadding divider={item.divider}>
-                <ListItemButton component={DebouncedLink} to={item.path} selected={location.pathname === item.path}>
+                <ListItemButton component={DebouncedLink} to={item.path} selected={props.dashboardNavigationArea === item.dashboardNavigationArea}>
                   <ListItemIcon>
                     <item.icon />
                   </ListItemIcon>
@@ -81,4 +83,4 @@ const NavigationBar = forwardRef<HTMLDivElement, INavigationBarProps>(function N
   );
 });
 
-export default NavigationBar;
+export default DashboardNavigationBar;

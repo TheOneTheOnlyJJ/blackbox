@@ -7,6 +7,7 @@ import UserSignUpForm from "@renderer/components/forms/UserSignUpForm";
 
 const SignUpPage: FC = () => {
   const [isSignUpPending, setIsSignUpPending] = useState<boolean>(false);
+
   return (
     <Box
       sx={{

@@ -1,17 +1,18 @@
 import { FC, MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
-import {
-  ISignedInDashboardLayoutRootContext,
-  useSignedInDashboardLayoutRootContext
-} from "@renderer/components/roots/signedInDashboardLayoutRoot/SignedInDashboardLayoutRootContext";
 import Button from "@mui/material/Button/Button";
 import { appLogger } from "@renderer/utils/loggers";
 import NewUserDataStorageConfigFormDialog from "@renderer/components/dialogs/NewUserDataStorageConfigFormDialog";
 import UserDataStoragesDataGrid from "@renderer/components/grids/UserDataStoragesDataGrid";
-import { Box } from "@mui/material";
+import { Box, Stack } from "@mui/material";
+import { DASHBOARD_NAVIGATION_AREAS } from "@renderer/navigationAreas/DashboardNavigationAreas";
+import {
+  IUserDataStoragesLayoutRootContext,
+  useUserDataStoragesLayoutRootContext
+} from "@renderer/components/roots/userDataStoragesLayoutRoot/UserDataStoragesLayoutRootContext";
+import { USER_DATA_STORAGES_NAVIGATION_AREAS } from "@renderer/navigationAreas/UserDataStoragesNavigationAreas";
 
 const UserDataStoragesPage: FC = () => {
-  const signedInDashboardLayoutRootContext: ISignedInDashboardLayoutRootContext = useSignedInDashboardLayoutRootContext();
-  // User data storage config form dialog
+  const userDataStoragesLayoutRootContext: IUserDataStoragesLayoutRootContext = useUserDataStoragesLayoutRootContext();
   const [isNewUserDataStorageConfigFormDialogOpen, setIsNewUserDataStorageConfigFormDialogOpen] = useState<boolean>(false);
   const isInitialMount: MutableRefObject<boolean> = useRef<boolean>(true);
 
@@ -38,9 +39,11 @@ const UserDataStoragesPage: FC = () => {
   }, [isNewUserDataStorageConfigFormDialogOpen]);
 
   useEffect((): void => {
-    signedInDashboardLayoutRootContext.setAppBarTitle("Data Storages");
-    signedInDashboardLayoutRootContext.setForbiddenLocationName("Data Storages");
-  }, [signedInDashboardLayoutRootContext]);
+    userDataStoragesLayoutRootContext.setDashboardNavigationArea(DASHBOARD_NAVIGATION_AREAS.userDataStorages);
+    userDataStoragesLayoutRootContext.setUserStoragesNavigationArea(USER_DATA_STORAGES_NAVIGATION_AREAS.storages);
+    userDataStoragesLayoutRootContext.setAppBarTitle("Data Storages");
+    userDataStoragesLayoutRootContext.setForbiddenLocationName("Data Storages");
+  }, [userDataStoragesLayoutRootContext]);
 
   return (
     <>
@@ -52,9 +55,11 @@ const UserDataStoragesPage: FC = () => {
           width: "100%"
         }}
       >
-        <Button variant="contained" size="large" onClick={handleNewDataStorageButtonClick}>
-          New Data Storage
-        </Button>
+        <Stack direction="row" spacing={2}>
+          <Button variant="contained" size="large" onClick={handleNewDataStorageButtonClick}>
+            New Data Storage
+          </Button>
+        </Stack>
 
         <Box sx={{ flex: 1, minHeight: 0, marginTop: ".5rem" }}>
           <UserDataStoragesDataGrid />
@@ -64,7 +69,7 @@ const UserDataStoragesPage: FC = () => {
         }
       </Box>
       <NewUserDataStorageConfigFormDialog
-        userIdToAddTo={signedInDashboardLayoutRootContext.signedInUser.userId}
+        userIdToAddTo={userDataStoragesLayoutRootContext.signedInUser.userId}
         onAddedSuccessfully={handleSuccessfullyAddedNewUserDataStorageConfig}
         open={isNewUserDataStorageConfigFormDialogOpen}
         onClose={handleNewUserDataStorageConfigFormDialogClose}

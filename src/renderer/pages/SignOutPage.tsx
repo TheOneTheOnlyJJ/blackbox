@@ -28,6 +28,7 @@ const SignOutPage: FC = () => {
     }
     // }, 2_500);
   }, []);
+
   return (
     <Box
       sx={{

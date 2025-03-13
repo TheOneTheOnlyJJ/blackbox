@@ -10,7 +10,9 @@ import SignedInRoot from "@renderer/components/roots/signedInRoot/SignedInRoot";
 import UserDataStoragesPage from "@renderer/pages/UserDataStoragesPage";
 import ProfilePage from "@renderer/pages/ProfilePage";
 import SettingsPage from "@renderer/pages/SettingsPage";
-import SignedInDashboardLayoutRoot from "@renderer/components/roots/signedInDashboardLayoutRoot/SignedInDashboardLayoutRoot";
+import DashboardLayoutRoot from "@renderer/components/roots/dashboardLayoutRoot/DashboardLayoutRoot";
+import UserDataStorageVisibilityGroupsPage from "./pages/UserDataStorageVisibilityGroupsPage";
+import UserDataStoragesLayoutRoot from "./components/roots/userDataStoragesLayoutRoot/UserDataStoragesLayoutRoot";
 
 const APP_ROUTER = createHashRouter([
   {
@@ -34,15 +36,25 @@ const APP_ROUTER = createHashRouter([
         element: <SignedInRoot />,
         children: [
           {
-            element: <SignedInDashboardLayoutRoot />,
+            element: <DashboardLayoutRoot />,
             children: [
               {
                 path: "dashboard",
                 element: <AccountDashboardPage />
               },
               {
-                path: "userDataStorages",
-                element: <UserDataStoragesPage />
+                path: "dataStorages",
+                element: <UserDataStoragesLayoutRoot />,
+                children: [
+                  {
+                    index: true,
+                    element: <UserDataStoragesPage />
+                  },
+                  {
+                    path: "visibilityGroups",
+                    element: <UserDataStorageVisibilityGroupsPage />
+                  }
+                ]
               },
               {
                 path: "profile",

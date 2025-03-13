@@ -394,12 +394,12 @@ export class App {
         return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
-    handleGetCurrentUserAccountStorageInfo: (): IPCAPIResponse<IUserAccountStorageInfo | null> => {
+    handleGetUserAccountStorageInfo: (): IPCAPIResponse<IUserAccountStorageInfo | null> => {
       try {
-        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userManager.getCurrentUserAccountStorageInfo() };
+        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userManager.getUserAccountStorageInfo() };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-        this.UserAPILogger.error(`Get current User Account Storage Info error: ${ERROR_MESSAGE}!`);
+        this.UserAPILogger.error(`Get User Account Storage Info error: ${ERROR_MESSAGE}!`);
         return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
@@ -423,17 +423,17 @@ export class App {
         return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
-    sendCurrentUserAccountStorageChanged: (newCurrentUserAccountStorageInfo: IUserAccountStorageInfo | null): void => {
+    sendUserAccountStorageChanged: (newUserAccountStorageInfo: IUserAccountStorageInfo | null): void => {
       this.UserAPILogger.debug(
-        `Sending window public current User Account Storage Info after change: ${JSON.stringify(newCurrentUserAccountStorageInfo, null, 2)}.`
+        `Sending window public User Account Storage Info after change: ${JSON.stringify(newUserAccountStorageInfo, null, 2)}.`
       );
       if (this.window === null) {
         this.UserAPILogger.debug("Window is null. No-op.");
         return;
       }
-      const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.onCurrentUserAccountStorageChanged;
+      const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.onUserAccountStorageChanged;
       this.UserAPILogger.debug(`Messaging renderer on channel: "${CHANNEL}".`);
-      this.window.webContents.send(CHANNEL, newCurrentUserAccountStorageInfo);
+      this.window.webContents.send(CHANNEL, newUserAccountStorageInfo);
     },
     sendUserAccountStorageOpenChanged: (newIsUserAccountStorageOpen: boolean): void => {
       this.UserAPILogger.debug(`Sending window User Account Storage open status after change: ${newIsUserAccountStorageOpen.toString()}.`);
@@ -542,7 +542,7 @@ export class App {
     this.userManager = new UserManager(
       this.userManagerLogger,
       this.USER_API_HANDLERS.sendSignedInUserChanged,
-      this.USER_API_HANDLERS.sendCurrentUserAccountStorageChanged,
+      this.USER_API_HANDLERS.sendUserAccountStorageChanged,
       this.USER_API_HANDLERS.sendUserAccountStorageOpenChanged,
       this.USER_API_HANDLERS.sendUserDataStoragesChanged
     );
@@ -883,9 +883,9 @@ export class App {
         event.returnValue = this.USER_API_HANDLERS.handleAddUserDataStorageConfig(encryptedUserDataStorageConfigCreateDTO);
       }
     );
-    ipcMain.on(USER_API_IPC_CHANNELS.getCurrentUserAccountStorageInfo, (event: IpcMainEvent): void => {
-      this.UserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.getCurrentUserAccountStorageInfo}".`);
-      event.returnValue = this.USER_API_HANDLERS.handleGetCurrentUserAccountStorageInfo();
+    ipcMain.on(USER_API_IPC_CHANNELS.getUserAccountStorageInfo, (event: IpcMainEvent): void => {
+      this.UserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.getUserAccountStorageInfo}".`);
+      event.returnValue = this.USER_API_HANDLERS.handleGetUserAccountStorageInfo();
     });
     ipcMain.on(USER_API_IPC_CHANNELS.getAllSignedInUserDataStoragesInfo, (event: IpcMainEvent): void => {
       this.UserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.getAllSignedInUserDataStoragesInfo}".`);

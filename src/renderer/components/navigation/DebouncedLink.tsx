@@ -8,7 +8,7 @@ const DebouncedLink = forwardRef<HTMLAnchorElement, LinkProps>(function Debounce
     (event: MouseEvent<HTMLAnchorElement>): void => {
       if (location.pathname === props.to) {
         event.preventDefault();
-        appLogger.debug(`Prevented redundant navigation to identical location as current: "${props.to}".`);
+        appLogger.debug(`Prevented redundant navigation to current location: "${props.to}".`);
       }
     },
     [location.pathname, props.to]

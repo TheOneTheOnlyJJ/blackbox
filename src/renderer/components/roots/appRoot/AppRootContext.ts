@@ -5,7 +5,7 @@ import { useOutletContext } from "react-router-dom";
 export interface IAppRootContext {
   signedInUser: IPublicSignedInUser | null;
   signedInNavigationEntryIndex: number;
-  currentUserAccountStorageInfo: IUserAccountStorageInfo | null;
+  userAccountStorageInfo: IUserAccountStorageInfo | null;
   isIPCTLSReady: {
     main: boolean;
     renderer: boolean;

@@ -3,7 +3,7 @@ import {
   SignedInUserChangedCallback,
   IUserAPI,
   USER_API_IPC_CHANNELS,
-  CurrentUserAccountStorageChangedCallback,
+  UserAccountStorageChangedCallback,
   UserAccountStorageOpenChangedCallback,
   UserAPIIPCChannel,
   UserDataStoragesChangedCallback
@@ -262,8 +262,8 @@ const USER_API: IUserAPI = {
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL, encryptedUserDataStorageConfigCreateDTO) as IPCAPIResponse<boolean>;
   },
-  getCurrentUserAccountStorageInfo: (): IPCAPIResponse<IUserAccountStorageInfo | null> => {
-    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.getCurrentUserAccountStorageInfo;
+  getUserAccountStorageInfo: (): IPCAPIResponse<IUserAccountStorageInfo | null> => {
+    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.getUserAccountStorageInfo;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL) as IPCAPIResponse<IUserAccountStorageInfo | null>;
   },
@@ -272,12 +272,12 @@ const USER_API: IUserAPI = {
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL) as IPCAPIResponse<IEncryptedData<IUserDataStorageInfo[]>>;
   },
-  onCurrentUserAccountStorageChanged: (callback: CurrentUserAccountStorageChangedCallback): (() => void) => {
-    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.onCurrentUserAccountStorageChanged;
+  onUserAccountStorageChanged: (callback: UserAccountStorageChangedCallback): (() => void) => {
+    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.onUserAccountStorageChanged;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Adding listener from main on channel: "${CHANNEL}".`);
-    const LISTENER = (_: IpcRendererEvent, newCurrentUserAccountStorageInfo: IUserAccountStorageInfo | null): void => {
+    const LISTENER = (_: IpcRendererEvent, newUserAccountStorageInfo: IUserAccountStorageInfo | null): void => {
       sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Received message from main on channel: "${CHANNEL}".`);
-      callback(newCurrentUserAccountStorageInfo);
+      callback(newUserAccountStorageInfo);
     };
     ipcRenderer.on(CHANNEL, LISTENER);
     return (): void => {

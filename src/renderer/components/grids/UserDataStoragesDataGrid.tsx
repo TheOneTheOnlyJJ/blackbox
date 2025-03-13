@@ -3,8 +3,6 @@ import { FC, useCallback } from "react";
 import { IUserDataStorageInfo, USER_DATA_STORAGE_INFO_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/info/UserDataStorageInfo";
 import { ISignedInRootContext, useSignedInRootContext } from "../roots/signedInRoot/SignedInRootContext";
 
-// export interface IUserDataStoragesDataGridProps {}
-
 const USER_DATA_STORAGES_DATA_GRID_COLUMNS: GridColDef[] = [
   { field: "storageId", type: "string", headerName: USER_DATA_STORAGE_INFO_JSON_SCHEMA_CONSTANTS.storageId.title },
   { field: "name", type: "string", headerName: USER_DATA_STORAGE_INFO_JSON_SCHEMA_CONSTANTS.name.title },
@@ -14,29 +12,27 @@ const USER_DATA_STORAGES_DATA_GRID_COLUMNS: GridColDef[] = [
   { field: "isOpen", type: "boolean", headerName: USER_DATA_STORAGE_INFO_JSON_SCHEMA_CONSTANTS.isOpen.title }
 ];
 
-const UserDataStoragesDataGrid: FC = () =>
-  // props: IUserDataStoragesDataGridProps
-  {
-    const signedInRootContext: ISignedInRootContext = useSignedInRootContext();
-    const rowIdGetter: GridRowIdGetter<IUserDataStorageInfo> = useCallback((row: IUserDataStorageInfo): GridRowId => {
-      return row.storageId;
-    }, []);
-    return (
-      <DataGrid
-        autosizeOnMount
-        autosizeOptions={{ expand: true, includeHeaders: true }}
-        getRowId={rowIdGetter}
-        rows={signedInRootContext.userDataStoragesInfo}
-        columns={USER_DATA_STORAGES_DATA_GRID_COLUMNS}
-        initialState={{
-          columns: {
-            columnVisibilityModel: {
-              storageId: false
-            }
+const UserDataStoragesDataGrid: FC = () => {
+  const signedInRootContext: ISignedInRootContext = useSignedInRootContext();
+  const rowIdGetter: GridRowIdGetter<IUserDataStorageInfo> = useCallback((row: IUserDataStorageInfo): GridRowId => {
+    return row.storageId;
+  }, []);
+  return (
+    <DataGrid
+      autosizeOnMount
+      autosizeOptions={{ expand: true, includeHeaders: true }}
+      getRowId={rowIdGetter}
+      rows={signedInRootContext.userDataStoragesInfo}
+      columns={USER_DATA_STORAGES_DATA_GRID_COLUMNS}
+      initialState={{
+        columns: {
+          columnVisibilityModel: {
+            storageId: false
           }
-        }}
-      />
-    );
-  };
+        }
+      }}
+    />
+  );
+};
 
 export default UserDataStoragesDataGrid;

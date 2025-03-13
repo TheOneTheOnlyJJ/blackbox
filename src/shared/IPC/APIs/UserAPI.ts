@@ -9,7 +9,7 @@ import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataSto
 import { IUserDataStoragesInfoChangedDiff } from "@shared/user/data/storage/info/UserDataStoragesInfoChangedDiff";
 
 // Utility types
-export type CurrentUserAccountStorageChangedCallback = (newCurrentUserAccountStorageInfo: IUserAccountStorageInfo | null) => void;
+export type UserAccountStorageChangedCallback = (newUserAccountStorageInfo: IUserAccountStorageInfo | null) => void;
 export type UserAccountStorageOpenChangedCallback = (newIsUserAccountStorageOpen: boolean) => void;
 export type SignedInUserChangedCallback = (newPublicSignedInUser: IPublicSignedInUser | null) => void;
 export type UserDataStoragesChangedCallback = (encryptedUserDataStoragesInfoChangedDiff: IEncryptedData<IUserDataStoragesInfoChangedDiff>) => void;
@@ -25,9 +25,9 @@ export interface IUserAPI {
   getUsernameForUserId: (userId: string) => IPCAPIResponse<string | null>;
   getSignedInUser: () => IPCAPIResponse<IPublicSignedInUser | null>;
   addUserDataStorageConfig: (encryptedUserDataStorageConfigCreateDTO: IEncryptedData<IUserDataStorageConfigCreateDTO>) => IPCAPIResponse<boolean>;
-  getCurrentUserAccountStorageInfo: () => IPCAPIResponse<IUserAccountStorageInfo | null>;
+  getUserAccountStorageInfo: () => IPCAPIResponse<IUserAccountStorageInfo | null>;
   getAllSignedInUserDataStoragesInfo: () => IPCAPIResponse<IEncryptedData<IUserDataStorageInfo[]>>;
-  onCurrentUserAccountStorageChanged: (callback: CurrentUserAccountStorageChangedCallback) => () => void;
+  onUserAccountStorageChanged: (callback: UserAccountStorageChangedCallback) => () => void;
   onUserAccountStorageOpenChanged: (callback: UserAccountStorageOpenChangedCallback) => () => void;
   onSignedInUserChanged: (callback: SignedInUserChangedCallback) => () => void;
   onUserDataStoragesChanged: (callback: UserDataStoragesChangedCallback) => () => void;
@@ -43,9 +43,9 @@ export const USER_API_IPC_CHANNELS = {
   getUsernameForUserId: "userAPI:getUsernameForUserId",
   getSignedInUser: "userAPI:getSignedInUser",
   addUserDataStorageConfig: "userAPI:addUserDataStorageConfig",
-  getCurrentUserAccountStorageInfo: "userAPI:getCurrentUserAccountStorageInfo",
+  getUserAccountStorageInfo: "userAPI:getUserAccountStorageInfo",
   getAllSignedInUserDataStoragesInfo: "userAPI:getAllSignedInUserDataStoragesInfo",
-  onCurrentUserAccountStorageChanged: "userAPI:onCurrentUserAccountStorageChanged",
+  onUserAccountStorageChanged: "userAPI:onUserAccountStorageChanged",
   onUserAccountStorageOpenChanged: "userAPI:onUserAccountStorageOpenChanged",
   onSignedInUserChanged: "userAPI:onSignedInUserChanged",
   onUserDataStoragesChanged: "userAPI:onUserDataStoragesChanged"

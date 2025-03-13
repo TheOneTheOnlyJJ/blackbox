@@ -2,17 +2,19 @@ import Box from "@mui/material/Box/Box";
 import Typography from "@mui/material/Typography/Typography";
 import { FC, useEffect } from "react";
 import {
-  ISignedInDashboardLayoutRootContext,
-  useSignedInDashboardLayoutRootContext
-} from "@renderer/components/roots/signedInDashboardLayoutRoot/SignedInDashboardLayoutRootContext";
+  IDashboardLayoutRootContext,
+  useDashboardLayoutRootContext
+} from "@renderer/components/roots/dashboardLayoutRoot/DashboardLayoutRootContext";
+import { DASHBOARD_NAVIGATION_AREAS } from "@renderer/navigationAreas/DashboardNavigationAreas";
 
 const ProfilePage: FC = () => {
-  const signedInDashboardLayoutRootContext: ISignedInDashboardLayoutRootContext = useSignedInDashboardLayoutRootContext();
+  const dashboardLayoutRootContext: IDashboardLayoutRootContext = useDashboardLayoutRootContext();
 
   useEffect((): void => {
-    signedInDashboardLayoutRootContext.setAppBarTitle("Profile");
-    signedInDashboardLayoutRootContext.setForbiddenLocationName("Profile");
-  }, [signedInDashboardLayoutRootContext]);
+    dashboardLayoutRootContext.setDashboardNavigationArea(DASHBOARD_NAVIGATION_AREAS.profile);
+    dashboardLayoutRootContext.setAppBarTitle("Profile");
+    dashboardLayoutRootContext.setForbiddenLocationName("Profile");
+  }, [dashboardLayoutRootContext]);
 
   return (
     <Box

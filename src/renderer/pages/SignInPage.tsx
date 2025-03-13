@@ -7,6 +7,7 @@ import UserSignInForm from "@renderer/components/forms/UserSignInForm";
 
 const SignInPage: FC = () => {
   const [isSignInPending, setIsSignInPending] = useState<boolean>(false);
+
   return (
     <Box
       sx={{

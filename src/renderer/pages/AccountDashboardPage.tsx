@@ -3,19 +3,20 @@ import Typography from "@mui/material/Typography/Typography";
 import { FC, useCallback, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import {
-  ISignedInDashboardLayoutRootContext,
-  useSignedInDashboardLayoutRootContext
-} from "@renderer/components/roots/signedInDashboardLayoutRoot/SignedInDashboardLayoutRootContext";
+  IDashboardLayoutRootContext,
+  useDashboardLayoutRootContext
+} from "@renderer/components/roots/dashboardLayoutRoot/DashboardLayoutRootContext";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { appLogger } from "@renderer/utils/loggers";
+import { DASHBOARD_NAVIGATION_AREAS } from "@renderer/navigationAreas/DashboardNavigationAreas";
 
 export interface IAccountDashboardPageParams extends Record<string, string> {
   userId: string;
 }
 
 const AccountDashboardPage: FC = () => {
-  const signedInDashboardLayoutRootContext: ISignedInDashboardLayoutRootContext = useSignedInDashboardLayoutRootContext();
+  const dashboardLayoutRootContext: IDashboardLayoutRootContext = useDashboardLayoutRootContext();
   const params: Readonly<Partial<IAccountDashboardPageParams>> = useParams<IAccountDashboardPageParams>();
   const getUsernameForUserId = useCallback(
     (userId: string | undefined): string => {
@@ -23,9 +24,9 @@ const AccountDashboardPage: FC = () => {
         appLogger.warn("Undefined user ID!");
         return "Undefined user ID";
       }
-      if (userId === signedInDashboardLayoutRootContext.signedInUser.userId) {
+      if (userId === dashboardLayoutRootContext.signedInUser.userId) {
         appLogger.debug("User ID is signed in user's.");
-        return signedInDashboardLayoutRootContext.signedInUser.username;
+        return dashboardLayoutRootContext.signedInUser.username;
       }
       appLogger.debug("Getting username for user ID from main process.");
       const GET_USERNAME_FOR_USER_ID_RESPONSE: IPCAPIResponse<string | null> = window.userAPI.getUsernameForUserId(userId);
@@ -37,13 +38,14 @@ const AccountDashboardPage: FC = () => {
       }
       return "Error getting username";
     },
-    [signedInDashboardLayoutRootContext.signedInUser]
+    [dashboardLayoutRootContext.signedInUser]
   );
 
   useEffect((): void => {
-    signedInDashboardLayoutRootContext.setAppBarTitle("Dashboard");
-    signedInDashboardLayoutRootContext.setForbiddenLocationName("Dashboard");
-  }, [signedInDashboardLayoutRootContext]);
+    dashboardLayoutRootContext.setDashboardNavigationArea(DASHBOARD_NAVIGATION_AREAS.dashboard);
+    dashboardLayoutRootContext.setAppBarTitle("Dashboard");
+    dashboardLayoutRootContext.setForbiddenLocationName("Dashboard");
+  }, [dashboardLayoutRootContext]);
 
   return (
     <Box

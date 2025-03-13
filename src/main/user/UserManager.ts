@@ -2,11 +2,7 @@ import { LogFunctions } from "electron-log";
 import { UserAccountStorageBackendType } from "./account/storage/backend/UserAccountStorageBackendType";
 import { randomUUID, scryptSync, timingSafeEqual, UUID } from "node:crypto";
 import { ISignedInUser, isSignedInUserValid } from "@main/user/account/SignedInUser";
-import {
-  SignedInUserChangedCallback,
-  CurrentUserAccountStorageChangedCallback,
-  UserAccountStorageOpenChangedCallback
-} from "@shared/IPC/APIs/UserAPI";
+import { SignedInUserChangedCallback, UserAccountStorageChangedCallback, UserAccountStorageOpenChangedCallback } from "@shared/IPC/APIs/UserAPI";
 import { isDeepStrictEqual } from "node:util";
 import { IUserDataStorageConfig } from "./data/storage/config/UserDataStorageConfig";
 import { ISecuredPassword } from "@main/utils/encryption/SecuredPassword";
@@ -29,7 +25,7 @@ import { IUserDataStoragesInfoChangedDiff } from "@shared/user/data/storage/info
 export class UserManager {
   private readonly logger: LogFunctions;
 
-  // Currently signed in user
+  // Signed in user
   // Must be wrapped in an object because it is a proxy
   private signedInUser: { value: ISignedInUser | null };
   public onSignedInUserChangedCallback: SignedInUserChangedCallback;
@@ -37,7 +33,7 @@ export class UserManager {
   // User Account Storage
   // Must be wrapped in an object because it too is a proxy
   private userAccountStorage: { value: UserAccountStorage | null };
-  public onUserAccountStorageChangedCallback: CurrentUserAccountStorageChangedCallback;
+  public onUserAccountStorageChangedCallback: UserAccountStorageChangedCallback;
   private onUserAccountStorageOpenChangedCallback: UserAccountStorageOpenChangedCallback;
 
   // User Data Storage
@@ -48,33 +44,33 @@ export class UserManager {
   public constructor(
     logger: LogFunctions,
     onSignedInUserChangedCallback?: SignedInUserChangedCallback,
-    onUserAccountStorageChangedCallback?: CurrentUserAccountStorageChangedCallback,
+    onUserAccountStorageChangedCallback?: UserAccountStorageChangedCallback,
     onUserAccountStorageOpenChangedCallback?: UserAccountStorageOpenChangedCallback,
     onUserDataStoragesChangedCallback?: (userDataStoragesInfoChangedDiff: IUserDataStoragesInfoChangedDiff) => void
   ) {
     // Loggers
     this.logger = logger;
     this.logger.debug("Initialising new User Manager.");
-    // Currently signed in user
+    // Signed in user
     this.onSignedInUserChangedCallback =
       onSignedInUserChangedCallback ??
       ((): void => {
-        this.logger.silly("No currently signed in user changed callback set.");
+        this.logger.silly("No signed in user changed callback set.");
       });
-    // Currently signed in user proxy that performs validation and calls the change callback when required
+    // Signed in user proxy that performs validation and calls the change callback when required
     this.signedInUser = new Proxy<{ value: ISignedInUser | null }>(
       { value: null },
       {
         set: (target: { value: ISignedInUser | null }, property: string | symbol, value: unknown): boolean => {
           if (property !== "value") {
-            throw new Error(`Cannot set property "${String(property)}" on currently signed in user. Only "value" property can be set! No-op set`);
+            throw new Error(`Cannot set property "${String(property)}" on signed in user. Only "value" property can be set! No-op set`);
           }
           if (value !== null && !isSignedInUserValid(value)) {
-            throw new Error(`Value must be null or a valid currently signed in user object! No-op set`);
+            throw new Error(`Value must be null or a valid signed in user object! No-op set`);
           }
           const NEW_PUBLIC_SIGNED_IN_USER: IPublicSignedInUser | null = value === null ? null : signedInUserToPublicSignedInUser(value, this.logger);
           if (isDeepStrictEqual(target[property], value)) {
-            this.logger.warn(`Currently signed in user already had this value: ${JSON.stringify(NEW_PUBLIC_SIGNED_IN_USER, null, 2)}. No-op set.`);
+            this.logger.warn(`Signed in user already had this value: ${JSON.stringify(NEW_PUBLIC_SIGNED_IN_USER, null, 2)}. No-op set.`);
             this.onSignedInUserChangedCallback(NEW_PUBLIC_SIGNED_IN_USER);
             return true;
           }
@@ -87,9 +83,9 @@ export class UserManager {
           }
           target[property] = value;
           if (value === null) {
-            this.logger.info("Set currently signed in user to null (signed out).");
+            this.logger.info("Set signed in user to null (signed out).");
           } else {
-            this.logger.info(`Set currently signed in user to: ${JSON.stringify(NEW_PUBLIC_SIGNED_IN_USER, null, 2)} (signed in).`);
+            this.logger.info(`Set signed in user to: ${JSON.stringify(NEW_PUBLIC_SIGNED_IN_USER, null, 2)} (signed in).`);
           }
           this.onSignedInUserChangedCallback(NEW_PUBLIC_SIGNED_IN_USER);
           return true;
@@ -362,7 +358,7 @@ export class UserManager {
     return signedInUserToPublicSignedInUser(this.signedInUser.value, this.logger);
   }
 
-  public getCurrentUserAccountStorageInfo(): IUserAccountStorageInfo | null {
+  public getUserAccountStorageInfo(): IUserAccountStorageInfo | null {
     if (this.userAccountStorage.value === null) {
       return null;
     }
@@ -440,6 +436,10 @@ export class UserManager {
     ALL_SECURED_USER_DATA_STORAGE_CONFIGS.map((securedUserDataStorageConfig: ISecuredUserDataStorageConfig): void => {
       ALL_USER_DATA_STORAGES_INFO.push(securedUserDataStorageConfigToUserDataStorageInfo(securedUserDataStorageConfig, null));
     });
+    // TODO: Change isOpen to true on the configs that are open
+    // TODO: Keep track of visibility passwords
+    // TODO: Give visibility passwords a nickname? This requires referencing them by IDs, keeping them in a separate SQLite table, keeping the inputted ones in memory
+    // TODO: Rename visibility passwords to visibility groups
     return ALL_USER_DATA_STORAGES_INFO;
   }
 }
