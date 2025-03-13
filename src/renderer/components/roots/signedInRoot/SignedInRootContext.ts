@@ -1,11 +1,11 @@
 import { useOutletContext } from "react-router-dom";
 import { IAppRootContext } from "@renderer/components/roots/appRoot/AppRootContext";
 import { IPublicSignedInUser } from "@shared/user/account/PublicSignedInUser";
-import { IPublicUserDataStorageConfig } from "@shared/user/data/storage/config/public/PublicUserDataStorageConfig";
+import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
 
 export interface ISignedInRootContext extends IAppRootContext {
   signedInUser: IPublicSignedInUser;
-  publicUserDataStorageConfigs: IPublicUserDataStorageConfig[];
+  userDataStoragesInfo: IUserDataStorageInfo[];
   setForbiddenLocationName: (newForbiddenLocationName: string) => void;
 }
 

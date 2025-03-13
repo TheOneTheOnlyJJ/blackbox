@@ -6,7 +6,7 @@ import { UserAccountStorageBackend } from "./backend/UserAccountStorageBackend";
 import { UserAccountStorageBackendType } from "./backend/UserAccountStorageBackendType";
 import { ISecuredUserSignUpPayload } from "../SecuredUserSignUpPayload";
 import { ISecuredPassword } from "@main/utils/encryption/SecuredPassword";
-import { IPublicUserAccountStorageConfig } from "@shared/user/account/storage/PublicUserAccountStorageConfig";
+import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserAccountStorageInfo";
 import { IStorageSecuredUserDataStorageConfig } from "@main/user/data/storage/config/StorageSecuredUserDataStorageConfig";
 
 export class UserAccountStorage {
@@ -39,14 +39,14 @@ export class UserAccountStorage {
     return this.backend.close();
   }
 
-  public getPublicUserAccountStorageConfig(): IPublicUserAccountStorageConfig {
-    this.logger.info("Getting Public User Account Storage Config.");
+  public getUserAccountStorageInfo(): IUserAccountStorageInfo {
+    this.logger.info("Getting User Account Storage Info.");
     return {
       storageId: this.storageId,
       name: this.name,
       type: this.getBackendTypeTitle(),
       isOpen: this.isOpen()
-    } satisfies IPublicUserAccountStorageConfig;
+    } satisfies IUserAccountStorageInfo;
   }
 
   public getBackendType(): UserAccountStorageBackendType {

@@ -3,17 +3,14 @@ import { Navigate, Outlet } from "react-router-dom";
 import { IAppRootContext, useAppRootContext } from "@renderer/components/roots/appRoot/AppRootContext";
 import { ISignedInRootContext } from "./SignedInRootContext";
 import { appLogger } from "@renderer/utils/loggers";
-import {
-  IPublicUserDataStorageConfig,
-  PUBLIC_USER_DATA_STORAGE_CONFIGS_VALIDATE_FUNCTION
-} from "@shared/user/data/storage/config/public/PublicUserDataStorageConfig";
+import { IUserDataStorageInfo, LIST_OF_USER_DATA_STORAGES_INFO_VALIDATE_FUNCTION } from "@shared/user/data/storage/info/UserDataStorageInfo";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { enqueueSnackbar } from "notistack";
 import {
-  IPublicUserDataStoragesChangedDiff,
-  PUBLIC_USER_DATA_STORAGES_CHANGED_DIFF_VALIDATE_FUNCTION
-} from "@shared/user/data/storage/config/public/PublicUserDataStoragesChangedDiff";
+  IUserDataStoragesInfoChangedDiff,
+  USER_DATA_STORAGES_INFO_CHANGED_DIFF_VALIDATE_FUNCTION
+} from "@shared/user/data/storage/info/UserDataStoragesInfoChangedDiff";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 
 const DEFAULT_FORBIDDEN_LOCATION_NAME = "this";
@@ -32,74 +29,73 @@ const SignedInRoot: FC = () => {
       setForbiddenLocationName(newForbiddenLocationname);
     }
   }, []);
-  // Public User Data Storage Configs
-  const [publicUserDataStorageConfigs, setPublicUserDataStorageConfigs] = useState<IPublicUserDataStorageConfig[]>([]);
+  const [userDataStoragesInfo, setUserDataStoragesInfo] = useState<IUserDataStorageInfo[]>([]);
 
   useEffect((): void => {
-    appLogger.info(`Public User Data Storage Configs changed. Count: ${publicUserDataStorageConfigs.length.toString()}.`);
-  }, [publicUserDataStorageConfigs]);
+    appLogger.info(`User Data Storages Info changed. Count: ${userDataStoragesInfo.length.toString()}.`);
+  }, [userDataStoragesInfo]);
 
   useEffect((): (() => void) => {
     appLogger.debug("Rendering Signed In Root component.");
     // Get all Public User Data Storage Configs
-    const GET_ALL_SIGNED_IN_USER_PUBLIC_USER_DATA_STORAGE_CONFIGS_RESPONSE: IPCAPIResponse<IEncryptedData<IPublicUserDataStorageConfig[]>> =
-      window.userAPI.getAllSignedInUserPublicUserDataStorageConfigs();
-    if (GET_ALL_SIGNED_IN_USER_PUBLIC_USER_DATA_STORAGE_CONFIGS_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
+    const GET_ALL_SIGNED_IN_USER_DATA_STORAGES_INFO_RESPONSE: IPCAPIResponse<IEncryptedData<IUserDataStorageInfo[]>> =
+      window.userAPI.getAllSignedInUserDataStoragesInfo();
+    if (GET_ALL_SIGNED_IN_USER_DATA_STORAGES_INFO_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
       appLogger.error(
-        `Could not get all signed in user Public User Data Storage Configs! Reason: ${GET_ALL_SIGNED_IN_USER_PUBLIC_USER_DATA_STORAGE_CONFIGS_RESPONSE.error}!`
+        `Could not get all signed in user's User Data Storages Info! Reason: ${GET_ALL_SIGNED_IN_USER_DATA_STORAGES_INFO_RESPONSE.error}!`
       );
-      enqueueSnackbar({ message: "Error getting Data Storage configurations.", variant: "error" });
+      enqueueSnackbar({ message: "Error getting data storages' information.", variant: "error" });
     } else {
-      window.IPCTLSAPI.decryptAndValidateJSON<IPublicUserDataStorageConfig[]>(
-        GET_ALL_SIGNED_IN_USER_PUBLIC_USER_DATA_STORAGE_CONFIGS_RESPONSE.data,
-        PUBLIC_USER_DATA_STORAGE_CONFIGS_VALIDATE_FUNCTION,
-        "all signed in user Public User Data Storage Configs"
+      window.IPCTLSAPI.decryptAndValidateJSON<IUserDataStorageInfo[]>(
+        GET_ALL_SIGNED_IN_USER_DATA_STORAGES_INFO_RESPONSE.data,
+        LIST_OF_USER_DATA_STORAGES_INFO_VALIDATE_FUNCTION,
+        "all signed in user's User Data Storages Info"
       )
         .then(
-          (allSignedInUserPublicUserDataStorageConfigs: IPublicUserDataStorageConfig[]): void => {
-            setPublicUserDataStorageConfigs(allSignedInUserPublicUserDataStorageConfigs);
+          (allSignedInUserDataStoragesInfo: IUserDataStorageInfo[]): void => {
+            setUserDataStoragesInfo(allSignedInUserDataStoragesInfo);
           },
           (reason: unknown): void => {
             const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
-            appLogger.error(`Could not decrypt all signed in user Public User Data Storage Configs. Reason: ${REASON_MESSAGE}.`);
-            enqueueSnackbar({ message: "Public User Data Storage configurations decryption error.", variant: "error" });
+            appLogger.error(`Could not decrypt all signed in user's User Data Storages Info. Reason: ${REASON_MESSAGE}.`);
+            enqueueSnackbar({ message: "Error decrypting data storages' information.", variant: "error" });
           }
         )
         .catch((err: unknown): void => {
           const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-          appLogger.error(`Could not decrypt all signed in user Public User Data Storage Configs. Reason: ${ERROR_MESSAGE}.`);
-          enqueueSnackbar({ message: "Public User Data Storage configurations decryption error.", variant: "error" });
+          appLogger.error(`Could not decrypt all signed in user's User Data Storages Info. Reason: ${ERROR_MESSAGE}.`);
+          enqueueSnackbar({ message: "Error decrypting data storages' information.", variant: "error" });
         });
     }
-    // Monitor changes to User Data Storages
+    // Monitor changes to User Data Storages Info
     const removeUserDataStoragesChangedListener: () => void = window.userAPI.onUserDataStoragesChanged(
-      (encryptedPublicUserDataStoragesChangedDiff: IEncryptedData<IPublicUserDataStoragesChangedDiff>): void => {
+      (encryptedUserDataStoragesInfoChangedDiff: IEncryptedData<IUserDataStoragesInfoChangedDiff>): void => {
         window.IPCTLSAPI.decryptAndValidateJSON(
-          encryptedPublicUserDataStoragesChangedDiff,
-          PUBLIC_USER_DATA_STORAGES_CHANGED_DIFF_VALIDATE_FUNCTION,
-          "Public User Data Storages Changed Diff"
+          encryptedUserDataStoragesInfoChangedDiff,
+          USER_DATA_STORAGES_INFO_CHANGED_DIFF_VALIDATE_FUNCTION,
+          "User Data Storages Info Changed Diff"
         )
           .then(
-            (publicUserDataStoragesChangedDiff: IPublicUserDataStoragesChangedDiff): void => {
-              setPublicUserDataStorageConfigs((prevPublicUserDataStorageConfigs: IPublicUserDataStorageConfig[]): IPublicUserDataStorageConfig[] => {
+            (userDataStoragesInfoChangedDiff: IUserDataStoragesInfoChangedDiff): void => {
+              setUserDataStoragesInfo((prevUserDataStoragesInfo: IUserDataStorageInfo[]): IUserDataStorageInfo[] => {
                 return [
-                  ...prevPublicUserDataStorageConfigs.filter((config: IPublicUserDataStorageConfig): boolean => {
-                    return !publicUserDataStoragesChangedDiff.deleted.includes(config.storageId);
+                  ...prevUserDataStoragesInfo.filter((config: IUserDataStorageInfo): boolean => {
+                    return !userDataStoragesInfoChangedDiff.deleted.includes(config.storageId);
                   }),
-                  ...publicUserDataStoragesChangedDiff.added
+                  ...userDataStoragesInfoChangedDiff.added
                 ];
               });
             },
             (reason: unknown): void => {
               const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
-              appLogger.error(`Could not decrypt Public User Data Storages Changed Diff. Reason: ${REASON_MESSAGE}.`);
-              enqueueSnackbar({ message: "Public User Data Storages changes decryption error.", variant: "error" });
+              appLogger.error(`Could not decrypt User Data Storages Info Changed Diff. Reason: ${REASON_MESSAGE}.`);
+              enqueueSnackbar({ message: "Error decrypting data storages' information changes.", variant: "error" });
             }
           )
           .catch((reason: unknown): void => {
             const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
-            appLogger.error(`Could not decrypt Public User Data Storages Changed Diff. Reason: ${REASON_MESSAGE}.`);
-            enqueueSnackbar({ message: "Public User Data Storages changes decryption error.", variant: "error" });
+            appLogger.error(`Could not decrypt User Data Storages Info Changed Diff. Reason: ${REASON_MESSAGE}.`);
+            enqueueSnackbar({ message: "Error decrypting data storages' information changes.", variant: "error" });
           });
       }
     );
@@ -115,7 +111,7 @@ const SignedInRoot: FC = () => {
         {
           ...appRootContext,
           signedInUser: appRootContext.signedInUser,
-          publicUserDataStorageConfigs: publicUserDataStorageConfigs,
+          userDataStoragesInfo: userDataStoragesInfo,
           setForbiddenLocationName: URIencodeAndSetForbiddenLocationName
         } satisfies ISignedInRootContext
       }

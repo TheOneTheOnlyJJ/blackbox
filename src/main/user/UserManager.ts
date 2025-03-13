@@ -13,7 +13,7 @@ import { ISecuredPassword } from "@main/utils/encryption/SecuredPassword";
 import { IUserSignInPayload, USER_SIGN_IN_PAYLOAD_VALIDATE_FUNCTION } from "./account/UserSignInPayload";
 import { IUserSignUpPayload, USER_SIGN_UP_PAYLOAD_VALIDATE_FUNCTION } from "./account/UserSignUpPayload";
 import { UserAccountStorage } from "./account/storage/UserAccountStorage";
-import { IPublicUserAccountStorageConfig } from "@shared/user/account/storage/PublicUserAccountStorageConfig";
+import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserAccountStorageInfo";
 import { signedInUserToPublicSignedInUser } from "./account/utils/signedInUserToPublicSignedInUser";
 import { IPublicSignedInUser } from "@shared/user/account/PublicSignedInUser";
 import { IStorageSecuredUserDataStorageConfig } from "./data/storage/config/StorageSecuredUserDataStorageConfig";
@@ -22,9 +22,9 @@ import { securedUserDataStorageConfigToStorageSecuredUserDataStorageConfig } fro
 import { userSignUpPayloadToSecuredUserSignUpPayload } from "./account/utils/userSignUpPayloadToSecuredUserSignUpPayload";
 import { ISecuredUserDataStorageConfig } from "./data/storage/config/SecuredUserDataStorageConfig";
 import { storageSecuredUserDataStorageConfigToSecuredUserDataStorageConfig } from "./data/storage/config/utils/storageSecuredUserDataStorageConfigToSecuredUserDataStorageConfig";
-import { IPublicUserDataStorageConfig } from "@shared/user/data/storage/config/public/PublicUserDataStorageConfig";
-import { securedUserDataStorageConfigToPublicUserDataStorageConfig } from "./data/storage/config/utils/securedUserDataStorageConfigToPublicUserDataStorageConfig";
-import { IPublicUserDataStoragesChangedDiff } from "@shared/user/data/storage/config/public/PublicUserDataStoragesChangedDiff";
+import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
+import { securedUserDataStorageConfigToUserDataStorageInfo } from "./data/storage/config/utils/securedUserDataStorageConfigToUserDataStorageInfo";
+import { IUserDataStoragesInfoChangedDiff } from "@shared/user/data/storage/info/UserDataStoragesInfoChangedDiff";
 
 export class UserManager {
   private readonly logger: LogFunctions;
@@ -41,7 +41,7 @@ export class UserManager {
   private onUserAccountStorageOpenChangedCallback: UserAccountStorageOpenChangedCallback;
 
   // User Data Storage
-  private onUserDataStoragesChangedCallback: (publicUserDataStoragesChangedDiff: IPublicUserDataStoragesChangedDiff) => void;
+  private onUserDataStoragesChangedCallback: (userDataStoragesInfoChangedDiff: IUserDataStoragesInfoChangedDiff) => void;
 
   private readonly PASSWORD_SALT_LENGTH = 32;
 
@@ -50,7 +50,7 @@ export class UserManager {
     onSignedInUserChangedCallback?: SignedInUserChangedCallback,
     onUserAccountStorageChangedCallback?: CurrentUserAccountStorageChangedCallback,
     onUserAccountStorageOpenChangedCallback?: UserAccountStorageOpenChangedCallback,
-    onUserDataStoragesChangedCallback?: (publicUserDataStoragesChangedDiff: IPublicUserDataStoragesChangedDiff) => void
+    onUserDataStoragesChangedCallback?: (userDataStoragesInfoChangedDiff: IUserDataStoragesInfoChangedDiff) => void
   ) {
     // Loggers
     this.logger = logger;
@@ -124,7 +124,7 @@ export class UserManager {
             this.onUserAccountStorageChangedCallback(null);
           } else {
             this.logger.info(`Set "${value.name}" User Account Storage (ID "${value.storageId}") (available).`);
-            this.onUserAccountStorageChangedCallback(value.getPublicUserAccountStorageConfig());
+            this.onUserAccountStorageChangedCallback(value.getUserAccountStorageInfo());
           }
           return true;
         }
@@ -362,11 +362,11 @@ export class UserManager {
     return signedInUserToPublicSignedInUser(this.signedInUser.value, this.logger);
   }
 
-  public getCurrentUserAccountStorageConfig(): IPublicUserAccountStorageConfig | null {
+  public getCurrentUserAccountStorageInfo(): IUserAccountStorageInfo | null {
     if (this.userAccountStorage.value === null) {
       return null;
     }
-    return this.userAccountStorage.value.getPublicUserAccountStorageConfig();
+    return this.userAccountStorage.value.getUserAccountStorageInfo();
   }
 
   public addUserDataStorageConfig(userDataStorageConfig: IUserDataStorageConfig): boolean {
@@ -401,8 +401,8 @@ export class UserManager {
     if (IS_ADDED_SUCCESSFULLY) {
       this.onUserDataStoragesChangedCallback({
         deleted: [],
-        added: [securedUserDataStorageConfigToPublicUserDataStorageConfig(NEW_SECURED_USER_DATA_STORAGE_CONFIG, this.logger)]
-      } satisfies IPublicUserDataStoragesChangedDiff);
+        added: [securedUserDataStorageConfigToUserDataStorageInfo(NEW_SECURED_USER_DATA_STORAGE_CONFIG, this.logger)]
+      } satisfies IUserDataStoragesInfoChangedDiff);
     }
     return IS_ADDED_SUCCESSFULLY;
   }
@@ -433,13 +433,13 @@ export class UserManager {
     return SECURED_USER_DATA_STORAGE_CONFIGS;
   }
 
-  public getAllSignedInUserPublicUserDataStorageConfigs(): IPublicUserDataStorageConfig[] {
-    this.logger.debug("Getting all signed in user Public User Data Storage Configs.");
+  public getAllSignedInUserDataStoragesInfo(): IUserDataStorageInfo[] {
+    this.logger.debug("Getting all signed in user's User Data Storages Info.");
     const ALL_SECURED_USER_DATA_STORAGE_CONFIGS: ISecuredUserDataStorageConfig[] = this.getAllSignedInUserSecuredUserDataStorageConfigs();
-    const ALL_PUBLIC_USER_DATA_STORAGE_CONFIGS: IPublicUserDataStorageConfig[] = [];
+    const ALL_USER_DATA_STORAGES_INFO: IUserDataStorageInfo[] = [];
     ALL_SECURED_USER_DATA_STORAGE_CONFIGS.map((securedUserDataStorageConfig: ISecuredUserDataStorageConfig): void => {
-      ALL_PUBLIC_USER_DATA_STORAGE_CONFIGS.push(securedUserDataStorageConfigToPublicUserDataStorageConfig(securedUserDataStorageConfig, null));
+      ALL_USER_DATA_STORAGES_INFO.push(securedUserDataStorageConfigToUserDataStorageInfo(securedUserDataStorageConfig, null));
     });
-    return ALL_PUBLIC_USER_DATA_STORAGE_CONFIGS;
+    return ALL_USER_DATA_STORAGES_INFO;
   }
 }

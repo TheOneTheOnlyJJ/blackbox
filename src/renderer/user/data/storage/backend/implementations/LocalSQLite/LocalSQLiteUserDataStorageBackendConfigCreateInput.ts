@@ -45,8 +45,11 @@ export const LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_UI_SCHEM
   },
   dbDirPath: {
     "ui:title": LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS.dbDirPath.title,
-    "ui:description": "The absolute directory path at which the SQLite file will be created",
-    "ui:widget": RJSFDirectoryPickerWidget
+    "ui:description": "Absolute folder path at which the SQLite file will be created",
+    "ui:widget": RJSFDirectoryPickerWidget,
+    "ui:options": {
+      pickerTitle: "Select folder for SQLite Data Storage file"
+    }
   },
   dbFileName: {
     "ui:enableMarkdownInDescription": true,

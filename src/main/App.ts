@@ -33,14 +33,14 @@ import { userSignInDTOToUserSignInPayload } from "./user/account/utils/userSignI
 import { userSignUpDTOToUserSignUpPayload } from "./user/account/utils/userSignUpDTOToUserSignUpPayload";
 import { IUserAccountStorageConfig } from "./user/account/storage/config/UserAccountStorageConfig";
 import { UserAccountStorage } from "./user/account/storage/UserAccountStorage";
-import { IPublicUserAccountStorageConfig } from "@shared/user/account/storage/PublicUserAccountStorageConfig";
+import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserAccountStorageInfo";
 import { SettingsManager } from "./settings/SettingsManager";
 import { BaseSettings } from "./settings/BaseSettings";
 import { SettingsManagerConfig } from "./settings/SettingsManagerConfig";
 import { IPublicSignedInUser } from "@shared/user/account/PublicSignedInUser";
-import { IPublicUserDataStoragesChangedDiff } from "@shared/user/data/storage/config/public/PublicUserDataStoragesChangedDiff";
+import { IUserDataStoragesInfoChangedDiff } from "@shared/user/data/storage/info/UserDataStoragesInfoChangedDiff";
 import { encryptWithAES } from "./utils/encryption/encryptWithAES";
-import { IPublicUserDataStorageConfig } from "@shared/user/data/storage/config/public/PublicUserDataStorageConfig";
+import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 import { IGetDirectoryWithPickerOptions, IUtilsAPI, UTILS_API_IPC_CHANNELS } from "@shared/IPC/APIs/UtilsAPI";
 
@@ -394,38 +394,38 @@ export class App {
         return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
-    handleGetCurrentUserAccountStorageConfig: (): IPCAPIResponse<IPublicUserAccountStorageConfig | null> => {
+    handleGetCurrentUserAccountStorageInfo: (): IPCAPIResponse<IUserAccountStorageInfo | null> => {
       try {
-        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userManager.getCurrentUserAccountStorageConfig() };
+        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userManager.getCurrentUserAccountStorageInfo() };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-        this.UserAPILogger.error(`Get current User Account Storage error: ${ERROR_MESSAGE}!`);
+        this.UserAPILogger.error(`Get current User Account Storage Info error: ${ERROR_MESSAGE}!`);
         return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
-    handleGetAllSignedInUserPublicUserDataStorageConfigs: (): IPCAPIResponse<IEncryptedData<IPublicUserDataStorageConfig[]>> => {
+    handleGetAllSignedInUserDataStoragesInfo: (): IPCAPIResponse<IEncryptedData<IUserDataStorageInfo[]>> => {
       try {
         if (this.IPC_TLS_AES_KEY.value === null) {
           throw new Error("Null IPC TLS AES key");
         }
         return {
           status: IPC_API_RESPONSE_STATUSES.SUCCESS,
-          data: encryptWithAES<IPublicUserDataStorageConfig[]>(
-            this.userManager.getAllSignedInUserPublicUserDataStorageConfigs(),
+          data: encryptWithAES<IUserDataStorageInfo[]>(
+            this.userManager.getAllSignedInUserDataStoragesInfo(),
             this.IPC_TLS_AES_KEY.value,
             this.UserAPILogger,
-            "all signed in user Public User Data Storage Configs"
+            "all signed in user User Data Storages Info"
           )
         };
       } catch (err: unknown) {
         const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-        this.UserAPILogger.error(`Get all User Data Storage Configs error: ${ERROR_MESSAGE}!`);
+        this.UserAPILogger.error(`Get all signed in user's User Data Storages Info error: ${ERROR_MESSAGE}!`);
         return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
-    sendCurrentUserAccountStorageChanged: (newCurrentUserAccountStorage: IPublicUserAccountStorageConfig | null): void => {
+    sendCurrentUserAccountStorageChanged: (newCurrentUserAccountStorageInfo: IUserAccountStorageInfo | null): void => {
       this.UserAPILogger.debug(
-        `Sending window public current User Account Storage after change: ${JSON.stringify(newCurrentUserAccountStorage, null, 2)}.`
+        `Sending window public current User Account Storage Info after change: ${JSON.stringify(newCurrentUserAccountStorageInfo, null, 2)}.`
       );
       if (this.window === null) {
         this.UserAPILogger.debug("Window is null. No-op.");
@@ -433,7 +433,7 @@ export class App {
       }
       const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.onCurrentUserAccountStorageChanged;
       this.UserAPILogger.debug(`Messaging renderer on channel: "${CHANNEL}".`);
-      this.window.webContents.send(CHANNEL, newCurrentUserAccountStorage);
+      this.window.webContents.send(CHANNEL, newCurrentUserAccountStorageInfo);
     },
     sendUserAccountStorageOpenChanged: (newIsUserAccountStorageOpen: boolean): void => {
       this.UserAPILogger.debug(`Sending window User Account Storage open status after change: ${newIsUserAccountStorageOpen.toString()}.`);
@@ -455,9 +455,9 @@ export class App {
       this.UserAPILogger.debug(`Messaging renderer on channel: "${CHANNEL}".`);
       this.window.webContents.send(CHANNEL, newPublicSignedInUser);
     },
-    sendUserDataStoragesChanged: (publicUserDataStoragesChangedDiff: IPublicUserDataStoragesChangedDiff): void => {
+    sendUserDataStoragesChanged: (userDataStoragesInfoChangedDiff: IUserDataStoragesInfoChangedDiff): void => {
       this.UserAPILogger.debug(
-        `Sending window Public User Data Storage Configs Changed Diff. Deletes: ${publicUserDataStoragesChangedDiff.deleted.length.toString()}. Additions: ${publicUserDataStoragesChangedDiff.added.length.toString()}.`
+        `Sending window User Data Storages Info Changed Diff. Deletes: ${userDataStoragesInfoChangedDiff.deleted.length.toString()}. Additions: ${userDataStoragesInfoChangedDiff.added.length.toString()}.`
       );
       if (this.window === null) {
         this.UserAPILogger.debug("Window is null. No-op.");
@@ -470,11 +470,11 @@ export class App {
       this.UserAPILogger.debug(`Messaging renderer on channel: "${CHANNEL}".`);
       this.window.webContents.send(
         CHANNEL,
-        encryptWithAES<IPublicUserDataStoragesChangedDiff>(
-          publicUserDataStoragesChangedDiff,
+        encryptWithAES<IUserDataStoragesInfoChangedDiff>(
+          userDataStoragesInfoChangedDiff,
           this.IPC_TLS_AES_KEY.value,
           this.UserAPILogger,
-          "Public User Data Storages Changed Diff"
+          "User Data Storages Info Changed Diff"
         )
       );
     }
@@ -883,15 +883,13 @@ export class App {
         event.returnValue = this.USER_API_HANDLERS.handleAddUserDataStorageConfig(encryptedUserDataStorageConfigCreateDTO);
       }
     );
-    ipcMain.on(USER_API_IPC_CHANNELS.getCurrentUserAccountStorageConfig, (event: IpcMainEvent): void => {
-      this.UserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.getCurrentUserAccountStorageConfig}".`);
-      event.returnValue = this.USER_API_HANDLERS.handleGetCurrentUserAccountStorageConfig();
+    ipcMain.on(USER_API_IPC_CHANNELS.getCurrentUserAccountStorageInfo, (event: IpcMainEvent): void => {
+      this.UserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.getCurrentUserAccountStorageInfo}".`);
+      event.returnValue = this.USER_API_HANDLERS.handleGetCurrentUserAccountStorageInfo();
     });
-    ipcMain.on(USER_API_IPC_CHANNELS.getAllSignedInUserPublicUserDataStorageConfigs, (event: IpcMainEvent): void => {
-      this.UserAPILogger.debug(
-        `Received message from renderer on channel: "${USER_API_IPC_CHANNELS.getAllSignedInUserPublicUserDataStorageConfigs}".`
-      );
-      event.returnValue = this.USER_API_HANDLERS.handleGetAllSignedInUserPublicUserDataStorageConfigs();
+    ipcMain.on(USER_API_IPC_CHANNELS.getAllSignedInUserDataStoragesInfo, (event: IpcMainEvent): void => {
+      this.UserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.getAllSignedInUserDataStoragesInfo}".`);
+      event.returnValue = this.USER_API_HANDLERS.handleGetAllSignedInUserDataStoragesInfo();
     });
   }
 

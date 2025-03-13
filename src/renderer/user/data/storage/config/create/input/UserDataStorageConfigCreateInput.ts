@@ -5,6 +5,7 @@ import {
   UserDataStorageBackendConfigCreateInput
 } from "../../../backend/config/create/input/UserDataStorageBackendConfigCreateInput";
 import { UiSchema } from "@rjsf/utils";
+import RJSFPasswordWidget from "@renderer/components/RJSFWidgets/RJSFPasswordWidget";
 
 export interface IUserDataStorageConfigCreateInput {
   name: string;
@@ -35,11 +36,17 @@ export const USER_DATA_STORAGE_CONFIG_CREATE_INPUT_UI_SCHEMA: UiSchema<IUserData
     "ui:widget": "textarea"
   },
   visibilityPassword: {
+    "ui:title": "Visibility Password",
     "ui:description":
       "**Important:** The visibility password **does not encrypt the data**; it only restricts visibility. \
       Leaving this field empty will create a **visible Data Storage** by default. \
       If you set a visibility password, **do not forget it**, as you will need it to access the Data Storage.",
-    "ui:enableMarkdownInDescription": true
+    "ui:enableMarkdownInDescription": true,
+    "ui:widget": RJSFPasswordWidget
+  },
+  confirmVisibilityPassword: {
+    "ui:title": "Confirm Visibility Password",
+    "ui:widget": RJSFPasswordWidget
   },
   backendConfigCreateInput: USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_UI_SCHEMA
 } as const;

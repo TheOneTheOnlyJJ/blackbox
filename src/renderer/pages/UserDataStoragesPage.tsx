@@ -1,5 +1,3 @@
-import Box from "@mui/material/Box/Box";
-import Typography from "@mui/material/Typography/Typography";
 import { FC, MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
 import {
   ISignedInDashboardLayoutRootContext,
@@ -8,6 +6,8 @@ import {
 import Button from "@mui/material/Button/Button";
 import { appLogger } from "@renderer/utils/loggers";
 import NewUserDataStorageConfigFormDialog from "@renderer/components/dialogs/NewUserDataStorageConfigFormDialog";
+import UserDataStoragesDataGrid from "@renderer/components/grids/UserDataStoragesDataGrid";
+import { Box } from "@mui/material";
 
 const UserDataStoragesPage: FC = () => {
   const signedInDashboardLayoutRootContext: ISignedInDashboardLayoutRootContext = useSignedInDashboardLayoutRootContext();
@@ -47,21 +47,19 @@ const UserDataStoragesPage: FC = () => {
       <Box
         sx={{
           display: "flex",
-          justifyContent: "start",
-          alignItems: "center",
           flexDirection: "column",
-          width: "100%",
           height: "100%",
-          background: "lime"
+          width: "100%"
         }}
       >
-        <Typography variant="h5">Data Storages</Typography>
         <Button variant="contained" size="large" onClick={handleNewDataStorageButtonClick}>
           New Data Storage
         </Button>
-        <Typography>{JSON.stringify(signedInDashboardLayoutRootContext.publicUserDataStorageConfigs, null, 2)}</Typography>
+
+        <Box sx={{ flex: 1, minHeight: 0, marginTop: ".5rem" }}>
+          <UserDataStoragesDataGrid />
+        </Box>
         {
-          // TODO Make this a proper MUI X Data Grid & Clear logs by making them optional
           // TODO: Add edit config & delete config (with optional delete resources)
         }
       </Box>

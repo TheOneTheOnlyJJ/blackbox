@@ -1,15 +1,17 @@
-import { IPublicUserDataStorageConfig } from "@shared/user/data/storage/config/public/PublicUserDataStorageConfig";
+import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
 import { ISecuredUserDataStorageConfig } from "../SecuredUserDataStorageConfig";
 import { LogFunctions } from "electron-log";
 
-export const securedUserDataStorageConfigToPublicUserDataStorageConfig = (
+export const securedUserDataStorageConfigToUserDataStorageInfo = (
   securedUserDataStorageConfig: ISecuredUserDataStorageConfig,
   logger: LogFunctions | null
-): IPublicUserDataStorageConfig => {
-  logger?.debug(`Converting Secured User Data Storage Config to Public User Data Storage Config.`); // TODO: Make logger optional in all of these
+): IUserDataStorageInfo => {
+  logger?.debug(`Converting Secured User Data Storage Config to User Data Storage Info.`);
   return {
     storageId: securedUserDataStorageConfig.storageId,
     name: securedUserDataStorageConfig.name,
+    description: securedUserDataStorageConfig.description,
+    hasVisibilityPassword: securedUserDataStorageConfig.securedVisibilityPassword !== null,
     type: securedUserDataStorageConfig.backendConfig.type,
     isOpen: false // TODO: Make this work properly & Move this to UserDataStorage class?
   };

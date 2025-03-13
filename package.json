@@ -19,6 +19,7 @@
     "@fontsource/roboto": "^5.1.1",
     "@mui/icons-material": "^6.4.7",
     "@mui/material": "^6.4.7",
+    "@mui/x-data-grid": "^7.27.3",
     "@rjsf/core": "^5.24.7",
     "@rjsf/mui": "^5.24.7",
     "@rjsf/utils": "^5.24.7",

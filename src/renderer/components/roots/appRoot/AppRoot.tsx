@@ -7,7 +7,7 @@ import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { enqueueSnackbar, SnackbarProvider } from "notistack";
 import Box from "@mui/material/Box/Box";
 import { IPublicSignedInUser } from "@shared/user/account/PublicSignedInUser";
-import { IPublicUserAccountStorageConfig } from "@shared/user/account/storage/PublicUserAccountStorageConfig";
+import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserAccountStorageInfo";
 
 const IS_IPC_TLS_READY_UPDATE_TIMEOUT_DELAY_MS = 1_000;
 
@@ -22,7 +22,7 @@ const AppRoot: FC = () => {
     return isMainIPCTLSReady && isRendererIPCTLSReady;
   }, [isMainIPCTLSReady, isRendererIPCTLSReady]);
   // User
-  const [currentUserAccountStorageConfig, setCurrentUserAccountStorageConfig] = useState<IPublicUserAccountStorageConfig | null>(null);
+  const [currentUserAccountStorageInfo, setCurrentUserAccountStorageInfo] = useState<IUserAccountStorageInfo | null>(null);
   const [signedInUser, setSignedInUser] = useState<IPublicSignedInUser | null>(null);
   // Navigation
   const [signedInNavigationEntryIndex, setSignedInNavigationEntryIndex] = useState<number>(0);
@@ -89,21 +89,21 @@ const AppRoot: FC = () => {
     };
   }, [isIPCTLSReady]);
 
-  // Monitor User Account Storage changes
+  // Monitor User Account Storage Info changes
   useEffect((): void => {
-    appLogger.info(`Current User Account Storage changed: ${JSON.stringify(currentUserAccountStorageConfig, null, 2)}.`);
-  }, [currentUserAccountStorageConfig]);
+    appLogger.info(`Current User Account Storage Info changed: ${JSON.stringify(currentUserAccountStorageInfo, null, 2)}.`);
+  }, [currentUserAccountStorageInfo]);
 
   useEffect((): (() => void) => {
     appLogger.debug("Rendering App Root component.");
     // Get initial app root context
-    const GET_CURRENT_USER_ACCOUNT_STORAGE_RESPONSE: IPCAPIResponse<IPublicUserAccountStorageConfig | null> =
-      window.userAPI.getCurrentUserAccountStorageConfig();
-    if (GET_CURRENT_USER_ACCOUNT_STORAGE_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
-      enqueueSnackbar({ message: "Error getting current User Account Storage Config.", variant: "error" });
-      setCurrentUserAccountStorageConfig(null);
+    const GET_CURRENT_USER_ACCOUNT_STORAGE_INFO_RESPONSE: IPCAPIResponse<IUserAccountStorageInfo | null> =
+      window.userAPI.getCurrentUserAccountStorageInfo();
+    if (GET_CURRENT_USER_ACCOUNT_STORAGE_INFO_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
+      enqueueSnackbar({ message: "Error getting current User Account Storage Info.", variant: "error" });
+      setCurrentUserAccountStorageInfo(null);
     } else {
-      setCurrentUserAccountStorageConfig(GET_CURRENT_USER_ACCOUNT_STORAGE_RESPONSE.data);
+      setCurrentUserAccountStorageInfo(GET_CURRENT_USER_ACCOUNT_STORAGE_INFO_RESPONSE.data);
     }
     const GET_SIGNED_IN_USER_RESPONSE: IPCAPIResponse<IPublicSignedInUser | null> = window.userAPI.getSignedInUser();
     if (GET_SIGNED_IN_USER_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
@@ -130,28 +130,26 @@ const AppRoot: FC = () => {
         setSignedInUser(newSignedInUser);
       }
     );
-    // Monitor changes to User Account Storage set status
+    // Monitor changes to User Account Storage
     const removeOnCurrentUserAccountStorageChangedListener: () => void = window.userAPI.onCurrentUserAccountStorageChanged(
-      (newCurrentUserAccountStorageConfig: IPublicUserAccountStorageConfig | null): void => {
-        setCurrentUserAccountStorageConfig(newCurrentUserAccountStorageConfig);
+      (newCurrentUserAccountStorageInfo: IUserAccountStorageInfo | null): void => {
+        setCurrentUserAccountStorageInfo(newCurrentUserAccountStorageInfo);
       }
     );
     // Monitor changes to User Account Storage open status
     const removeOnUserAccountStorageOpenChangedListener: () => void = window.userAPI.onUserAccountStorageOpenChanged(
       (newIsUserAccountStorageOpen: boolean): void => {
-        setCurrentUserAccountStorageConfig(
-          (prevCurrentUserAccountStorageConfig: IPublicUserAccountStorageConfig | null): IPublicUserAccountStorageConfig | null => {
-            if (prevCurrentUserAccountStorageConfig === null) {
-              appLogger.warn("Current User Account Storage open state changed callback invoked with no current User Account Storage set! No-op.");
-              enqueueSnackbar({ message: "Current User Account Storage open state received without being set.", variant: "warning" });
-              return null;
-            }
-            return {
-              ...prevCurrentUserAccountStorageConfig,
-              isOpen: newIsUserAccountStorageOpen
-            };
+        setCurrentUserAccountStorageInfo((prevCurrentUserAccountStorageInfo: IUserAccountStorageInfo | null): IUserAccountStorageInfo | null => {
+          if (prevCurrentUserAccountStorageInfo === null) {
+            appLogger.warn("Current User Account Storage open state changed callback invoked with no current User Account Storage set! No-op.");
+            enqueueSnackbar({ message: "Current User Account Storage open state received without being set.", variant: "warning" });
+            return null;
           }
-        );
+          return {
+            ...prevCurrentUserAccountStorageInfo,
+            isOpen: newIsUserAccountStorageOpen
+          };
+        });
       }
     );
     return (): void => {
@@ -176,7 +174,7 @@ const AppRoot: FC = () => {
           {
             signedInUser: signedInUser,
             signedInNavigationEntryIndex: signedInNavigationEntryIndex,
-            currentUserAccountStorageConfig: currentUserAccountStorageConfig,
+            currentUserAccountStorageInfo: currentUserAccountStorageInfo,
             isIPCTLSReady: {
               main: isMainIPCTLSReady,
               renderer: isRendererIPCTLSReady,

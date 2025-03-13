@@ -70,7 +70,8 @@ const SignedInDashboardLayoutRoot: FC = () => {
           left: drawerWidth, // Adjust for the navigation bar
           right: 0, // Stretch to the right edge of the viewport
           bottom: 0, // Stretch to the bottom of the viewport
-          overflow: "auto"
+          overflow: "auto",
+          padding: ".5rem"
         }}
       >
         <Outlet context={{ ...signedInRootContext, appBarTitle, setAppBarTitle } satisfies ISignedInDashboardLayoutRootContext} />

@@ -9,6 +9,7 @@ import { IEncryptedData } from "@shared/utils/EncryptedData";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { JSONSchemaType, ValidateFunction } from "ajv";
 import { AJV } from "@shared/utils/AJVJSONValidator";
+import { enqueueSnackbar } from "notistack";
 
 const LIST_OF_STRINGS_JSON_VALIDATE_FUNCTION: ValidateFunction<string[]> = AJV.compile({
   $schema: "http://json-schema.org/draft-07/schema#",
@@ -29,13 +30,27 @@ const RJSFDirectoryPickerWidget: FC<WidgetProps> = (props: WidgetProps) => {
     return hasError ? theme.palette.error.main : theme.palette.text.secondary;
   }, [theme, hasError]);
 
+  const pickerTitle: string = useMemo<string>((): string => {
+    if (options.pickerTitle !== null && options.pickerTitle !== undefined) {
+      if (typeof options.pickerTitle === "string") {
+        return options.pickerTitle;
+      } else {
+        appLogger.warn(
+          `RJSF Directory Picker Widget picker title must be string if provided. Got "${typeof options.pickerTitle}". Using default title.`
+        );
+      }
+    }
+    return "Choose Directory";
+  }, [options]);
+
   const openDirectoryPickerIconButtonOnClick = useCallback((): void => {
     appLogger.debug("Open directory picker icon button clicked.");
     window.utilsAPI
-      .getDirectoryPathWithPicker({ pickerTitle: "Choose Directory", multiple: false })
+      .getDirectoryPathWithPicker({ pickerTitle: pickerTitle, multiple: false })
       .then(
         async (getDirectoryPathWithPickerResponse: IPCAPIResponse<IEncryptedData<string[]> | null>): Promise<void> => {
           if (getDirectoryPathWithPickerResponse.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
+            enqueueSnackbar({ message: "Directory picker error.", variant: "error" });
             return;
           }
           if (getDirectoryPathWithPickerResponse.data === null) {
@@ -46,13 +61,13 @@ const RJSFDirectoryPickerWidget: FC<WidgetProps> = (props: WidgetProps) => {
               await window.IPCTLSAPI.decryptAndValidateJSON<string[]>(
                 getDirectoryPathWithPickerResponse.data,
                 LIST_OF_STRINGS_JSON_VALIDATE_FUNCTION,
-                "chosen directory path"
+                "picked directory path"
               )
             )[0];
             onChange(CHOSEN_DIRECTORY_PATH);
           } catch (error: unknown) {
             const ERROR_MESSAGE: string = error instanceof Error ? error.message : String(error);
-            appLogger.error(`Chosen directory path decryption error: ${ERROR_MESSAGE}!`);
+            appLogger.error(`Picked directory path decryption error: ${ERROR_MESSAGE}!`);
           }
         },
         (reason: unknown): void => {
@@ -64,7 +79,7 @@ const RJSFDirectoryPickerWidget: FC<WidgetProps> = (props: WidgetProps) => {
         const ERROR_MESSAGE: string = error instanceof Error ? error.message : String(error);
         appLogger.error(`Get directory path with picker error: ${ERROR_MESSAGE}!`);
       });
-  }, [onChange]);
+  }, [onChange, pickerTitle]);
 
   const _onChange = useCallback(
     ({ target: { value } }: ChangeEvent<HTMLInputElement>): void => {

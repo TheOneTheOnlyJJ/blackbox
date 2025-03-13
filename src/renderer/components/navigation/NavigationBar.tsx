@@ -5,7 +5,7 @@ import ListItem from "@mui/material/ListItem/ListItem";
 import ListItemButton from "@mui/material/ListItemButton/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText/ListItemText";
-import { forwardRef, useMemo } from "react";
+import { ForwardedRef, forwardRef, useMemo } from "react";
 import { SvgIconComponent } from "@mui/icons-material";
 import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
@@ -25,7 +25,11 @@ export interface INavigationBarProps {
   heightOffset: number;
 }
 
-const NavigationBar = forwardRef<HTMLDivElement, INavigationBarProps>(function NavigationBar(props: INavigationBarProps) {
+const NavigationBar = forwardRef<HTMLDivElement, INavigationBarProps>(function NavigationBar(
+  props: INavigationBarProps,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _: ForwardedRef<HTMLDivElement> // This is needed for some reason
+) {
   const signedInRootContext: ISignedInRootContext = useSignedInRootContext();
   const location: Location = useLocation();
   const DRAWER_ITEMS: IDrawerItem[] = useMemo<IDrawerItem[]>((): IDrawerItem[] => {

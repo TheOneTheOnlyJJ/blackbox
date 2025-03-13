@@ -3,7 +3,7 @@ export const LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS
     title: "Local SQLite"
   },
   dbDirPath: {
-    title: "Database Directory Path",
+    title: "Database Folder Path",
     pattern: '^(?:[a-zA-Z]:\\\\|/)?(?:[^<>:"|?*]+[\\\\/])*[^<>:"|?*]*$',
     minLength: 1
   },
