@@ -19,8 +19,8 @@ export const isAESKeyValid = (AESKey: Buffer, logger: LogFunctions | null, keyPu
 
     // Check if decrypted data matches the original test data
     return DECRYPTED.toString("utf8") === TEST_DATA;
-  } catch (err: unknown) {
-    const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+  } catch (error: unknown) {
+    const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
     logger?.error(`Invalid AES key: ${ERROR_MESSAGE}!`);
     return false;
   }

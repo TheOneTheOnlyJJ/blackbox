@@ -2,7 +2,7 @@ import { FC, MutableRefObject, useCallback, useEffect, useRef, useState } from "
 import Button from "@mui/material/Button/Button";
 import { appLogger } from "@renderer/utils/loggers";
 import NewUserDataStorageConfigFormDialog from "@renderer/components/dialogs/NewUserDataStorageConfigFormDialog";
-import UserDataStoragesDataGrid from "@renderer/components/grids/UserDataStoragesDataGrid";
+import UserDataStoragesDataGrid from "@renderer/components/dataGrids/UserDataStoragesDataGrid";
 import { Box, Stack } from "@mui/material";
 import { DASHBOARD_NAVIGATION_AREAS } from "@renderer/navigationAreas/DashboardNavigationAreas";
 import {

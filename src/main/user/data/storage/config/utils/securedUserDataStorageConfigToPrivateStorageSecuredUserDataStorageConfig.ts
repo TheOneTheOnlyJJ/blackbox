@@ -6,11 +6,10 @@ export const securedUserDataStorageConfigToPrivateStorageSecuredUserDataStorageC
   securedUserDataStorageConfig: ISecuredUserDataStorageConfig,
   logger: LogFunctions | null
 ): IPrivateStorageSecuredUserDataStorageConfig => {
-  logger?.debug(`Converting Secured User Data Storage Config to Private Storage Secured User Data Storage Config.`);
+  logger?.debug("Converting Secured User Data Storage Config to Private Storage Secured User Data Storage Config.");
   return {
     name: securedUserDataStorageConfig.name,
     description: securedUserDataStorageConfig.description,
-    securedVisibilityPassword: securedUserDataStorageConfig.securedVisibilityPassword,
     backendConfig: securedUserDataStorageConfig.backendConfig
   };
 };

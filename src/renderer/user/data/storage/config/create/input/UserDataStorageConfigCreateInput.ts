@@ -5,13 +5,11 @@ import {
   UserDataStorageBackendConfigCreateInput
 } from "../../../backend/config/create/input/UserDataStorageBackendConfigCreateInput";
 import { UiSchema } from "@rjsf/utils";
-import RJSFPasswordWidget from "@renderer/components/RJSFWidgets/RJSFPasswordWidget";
 
 export interface IUserDataStorageConfigCreateInput {
   name: string;
   description?: string;
-  visibilityPassword?: string;
-  confirmVisibilityPassword?: string;
+  visibilityGroupId?: string;
   // TODO: Add icon/image
   backendConfigCreateInput: UserDataStorageBackendConfigCreateInput;
 }
@@ -22,8 +20,7 @@ export const USER_DATA_STORAGE_CONFIG_CREATE_INPUT_JSON_SCHEMA: JSONSchemaType<I
   properties: {
     name: { type: "string", title: "Name" },
     description: { type: "string", title: "Description", nullable: true },
-    visibilityPassword: { type: "string", title: "Visibility Password", nullable: true },
-    confirmVisibilityPassword: { type: "string", title: "Confirm Visibility Password", nullable: true },
+    visibilityGroupId: { type: "string", format: "uuid", nullable: true },
     backendConfigCreateInput: USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_JSON_SCHEMA
   },
   required: ["name", "backendConfigCreateInput"],
@@ -35,18 +32,6 @@ export const USER_DATA_STORAGE_CONFIG_CREATE_INPUT_UI_SCHEMA: UiSchema<IUserData
   description: {
     "ui:widget": "textarea"
   },
-  visibilityPassword: {
-    "ui:title": "Visibility Password",
-    "ui:description":
-      "**Important:** The visibility password **does not encrypt the data**; it only restricts visibility. \
-      Leaving this field empty will create a **visible Data Storage** by default. \
-      If you set a visibility password, **do not forget it**, as you will need it to access the Data Storage.",
-    "ui:enableMarkdownInDescription": true,
-    "ui:widget": RJSFPasswordWidget
-  },
-  confirmVisibilityPassword: {
-    "ui:title": "Confirm Visibility Password",
-    "ui:widget": RJSFPasswordWidget
-  },
+  // TODO: Add RJSF widget for this
   backendConfigCreateInput: USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_UI_SCHEMA
 } as const;

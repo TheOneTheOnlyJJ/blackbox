@@ -8,6 +8,7 @@ import { ISecuredUserSignUpPayload } from "../SecuredUserSignUpPayload";
 import { ISecuredPassword } from "@main/utils/encryption/SecuredPassword";
 import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserAccountStorageInfo";
 import { IStorageSecuredUserDataStorageConfig } from "@main/user/data/storage/config/StorageSecuredUserDataStorageConfig";
+import { IStorageSecuredUserDataStorageVisibilityGroup } from "@main/user/data/storage/visibilityGroup/StorageSecuredUserDataStorageVisibilityGroup";
 
 export class UserAccountStorage {
   private readonly logger: LogFunctions;
@@ -27,6 +28,10 @@ export class UserAccountStorage {
 
   public isOpen(): boolean {
     return this.backend.isOpen();
+  }
+
+  public isClosed(): boolean {
+    return this.backend.isClosed();
   }
 
   public open(): boolean {
@@ -76,6 +81,13 @@ export class UserAccountStorage {
     return this.backend.isUserDataStorageIdAvailable(storageId);
   }
 
+  public isUserDataStorageVisibilityGroupIdAvailable(dataStorageVisibilityGroupId: UUID): boolean {
+    this.logger.info(
+      `Checking if User Data Storage Visibility Group ID "${dataStorageVisibilityGroupId}" is available in User Account Storage "${this.name}" with ID "${this.storageId}".`
+    );
+    return this.backend.isUserDataStorageVisibilityGroupIdAvailable(dataStorageVisibilityGroupId);
+  }
+
   public getUserCount(): number {
     this.logger.info(`Getting user count in User Account Storage "${this.name}" with ID "${this.storageId}".`);
     return this.backend.getUserCount();
@@ -117,10 +129,61 @@ export class UserAccountStorage {
     return this.backend.addStorageSecuredUserDataStorageConfig(storageSecuredUserDataStorageConfig);
   }
 
-  public getAllStorageSecuredUserDataStorageConfigs(userId: UUID): IStorageSecuredUserDataStorageConfig[] {
+  public addStorageSecuredUserDataStorageVisibilityGroup(
+    storageSecuredUserDataStorageVisibilityGroup: IStorageSecuredUserDataStorageVisibilityGroup
+  ): boolean {
     this.logger.info(
-      `Getting all Storage Secured User Data Storage Configs for user with ID "${userId}" from User Account Storage "${this.name}" with ID "${this.storageId}".`
+      `Adding Storage Secured User Data Storage Visibility Group to user with ID "${storageSecuredUserDataStorageVisibilityGroup.userId}" to User Account Storage "${this.name}" with ID "${this.storageId}".`
     );
-    return this.backend.getAllStorageSecuredUserDataStorageConfigs(userId);
+    return this.backend.addStorageSecuredUserDataStorageVisibilityGroup(storageSecuredUserDataStorageVisibilityGroup);
+  }
+
+  public getStorageSecuredUserDataStorageVisibilityGroups(options: {
+    userId: UUID;
+    includeIds: UUID[] | "all";
+    excludeIds: UUID[] | null;
+  }): IStorageSecuredUserDataStorageVisibilityGroup[] {
+    const { userId, includeIds, excludeIds } = options;
+    if (includeIds.length === 0) {
+      throw new Error("Empty list of included User Data Storage Visibility Group IDs given");
+    }
+    if (excludeIds?.length === 0) {
+      throw new Error("Empty list of excluded User Data Storage Visibility Group IDs given");
+    }
+    // TODO: Improve logging
+    this.logger.info(
+      `Getting Storage Secured User Data Storage Visibility Groups for user with ID "${userId}" from User Account Storage "${this.name}" with ID "${this.storageId}".`
+    );
+    return this.backend.getStorageSecuredUserDataStorageVisibilityGroups(options);
+  }
+
+  public getStorageSecuredUserDataStorageConfigs(options: {
+    userId: UUID;
+    includeIds: UUID[] | "all";
+    excludeIds: UUID[] | null;
+    visibilityGroups: {
+      includeIds: (UUID | null)[] | "all";
+      excludeIds: UUID[] | null;
+    };
+  }): IStorageSecuredUserDataStorageConfig[] {
+    const { userId, includeIds, excludeIds } = options;
+    if (includeIds.length === 0) {
+      throw new Error("Empty list of included User Data Storage Config IDs given");
+    }
+    if (excludeIds?.length === 0) {
+      throw new Error("Empty list of excluded User Data Storage Config IDs given");
+    }
+    // TODO: Improve logging
+    this.logger.info(
+      `Getting Storage Secured User Data Storage Configs for user with ID "${userId}" from User Account Storage "${this.name}" with ID "${this.storageId}".`
+    );
+    return this.backend.getStorageSecuredUserDataStorageConfigs(options);
+  }
+
+  public getStorageSecuredUserDataStorageVisibilityGroupForConfigId(userDataStorageConfigId: UUID): IStorageSecuredUserDataStorageVisibilityGroup {
+    this.logger.info(
+      `Getting Storage Secured User Data Storage Visibility Group for User Data Storage "${userDataStorageConfigId}" from User Account Storage "${this.name}" with ID "${this.storageId}".`
+    );
+    return this.backend.getStorageSecuredUserDataStorageVisibilityGroupForConfigId(userDataStorageConfigId);
   }
 }

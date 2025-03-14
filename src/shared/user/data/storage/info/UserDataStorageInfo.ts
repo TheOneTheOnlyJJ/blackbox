@@ -5,7 +5,7 @@ export interface IUserDataStorageInfo {
   storageId: string;
   name: string;
   description: string | null;
-  hasVisibilityPassword: boolean;
+  visibilityGroupName: string;
   type: string; // TODO: Add backendConfig and a new type to represent it, with nice titles
   isOpen: boolean;
 }
@@ -14,7 +14,7 @@ export const USER_DATA_STORAGE_INFO_JSON_SCHEMA_CONSTANTS = {
   storageId: { title: "Storage ID", format: "uuid" },
   name: { title: "Name" },
   description: { title: "Description" },
-  hasVisibilityPassword: { title: "Has Visibility Password" },
+  visibilityGroupName: { title: "Visibility Group Name" },
   type: { title: "Type" },
   isOpen: { title: "Is Open" }
 } as const;
@@ -30,11 +30,11 @@ export const USER_DATA_STORAGE_INFO_JSON_SCHEMA: JSONSchemaType<IUserDataStorage
       ...USER_DATA_STORAGE_INFO_JSON_SCHEMA_CONSTANTS.description,
       nullable: true as false // https://github.com/ajv-validator/ajv/issues/2163#issuecomment-2085689455
     },
-    hasVisibilityPassword: { type: "boolean", ...USER_DATA_STORAGE_INFO_JSON_SCHEMA_CONSTANTS.hasVisibilityPassword },
+    visibilityGroupName: { type: "string", ...USER_DATA_STORAGE_INFO_JSON_SCHEMA_CONSTANTS.visibilityGroupName },
     type: { type: "string", ...USER_DATA_STORAGE_INFO_JSON_SCHEMA_CONSTANTS.type },
     isOpen: { type: "boolean", ...USER_DATA_STORAGE_INFO_JSON_SCHEMA_CONSTANTS.isOpen }
   },
-  required: ["storageId", "name", "description", "hasVisibilityPassword", "type", "isOpen"],
+  required: ["storageId", "name", "description", "visibilityGroupName", "type", "isOpen"],
   additionalProperties: false
 } as const;
 

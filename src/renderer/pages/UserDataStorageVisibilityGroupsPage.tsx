@@ -1,15 +1,70 @@
-import { Button, Box, Stack } from "@mui/material";
-import UserDataStorageVisibilityGroupsDataGrid from "@renderer/components/grids/UserDataStorageVisibilityGroupsDataGrid";
+import { Button, Box, Stack, Typography } from "@mui/material";
+import UserDataStorageVisibilityGroupsDataGrid from "@renderer/components/dataGrids/UserDataStorageVisibilityGroupsDataGrid";
 import { DASHBOARD_NAVIGATION_AREAS } from "@renderer/navigationAreas/DashboardNavigationAreas";
 import { USER_DATA_STORAGES_NAVIGATION_AREAS } from "@renderer/navigationAreas/UserDataStoragesNavigationAreas";
 import {
   IUserDataStoragesLayoutRootContext,
   useUserDataStoragesLayoutRootContext
 } from "@renderer/components/roots/userDataStoragesLayoutRoot/UserDataStoragesLayoutRootContext";
-import { FC, useEffect } from "react";
+import { FC, MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
+import { appLogger } from "@renderer/utils/loggers";
+import NewUserDataStorageVisibilityGroupFormDialog from "@renderer/components/dialogs/NewUserDataStorageVisibilityGroupFormDialog";
+import OpenUserDataStorageVisibilityGroupFormDialog from "@renderer/components/dialogs/OpenUserDataStorageVisibilityGroupFormDialog";
 
 const UserDataStorageVisibilityGroupsPage: FC = () => {
   const userDataStoragesLayoutRootContext: IUserDataStoragesLayoutRootContext = useUserDataStoragesLayoutRootContext();
+  const [isNewUserDataStorageVisibilityGroupFormDialogOpen, setIsNewUserDataStorageVisibilityGroupFormDialogOpen] = useState<boolean>(false);
+  const isInitialMountNew: MutableRefObject<boolean> = useRef<boolean>(true);
+  const [isOpenUserDataStorageVisibilityGroupFormDialogOpen, setIsOpenUserDataStorageVisibilityGroupFormDialogOpen] = useState<boolean>(false);
+  const isInitialMountOpen: MutableRefObject<boolean> = useRef<boolean>(true);
+
+  // New visibility group
+  const handleNewUserDataStorageVisibilityGroupButtonClick = useCallback((): void => {
+    appLogger.debug("New User Data Storage Visibility Group button clicked.");
+    setIsNewUserDataStorageVisibilityGroupFormDialogOpen(true);
+  }, []);
+
+  const handleNewUserDataStorageVisibilityGroupFormDialogClose = useCallback((): void => {
+    setIsNewUserDataStorageVisibilityGroupFormDialogOpen(false);
+  }, []);
+
+  const handleSuccessfullyAddedNewUserDataStorageVisibilityGroup = useCallback((): void => {
+    handleNewUserDataStorageVisibilityGroupFormDialogClose();
+  }, [handleNewUserDataStorageVisibilityGroupFormDialogClose]);
+
+  // Open visibility group
+  const handleOpenUserDataStorageVisibilityGroupButtonClick = useCallback((): void => {
+    appLogger.debug("Open User Data Storage Visibility Group button clicked.");
+    setIsOpenUserDataStorageVisibilityGroupFormDialogOpen(true);
+  }, []);
+
+  const handleOpenUserDataStorageVisibilityGroupFormDialogClose = useCallback((): void => {
+    setIsOpenUserDataStorageVisibilityGroupFormDialogOpen(false);
+  }, []);
+
+  const handleSuccessfullyOpenedNewUserDataStorageVisibilityGroup = useCallback((): void => {
+    handleOpenUserDataStorageVisibilityGroupFormDialogClose();
+  }, [handleOpenUserDataStorageVisibilityGroupFormDialogClose]);
+
+  useEffect((): void => {
+    if (isInitialMountNew.current) {
+      // Skip logging on the initial render
+      isInitialMountNew.current = false;
+      return;
+    }
+    appLogger.debug(`${isNewUserDataStorageVisibilityGroupFormDialogOpen ? "Opened" : "Closed"} New User Data Storage Visibility Group form dialog.`);
+  }, [isNewUserDataStorageVisibilityGroupFormDialogOpen]);
+
+  useEffect((): void => {
+    if (isInitialMountOpen.current) {
+      // Skip logging on the initial render
+      isInitialMountOpen.current = false;
+      return;
+    }
+    appLogger.debug(
+      `${isOpenUserDataStorageVisibilityGroupFormDialogOpen ? "Opened" : "Closed"} Open User Data Storage Visibility Group form dialog.`
+    );
+  }, [isOpenUserDataStorageVisibilityGroupFormDialogOpen]);
 
   useEffect((): void => {
     userDataStoragesLayoutRootContext.setDashboardNavigationArea(DASHBOARD_NAVIGATION_AREAS.userDataStorages);
@@ -29,14 +84,32 @@ const UserDataStorageVisibilityGroupsPage: FC = () => {
         }}
       >
         <Stack direction="row" spacing={2}>
-          <Button variant="contained" size="large">
+          <Button variant="contained" size="large" onClick={handleNewUserDataStorageVisibilityGroupButtonClick}>
             New Visibility Group
           </Button>
+          <Button variant="contained" size="large" onClick={handleOpenUserDataStorageVisibilityGroupButtonClick}>
+            Open Visibility Group
+          </Button>
         </Stack>
+        <Typography variant="h6" sx={{ marginTop: ".5rem" }}>
+          Open Visibility Groups:
+        </Typography>
         <Box sx={{ flex: 1, minHeight: 0, marginTop: ".5rem", background: "yellow" }}>
           <UserDataStorageVisibilityGroupsDataGrid />
         </Box>
       </Box>
+      <NewUserDataStorageVisibilityGroupFormDialog
+        userIdToAddTo={userDataStoragesLayoutRootContext.signedInUser.userId}
+        onAddedSuccessfully={handleSuccessfullyAddedNewUserDataStorageVisibilityGroup}
+        open={isNewUserDataStorageVisibilityGroupFormDialogOpen}
+        onClose={handleNewUserDataStorageVisibilityGroupFormDialogClose}
+      />
+      <OpenUserDataStorageVisibilityGroupFormDialog
+        userIdToOpenFor={userDataStoragesLayoutRootContext.signedInUser.userId}
+        onOpenedSuccessfully={handleSuccessfullyOpenedNewUserDataStorageVisibilityGroup}
+        open={isOpenUserDataStorageVisibilityGroupFormDialogOpen}
+        onClose={handleOpenUserDataStorageVisibilityGroupFormDialogClose}
+      />
     </>
   );
 };

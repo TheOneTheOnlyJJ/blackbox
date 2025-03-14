@@ -5,6 +5,7 @@ import { IPrivateStorageSecuredUserDataStorageConfig } from "./PrivateStorageSec
 export interface IStorageSecuredUserDataStorageConfig {
   storageId: UUID;
   userId: UUID;
+  visibilityGroupId: UUID | null;
   encryptedPrivateStorageSecuredUserDataStorageConfig: IEncryptedData<IPrivateStorageSecuredUserDataStorageConfig>;
 }
 
@@ -14,12 +15,15 @@ export const isStorageSecuredUserDataStorageConfigValid = (data: any): data is I
     typeof data === "object" &&
     data !== null &&
     "storageId" in data &&
+    "visibilityGroupId" in data &&
     "userId" in data &&
     "encryptedPrivateStorageSecuredUserDataStorageConfig" in data &&
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     typeof data.storageId === "string" &&
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     typeof data.userId === "string" &&
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    (typeof data.visibilityGroupId === "string" || data.visibilityGroupId === null) &&
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     isEncryptedDataValid(data.encryptedPrivateStorageSecuredUserDataStorageConfig)
   );

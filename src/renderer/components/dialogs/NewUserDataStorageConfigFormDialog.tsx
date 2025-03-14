@@ -18,6 +18,7 @@ export interface INewUserDataStorageConfigFormDialogProps {
 const NewUserDataStorageConfigFormDialog: FC<INewUserDataStorageConfigFormDialogProps> = (props: INewUserDataStorageConfigFormDialogProps) => {
   const formRef: Ref<Form> = useRef<Form>(null);
   const [isAddUserDataStorageConfigPending, setIsAddUserDataStorageConfigPending] = useState<boolean>(false);
+
   const handleSubmitButtonClick = useCallback((): void => {
     appLogger.info("New User Data Storage Config form Submit button clicked.");
     if (isAddUserDataStorageConfigPending) {
@@ -26,10 +27,10 @@ const NewUserDataStorageConfigFormDialog: FC<INewUserDataStorageConfigFormDialog
     }
     if (!formRef.current?.validateForm()) {
       enqueueSnackbar({ message: "Invalid form data.", variant: "warning" });
-      appLogger.warn("Invalid User Data Storage Config form data.");
+      appLogger.warn("Invalid New User Data Storage Config form data.");
       return;
     }
-    appLogger.info("Valid User Data Storage Config form data. Submitting.");
+    appLogger.info("Valid New User Data Storage Config form data. Submitting.");
     formRef.current.submit();
   }, [isAddUserDataStorageConfigPending]);
 
@@ -48,7 +49,7 @@ const NewUserDataStorageConfigFormDialog: FC<INewUserDataStorageConfigFormDialog
       <DialogActions>
         <Button onClick={props.onClose}>Cancel</Button>
         <Button variant="contained" disabled={isAddUserDataStorageConfigPending} onClick={handleSubmitButtonClick}>
-          Submit
+          {isAddUserDataStorageConfigPending ? "Submitting..." : "Submit"}
         </Button>
       </DialogActions>
     </Dialog>

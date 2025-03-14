@@ -67,8 +67,8 @@ export class LocalJSONSettingsManager<SettingsType extends Record<string, unknow
         this.settings = FETCHED_SETTINGS;
       }
       return FETCHED_SETTINGS;
-    } catch (err: unknown) {
-      const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+    } catch (error: unknown) {
+      const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
       throw new Error(`Settings fetch error: ${ERROR_MESSAGE}.`);
     }
   }
@@ -84,8 +84,8 @@ export class LocalJSONSettingsManager<SettingsType extends Record<string, unknow
       try {
         mkdirSync(this.config.fileDir, { recursive: true });
         this.logger.info(`Created settings directory: "${this.config.fileDir}".`);
-      } catch (err: unknown) {
-        const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+      } catch (error: unknown) {
+        const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
         this.logger.error(`Settings directory creation error: ${ERROR_MESSAGE}! No-op.`);
         return false;
       }
@@ -95,8 +95,8 @@ export class LocalJSONSettingsManager<SettingsType extends Record<string, unknow
       writeFileSync(this.SETTINGS_FILE_PATH, JSON.stringify(this.settings, null, 2), "utf-8");
       this.logger.debug("Settings saved.");
       return true;
-    } catch (err: unknown) {
-      const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+    } catch (error: unknown) {
+      const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
       this.logger.error(`Settings save error: ${ERROR_MESSAGE}! No-op.`);
       return false;
     }

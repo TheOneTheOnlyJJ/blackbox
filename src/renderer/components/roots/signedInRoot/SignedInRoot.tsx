@@ -12,6 +12,7 @@ import {
   USER_DATA_STORAGES_INFO_CHANGED_DIFF_VALIDATE_FUNCTION
 } from "@shared/user/data/storage/info/UserDataStoragesInfoChangedDiff";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
+import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
 
 const DEFAULT_FORBIDDEN_LOCATION_NAME = "this";
 
@@ -21,8 +22,8 @@ const SignedInRoot: FC = () => {
   const URIencodeAndSetForbiddenLocationName = useCallback((newForbiddenLocationname: string): void => {
     try {
       newForbiddenLocationname = encodeURIComponent(newForbiddenLocationname);
-    } catch (err: unknown) {
-      const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+    } catch (error: unknown) {
+      const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
       appLogger.error(`Could not set forbidden location name: ${ERROR_MESSAGE}!`);
       newForbiddenLocationname = DEFAULT_FORBIDDEN_LOCATION_NAME;
     } finally {
@@ -30,14 +31,19 @@ const SignedInRoot: FC = () => {
     }
   }, []);
   const [userDataStoragesInfo, setUserDataStoragesInfo] = useState<IUserDataStorageInfo[]>([]);
+  const [openUserDataStorageVisibilityGroupsInfo, setOpenUserDataStorageVisibilityGroupsInfo] = useState<IUserDataStorageVisibilityGroupInfo[]>([]);
 
   useEffect((): void => {
     appLogger.info(`User Data Storages Info changed. Count: ${userDataStoragesInfo.length.toString()}.`);
   }, [userDataStoragesInfo]);
 
+  useEffect((): void => {
+    appLogger.info(`Open User Data Storage Visibility Groups Info changed. Count: ${openUserDataStorageVisibilityGroupsInfo.length.toString()}.`);
+  }, [openUserDataStorageVisibilityGroupsInfo]);
+
   useEffect((): (() => void) => {
     appLogger.debug("Rendering Signed In Root component.");
-    // Get all Public User Data Storage Configs
+    // Get all User Data Storage Configs
     const GET_ALL_SIGNED_IN_USER_DATA_STORAGES_INFO_RESPONSE: IPCAPIResponse<IEncryptedData<IUserDataStorageInfo[]>> =
       window.userAPI.getAllSignedInUserDataStoragesInfo();
     if (GET_ALL_SIGNED_IN_USER_DATA_STORAGES_INFO_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
@@ -61,8 +67,8 @@ const SignedInRoot: FC = () => {
             enqueueSnackbar({ message: "Error decrypting data storages' information.", variant: "error" });
           }
         )
-        .catch((err: unknown): void => {
-          const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+        .catch((error: unknown): void => {
+          const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
           appLogger.error(`Could not decrypt all signed in user's User Data Storages Info. Reason: ${ERROR_MESSAGE}.`);
           enqueueSnackbar({ message: "Error decrypting data storages' information.", variant: "error" });
         });
@@ -112,6 +118,7 @@ const SignedInRoot: FC = () => {
           ...appRootContext,
           signedInUser: appRootContext.signedInUser,
           userDataStoragesInfo: userDataStoragesInfo,
+          openUserDataStorageVisibilityGroupsInfo: openUserDataStorageVisibilityGroupsInfo,
           setForbiddenLocationName: URIencodeAndSetForbiddenLocationName
         } satisfies ISignedInRootContext
       }

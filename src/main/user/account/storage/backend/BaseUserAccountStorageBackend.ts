@@ -6,6 +6,7 @@ import { ISecuredPassword } from "@main/utils/encryption/SecuredPassword";
 import { IBaseUserAccountStorageBackendConfig } from "./config/BaseUserAccountStorageBackendConfig";
 import { IStorageSecuredUserDataStorageConfig } from "@main/user/data/storage/config/StorageSecuredUserDataStorageConfig";
 import { AJV } from "@shared/utils/AJVJSONValidator";
+import { IStorageSecuredUserDataStorageVisibilityGroup } from "@main/user/data/storage/visibilityGroup/StorageSecuredUserDataStorageVisibilityGroup";
 
 export abstract class BaseUserAccountStorageBackend<T extends IBaseUserAccountStorageBackendConfig> {
   protected readonly logger: LogFunctions;
@@ -27,6 +28,7 @@ export abstract class BaseUserAccountStorageBackend<T extends IBaseUserAccountSt
   public abstract open(): boolean;
   public abstract close(): boolean;
   public abstract isOpen(): boolean;
+  public abstract isClosed(): boolean;
   public abstract isLocal(): boolean;
   public abstract isUserIdAvailable(userId: UUID): boolean;
   public abstract isUsernameAvailable(username: string): boolean;
@@ -37,8 +39,28 @@ export abstract class BaseUserAccountStorageBackend<T extends IBaseUserAccountSt
   public abstract getUserCount(): number;
   public abstract getUsernameForUserId(userId: UUID): string | null;
   public abstract isUserDataStorageIdAvailable(storageId: UUID): boolean;
-  public abstract addStorageSecuredUserDataStorageConfig(encryptedStorageSecuredUserDataStorageConfig: IStorageSecuredUserDataStorageConfig): boolean;
-  public abstract getAllStorageSecuredUserDataStorageConfigs(userId: UUID): IStorageSecuredUserDataStorageConfig[];
+  public abstract isUserDataStorageVisibilityGroupIdAvailable(dataStorageVisibilityGroupId: UUID): boolean;
+  public abstract addStorageSecuredUserDataStorageConfig(storageSecuredUserDataStorageConfig: IStorageSecuredUserDataStorageConfig): boolean;
+  public abstract addStorageSecuredUserDataStorageVisibilityGroup(
+    storageSecuredUserDataStorageVisibilityGroup: IStorageSecuredUserDataStorageVisibilityGroup
+  ): boolean;
+  public abstract getStorageSecuredUserDataStorageConfigs(options: {
+    userId: UUID;
+    includeIds: UUID[] | "all";
+    excludeIds: UUID[] | null;
+    visibilityGroups: {
+      includeIds: (UUID | null)[] | "all";
+      excludeIds: UUID[] | null;
+    };
+  }): IStorageSecuredUserDataStorageConfig[];
+  public abstract getStorageSecuredUserDataStorageVisibilityGroups(options: {
+    userId: UUID;
+    includeIds: UUID[] | "all";
+    excludeIds: UUID[] | null;
+  }): IStorageSecuredUserDataStorageVisibilityGroup[];
+  public abstract getStorageSecuredUserDataStorageVisibilityGroupForConfigId(
+    userDataStorageConfigId: UUID
+  ): IStorageSecuredUserDataStorageVisibilityGroup;
 
   private isConfigValid(): boolean {
     this.logger.debug("Validating User Acount Storage Backend Config.");

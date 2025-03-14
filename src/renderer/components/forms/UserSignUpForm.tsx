@@ -92,44 +92,37 @@ const UserSignUpForm: FC<IUserSignUpFormProps> = (props: IUserSignUpFormProps) =
       const FORM_DATA: IUserSignUpInput = data.formData;
       window.IPCTLSAPI.encrypt<IUserSignUpDTO>(userSignUpInputToUserSignUpDTO(FORM_DATA, appLogger), "user sign up DTO")
         .then(
-          (encryptedUserSignUpDTO: IEncryptedData<IUserSignUpDTO>): void => {
+          async (encryptedUserSignUpDTO: IEncryptedData<IUserSignUpDTO>): Promise<void> => {
             const SIGN_UP_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.signUp(encryptedUserSignUpDTO);
             if (SIGN_UP_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
               if (SIGN_UP_RESPONSE.data) {
                 appLogger.info(`Signed up new user "${USERNAME}".`);
                 enqueueSnackbar({ message: `${USERNAME} signed up.`, variant: "info" });
                 // Extract sign in data from sign up user data
-                let encryptedNewUserSignInDTO: IEncryptedData<IUserSignInDTO> | null = null;
-                window.IPCTLSAPI.encrypt<IUserSignInDTO>(userSignUpInputToUserSignInDTO(FORM_DATA, appLogger), "new user sign in DTO")
-                  .then(
-                    (encryptedUserSignInDTO: IEncryptedData<IUserSignInDTO>): void => {
-                      encryptedNewUserSignInDTO = encryptedUserSignInDTO;
-                    },
-                    (reason: unknown): void => {
-                      const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
-                      appLogger.error(`Could not encrypt user sign in DTO for new user "${USERNAME}": ${REASON_MESSAGE}.`);
-                      enqueueSnackbar({ message: "Credentials encryption error.", variant: "error" });
-                    }
-                  )
-                  .catch((err: unknown): void => {
-                    const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
-                    appLogger.error(`Could not encrypt user sign in DTO for new user "${USERNAME}": ${ERROR_MESSAGE}.`);
-                    enqueueSnackbar({ message: "Credentials encryption error.", variant: "error" });
-                  })
-                  .finally((): void => {
-                    appLogger.debug("Opening successful user sign up dialog.");
-                    let userCount: number | null = null;
-                    const GET_USER_COUNT_RESPONSE: IPCAPIResponse<number> = window.userAPI.getUserCount();
-                    if (GET_USER_COUNT_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
-                      userCount = GET_USER_COUNT_RESPONSE.data;
-                    }
-                    setSuccessfulUserSignUpDialogProps({
-                      open: true,
-                      username: USERNAME,
-                      userCount: userCount,
-                      encryptedNewUserSignInDTO: encryptedNewUserSignInDTO
-                    });
+                let newUserSignInDTO: IEncryptedData<IUserSignInDTO> | null = null;
+                try {
+                  newUserSignInDTO = await window.IPCTLSAPI.encrypt<IUserSignInDTO>(
+                    userSignUpInputToUserSignInDTO(FORM_DATA, appLogger),
+                    "new user sign in DTO"
+                  );
+                } catch (error: unknown) {
+                  const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
+                  appLogger.error(`Could not encrypt user sign in DTO for new user "${USERNAME}": ${ERROR_MESSAGE}.`);
+                  enqueueSnackbar({ message: "Credentials encryption error.", variant: "error" });
+                } finally {
+                  appLogger.debug("Opening successful user sign up dialog.");
+                  let userCount: number | null = null;
+                  const GET_USER_COUNT_RESPONSE: IPCAPIResponse<number> = window.userAPI.getUserCount();
+                  if (GET_USER_COUNT_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
+                    userCount = GET_USER_COUNT_RESPONSE.data;
+                  }
+                  setSuccessfulUserSignUpDialogProps({
+                    open: true,
+                    username: USERNAME,
+                    userCount: userCount,
+                    encryptedNewUserSignInDTO: newUserSignInDTO
                   });
+                }
               } else {
                 appLogger.info(`Could not sign up new user "${USERNAME}".`);
                 enqueueSnackbar({ message: "Sign up error.", variant: "error" });
@@ -145,8 +138,8 @@ const UserSignUpForm: FC<IUserSignUpFormProps> = (props: IUserSignUpFormProps) =
             enqueueSnackbar({ message: "Account data encryption error.", variant: "error" });
           }
         )
-        .catch((err: unknown): void => {
-          const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+        .catch((error: unknown): void => {
+          const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
           appLogger.error(`Could not encrypt sign up DTO for new user "${USERNAME}": ${ERROR_MESSAGE}.`);
           enqueueSnackbar({ message: "Account data encryption error.", variant: "error" });
         })

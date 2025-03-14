@@ -27,14 +27,17 @@ export interface ISuccessfulUserSignUpDialogProps {
 const SuccessfulUserSignUpDialog: FC<ISuccessfulUserSignUpDialogProps> = (props: ISuccessfulUserSignUpDialogProps) => {
   const navigate: NavigateFunction = useNavigate();
   const [signInError, setSignInError] = useState<boolean>(false);
+
   const handleDialogClose = useCallback((): void => {
     // This ensures no backdrop click or escape keypress closes the dialog
     return;
   }, []);
+
   const handleBackToSignInButtonClick = useCallback((): void => {
     appLogger.debug("Back to sign in button clicked.");
     navigate("/");
   }, [navigate]);
+
   const handleStartExploringButtonClick = useCallback((): void => {
     appLogger.debug("Start exploring button clicked.");
     if (props.encryptedNewUserSignInDTO === null) {

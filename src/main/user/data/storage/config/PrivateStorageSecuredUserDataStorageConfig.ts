@@ -1,5 +1,4 @@
 import { USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA, UserDataStorageBackendConfig } from "../backend/config/UserDataStorageBackendConfig";
-import { ISecuredPassword, SECURED_PASSWORD_JSON_SCHEMA } from "@main/utils/encryption/SecuredPassword";
 import { AJV } from "@shared/utils/AJVJSONValidator";
 import { JSONSchemaType, ValidateFunction } from "ajv";
 
@@ -7,7 +6,6 @@ import { JSONSchemaType, ValidateFunction } from "ajv";
 export interface IPrivateStorageSecuredUserDataStorageConfig {
   name: string;
   description: string | null;
-  securedVisibilityPassword: ISecuredPassword | null;
   backendConfig: UserDataStorageBackendConfig;
 }
 
@@ -20,13 +18,9 @@ export const PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_CONFIG_JSON_SCHEMA: JSONS
       type: "string",
       nullable: true as false // https://github.com/ajv-validator/ajv/issues/2163#issuecomment-2085689455
     },
-    securedVisibilityPassword: {
-      ...SECURED_PASSWORD_JSON_SCHEMA,
-      nullable: true as false // https://github.com/ajv-validator/ajv/issues/2163#issuecomment-2085689455
-    },
     backendConfig: USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA
   },
-  required: ["name", "description", "securedVisibilityPassword", "backendConfig"],
+  required: ["name", "description", "backendConfig"],
   additionalProperties: false
 } as const;
 

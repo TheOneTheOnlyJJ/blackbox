@@ -12,7 +12,7 @@ export const storageSecuredUserDataStorageConfigToSecuredUserDataStorageConfig =
   decryptionAESKey: Buffer,
   logger: LogFunctions | null
 ): ISecuredUserDataStorageConfig => {
-  logger?.debug(`Converting Storage Secured User Data Storage Config to Secured User Data Storage Config.`);
+  logger?.debug("Converting Storage Secured User Data Storage Config to Secured User Data Storage Config.");
   const DECRYPTED_PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_CONFIG: IPrivateStorageSecuredUserDataStorageConfig =
     decryptWithAESAndValidateJSON<IPrivateStorageSecuredUserDataStorageConfig>(
       storageSecuredUserDataStorageConfig.encryptedPrivateStorageSecuredUserDataStorageConfig,
@@ -24,9 +24,9 @@ export const storageSecuredUserDataStorageConfigToSecuredUserDataStorageConfig =
   return {
     storageId: storageSecuredUserDataStorageConfig.storageId,
     userId: storageSecuredUserDataStorageConfig.userId,
+    visibilityGroupId: storageSecuredUserDataStorageConfig.visibilityGroupId,
     name: DECRYPTED_PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_CONFIG.name,
     description: DECRYPTED_PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_CONFIG.description,
-    securedVisibilityPassword: DECRYPTED_PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_CONFIG.securedVisibilityPassword,
     backendConfig: DECRYPTED_PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_CONFIG.backendConfig
   };
 };

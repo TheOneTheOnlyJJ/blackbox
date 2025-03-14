@@ -6,7 +6,8 @@ import {
   UserAccountStorageChangedCallback,
   UserAccountStorageOpenChangedCallback,
   UserAPIIPCChannel,
-  UserDataStoragesChangedCallback
+  UserDataStoragesChangedCallback,
+  OpenUserDataStorageVisibilityGroupsChangedCallback
 } from "@shared/IPC/APIs/UserAPI";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IIPCTLSAPI, IPC_TLS_API_IPC_CHANNELS, IPCTLSAPIIPCChannel, IPCTLSReadinessChangedCallback } from "@shared/IPC/APIs/IPCTLSAPI";
@@ -29,6 +30,10 @@ import {
   UTILS_API_IPC_CHANNELS,
   UtilsAPIIPCChannel
 } from "@shared/IPC/APIs/UtilsAPI";
+import { IUserDataStorageVisibilityGroupCreateDTO } from "@shared/user/data/storage/visibilityGroup/create/DTO/UserDataStorageVisibilityGroupCreateDTO";
+import { IUserDataStorageVisibilityGroupsOpenRequestDTO } from "@shared/user/data/storage/visibilityGroup/openRequest/DTO/UserDataStorageVisibilityGroupsOpenRequestDTO";
+import { IUserDataStorageVisibilityGroupsInfoChangedDiff } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfoChangedDiff";
+import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
 
 // Variables
 const TEXT_ENCODER: TextEncoder = new TextEncoder();
@@ -262,6 +267,20 @@ const USER_API: IUserAPI = {
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL, encryptedUserDataStorageConfigCreateDTO) as IPCAPIResponse<boolean>;
   },
+  addUserDataStorageVisibilityGroup: (
+    encryptedUserDataStorageVisibilityGroupCreateDTO: IEncryptedData<IUserDataStorageVisibilityGroupCreateDTO>
+  ): IPCAPIResponse<boolean> => {
+    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.addUserDataStorageVisibilityGroup;
+    sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
+    return ipcRenderer.sendSync(CHANNEL, encryptedUserDataStorageVisibilityGroupCreateDTO) as IPCAPIResponse<boolean>;
+  },
+  openUserDataStorageVisibilityGroups: (
+    encryptedUserDataStorageVisibilityGroupsOpenRequestDTO: IEncryptedData<IUserDataStorageVisibilityGroupsOpenRequestDTO>
+  ): IPCAPIResponse<number> => {
+    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.openUserDataStorageVisibilityGroups;
+    sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
+    return ipcRenderer.sendSync(CHANNEL, encryptedUserDataStorageVisibilityGroupsOpenRequestDTO) as IPCAPIResponse<number>;
+  },
   getUserAccountStorageInfo: (): IPCAPIResponse<IUserAccountStorageInfo | null> => {
     const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.getUserAccountStorageInfo;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
@@ -271,6 +290,11 @@ const USER_API: IUserAPI = {
     const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.getAllSignedInUserDataStoragesInfo;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL) as IPCAPIResponse<IEncryptedData<IUserDataStorageInfo[]>>;
+  },
+  getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo: (): IPCAPIResponse<IEncryptedData<IUserDataStorageVisibilityGroupInfo[]>> => {
+    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo;
+    sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
+    return ipcRenderer.sendSync(CHANNEL) as IPCAPIResponse<IEncryptedData<IUserDataStorageVisibilityGroupInfo[]>>;
   },
   onUserAccountStorageChanged: (callback: UserAccountStorageChangedCallback): (() => void) => {
     const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.onUserAccountStorageChanged;
@@ -317,6 +341,22 @@ const USER_API: IUserAPI = {
     const LISTENER = (_: IpcRendererEvent, encryptedUserDataStoragesInfoChangedDiff: IEncryptedData<IUserDataStoragesInfoChangedDiff>): void => {
       sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Received message from main on channel: "${CHANNEL}".`);
       callback(encryptedUserDataStoragesInfoChangedDiff);
+    };
+    ipcRenderer.on(CHANNEL, LISTENER);
+    return (): void => {
+      sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Removing listener from main on channel: "${CHANNEL}".`);
+      ipcRenderer.removeListener(CHANNEL, LISTENER);
+    };
+  },
+  onOpenUserDataStorageVisibilityGroupsChanged: (callback: OpenUserDataStorageVisibilityGroupsChangedCallback): (() => void) => {
+    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.onOpenUserDataStorageVisibilityGroupsChanged;
+    sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Adding listener from main on channel: "${CHANNEL}".`);
+    const LISTENER = (
+      _: IpcRendererEvent,
+      encryptedUserDataStorageVisibilityGroupsInfoChangedDiff: IEncryptedData<IUserDataStorageVisibilityGroupsInfoChangedDiff>
+    ): void => {
+      sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Received message from main on channel: "${CHANNEL}".`);
+      callback(encryptedUserDataStorageVisibilityGroupsInfoChangedDiff);
     };
     ipcRenderer.on(CHANNEL, LISTENER);
     return (): void => {

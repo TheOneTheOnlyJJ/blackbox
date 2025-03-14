@@ -8,15 +8,15 @@ export const userDataStorageConfigCreateInputToUserDataStorageConfigCreateDTO = 
   userDataStorageConfigCreateInput: IUserDataStorageConfigCreateInput,
   logger: LogFunctions | null
 ): IUserDataStorageConfigCreateDTO => {
-  logger?.debug(`Converting User Data Storage Config Create Input to User Data Storage Config Create DTO.`);
+  logger?.debug("Converting User Data Storage Config Create Input to User Data Storage Config Create DTO.");
   return {
     userId: userIdToAddTo,
     name: userDataStorageConfigCreateInput.name,
     description: userDataStorageConfigCreateInput.description ?? null,
-    visibilityPassword: userDataStorageConfigCreateInput.visibilityPassword ?? null,
+    visibilityGroupId: userDataStorageConfigCreateInput.visibilityGroupId ?? null,
     backendConfigCreateDTO: userDataStorageBackendConfigCreateInputToUserDataStorageBackendConfigCreateDTO(
       userDataStorageConfigCreateInput.backendConfigCreateInput,
       logger
     )
-  };
+  } satisfies IUserDataStorageConfigCreateDTO;
 };

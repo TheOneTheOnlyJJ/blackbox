@@ -8,8 +8,8 @@ import { AJV } from "@shared/utils/AJVJSONValidator";
 export interface IUserDataStorageConfigCreateDTO {
   userId: string;
   name: string;
+  visibilityGroupId: string | null;
   description: string | null;
-  visibilityPassword: string | null;
   backendConfigCreateDTO: UserDataStorageBackendConfigCreateDTO;
 }
 
@@ -19,19 +19,19 @@ export const USER_DATA_STORAGE_CONFIG_CREATE_DTO_JSON_SCHEMA: JSONSchemaType<IUs
   properties: {
     userId: { type: "string", title: "User ID", format: "uuid" },
     name: { type: "string", title: "Name" },
+    visibilityGroupId: {
+      type: "string",
+      format: "uuid",
+      nullable: true as false // https://github.com/ajv-validator/ajv/issues/2163#issuecomment-2085689455
+    },
     description: {
       type: "string",
       title: "Description",
       nullable: true as false // https://github.com/ajv-validator/ajv/issues/2163#issuecomment-2085689455
     },
-    visibilityPassword: {
-      type: "string",
-      title: "Visibility Password",
-      nullable: true as false // https://github.com/ajv-validator/ajv/issues/2163#issuecomment-2085689455
-    },
     backendConfigCreateDTO: USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_DTO_JSON_SCHEMA
   },
-  required: ["userId", "name", "description", "visibilityPassword", "backendConfigCreateDTO"],
+  required: ["userId", "visibilityGroupId", "name", "description", "backendConfigCreateDTO"],
   additionalProperties: false
 } as const;
 

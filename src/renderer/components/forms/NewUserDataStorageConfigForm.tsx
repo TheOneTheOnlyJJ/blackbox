@@ -43,16 +43,14 @@ const newUserDataStorageConfigFormErrorTransformer: ErrorTransformer<IUserDataSt
   );
 };
 
+// TODO: This may not be required anymore
 const newUserDataStorageConfigFormValidator: CustomValidator<IUserDataStorageConfigCreateInput> = (
   formData: IUserDataStorageConfigCreateInput | undefined,
   errors: FormValidation<IUserDataStorageConfigCreateInput>
 ): FormValidation<IUserDataStorageConfigCreateInput> => {
   // Skip if no form data or errors
-  if (formData === undefined || errors.visibilityPassword === undefined || errors.confirmVisibilityPassword === undefined) {
+  if (formData === undefined) {
     return errors;
-  }
-  if (formData.visibilityPassword !== formData.confirmVisibilityPassword) {
-    errors.confirmVisibilityPassword.addError("Does not match Visibility Password.");
   }
   return errors;
 };
@@ -70,7 +68,7 @@ const NewUserDataStorageConfigForm: FC<INewUserDataStorageConfigFormProps> = (pr
   const { userIdToAddTo, onAddedSuccessfully } = props;
   const handleFormSubmit = useCallback(
     (data: IChangeEvent<IUserDataStorageConfigCreateInput>): void => {
-      appLogger.info("Submitted new User Data Storage form.");
+      appLogger.info("Submitted new User Data Storage Config form.");
       if (props.isAddUserDataStorageConfigPending) {
         appLogger.warn("Add User Data Storage Config pending. No-op form sumit.");
         return;
@@ -89,11 +87,11 @@ const NewUserDataStorageConfigForm: FC<INewUserDataStorageConfigFormProps> = (pr
       window.IPCTLSAPI.encrypt<IUserDataStorageConfigCreateDTO>(USER_DATA_STORAGE_CONFIG_CREATE_DTO, "User Data Storage Config Create DTO")
         .then(
           (encryptedUserDataStorageConfigCreateDTO: IEncryptedData<IUserDataStorageConfigCreateDTO>): void => {
-            const ADD_USER_DATA_STORAGE_CONFIG_TO_USER_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.addUserDataStorageConfig(
+            const ADD_USER_DATA_STORAGE_CONFIG_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.addUserDataStorageConfig(
               encryptedUserDataStorageConfigCreateDTO
             );
-            if (ADD_USER_DATA_STORAGE_CONFIG_TO_USER_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
-              if (ADD_USER_DATA_STORAGE_CONFIG_TO_USER_RESPONSE.data) {
+            if (ADD_USER_DATA_STORAGE_CONFIG_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
+              if (ADD_USER_DATA_STORAGE_CONFIG_RESPONSE.data) {
                 enqueueSnackbar({ message: "Added User Data Storage Config.", variant: "success" });
                 onAddedSuccessfully();
               } else {
@@ -109,8 +107,8 @@ const NewUserDataStorageConfigForm: FC<INewUserDataStorageConfigFormProps> = (pr
             enqueueSnackbar({ message: "User Data Storage Config encryption error.", variant: "error" });
           }
         )
-        .catch((err: unknown): void => {
-          const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+        .catch((error: unknown): void => {
+          const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
           appLogger.error(`Could not encrypt User Data Storage Config Create DTO. Reason: ${ERROR_MESSAGE}.`);
           enqueueSnackbar({ message: "User Data Storage Config encryption error.", variant: "error" });
         })

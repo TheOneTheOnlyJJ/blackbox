@@ -76,8 +76,8 @@ const UserSignInForm: FC<IUserSignInFormProps> = (props: IUserSignInFormProps) =
             enqueueSnackbar({ message: "Credentials encryption error.", variant: "error" });
           }
         )
-        .catch((err: unknown): void => {
-          const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+        .catch((error: unknown): void => {
+          const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
           appLogger.error(`Could not encrypt user sign in DTO for user "${USERNAME}". Reason: ${ERROR_MESSAGE}.`);
           enqueueSnackbar({ message: "Credentials encryption error.", variant: "error" });
         })

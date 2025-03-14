@@ -33,8 +33,8 @@ const ForbiddenPage: FC = () => {
       } else {
         setAlertMessage(null);
       }
-    } catch (err: unknown) {
-      const ERROR_MESSAGE = err instanceof Error ? err.message : String(err);
+    } catch (error: unknown) {
+      const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
       appLogger.error(`Could not set alert message: ${ERROR_MESSAGE}!`);
       setAlertMessage(null);
     }
