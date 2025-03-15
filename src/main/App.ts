@@ -394,7 +394,7 @@ export class App {
                 USER_DATA_STORAGE_CONFIG_CREATE_DTO_VALIDATE_FUNCTION,
                 this.IPC_TLS_AES_KEY.value,
                 this.UserAPILogger,
-                "User Data Storage Config DTO"
+                "User Data Storage Config Create DTO"
               ),
               this.userManager.generateRandomUserDataStorageId(),
               this.UserAPILogger
@@ -423,7 +423,7 @@ export class App {
                 USER_DATA_STORAGE_VISIBILITY_GROUP_CREATE_DTO_VALIDATE_FUNCTION,
                 this.IPC_TLS_AES_KEY.value,
                 this.UserAPILogger,
-                "User Data Storage Visibility Group DTO"
+                "User Data Storage Visibility Group Create DTO"
               ),
               this.userManager.generateRandomUserDataStorageVisibilityGroupId(),
               USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS.AESKeySalt.lengthBytes,
@@ -461,7 +461,22 @@ export class App {
         };
       } catch (error: unknown) {
         const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
-        this.UserAPILogger.error(`Open User Data Storage Visibility Group error: ${ERROR_MESSAGE}!`);
+        this.UserAPILogger.error(`Open User Data Storage Visibility Groups error: ${ERROR_MESSAGE}!`);
+        return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
+      }
+    },
+    handleCloseUserDataStorageVisibilityGroups: (userDataStorageVisibilityGroupIds: string[]): IPCAPIResponse<number> => {
+      try {
+        if (this.IPC_TLS_AES_KEY.value === null) {
+          throw new Error("Null IPC TLS AES key");
+        }
+        return {
+          status: IPC_API_RESPONSE_STATUSES.SUCCESS,
+          data: this.userManager.closeUserDataStorageVisibilityGroups(userDataStorageVisibilityGroupIds as UUID[])
+        };
+      } catch (error: unknown) {
+        const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
+        this.UserAPILogger.error(`Close User Data Storage Visibility Groups error: ${ERROR_MESSAGE}!`);
         return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
@@ -482,7 +497,7 @@ export class App {
         return {
           status: IPC_API_RESPONSE_STATUSES.SUCCESS,
           data: encryptWithAES<IUserDataStorageInfo[]>(
-            this.userManager.getSignedInUserDataStoragesInfo(),
+            this.userManager.getAllSignedInUserDataStoragesInfo(),
             this.IPC_TLS_AES_KEY.value,
             this.UserAPILogger,
             "all signed in user's User Data Storages Info"
@@ -573,7 +588,7 @@ export class App {
       userDataStorageVisibilityGroupsInfoChangedDiff: IUserDataStorageVisibilityGroupsInfoChangedDiff
     ): void => {
       this.UserAPILogger.debug(
-        `Sending window User Data Storages Visibility Groups Info Changed Diff. Deletes: ${userDataStorageVisibilityGroupsInfoChangedDiff.deleted.length.toString()}. Additions: ${userDataStorageVisibilityGroupsInfoChangedDiff.added.length.toString()}.`
+        `Sending window open User Data Storages Visibility Groups Info Changed Diff. Deletes: ${userDataStorageVisibilityGroupsInfoChangedDiff.deleted.length.toString()}. Additions: ${userDataStorageVisibilityGroupsInfoChangedDiff.added.length.toString()}.`
       );
       if (this.window === null) {
         this.UserAPILogger.debug("Window is null. No-op.");
@@ -590,7 +605,7 @@ export class App {
           userDataStorageVisibilityGroupsInfoChangedDiff,
           this.IPC_TLS_AES_KEY.value,
           this.UserAPILogger,
-          "User Data Storage Visibility Groups Info Changed Diff"
+          "open User Data Storage Visibility Groups Info Changed Diff"
         )
       );
     }
@@ -1007,6 +1022,23 @@ export class App {
         event.returnValue = this.USER_API_HANDLERS.handleAddUserDataStorageVisibilityGroup(encryptedUserDataStorageVisibilityGroupCreateDTO);
       }
     );
+    ipcMain.on(
+      USER_API_IPC_CHANNELS.openUserDataStorageVisibilityGroups,
+      (
+        event: IpcMainEvent,
+        encryptedUserDataStorageVisibilityGroupsOpenRequestDTO: IEncryptedData<IUserDataStorageVisibilityGroupsOpenRequestDTO>
+      ): void => {
+        this.UserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.openUserDataStorageVisibilityGroups}".`);
+        event.returnValue = this.USER_API_HANDLERS.handleOpenUserDataStorageVisibilityGroups(encryptedUserDataStorageVisibilityGroupsOpenRequestDTO);
+      }
+    );
+    ipcMain.on(
+      USER_API_IPC_CHANNELS.closeUserDataStorageVisibilityGroups,
+      (event: IpcMainEvent, userDataStorageVisibilityGroupIds: string[]): void => {
+        this.UserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.closeUserDataStorageVisibilityGroups}".`);
+        event.returnValue = this.USER_API_HANDLERS.handleCloseUserDataStorageVisibilityGroups(userDataStorageVisibilityGroupIds);
+      }
+    );
     ipcMain.on(USER_API_IPC_CHANNELS.getUserAccountStorageInfo, (event: IpcMainEvent): void => {
       this.UserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.getUserAccountStorageInfo}".`);
       event.returnValue = this.USER_API_HANDLERS.handleGetUserAccountStorageInfo();
@@ -1014,6 +1046,12 @@ export class App {
     ipcMain.on(USER_API_IPC_CHANNELS.getAllSignedInUserDataStoragesInfo, (event: IpcMainEvent): void => {
       this.UserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.getAllSignedInUserDataStoragesInfo}".`);
       event.returnValue = this.USER_API_HANDLERS.handleGetAllSignedInUserDataStoragesInfo();
+    });
+    ipcMain.on(USER_API_IPC_CHANNELS.getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo, (event: IpcMainEvent): void => {
+      this.UserAPILogger.debug(
+        `Received message from renderer on channel: "${USER_API_IPC_CHANNELS.getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo}".`
+      );
+      event.returnValue = this.USER_API_HANDLERS.handleGetAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo();
     });
   }
 

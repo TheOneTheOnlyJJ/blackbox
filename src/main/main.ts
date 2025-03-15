@@ -12,6 +12,9 @@ import { App } from "@main/App";
 // TODO: Add ability to close visibility groups, send diff to renderer with removed data storages
 // TODO: Check all the related code
 
+// TODO: Clear open visibility groups on sign in/up/out
+// TODO: Close open visibility groups
+
 // TODO: Rename create to createRequest? Make a new requests folder?
 // TODO: Edit & delete user data storage configs from frontend
 // TODO: Explore RBAC user data storage access

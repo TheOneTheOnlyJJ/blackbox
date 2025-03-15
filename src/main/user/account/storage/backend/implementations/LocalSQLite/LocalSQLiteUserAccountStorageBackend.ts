@@ -323,7 +323,7 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     const GET_USERNAME_FOR_USER_ID_SQL = "SELECT username FROM users WHERE user_id = @userId";
     const RESULT = this.db.prepare(GET_USERNAME_FOR_USER_ID_SQL).get({ userId: userId }) as { username: string } | undefined;
     if (RESULT === undefined) {
-      this.logger.silly(`User with ID "${userId}" has no username (doers not exist).`);
+      this.logger.silly(`User with ID "${userId}" has no username (does not exist).`);
       return null;
     }
     this.logger.silly(`User with ID "${userId}" has username "${RESULT.username}".`);
@@ -427,8 +427,20 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
       if (visibilityGroups.includeIds.length === 0) {
         throw new Error("Visibility groups include IDs list cannot be empty");
       }
-      SQLQuery += " AND visibility_group_id IN (SELECT value FROM json_each(@visibilityGroupsIncludeIdsString))";
-      SQL_QUERY_ARGUMENTS.set("visibilityGroupsIncludeIdsString", JSON.stringify(visibilityGroups.includeIds));
+      if (visibilityGroups.includeIds.includes(null)) {
+        SQLQuery += " AND (visibility_group_id IS NULL OR visibility_group_id IN (SELECT value FROM json_each(@visibilityGroupsIncludeIdsString)))";
+        SQL_QUERY_ARGUMENTS.set(
+          "visibilityGroupsIncludeIdsString",
+          JSON.stringify(
+            visibilityGroups.includeIds.filter((includeId: UUID | null): boolean => {
+              return includeId !== null;
+            })
+          )
+        );
+      } else {
+        SQLQuery += " AND visibility_group_id IN (SELECT value FROM json_each(@visibilityGroupsIncludeIdsString))";
+        SQL_QUERY_ARGUMENTS.set("visibilityGroupsIncludeIdsString", JSON.stringify(visibilityGroups.includeIds));
+      }
     }
     if (visibilityGroups.excludeIds !== null) {
       if (visibilityGroups.excludeIds.length === 0) {
@@ -495,14 +507,14 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
       this.logger.debug("Invalid Storage Secured User Data Storage Visibility Group.");
       return false;
     }
-    const ADD_STORAGE_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUP_SQL = `
+    const SQL_QUERY = `
     INSERT INTO user_data_storage_visibility_groups (
       visibility_group_id, user_id, user_data_storage_visibility_group_iv, user_data_storage_visibility_group_data
     ) VALUES (
       @visibilityGroupId, @userId, @userDataStorageVisibilityGroupIV, @userDataStorageVisibilityGroupData
     )`;
     try {
-      const RUN_RESULT: RunResult = this.db.prepare(ADD_STORAGE_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUP_SQL).run({
+      const RUN_RESULT: RunResult = this.db.prepare(SQL_QUERY).run({
         visibilityGroupId: storageSecuredUserDataStorageVisibilityGroup.visibilityGroupId,
         userId: storageSecuredUserDataStorageVisibilityGroup.userId,
         userDataStorageVisibilityGroupIV: Buffer.from(
@@ -585,8 +597,39 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     return STORAGE_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUPS;
   }
 
-  public getStorageSecuredUserDataStorageVisibilityGroupForConfigId(userDataStorageConfigId: UUID): IStorageSecuredUserDataStorageVisibilityGroup {
-    // TODO: Implement this
+  public getStorageSecuredUserDataStorageVisibilityGroupForConfigId(
+    userId: UUID,
+    userDataStorageConfigId: UUID
+  ): IStorageSecuredUserDataStorageVisibilityGroup | null {
+    this.logger.debug(`Getting Storage Secured User Data Storage Visibility Group for User Data Storage Config "${userDataStorageConfigId}".`);
+    if (this.db === null) {
+      throw new Error(`Closed "${this.config.type}" User Account Storage Backend`);
+    }
+    const SQL_QUERY = `
+      SELECT
+        v.visibility_group_id AS visibilityGroupId,
+        v.user_data_storage_visibility_group_iv AS userDataStorageVisibilityGroupIV,
+        v.user_data_storage_visibility_group_data AS userDataStorageVisibilityGroupData
+      FROM
+        user_data_storage_configs c
+      JOIN
+        user_data_storage_visibility_groups v
+      ON
+        c.visibility_group_id = v.visibility_group_id
+      WHERE
+        c.user_id = @userId
+      AND
+        c.storage_id = @userDataStorageConfigId
+    `;
+    const RESULT = this.db.prepare(SQL_QUERY).get({ userId: userId, userDataStorageConfigId: userDataStorageConfigId }) as
+      | IRawStorageSecuredUserDataStorageVisibilityGroup
+      | undefined;
+    if (RESULT === undefined) {
+      this.logger.silly(`User Data Storage "${userDataStorageConfigId}" has no User Data Storage Visibility Group.`);
+      return null;
+    }
+    this.logger.silly(`User Data Storage "${userDataStorageConfigId}" has User Data Storage Visibility Group "${RESULT.visibilityGroupId}".`);
+    return rawStorageSecuredUserDataStorageVisibilityGroupToStorageSecuredUserDataStorageVisibilityGroup(RESULT, userId, null);
   }
 
   private createUsersTable(): void {
@@ -629,7 +672,7 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
       CREATE TABLE IF NOT EXISTS user_data_storage_configs (
         storage_id TEXT NOT NULL PRIMARY KEY,
         user_id TEXT NOT NULL REFERENCES users(user_id) ON UPDATE CASCADE ON DELETE CASCADE,
-        visibility_group_id TEXT REFERENCES user_data_storage_visibility_groups(visibility_group_id) ON UPDATE CASCADE ON DELETE CASCADE
+        visibility_group_id TEXT REFERENCES user_data_storage_visibility_groups(visibility_group_id) ON UPDATE CASCADE ON DELETE CASCADE,
         user_data_storage_config_iv BLOB NOT NULL,
         user_data_storage_config_data BLOB NOT NULL
       )

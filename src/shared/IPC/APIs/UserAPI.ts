@@ -38,6 +38,7 @@ export interface IUserAPI {
   openUserDataStorageVisibilityGroups: (
     encryptedUserDataStorageVisibilityGroupsOpenRequestDTO: IEncryptedData<IUserDataStorageVisibilityGroupsOpenRequestDTO>
   ) => IPCAPIResponse<number>;
+  closeUserDataStorageVisibilityGroups: (userDataStorageVisibilityGroupIds: string[]) => IPCAPIResponse<number>;
   getUserAccountStorageInfo: () => IPCAPIResponse<IUserAccountStorageInfo | null>;
   getAllSignedInUserDataStoragesInfo: () => IPCAPIResponse<IEncryptedData<IUserDataStorageInfo[]>>;
   getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo: () => IPCAPIResponse<IEncryptedData<IUserDataStorageVisibilityGroupInfo[]>>;
@@ -60,6 +61,7 @@ export const USER_API_IPC_CHANNELS = {
   addUserDataStorageConfig: "userAPI:addUserDataStorageConfig",
   addUserDataStorageVisibilityGroup: "userAPI:addUserDataStorageVisibilityGroup",
   openUserDataStorageVisibilityGroups: "userAPI:openUserDataStorageVisibilityGroups",
+  closeUserDataStorageVisibilityGroups: "userAPI:closeUserDataStorageVisibilityGroups",
   getUserAccountStorageInfo: "userAPI:getUserAccountStorageInfo",
   getAllSignedInUserDataStoragesInfo: "userAPI:getAllSignedInUserDataStoragesInfo",
   getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo: "userAPI:getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo",

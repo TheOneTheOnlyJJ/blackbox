@@ -8,6 +8,7 @@ import NewUserDataStorageVisibilityGroupForm from "../forms/NewUserDataStorageVi
 export interface INewUserDataStorageVisibilityGroupFormDialogProps {
   userIdToAddTo: string;
   onAddedSuccessfully: () => void;
+  onOpenedSuccessfully: () => void;
   open: DialogProps["open"];
   onClose: () => void;
 }
@@ -40,6 +41,7 @@ const NewUserDataStorageVisibilityGroupFormDialog: FC<INewUserDataStorageVisibil
           formRef={formRef}
           userIdToAddTo={props.userIdToAddTo}
           onAddedSuccessfully={props.onAddedSuccessfully}
+          onOpenedSuccessfully={props.onOpenedSuccessfully}
           renderSubmitButton={false}
           isAddUserDataStorageVisibilityGroupPending={isAddUserDataStorageVisibilityGroupPending}
           setIsAddUserDataStorageVisibilityGroupPending={setIsAddUserDataStorageVisibilityGroupPending}

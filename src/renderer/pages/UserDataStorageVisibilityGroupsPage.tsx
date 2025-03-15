@@ -32,6 +32,10 @@ const UserDataStorageVisibilityGroupsPage: FC = () => {
     handleNewUserDataStorageVisibilityGroupFormDialogClose();
   }, [handleNewUserDataStorageVisibilityGroupFormDialogClose]);
 
+  const handleSuccessfullyOpenedNewlyAddedUserDataStorageVisibilityGroup = useCallback((): void => {
+    // No-op
+  }, []);
+
   // Open visibility group
   const handleOpenUserDataStorageVisibilityGroupButtonClick = useCallback((): void => {
     appLogger.debug("Open User Data Storage Visibility Group button clicked.");
@@ -101,6 +105,7 @@ const UserDataStorageVisibilityGroupsPage: FC = () => {
       <NewUserDataStorageVisibilityGroupFormDialog
         userIdToAddTo={userDataStoragesLayoutRootContext.signedInUser.userId}
         onAddedSuccessfully={handleSuccessfullyAddedNewUserDataStorageVisibilityGroup}
+        onOpenedSuccessfully={handleSuccessfullyOpenedNewlyAddedUserDataStorageVisibilityGroup}
         open={isNewUserDataStorageVisibilityGroupFormDialogOpen}
         onClose={handleNewUserDataStorageVisibilityGroupFormDialogClose}
       />

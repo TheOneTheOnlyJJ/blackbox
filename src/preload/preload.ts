@@ -281,6 +281,11 @@ const USER_API: IUserAPI = {
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL, encryptedUserDataStorageVisibilityGroupsOpenRequestDTO) as IPCAPIResponse<number>;
   },
+  closeUserDataStorageVisibilityGroups: (userDataStorageVisibilityGroupIds: string[]): IPCAPIResponse<number> => {
+    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.closeUserDataStorageVisibilityGroups;
+    sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
+    return ipcRenderer.sendSync(CHANNEL, userDataStorageVisibilityGroupIds) as IPCAPIResponse<number>;
+  },
   getUserAccountStorageInfo: (): IPCAPIResponse<IUserAccountStorageInfo | null> => {
     const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.getUserAccountStorageInfo;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);

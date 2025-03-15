@@ -80,11 +80,11 @@ const OpenUserDataStorageVisibilityGroupForm: FC<IOpenUserDataStorageVisibilityG
                   message: `Opened ${OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS_RESPONSE.data.toString()} new User Data Storage Visibility Group${
                     OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS_RESPONSE.data === 1 ? "" : "s"
                   }.`,
-                  variant: "success"
+                  variant: "info"
                 });
                 onOpenedSuccessfully();
               } else {
-                enqueueSnackbar({ message: "No new User Data Storage Visibility Group opened.", variant: "error" });
+                enqueueSnackbar({ message: "No new User Data Storage Visibility Group opened.", variant: "info" });
               }
             } else {
               enqueueSnackbar({ message: "Error opening User Data Storage Visibility Group.", variant: "error" });

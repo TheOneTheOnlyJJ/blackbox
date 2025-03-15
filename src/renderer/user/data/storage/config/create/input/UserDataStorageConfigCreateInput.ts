@@ -5,6 +5,7 @@ import {
   UserDataStorageBackendConfigCreateInput
 } from "../../../backend/config/create/input/UserDataStorageBackendConfigCreateInput";
 import { UiSchema } from "@rjsf/utils";
+import RJSFSelectOpenUserDataStorageVisibilityGroupWidget from "@renderer/components/RJSFWidgets/RJSFSelectOpenUserDataStorageVisibilityGroupWidget";
 
 export interface IUserDataStorageConfigCreateInput {
   name: string;
@@ -32,6 +33,10 @@ export const USER_DATA_STORAGE_CONFIG_CREATE_INPUT_UI_SCHEMA: UiSchema<IUserData
   description: {
     "ui:widget": "textarea"
   },
-  // TODO: Add RJSF widget for this
+  visibilityGroupId: {
+    "ui:title": "Visibility Group",
+    "ui:description": "DESCRIPTIOPN", // TODO: Add this, with markdown
+    "ui:widget": RJSFSelectOpenUserDataStorageVisibilityGroupWidget
+  },
   backendConfigCreateInput: USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_UI_SCHEMA
 } as const;

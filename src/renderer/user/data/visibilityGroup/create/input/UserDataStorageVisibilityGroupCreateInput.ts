@@ -7,6 +7,7 @@ export interface IUserDataStorageVisibilityGroupCreateInput {
   password: string;
   confirmPassword: string;
   description?: string;
+  openAfterCreating: boolean;
 }
 
 export const USER_DATA_STORAGE_VISIBILITY_GROUP_CREATE_INPUT_JSON_SCHEMA: JSONSchemaType<IUserDataStorageVisibilityGroupCreateInput> = {
@@ -16,9 +17,10 @@ export const USER_DATA_STORAGE_VISIBILITY_GROUP_CREATE_INPUT_JSON_SCHEMA: JSONSc
     name: { type: "string", title: "Name" },
     password: { type: "string", title: "Password" },
     confirmPassword: { type: "string", title: "Confirm Password" },
-    description: { type: "string", title: "Description", nullable: true }
+    description: { type: "string", title: "Description", nullable: true },
+    openAfterCreating: { type: "boolean", title: "Open After Creating" }
   },
-  required: ["name", "password", "confirmPassword"],
+  required: ["name", "password", "confirmPassword", "openAfterCreating"],
   additionalProperties: false
 } as const;
 
@@ -37,5 +39,8 @@ export const USER_DATA_STORAGE_VISIBILITY_GROUP_CREATE_INPUT_UI_SCHEMA: UiSchema
   confirmPassword: {
     "ui:title": "Confirm Password",
     "ui:widget": RJSFPasswordWidget
+  },
+  openAfterCreating: {
+    "ui:description": "Will open all visibility groups with the same password."
   }
 } as const;

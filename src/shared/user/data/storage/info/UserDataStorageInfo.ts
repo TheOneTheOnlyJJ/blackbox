@@ -14,7 +14,7 @@ export const USER_DATA_STORAGE_INFO_JSON_SCHEMA_CONSTANTS = {
   storageId: { title: "Storage ID", format: "uuid" },
   name: { title: "Name" },
   description: { title: "Description" },
-  visibilityGroupName: { title: "Visibility Group Name" },
+  visibilityGroupName: { title: "Visibility Group" },
   type: { title: "Type" },
   isOpen: { title: "Is Open" }
 } as const;

@@ -59,8 +59,9 @@ export abstract class BaseUserAccountStorageBackend<T extends IBaseUserAccountSt
     excludeIds: UUID[] | null;
   }): IStorageSecuredUserDataStorageVisibilityGroup[];
   public abstract getStorageSecuredUserDataStorageVisibilityGroupForConfigId(
+    userId: UUID,
     userDataStorageConfigId: UUID
-  ): IStorageSecuredUserDataStorageVisibilityGroup;
+  ): IStorageSecuredUserDataStorageVisibilityGroup | null;
 
   private isConfigValid(): boolean {
     this.logger.debug("Validating User Acount Storage Backend Config.");

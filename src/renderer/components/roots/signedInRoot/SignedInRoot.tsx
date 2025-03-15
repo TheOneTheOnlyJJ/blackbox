@@ -12,7 +12,14 @@ import {
   USER_DATA_STORAGES_INFO_CHANGED_DIFF_VALIDATE_FUNCTION
 } from "@shared/user/data/storage/info/UserDataStoragesInfoChangedDiff";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
-import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
+import {
+  IUserDataStorageVisibilityGroupInfo,
+  LIST_OF_USER_DATA_STORAGES_VISIBILITY_GROUP_INFO_VALIDATE_FUNCTION
+} from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
+import {
+  IUserDataStorageVisibilityGroupsInfoChangedDiff,
+  USER_DATA_STORAGES_VISIBILITY_GROUPS_INFO_CHANGED_DIFF_VALIDATE_FUNCTION
+} from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfoChangedDiff";
 
 const DEFAULT_FORBIDDEN_LOCATION_NAME = "this";
 
@@ -76,7 +83,7 @@ const SignedInRoot: FC = () => {
     // Monitor changes to User Data Storages Info
     const removeUserDataStoragesChangedListener: () => void = window.userAPI.onUserDataStoragesChanged(
       (encryptedUserDataStoragesInfoChangedDiff: IEncryptedData<IUserDataStoragesInfoChangedDiff>): void => {
-        window.IPCTLSAPI.decryptAndValidateJSON(
+        window.IPCTLSAPI.decryptAndValidateJSON<IUserDataStoragesInfoChangedDiff>(
           encryptedUserDataStoragesInfoChangedDiff,
           USER_DATA_STORAGES_INFO_CHANGED_DIFF_VALIDATE_FUNCTION,
           "User Data Storages Info Changed Diff"
@@ -85,8 +92,8 @@ const SignedInRoot: FC = () => {
             (userDataStoragesInfoChangedDiff: IUserDataStoragesInfoChangedDiff): void => {
               setUserDataStoragesInfo((prevUserDataStoragesInfo: IUserDataStorageInfo[]): IUserDataStorageInfo[] => {
                 return [
-                  ...prevUserDataStoragesInfo.filter((config: IUserDataStorageInfo): boolean => {
-                    return !userDataStoragesInfoChangedDiff.deleted.includes(config.storageId);
+                  ...prevUserDataStoragesInfo.filter((configInfo: IUserDataStorageInfo): boolean => {
+                    return !userDataStoragesInfoChangedDiff.deleted.includes(configInfo.storageId);
                   }),
                   ...userDataStoragesInfoChangedDiff.added
                 ];
@@ -105,9 +112,76 @@ const SignedInRoot: FC = () => {
           });
       }
     );
+    // Get all Open User Data Storage Visibility Groups
+    const GET_ALL_SIGNED_IN_USER_OPEN_DATA_STORAGE_VISIBILITY_GROUPS_INFO_RESPONSE: IPCAPIResponse<
+      IEncryptedData<IUserDataStorageVisibilityGroupInfo[]>
+    > = window.userAPI.getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo();
+    if (GET_ALL_SIGNED_IN_USER_OPEN_DATA_STORAGE_VISIBILITY_GROUPS_INFO_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
+      appLogger.error(
+        `Could not get all signed in user's open User Data Storage Visibility Groups Info! Reason: ${GET_ALL_SIGNED_IN_USER_OPEN_DATA_STORAGE_VISIBILITY_GROUPS_INFO_RESPONSE.error}!`
+      );
+      enqueueSnackbar({ message: "Error getting open data storage visibility groups' information.", variant: "error" });
+    } else {
+      window.IPCTLSAPI.decryptAndValidateJSON<IUserDataStorageVisibilityGroupInfo[]>(
+        GET_ALL_SIGNED_IN_USER_OPEN_DATA_STORAGE_VISIBILITY_GROUPS_INFO_RESPONSE.data,
+        LIST_OF_USER_DATA_STORAGES_VISIBILITY_GROUP_INFO_VALIDATE_FUNCTION,
+        "all signed in user's open User Data Storage Visibility Groups Info"
+      )
+        .then(
+          (allSignedInUserOpenDataStorageVisibilityGroupsInfo: IUserDataStorageVisibilityGroupInfo[]): void => {
+            setOpenUserDataStorageVisibilityGroupsInfo(allSignedInUserOpenDataStorageVisibilityGroupsInfo);
+          },
+          (reason: unknown): void => {
+            const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
+            appLogger.error(`Could not decrypt all signed in user's open User Data Storage Visibility Groups Info. Reason: ${REASON_MESSAGE}.`);
+            enqueueSnackbar({ message: "Error decrypting open data storage visibility groups' information.", variant: "error" });
+          }
+        )
+        .catch((error: unknown): void => {
+          const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
+          appLogger.error(`Could not decrypt all signed in user's open User Data Storage Visibility Groups Info. Reason: ${ERROR_MESSAGE}.`);
+          enqueueSnackbar({ message: "Error decrypting open data storage visibility groups' information.", variant: "error" });
+        });
+    }
+    // Monitor changes to User Data Storage Visibility Groups Info
+    const removeOpenUserDataStorageVisibilityGroupsChangedListener: () => void = window.userAPI.onOpenUserDataStorageVisibilityGroupsChanged(
+      (encryptedOpenUserDataStorageVisibilityGroupsInfoChangedDiff: IEncryptedData<IUserDataStorageVisibilityGroupsInfoChangedDiff>): void => {
+        window.IPCTLSAPI.decryptAndValidateJSON<IUserDataStorageVisibilityGroupsInfoChangedDiff>(
+          encryptedOpenUserDataStorageVisibilityGroupsInfoChangedDiff,
+          USER_DATA_STORAGES_VISIBILITY_GROUPS_INFO_CHANGED_DIFF_VALIDATE_FUNCTION,
+          "User Data Storage Visibility Groups Info Changed Diff"
+        )
+          .then(
+            (openUserDataStorageVisibilityGroupsInfoChangedDiff: IUserDataStorageVisibilityGroupsInfoChangedDiff): void => {
+              setOpenUserDataStorageVisibilityGroupsInfo(
+                (prevOpenUserDataStorageVisibilityGroupsInfo: IUserDataStorageVisibilityGroupInfo[]): IUserDataStorageVisibilityGroupInfo[] => {
+                  return [
+                    ...prevOpenUserDataStorageVisibilityGroupsInfo.filter((visibilityGroupInfo: IUserDataStorageVisibilityGroupInfo): boolean => {
+                      return !openUserDataStorageVisibilityGroupsInfoChangedDiff.deleted.includes(visibilityGroupInfo.visibilityGroupId);
+                    }),
+                    ...openUserDataStorageVisibilityGroupsInfoChangedDiff.added
+                  ];
+                }
+              );
+            },
+            (reason: unknown): void => {
+              const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
+              appLogger.error(`Could not decrypt open User Data Storage Visibility Groups Info Changed Diff. Reason: ${REASON_MESSAGE}.`);
+              enqueueSnackbar({ message: "Error decrypting open data storage visibility groups' information changes.", variant: "error" });
+            }
+          )
+          .catch((reason: unknown): void => {
+            const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
+            appLogger.error(`Could not decrypt User Data Storage Visibility Groups Info Changed Diff. Reason: ${REASON_MESSAGE}.`);
+            enqueueSnackbar({ message: "Error decrypting open data storage visibility groups' information changes.", variant: "error" });
+          });
+      }
+    );
+
     return (): void => {
       appLogger.debug("Removing Signed In Root event listeners.");
       removeUserDataStoragesChangedListener();
+      removeOpenUserDataStorageVisibilityGroupsChangedListener();
     };
   }, []);
 

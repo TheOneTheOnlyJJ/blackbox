@@ -14,6 +14,7 @@ import { customizeValidator } from "@rjsf/validator-ajv8";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { IUserDataStorageVisibilityGroupCreateDTO } from "@shared/user/data/storage/visibilityGroup/create/DTO/UserDataStorageVisibilityGroupCreateDTO";
+import { IUserDataStorageVisibilityGroupsOpenRequestDTO } from "@shared/user/data/storage/visibilityGroup/openRequest/DTO/UserDataStorageVisibilityGroupsOpenRequestDTO";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 import { enqueueSnackbar } from "notistack";
 import { Dispatch, FC, SetStateAction, useCallback } from "react";
@@ -40,15 +41,18 @@ export interface INewUserDataStorageVisibilityGroupFormProps {
   formRef: FormProps["ref"];
   userIdToAddTo: string;
   onAddedSuccessfully: () => void;
+  onOpenedSuccessfully: () => void;
   renderSubmitButton: boolean;
   isAddUserDataStorageVisibilityGroupPending: boolean;
   setIsAddUserDataStorageVisibilityGroupPending: Dispatch<SetStateAction<boolean>>;
 }
 
+// TODO: Disallow duplicate visibility group names and Public visibility group name
+// TODO: Both here and on the main process side
 const NewUserDataStorageVisibilityGroupForm: FC<INewUserDataStorageVisibilityGroupFormProps> = (
   props: INewUserDataStorageVisibilityGroupFormProps
 ) => {
-  const { userIdToAddTo, onAddedSuccessfully } = props;
+  const { userIdToAddTo, onAddedSuccessfully, onOpenedSuccessfully } = props;
 
   const handleFormSubmit = useCallback(
     (data: IChangeEvent<IUserDataStorageVisibilityGroupCreateInput>): void => {
@@ -63,6 +67,7 @@ const NewUserDataStorageVisibilityGroupForm: FC<INewUserDataStorageVisibilityGro
         enqueueSnackbar({ message: "Missing form data.", variant: "error" });
         return;
       }
+      const DO_OPEN_AFTER_CREATING: boolean = data.formData.openAfterCreating;
       const USER_DATA_STORAGE_VISIBILITY_GROUP_CREATE_DTO: IUserDataStorageVisibilityGroupCreateDTO =
         userDataStorageVisibilityGroupCreateInputToUserDataStorageVisibilityGroupCreateDTO(userIdToAddTo, data.formData, appLogger);
       window.IPCTLSAPI.encrypt<IUserDataStorageVisibilityGroupCreateDTO>(
@@ -70,7 +75,7 @@ const NewUserDataStorageVisibilityGroupForm: FC<INewUserDataStorageVisibilityGro
         "User Data Storage Visibility Group Create DTO"
       )
         .then(
-          (encryptedUserDataStorageVisibilityGroupCreateDTO: IEncryptedData<IUserDataStorageVisibilityGroupCreateDTO>): void => {
+          async (encryptedUserDataStorageVisibilityGroupCreateDTO: IEncryptedData<IUserDataStorageVisibilityGroupCreateDTO>): Promise<void> => {
             const ADD_USER_DATA_STORAGE_VISIBILITY_GROUP_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.addUserDataStorageVisibilityGroup(
               encryptedUserDataStorageVisibilityGroupCreateDTO
             );
@@ -78,6 +83,39 @@ const NewUserDataStorageVisibilityGroupForm: FC<INewUserDataStorageVisibilityGro
               if (ADD_USER_DATA_STORAGE_VISIBILITY_GROUP_RESPONSE.data) {
                 enqueueSnackbar({ message: "Added User Data Storage Visibility Group.", variant: "success" });
                 onAddedSuccessfully();
+                if (DO_OPEN_AFTER_CREATING) {
+                  try {
+                    const ENCRYPTED_USER_DATA_STORAGE_VISIBILITY_GROUP_OPEN_REQUEST_DTO: IEncryptedData<IUserDataStorageVisibilityGroupsOpenRequestDTO> =
+                      await window.IPCTLSAPI.encrypt<IUserDataStorageVisibilityGroupsOpenRequestDTO>(
+                        {
+                          userIdToOpenFor: userIdToAddTo,
+                          password: USER_DATA_STORAGE_VISIBILITY_GROUP_CREATE_DTO.password
+                        } satisfies IUserDataStorageVisibilityGroupsOpenRequestDTO,
+                        "newly created User Data Storage Visibility Group Open Request DTO"
+                      );
+                    const OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS_RESPONSE: IPCAPIResponse<number> =
+                      window.userAPI.openUserDataStorageVisibilityGroups(ENCRYPTED_USER_DATA_STORAGE_VISIBILITY_GROUP_OPEN_REQUEST_DTO);
+                    if (OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
+                      if (OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS_RESPONSE.data > 0) {
+                        enqueueSnackbar({
+                          message: `Opened ${OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS_RESPONSE.data.toString()} new User Data Storage Visibility Group${
+                            OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS_RESPONSE.data === 1 ? "" : "s"
+                          }.`,
+                          variant: "success"
+                        });
+                        onOpenedSuccessfully();
+                      } else {
+                        enqueueSnackbar({ message: "No new User Data Storage Visibility Group opened.", variant: "error" });
+                      }
+                    } else {
+                      enqueueSnackbar({ message: "Error opening User Data Storage Visibility Group.", variant: "error" });
+                    }
+                  } catch (error: unknown) {
+                    const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
+                    appLogger.error(`Could not open newly created User Data Storage Visibility Group. Reason: ${ERROR_MESSAGE}.`);
+                    enqueueSnackbar({ message: "User Data Storage Visibility Group open error.", variant: "error" });
+                  }
+                }
               } else {
                 enqueueSnackbar({ message: "Could not add User Data Storage Visibility Group.", variant: "error" });
               }
@@ -100,7 +138,7 @@ const NewUserDataStorageVisibilityGroupForm: FC<INewUserDataStorageVisibilityGro
           props.setIsAddUserDataStorageVisibilityGroupPending(false);
         });
     },
-    [userIdToAddTo, onAddedSuccessfully, props]
+    [props, userIdToAddTo, onAddedSuccessfully, onOpenedSuccessfully]
   );
 
   return (
