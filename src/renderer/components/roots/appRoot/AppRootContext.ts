@@ -1,9 +1,9 @@
-import { IPublicSignedInUser } from "@shared/user/account/PublicSignedInUser";
+import { ISignedInUserInfo } from "@shared/user/account/SignedInUserInfo";
 import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserAccountStorageInfo";
 import { useOutletContext } from "react-router-dom";
 
 export interface IAppRootContext {
-  signedInUser: IPublicSignedInUser | null;
+  signedInUserInfo: ISignedInUserInfo | null;
   signedInNavigationEntryIndex: number;
   userAccountStorageInfo: IUserAccountStorageInfo | null;
   isIPCTLSReady: {

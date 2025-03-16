@@ -37,7 +37,7 @@ import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserA
 import { SettingsManager } from "./settings/SettingsManager";
 import { BaseSettings } from "./settings/BaseSettings";
 import { SettingsManagerConfig } from "./settings/SettingsManagerConfig";
-import { IPublicSignedInUser } from "@shared/user/account/PublicSignedInUser";
+import { ISignedInUserInfo } from "@shared/user/account/SignedInUserInfo";
 import { IUserDataStoragesInfoChangedDiff } from "@shared/user/data/storage/info/UserDataStoragesInfoChangedDiff";
 import { encryptWithAES } from "./utils/encryption/encryptWithAES";
 import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
@@ -324,7 +324,7 @@ export class App {
         return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
-    handleSignOut: (): IPCAPIResponse<IPublicSignedInUser | null> => {
+    handleSignOut: (): IPCAPIResponse<ISignedInUserInfo | null> => {
       try {
         return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userManager.signOutUser() };
       } catch (error: unknown) {
@@ -381,9 +381,9 @@ export class App {
         return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
-    handleGetSignedInUser: (): IPCAPIResponse<IPublicSignedInUser | null> => {
+    handleGetSignedInUserInfo: (): IPCAPIResponse<ISignedInUserInfo | null> => {
       try {
-        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userManager.getPublicSignedInUser() };
+        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userManager.getSignedInUserInfo() };
       } catch (error: unknown) {
         const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
         this.UserAPILogger.error(`Get signed in user error: ${ERROR_MESSAGE}!`);
@@ -563,15 +563,15 @@ export class App {
       this.UserAPILogger.debug(`Messaging renderer on channel: "${CHANNEL}".`);
       this.window.webContents.send(CHANNEL, newIsUserAccountStorageOpen);
     },
-    sendSignedInUserChanged: (newPublicSignedInUser: IPublicSignedInUser | null): void => {
-      this.UserAPILogger.debug(`Sending window public signed in user after change: ${JSON.stringify(newPublicSignedInUser, null, 2)}.`);
+    sendSignedInUserChanged: (newSignedInUserInfo: ISignedInUserInfo | null): void => {
+      this.UserAPILogger.debug(`Sending window signed in user info after change: ${JSON.stringify(newSignedInUserInfo, null, 2)}.`);
       if (this.window === null) {
         this.UserAPILogger.debug("Window is null. No-op.");
         return;
       }
       const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.onSignedInUserChanged;
       this.UserAPILogger.debug(`Messaging renderer on channel: "${CHANNEL}".`);
-      this.window.webContents.send(CHANNEL, newPublicSignedInUser);
+      this.window.webContents.send(CHANNEL, newSignedInUserInfo);
     },
     sendAvailableUserDataStoragesChanged: (availableUserDataStoragesInfoChangedDiff: IUserDataStoragesInfoChangedDiff): void => {
       this.UserAPILogger.debug(
@@ -1022,9 +1022,9 @@ export class App {
       this.UserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.signOut}".`);
       event.returnValue = this.USER_API_HANDLERS.handleSignOut();
     });
-    ipcMain.on(USER_API_IPC_CHANNELS.getSignedInUser, (event: IpcMainEvent): void => {
-      this.UserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.getSignedInUser}".`);
-      event.returnValue = this.USER_API_HANDLERS.handleGetSignedInUser();
+    ipcMain.on(USER_API_IPC_CHANNELS.getSignedInUserInfo, (event: IpcMainEvent): void => {
+      this.UserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.getSignedInUserInfo}".`);
+      event.returnValue = this.USER_API_HANDLERS.handleGetSignedInUserInfo();
     });
     ipcMain.on(
       USER_API_IPC_CHANNELS.addUserDataStorageConfig,

@@ -33,7 +33,7 @@ const newUserDataStorageVisibilityGroupFormValidator: CustomValidator<IUserDataS
     return errors;
   }
   if (formData.name.toLowerCase() === PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS.name.toLowerCase()) {
-    errors.name.addError('Naming a Visibility Group "Public" is forbidden. Why would you even attempt to do that?');
+    errors.name.addError('"Public" is a reserved Visibility Group name. Try something else.');
   } else {
     const IS_DATA_VISIBILITY_GROUP_AVAILABLE_RESPONSE: IPCAPIResponse<boolean> =
       window.userAPI.isUserDataStorageVisibilityGroupNameAvailableForSignedInUser(formData.name);

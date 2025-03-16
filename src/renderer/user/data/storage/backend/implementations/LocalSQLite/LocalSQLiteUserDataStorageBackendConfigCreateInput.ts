@@ -1,7 +1,7 @@
 import { JSONSchemaType } from "ajv";
 import { IBaseUserDataStorageBackendConfigCreateInput } from "../../config/create/input/BaseUserDataStorageBackendConfigCreateInput";
 import { UiSchema } from "@rjsf/utils";
-import { LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/backend/implementations/LocalSQLite/LocalSQLiteUserDataStorageBackendConfigConstants";
+import { LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/backend/constants/implementations/LocalSQLite/LocalSQLiteUserDataStorageBackendConstants";
 import { USER_DATA_STORAGE_BACKEND_TYPES, UserDataStorageBackendTypes } from "@shared/user/data/storage/backend/UserDataStorageBackendType";
 import RJSFDirectoryPickerWidget from "@renderer/components/RJSFWidgets/RJSFDirectoryPickerWidget";
 
@@ -20,15 +20,15 @@ export const LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_JSON_SCH
         type: "string",
         enum: [USER_DATA_STORAGE_BACKEND_TYPES.LocalSQLite],
         default: USER_DATA_STORAGE_BACKEND_TYPES.LocalSQLite,
-        ...LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS.type
+        ...LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS.type
       },
       dbDirPath: {
         type: "string",
-        ...LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS.dbDirPath
+        ...LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS.dbDirPath
       },
       dbFileName: {
         type: "string",
-        ...LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS.dbFileName
+        ...LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS.dbFileName
       }
     },
     required: ["type", "dbDirPath", "dbFileName"],
@@ -36,7 +36,7 @@ export const LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_JSON_SCH
   } as const;
 
 export const LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_UI_SCHEMA: UiSchema<ILocalSQLiteUserDataStorageBackendConfigCreateInput> = {
-  "ui:title": "Local SQLite",
+  "ui:title": LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS.type.title,
   "ui:options": {
     label: false
   },
@@ -44,7 +44,7 @@ export const LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_UI_SCHEM
     "ui:widget": "hidden"
   },
   dbDirPath: {
-    "ui:title": LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS.dbDirPath.title,
+    "ui:title": LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS.dbDirPath.title,
     "ui:description": "Absolute folder path at which the SQLite file will be created",
     "ui:widget": RJSFDirectoryPickerWidget,
     "ui:options": {

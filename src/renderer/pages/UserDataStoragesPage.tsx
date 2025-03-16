@@ -40,7 +40,7 @@ const UserDataStoragesPage: FC = () => {
 
   useEffect((): void => {
     userDataStoragesLayoutRootContext.setDashboardNavigationArea(DASHBOARD_NAVIGATION_AREAS.userDataStorages);
-    userDataStoragesLayoutRootContext.setUserStoragesNavigationArea(USER_DATA_STORAGES_NAVIGATION_AREAS.storages);
+    userDataStoragesLayoutRootContext.setUserStoragesNavigationArea(USER_DATA_STORAGES_NAVIGATION_AREAS.availableStorages);
     userDataStoragesLayoutRootContext.setAppBarTitle("Available Data Storages");
     userDataStoragesLayoutRootContext.setForbiddenLocationName("Available Data Storages");
   }, [userDataStoragesLayoutRootContext]);
@@ -71,7 +71,7 @@ const UserDataStoragesPage: FC = () => {
         }
       </Box>
       <NewUserDataStorageConfigFormDialog
-        userIdToAddTo={userDataStoragesLayoutRootContext.signedInUser.userId}
+        userIdToAddTo={userDataStoragesLayoutRootContext.signedInUserInfo.userId}
         onAddedSuccessfully={handleSuccessfullyAddedNewUserDataStorageConfig}
         open={isNewUserDataStorageConfigFormDialogOpen}
         onClose={handleNewUserDataStorageConfigFormDialogClose}

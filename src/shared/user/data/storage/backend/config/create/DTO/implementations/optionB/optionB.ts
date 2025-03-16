@@ -1,6 +1,7 @@
 import { JSONSchemaType } from "ajv";
-import { IBaseUserDataStorageBackendConfigCreateDTO } from "../../config/create/DTO/BaseUserDataStorageBackendConfigCreateDTO";
-import { USER_DATA_STORAGE_BACKEND_TYPES, UserDataStorageBackendTypes } from "../../UserDataStorageBackendType";
+import { IBaseUserDataStorageBackendConfigCreateDTO } from "../../BaseUserDataStorageBackendConfigCreateDTO";
+import { USER_DATA_STORAGE_BACKEND_TYPES, UserDataStorageBackendTypes } from "@shared/user/data/storage/backend/UserDataStorageBackendType";
+import { OPTION_B_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS } from "../../../../../constants/implementations/optionB/OptionBUserDataStorageBackendConstants";
 
 export interface IOptionBUserDataStorageBackendConfigCreateDTO extends IBaseUserDataStorageBackendConfigCreateDTO {
   type: UserDataStorageBackendTypes["OptionB"];
@@ -13,12 +14,12 @@ export const OPTION_B_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_DTO_JSON_SCHEMA: J
     type: {
       type: "string",
       enum: [USER_DATA_STORAGE_BACKEND_TYPES.OptionB],
-      default: USER_DATA_STORAGE_BACKEND_TYPES.OptionB
+      default: USER_DATA_STORAGE_BACKEND_TYPES.OptionB,
+      ...OPTION_B_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS.type
     },
     optionB: {
       type: "string",
-      title: "OPTION B TITLE",
-      minLength: 1
+      ...OPTION_B_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS.optionB
     }
   },
   required: ["type", "optionB"],

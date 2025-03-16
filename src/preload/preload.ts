@@ -16,7 +16,7 @@ import { IIPCTLSBootstrapAPI, IPC_TLS_BOOTSTRAP_API_IPC_CHANNELS } from "@shared
 import { LogLevel, LogMessage } from "electron-log";
 import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserAccountStorageInfo";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
-import { IPublicSignedInUser } from "@shared/user/account/PublicSignedInUser";
+import { ISignedInUserInfo } from "@shared/user/account/SignedInUserInfo";
 import { IV_LENGTH } from "@shared/encryption/constants";
 import { ValidateFunction } from "ajv";
 import { IUserSignUpDTO } from "@shared/user/account/UserSignUpDTO";
@@ -232,10 +232,10 @@ const USER_API: IUserAPI = {
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL, encryptedUserSignInDTO) as IPCAPIResponse<boolean>;
   },
-  signOut: (): IPCAPIResponse<IPublicSignedInUser | null> => {
+  signOut: (): IPCAPIResponse<ISignedInUserInfo | null> => {
     const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.signOut;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
-    return ipcRenderer.sendSync(CHANNEL) as IPCAPIResponse<IPublicSignedInUser | null>;
+    return ipcRenderer.sendSync(CHANNEL) as IPCAPIResponse<ISignedInUserInfo | null>;
   },
   isUserAccountStorageOpen: (): IPCAPIResponse<boolean> => {
     const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.isUserAccountStorageOpen;
@@ -262,10 +262,10 @@ const USER_API: IUserAPI = {
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL, userId) as IPCAPIResponse<string | null>;
   },
-  getSignedInUser: (): IPCAPIResponse<IPublicSignedInUser | null> => {
-    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.getSignedInUser;
+  getSignedInUserInfo: (): IPCAPIResponse<ISignedInUserInfo | null> => {
+    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.getSignedInUserInfo;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
-    return ipcRenderer.sendSync(CHANNEL) as IPCAPIResponse<IPublicSignedInUser | null>;
+    return ipcRenderer.sendSync(CHANNEL) as IPCAPIResponse<ISignedInUserInfo | null>;
   },
   addUserDataStorageConfig: (encryptedUserDataStorageConfigCreateDTO: IEncryptedData<IUserDataStorageConfigCreateDTO>): IPCAPIResponse<boolean> => {
     const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.addUserDataStorageConfig;
@@ -335,9 +335,9 @@ const USER_API: IUserAPI = {
   onSignedInUserChanged: (callback: SignedInUserChangedCallback): (() => void) => {
     const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.onSignedInUserChanged;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Adding listener from main on channel: "${CHANNEL}".`);
-    const LISTENER = (_: IpcRendererEvent, newPublicSignedInUser: IPublicSignedInUser | null): void => {
+    const LISTENER = (_: IpcRendererEvent, newSignedInUserInfo: ISignedInUserInfo | null): void => {
       sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Received message from main on channel: "${CHANNEL}".`);
-      callback(newPublicSignedInUser);
+      callback(newSignedInUserInfo);
     };
     ipcRenderer.on(CHANNEL, LISTENER);
     return (): void => {

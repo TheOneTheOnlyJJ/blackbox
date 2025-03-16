@@ -6,7 +6,7 @@ import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { enqueueSnackbar } from "notistack";
 import log, { LogFunctions } from "electron-log";
-import { IPublicSignedInUser } from "@shared/user/account/PublicSignedInUser";
+import { ISignedInUserInfo } from "@shared/user/account/SignedInUserInfo";
 
 const signOutPageLogger: LogFunctions = log.scope("renderer-sign-out-page");
 
@@ -14,7 +14,7 @@ const SignOutPage: FC = () => {
   useEffect((): void => {
     // TODO: Delete comment
     // setTimeout(() => {
-    const SIGN_OUT_RESPONSE: IPCAPIResponse<IPublicSignedInUser | null> = window.userAPI.signOut();
+    const SIGN_OUT_RESPONSE: IPCAPIResponse<ISignedInUserInfo | null> = window.userAPI.signOut();
     if (SIGN_OUT_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
       if (SIGN_OUT_RESPONSE.data === null) {
         signOutPageLogger.warn("No user was signed in.");

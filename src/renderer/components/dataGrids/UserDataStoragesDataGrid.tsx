@@ -17,8 +17,16 @@ const USER_DATA_STORAGES_DATA_GRID_COLUMNS: GridColDef[] = [
       return params.value === null ? <em>{PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS.name}</em> : params.value;
     }
   },
-  { field: "type", type: "string", headerName: USER_DATA_STORAGE_INFO_JSON_SCHEMA_CONSTANTS.type.title },
+  {
+    field: "type",
+    type: "string",
+    headerName: "Type",
+    valueGetter: (_: never, row: IUserDataStorageInfo): string => {
+      return row.backend.type;
+    }
+  },
   { field: "isOpen", type: "boolean", headerName: USER_DATA_STORAGE_INFO_JSON_SCHEMA_CONSTANTS.isOpen.title }
+  // TODO: Add master detail row (pro feature)
 ];
 
 const UserDataStoragesDataGrid: FC = () => {

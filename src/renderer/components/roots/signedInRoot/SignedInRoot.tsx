@@ -185,12 +185,12 @@ const SignedInRoot: FC = () => {
     };
   }, []);
 
-  return appRootContext.signedInUser !== null ? (
+  return appRootContext.signedInUserInfo !== null ? (
     <Outlet
       context={
         {
           ...appRootContext,
-          signedInUser: appRootContext.signedInUser,
+          signedInUserInfo: appRootContext.signedInUserInfo,
           userDataStoragesInfo: availableUserDataStoragesInfo,
           openUserDataStorageVisibilityGroupsInfo: openUserDataStorageVisibilityGroupsInfo,
           setForbiddenLocationName: URIencodeAndSetForbiddenLocationName

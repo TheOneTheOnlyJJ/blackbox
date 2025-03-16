@@ -3,6 +3,7 @@ import Ajv, { JSONSchemaType } from "ajv";
 import { IBaseUserDataStorageBackendConfig } from "../../config/BaseUserDataStorageBackendConfig";
 import { BaseUserDataStorageBackend } from "../../BaseUserDataStorageBackend";
 import { LogFunctions } from "electron-log";
+import { OPTION_B_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/backend/constants/implementations/optionB/OptionBUserDataStorageBackendConstants";
 
 export interface IOptionBUserDataStorageBackendConfig extends IBaseUserDataStorageBackendConfig {
   type: UserDataStorageBackendTypes["OptionB"];
@@ -16,11 +17,12 @@ export class OptionBUserDataStorageBackend extends BaseUserDataStorageBackend<IO
       type: {
         type: "string",
         enum: [USER_DATA_STORAGE_BACKEND_TYPES.OptionB],
-        default: USER_DATA_STORAGE_BACKEND_TYPES.OptionB
+        default: USER_DATA_STORAGE_BACKEND_TYPES.OptionB,
+        ...OPTION_B_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS.type
       },
       optionB: {
         type: "string",
-        minLength: 1
+        ...OPTION_B_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS.optionB
       }
     },
     required: ["type", "optionB"],

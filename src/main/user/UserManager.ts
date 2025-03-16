@@ -10,8 +10,8 @@ import { IUserSignInPayload, USER_SIGN_IN_PAYLOAD_VALIDATE_FUNCTION } from "./ac
 import { IUserSignUpPayload, USER_SIGN_UP_PAYLOAD_VALIDATE_FUNCTION } from "./account/UserSignUpPayload";
 import { UserAccountStorage } from "./account/storage/UserAccountStorage";
 import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserAccountStorageInfo";
-import { signedInUserToPublicSignedInUser } from "./account/utils/signedInUserToPublicSignedInUser";
-import { IPublicSignedInUser } from "@shared/user/account/PublicSignedInUser";
+import { signedInUserToSignedInUserInfo } from "./account/utils/signedInUserToSignedInUserInfo";
+import { ISignedInUserInfo } from "@shared/user/account/SignedInUserInfo";
 import { IStorageSecuredUserDataStorageConfig } from "./data/storage/config/StorageSecuredUserDataStorageConfig";
 import { userDataStorageConfigToSecuredUserDataStorageConfig } from "./data/storage/config/utils/userDataStorageConfigToSecuredUserDataStorageConfig";
 import { securedUserDataStorageConfigToStorageSecuredUserDataStorageConfig } from "./data/storage/config/utils/securedUserDataStorageConfigToStorageSecuredUserDataStorageConfig";
@@ -87,10 +87,10 @@ export class UserManager {
           if (value !== null && !isSignedInUserValid(value)) {
             throw new Error(`Value must be null or a valid signed in user object! No-op set`);
           }
-          const NEW_PUBLIC_SIGNED_IN_USER: IPublicSignedInUser | null = value === null ? null : signedInUserToPublicSignedInUser(value, this.logger);
+          const NEW_SIGNED_IN_USER_INFO: ISignedInUserInfo | null = value === null ? null : signedInUserToSignedInUserInfo(value, this.logger);
           if (isDeepStrictEqual(target[property], value)) {
-            this.logger.warn(`Signed in user already had this value: ${JSON.stringify(NEW_PUBLIC_SIGNED_IN_USER, null, 2)}. No-op set.`);
-            this.onSignedInUserChangedCallback(NEW_PUBLIC_SIGNED_IN_USER);
+            this.logger.warn(`Signed in user already had this value: ${JSON.stringify(NEW_SIGNED_IN_USER_INFO, null, 2)}. No-op set.`);
+            this.onSignedInUserChangedCallback(NEW_SIGNED_IN_USER_INFO);
             return true;
           }
           // Corrupt data encryption key previous value was a signed in user
@@ -104,9 +104,9 @@ export class UserManager {
           if (value === null) {
             this.logger.info("Set signed in user to null (signed out).");
           } else {
-            this.logger.info(`Set signed in user to: ${JSON.stringify(NEW_PUBLIC_SIGNED_IN_USER, null, 2)} (signed in).`);
+            this.logger.info(`Set signed in user to: ${JSON.stringify(NEW_SIGNED_IN_USER_INFO, null, 2)} (signed in).`);
           }
-          this.onSignedInUserChangedCallback(NEW_PUBLIC_SIGNED_IN_USER);
+          this.onSignedInUserChangedCallback(NEW_SIGNED_IN_USER_INFO);
           return true;
         }
       }
@@ -369,7 +369,7 @@ export class UserManager {
   public signInUser(userSignInPayload: IUserSignInPayload): boolean {
     this.logger.debug(`Signing in user: "${userSignInPayload.username}".`);
     if (this.signedInUser.value !== null) {
-      this.logger.warn(`A user is already signed in: "${JSON.stringify(this.getPublicSignedInUser())}".`);
+      this.logger.warn(`A user is already signed in: "${JSON.stringify(this.getSignedInUserInfo())}".`);
     }
     if (this.userAccountStorage.value === null) {
       throw new Error("Null User Account Storage");
@@ -409,7 +409,7 @@ export class UserManager {
     return true;
   }
 
-  public signOutUser(): IPublicSignedInUser | null {
+  public signOutUser(): ISignedInUserInfo | null {
     this.logger.debug("Signing out.");
     if (this.signedInUser.value === null) {
       this.logger.debug("No signed in user.");
@@ -417,16 +417,16 @@ export class UserManager {
     }
     this.logger.debug(`Signing out user: "${this.signedInUser.value.username}".`);
     this.closeUserDataStorageVisibilityGroups(Array.from(this.OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS.keys()));
-    const PUBLIC_SIGNED_OUT_USER: IPublicSignedInUser = signedInUserToPublicSignedInUser(this.signedInUser.value, this.logger);
+    const SIGNED_OUT_USER_INFO: ISignedInUserInfo = signedInUserToSignedInUserInfo(this.signedInUser.value, this.logger);
     this.signedInUser.value = null; // AES key gets corrupted in proxy
-    return PUBLIC_SIGNED_OUT_USER;
+    return SIGNED_OUT_USER_INFO;
   }
 
-  public getPublicSignedInUser(): IPublicSignedInUser | null {
+  public getSignedInUserInfo(): ISignedInUserInfo | null {
     if (this.signedInUser.value === null) {
       return null;
     }
-    return signedInUserToPublicSignedInUser(this.signedInUser.value, this.logger);
+    return signedInUserToSignedInUserInfo(this.signedInUser.value, this.logger);
   }
 
   public getUserAccountStorageInfo(): IUserAccountStorageInfo | null {

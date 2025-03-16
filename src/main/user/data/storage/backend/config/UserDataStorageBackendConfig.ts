@@ -30,8 +30,11 @@ export const USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA: JSONSchemaType<UserDa
   // Sort by keys to ensure the order is the same even if definitions change around
   anyOf: Object.keys(USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_MAP)
     .sort()
-    .reduce<JSONSchemaType<UserDataStorageBackendConfig>[]>((accumulator: JSONSchemaType<UserDataStorageBackendConfig>[], currentValue: string) => {
-      accumulator.push(USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_MAP[currentValue as keyof UserDataStorageBackendConfigJSONSchemaMap]);
-      return accumulator;
-    }, [])
+    .reduce<JSONSchemaType<UserDataStorageBackendConfig>[]>(
+      (accumulator: JSONSchemaType<UserDataStorageBackendConfig>[], currentValue: string): JSONSchemaType<UserDataStorageBackendConfig>[] => {
+        accumulator.push(USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_MAP[currentValue as keyof UserDataStorageBackendConfigJSONSchemaMap]);
+        return accumulator;
+      },
+      []
+    )
 } as const;

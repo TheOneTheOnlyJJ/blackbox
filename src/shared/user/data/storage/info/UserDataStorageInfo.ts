@@ -1,12 +1,13 @@
 import { AJV } from "@shared/utils/AJVJSONValidator";
 import { JSONSchemaType, ValidateFunction } from "ajv";
+import { USER_DATA_STORAGE_BACKEND_INFO_JSON_SCHEMA, UserDataStorageBackendInfo } from "../backend/info/UserDataStorageBackendInfo";
 
 export interface IUserDataStorageInfo {
   storageId: string;
   name: string;
   description: string | null;
   visibilityGroupName: string | null;
-  type: string; // TODO: Add backendConfig and a new type to represent it, with nice titles
+  backend: UserDataStorageBackendInfo;
   isOpen: boolean;
 }
 
@@ -15,7 +16,6 @@ export const USER_DATA_STORAGE_INFO_JSON_SCHEMA_CONSTANTS = {
   name: { title: "Name" },
   description: { title: "Description" },
   visibilityGroupName: { title: "Visibility Group" },
-  type: { title: "Type" },
   isOpen: { title: "Is Open" }
 } as const;
 
@@ -35,10 +35,10 @@ export const USER_DATA_STORAGE_INFO_JSON_SCHEMA: JSONSchemaType<IUserDataStorage
       ...USER_DATA_STORAGE_INFO_JSON_SCHEMA_CONSTANTS.visibilityGroupName,
       nullable: true as false // https://github.com/ajv-validator/ajv/issues/2163#issuecomment-2085689455
     },
-    type: { type: "string", ...USER_DATA_STORAGE_INFO_JSON_SCHEMA_CONSTANTS.type },
+    backend: USER_DATA_STORAGE_BACKEND_INFO_JSON_SCHEMA,
     isOpen: { type: "boolean", ...USER_DATA_STORAGE_INFO_JSON_SCHEMA_CONSTANTS.isOpen }
   },
-  required: ["storageId", "name", "description", "visibilityGroupName", "type", "isOpen"],
+  required: ["storageId", "name", "description", "visibilityGroupName", "backend", "isOpen"],
   additionalProperties: false
 } as const;
 

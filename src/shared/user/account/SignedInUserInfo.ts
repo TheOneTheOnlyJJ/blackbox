@@ -1,11 +1,11 @@
 import { JSONSchemaType } from "ajv";
 
-export interface IPublicSignedInUser {
+export interface ISignedInUserInfo {
   userId: string;
   username: string;
 }
 
-export const PUBLIC_SIGNED_IN_USER_JSON_SCHEMA: JSONSchemaType<IPublicSignedInUser> = {
+export const SIGNED_IN_USER_INFO_JSON_SCHEMA: JSONSchemaType<ISignedInUserInfo> = {
   $schema: "http://json-schema.org/draft-07/schema#",
   type: "object",
   properties: {

@@ -56,7 +56,7 @@ const UserDataStoragesLayoutRoot: FC = () => {
         width={userDataStoragesNavigationBarWidth}
         leftOffset={dashboardLayoutRootContext.layout.dashboardNavigationBarWidth}
         heightOffset={dashboardLayoutRootContext.layout.dashboardAppBarHeight}
-        signedInUserId={dashboardLayoutRootContext.signedInUser.userId}
+        signedInUserId={dashboardLayoutRootContext.signedInUserInfo.userId}
         userStoragesNavigationArea={userStoragesNavigationArea}
       />
       <Box

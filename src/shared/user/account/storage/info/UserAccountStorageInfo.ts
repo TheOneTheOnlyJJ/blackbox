@@ -1,6 +1,8 @@
+import { UserAccountStorageBackendInfo } from "../backend/info/UserAccountStorageBackendInfo";
+
 export interface IUserAccountStorageInfo {
   storageId: string;
   name: string;
-  type: string; // TODO: Add backendConfig
+  backend: UserAccountStorageBackendInfo;
   isOpen: boolean;
 }

@@ -3,15 +3,15 @@ import { USER_DATA_STORAGE_BACKEND_TYPES, UserDataStorageBackendType } from "../
 import {
   ILocalSQLiteUserDataStorageBackendConfigCreateDTO,
   LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_DTO_JSON_SCHEMA
-} from "../../../implementations/LocalSQLite/LocalSQLiteUserDataStorageBackendConfigCreateDTO";
+} from "./implementations/LocalSQLite/LocalSQLiteUserDataStorageBackendConfigCreateDTO";
 import {
   IOptionBUserDataStorageBackendConfigCreateDTO,
   OPTION_B_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_DTO_JSON_SCHEMA
-} from "../../../implementations/optionB/optionB";
+} from "./implementations/optionB/optionB";
 import {
   IOptionCUserDataStorageBackendConfigCreateDTO,
   OPTION_C_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_DTO_JSON_SCHEMA
-} from "../../../implementations/optionC/optionC";
+} from "./implementations/optionC/optionC";
 
 // Map of every user data storage backend type to its corresponding config create DTO type
 export interface IUserDataStorageBackendConfigCreateDTOMap {
@@ -37,7 +37,10 @@ export const USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_DTO_JSON_SCHEMA: JSONSchema
   anyOf: Object.keys(USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_DTO_JSON_SCHEMA_MAP)
     .sort()
     .reduce<JSONSchemaType<UserDataStorageBackendConfigCreateDTO>[]>(
-      (accumulator: JSONSchemaType<UserDataStorageBackendConfigCreateDTO>[], currentValue: string) => {
+      (
+        accumulator: JSONSchemaType<UserDataStorageBackendConfigCreateDTO>[],
+        currentValue: string
+      ): JSONSchemaType<UserDataStorageBackendConfigCreateDTO>[] => {
         accumulator.push(
           USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_DTO_JSON_SCHEMA_MAP[currentValue as keyof UserDataStorageBackendConfigCreateDTOJSONSchemaMap]
         );

@@ -41,7 +41,10 @@ export const USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_JSON_SCHEMA: JSONSche
   anyOf: Object.keys(USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_JSON_SCHEMA_MAP)
     .sort()
     .reduce<JSONSchemaType<UserDataStorageBackendConfigCreateInput>[]>(
-      (accumulator: JSONSchemaType<UserDataStorageBackendConfigCreateInput>[], currentValue: string) => {
+      (
+        accumulator: JSONSchemaType<UserDataStorageBackendConfigCreateInput>[],
+        currentValue: string
+      ): JSONSchemaType<UserDataStorageBackendConfigCreateInput>[] => {
         accumulator.push(
           USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_JSON_SCHEMA_MAP[currentValue as keyof UserDataStorageBackendConfigCreateInputJSONSchemaMap]
         );
@@ -66,7 +69,10 @@ export const USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_UI_SCHEMA: UiSchema<U
   anyOf: Object.keys(USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_UI_SCHEMA_MAP)
     .sort()
     .reduce<UiSchema<UserDataStorageBackendConfigCreateInput>[]>(
-      (accumulator: UiSchema<UserDataStorageBackendConfigCreateInput>[], currentValue: string) => {
+      (
+        accumulator: UiSchema<UserDataStorageBackendConfigCreateInput>[],
+        currentValue: string
+      ): UiSchema<UserDataStorageBackendConfigCreateInput>[] => {
         accumulator.push(
           USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_UI_SCHEMA_MAP[
             currentValue as keyof UserDataStorageBackendConfigCreateInputUiSchemaMap

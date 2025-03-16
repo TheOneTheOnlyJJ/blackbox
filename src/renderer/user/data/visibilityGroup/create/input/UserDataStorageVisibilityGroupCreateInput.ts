@@ -27,14 +27,13 @@ export const USER_DATA_STORAGE_VISIBILITY_GROUP_CREATE_INPUT_JSON_SCHEMA: JSONSc
 
 export const USER_DATA_STORAGE_VISIBILITY_GROUP_CREATE_INPUT_UI_SCHEMA: UiSchema<IUserDataStorageVisibilityGroupCreateInput> = {
   "ui:title": "New Data Storage Visibility Group",
-  name: {
-    "ui:description": "This is required only to differenciate different visibility groups from one another."
-  },
   description: {
     "ui:widget": "textarea"
   },
   password: {
     "ui:title": "Password",
+    "ui:description": "When opening Visibility Groups, **only the password is required**.",
+    "ui:enableMarkdownInDescription": true,
     "ui:widget": RJSFPasswordWidget
   },
   confirmPassword: {
@@ -42,7 +41,7 @@ export const USER_DATA_STORAGE_VISIBILITY_GROUP_CREATE_INPUT_UI_SCHEMA: UiSchema
     "ui:widget": RJSFPasswordWidget
   },
   openAfterCreating: {
-    "ui:description": "Will open the new Visibility Group **and all visibility groups with the same password**.",
+    "ui:help": "Will open the new Visibility Group **and all other visibility groups with the same password**, if any.",
     "ui:enableMarkdownInDescription": true // TODO: Open issue as this does not work
   }
 } as const;

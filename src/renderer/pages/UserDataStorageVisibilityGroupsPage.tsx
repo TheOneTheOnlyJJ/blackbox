@@ -103,14 +103,14 @@ const UserDataStorageVisibilityGroupsPage: FC = () => {
         </Box>
       </Box>
       <NewUserDataStorageVisibilityGroupFormDialog
-        userIdToAddTo={userDataStoragesLayoutRootContext.signedInUser.userId}
+        userIdToAddTo={userDataStoragesLayoutRootContext.signedInUserInfo.userId}
         onAddedSuccessfully={handleSuccessfullyAddedNewUserDataStorageVisibilityGroup}
         onOpenedSuccessfully={handleSuccessfullyOpenedNewlyAddedUserDataStorageVisibilityGroup}
         open={isNewUserDataStorageVisibilityGroupFormDialogOpen}
         onClose={handleNewUserDataStorageVisibilityGroupFormDialogClose}
       />
       <OpenUserDataStorageVisibilityGroupFormDialog
-        userIdToOpenFor={userDataStoragesLayoutRootContext.signedInUser.userId}
+        userIdToOpenFor={userDataStoragesLayoutRootContext.signedInUserInfo.userId}
         onOpenedSuccessfully={handleSuccessfullyOpenedNewUserDataStorageVisibilityGroup}
         open={isOpenUserDataStorageVisibilityGroupFormDialogOpen}
         onClose={handleOpenUserDataStorageVisibilityGroupFormDialogClose}

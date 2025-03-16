@@ -8,7 +8,7 @@ import { USER_ACCOUNT_STORAGE_BACKEND_TYPES, UserAccountStorageBackendTypes } fr
 import { ISecuredUserSignUpPayload } from "@main/user/account/SecuredUserSignUpPayload";
 import { UUID } from "crypto";
 import { ISecuredPassword } from "@main/utils/encryption/SecuredPassword";
-import { LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS } from "@shared/user/account/storage/backend/implementations/LocalSQLite/LocalSQLiteUserAccountStorageBackendConstants";
+import { LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS } from "@shared/user/account/storage/backend/constants/implementations/LocalSQLite/LocalSQLiteUserAccountStorageBackendConstants";
 import { IBaseUserAccountStorageBackendConfig } from "../../config/BaseUserAccountStorageBackendConfig";
 import {
   IStorageSecuredUserDataStorageConfig,
@@ -87,15 +87,15 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
       type: {
         type: "string",
         enum: [USER_ACCOUNT_STORAGE_BACKEND_TYPES.LocalSQLite],
-        ...LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS.type
+        ...LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS.type
       },
       dbDirPath: {
         type: "string",
-        ...LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS.dbDirPath
+        ...LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS.dbDirPath
       },
       dbFileName: {
         type: "string",
-        ...LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS.dbFileName
+        ...LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS.dbFileName
       }
     },
     required: ["type", "dbDirPath", "dbFileName"],
@@ -107,10 +107,6 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
   public constructor(config: ILocalSQLiteUserAccountStorageBackendConfig, logger: LogFunctions) {
     super(config, LocalSQLiteUserAccountStorageBackend.CONFIG_JSON_SCHEMA, logger);
     this.db = null;
-  }
-
-  public getTypeTitle(): string {
-    return LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS.type.title;
   }
 
   public isOpen(): boolean {

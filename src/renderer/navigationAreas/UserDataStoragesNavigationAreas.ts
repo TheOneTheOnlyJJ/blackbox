@@ -1,5 +1,5 @@
 export const USER_DATA_STORAGES_NAVIGATION_AREAS = {
-  storages: "storages",
+  availableStorages: "availableStorages",
   visibilityGroups: "visibilityGroups"
 } as const;
 

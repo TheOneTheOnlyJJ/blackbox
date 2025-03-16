@@ -107,7 +107,7 @@ const DashboardAppBar = forwardRef<HTMLDivElement, IDashboardAppBarProps>(functi
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             {props.title}
           </Typography>
-          <Tooltip title={signedInRootContext.signedInUser.username}>
+          <Tooltip title={signedInRootContext.signedInUserInfo.username}>
             <IconButton
               size="large"
               aria-label="account of current user"

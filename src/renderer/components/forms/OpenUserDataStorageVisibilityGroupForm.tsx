@@ -9,7 +9,7 @@ import { appLogger } from "@renderer/utils/loggers";
 import { errorCapitalizerErrorTransformer } from "@renderer/utils/RJSF/errorTransformers/errorCapitalizerErrorTransformer";
 import { FormProps, IChangeEvent, withTheme } from "@rjsf/core";
 import { Theme } from "@rjsf/mui";
-import { CustomValidator, FormValidation, RJSFSchema } from "@rjsf/utils";
+import { CustomValidator, ErrorTransformer, FormValidation, RJSFSchema, RJSFValidationError } from "@rjsf/utils";
 import { customizeValidator } from "@rjsf/validator-ajv8";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
@@ -21,6 +21,22 @@ import { Dispatch, FC, SetStateAction, useCallback } from "react";
 const MUIForm = withTheme<IUserDataStorageVisibilityGroupOpenRequestInput>(Theme);
 
 const USER_DATA_STORAGE_VISIBILITY_GROUP_OPEN_INPUT_VALIDATOR = customizeValidator<IUserDataStorageVisibilityGroupOpenRequestInput>();
+
+const openUserDataStorageVisibilityGroupFormErrorTransformer: ErrorTransformer = (errors: RJSFValidationError[]): RJSFValidationError[] => {
+  return errorCapitalizerErrorTransformer(
+    errors.map((error: RJSFValidationError) => {
+      if (error.name === "required" && error.property !== undefined) {
+        if (error.property === "confirmPassword") {
+          error.message = "Must confirm Password";
+        } else {
+          // TODO: Extract title from error: https://github.com/rjsf-team/react-jsonschema-form/issues/4504
+          error.message = `Must provide ${error.property.charAt(0).toUpperCase()}${error.property.slice(1)}`;
+        }
+      }
+      return error;
+    })
+  );
+};
 
 const openUserDataStorageVisibilityGroupFormValidator: CustomValidator<IUserDataStorageVisibilityGroupOpenRequestInput> = (
   formData: IUserDataStorageVisibilityGroupOpenRequestInput | undefined,
@@ -123,7 +139,7 @@ const OpenUserDataStorageVisibilityGroupForm: FC<IOpenUserDataStorageVisibilityG
       liveOmit={true}
       showErrorList={false}
       customValidate={openUserDataStorageVisibilityGroupFormValidator}
-      transformErrors={errorCapitalizerErrorTransformer}
+      transformErrors={openUserDataStorageVisibilityGroupFormErrorTransformer}
       onSubmit={handleFormSubmit}
       noHtml5Validate={true}
     >

@@ -3,6 +3,7 @@ import { USER_DATA_STORAGE_BACKEND_TYPES, UserDataStorageBackendTypes } from "@s
 import { IBaseUserDataStorageBackendConfig } from "../../config/BaseUserDataStorageBackendConfig";
 import { BaseUserDataStorageBackend } from "../../BaseUserDataStorageBackend";
 import { LogFunctions } from "electron-log";
+import { OPTION_C_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/backend/constants/implementations/optionC/OptionCUserDataStorageBackendConstants";
 
 export interface IOptionCUserDataStorageBackendConfig extends IBaseUserDataStorageBackendConfig {
   type: UserDataStorageBackendTypes["OptionC"];
@@ -16,11 +17,12 @@ export class OptionCUserDataStorageBackend extends BaseUserDataStorageBackend<IO
       type: {
         type: "string",
         enum: [USER_DATA_STORAGE_BACKEND_TYPES.OptionC],
-        default: USER_DATA_STORAGE_BACKEND_TYPES.OptionC
+        default: USER_DATA_STORAGE_BACKEND_TYPES.OptionC,
+        ...OPTION_C_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS.type
       },
       optionC: {
         type: "string",
-        minLength: 10
+        ...OPTION_C_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS.optionC
       }
     },
     required: ["type", "optionC"],

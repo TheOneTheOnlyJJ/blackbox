@@ -1,6 +1,7 @@
 import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
 import { ISecuredUserDataStorageConfig } from "../SecuredUserDataStorageConfig";
 import { LogFunctions } from "electron-log";
+import { userDataStorageBackendConfigToUserDataStorageBackendInfo } from "../../backend/config/utils/userDataStorageBackendConfigToUserDataStorageBackendInfo";
 
 export const securedUserDataStorageConfigToUserDataStorageInfo = (
   securedUserDataStorageConfig: ISecuredUserDataStorageConfig,
@@ -13,7 +14,7 @@ export const securedUserDataStorageConfigToUserDataStorageInfo = (
     name: securedUserDataStorageConfig.name,
     description: securedUserDataStorageConfig.description,
     visibilityGroupName: visibilityGroupName,
-    type: securedUserDataStorageConfig.backendConfig.type,
+    backend: userDataStorageBackendConfigToUserDataStorageBackendInfo(securedUserDataStorageConfig.backendConfig, logger),
     isOpen: false // TODO: Make this work properly & Move this to UserDataStorage class?
   };
 };

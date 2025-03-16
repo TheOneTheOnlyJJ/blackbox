@@ -34,7 +34,7 @@ const UserDataStoragesNavigationBar = forwardRef<HTMLDivElement, IUserDataStorag
       {
         name: "Available Storages",
         icon: ViewListOutlinedIcon,
-        userDataStoragesNavigationArea: USER_DATA_STORAGES_NAVIGATION_AREAS.storages,
+        userDataStoragesNavigationArea: USER_DATA_STORAGES_NAVIGATION_AREAS.availableStorages,
         path: `/users/${props.signedInUserId}/dataStorages`,
         divider: false
       },

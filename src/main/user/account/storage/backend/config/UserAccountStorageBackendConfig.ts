@@ -25,7 +25,7 @@ export const USER_ACCOUNT_STORAGE_BACKEND_CONFIG_JSON_SCHEMA: JSONSchemaType<Use
   anyOf: Object.keys(USER_ACCOUNT_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_MAP)
     .sort()
     .reduce<JSONSchemaType<UserAccountStorageBackendConfig>[]>(
-      (accumulator: JSONSchemaType<UserAccountStorageBackendConfig>[], currentValue: string) => {
+      (accumulator: JSONSchemaType<UserAccountStorageBackendConfig>[], currentValue: string): JSONSchemaType<UserAccountStorageBackendConfig>[] => {
         accumulator.push(USER_ACCOUNT_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_MAP[currentValue as keyof UserAccountStorageBackendConfigJSONSchemaMap]);
         return accumulator;
       },

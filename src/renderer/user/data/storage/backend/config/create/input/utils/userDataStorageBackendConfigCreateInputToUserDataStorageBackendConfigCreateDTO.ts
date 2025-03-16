@@ -5,9 +5,9 @@ import {
   IUserDataStorageBackendConfigCreateInputMap,
   UserDataStorageBackendConfigCreateInput
 } from "@renderer/user/data/storage/backend/config/create/input/UserDataStorageBackendConfigCreateInput";
-import { ILocalSQLiteUserDataStorageBackendConfigCreateDTO } from "@shared/user/data/storage/backend/implementations/LocalSQLite/LocalSQLiteUserDataStorageBackendConfigCreateDTO";
-import { IOptionBUserDataStorageBackendConfigCreateDTO } from "@shared/user/data/storage/backend/implementations/optionB/optionB";
-import { IOptionCUserDataStorageBackendConfigCreateDTO } from "@shared/user/data/storage/backend/implementations/optionC/optionC";
+import { ILocalSQLiteUserDataStorageBackendConfigCreateDTO } from "@shared/user/data/storage/backend/config/create/DTO/implementations/LocalSQLite/LocalSQLiteUserDataStorageBackendConfigCreateDTO";
+import { IOptionBUserDataStorageBackendConfigCreateDTO } from "@shared/user/data/storage/backend/config/create/DTO/implementations/optionB/optionB";
+import { IOptionCUserDataStorageBackendConfigCreateDTO } from "@shared/user/data/storage/backend/config/create/DTO/implementations/optionC/optionC";
 import {
   IUserDataStorageBackendConfigCreateDTOMap,
   UserDataStorageBackendConfigCreateDTO
@@ -25,17 +25,17 @@ const USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_TO_USER_DATA_STORAGE_BACKEND
     [USER_DATA_STORAGE_BACKEND_TYPES.LocalSQLite]: (
       userDataStorageBackendConfigCreateInput: ILocalSQLiteUserDataStorageBackendConfigCreateInput
     ): ILocalSQLiteUserDataStorageBackendConfigCreateDTO => {
-      return userDataStorageBackendConfigCreateInput;
+      return userDataStorageBackendConfigCreateInput satisfies ILocalSQLiteUserDataStorageBackendConfigCreateDTO;
     },
     [USER_DATA_STORAGE_BACKEND_TYPES.OptionB]: (
       userDataStorageBackendConfigCreateInput: IOptionBUserDataStorageBackendConfigCreateInput
     ): IOptionBUserDataStorageBackendConfigCreateDTO => {
-      return userDataStorageBackendConfigCreateInput;
+      return userDataStorageBackendConfigCreateInput satisfies IOptionBUserDataStorageBackendConfigCreateDTO;
     },
     [USER_DATA_STORAGE_BACKEND_TYPES.OptionC]: (
       userDataStorageBackendConfigCreateInput: IOptionCUserDataStorageBackendConfigCreateInput
     ): IOptionCUserDataStorageBackendConfigCreateDTO => {
-      return userDataStorageBackendConfigCreateInput;
+      return userDataStorageBackendConfigCreateInput satisfies IOptionCUserDataStorageBackendConfigCreateDTO;
     }
   };
 
@@ -46,7 +46,7 @@ export const userDataStorageBackendConfigCreateInputToUserDataStorageBackendConf
   logger?.debug(
     `Converting "${userDataStorageBackendConfigCreateInput.type}" User Data Storage Backend Config Create Input to User Data Storage Backend Config Create DTO.`
   );
-  // TODO: Ocasionally check if TypeScript can manage not throwing a type error here (TS 5.8)
+  // TODO: Ocasionally check if TypeScript can manage not throwing a type error here (TS 5.9)
   switch (userDataStorageBackendConfigCreateInput.type) {
     case USER_DATA_STORAGE_BACKEND_TYPES.LocalSQLite:
       return USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_TO_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_DTO_FUNCTION_MAP[
@@ -60,5 +60,7 @@ export const userDataStorageBackendConfigCreateInputToUserDataStorageBackendConf
       return USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_TO_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_DTO_FUNCTION_MAP[
         userDataStorageBackendConfigCreateInput.type
       ](userDataStorageBackendConfigCreateInput);
+    default:
+      throw new Error(`Invalid User Data Storage Backend Config type "${(userDataStorageBackendConfigCreateInput as { type: string }).type}"`);
   }
 };

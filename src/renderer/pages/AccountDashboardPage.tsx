@@ -24,9 +24,9 @@ const AccountDashboardPage: FC = () => {
         appLogger.warn("Undefined user ID!");
         return "Undefined user ID";
       }
-      if (userId === dashboardLayoutRootContext.signedInUser.userId) {
+      if (userId === dashboardLayoutRootContext.signedInUserInfo.userId) {
         appLogger.debug("User ID is signed in user's.");
-        return dashboardLayoutRootContext.signedInUser.username;
+        return dashboardLayoutRootContext.signedInUserInfo.username;
       }
       appLogger.debug("Getting username for user ID from main process.");
       const GET_USERNAME_FOR_USER_ID_RESPONSE: IPCAPIResponse<string | null> = window.userAPI.getUsernameForUserId(userId);
@@ -38,7 +38,7 @@ const AccountDashboardPage: FC = () => {
       }
       return "Error getting username";
     },
-    [dashboardLayoutRootContext.signedInUser]
+    [dashboardLayoutRootContext.signedInUserInfo]
   );
 
   useEffect((): void => {

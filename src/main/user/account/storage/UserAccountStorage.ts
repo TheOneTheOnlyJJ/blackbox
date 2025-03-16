@@ -9,6 +9,8 @@ import { ISecuredPassword } from "@main/utils/encryption/SecuredPassword";
 import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserAccountStorageInfo";
 import { IStorageSecuredUserDataStorageConfig } from "@main/user/data/storage/config/StorageSecuredUserDataStorageConfig";
 import { IStorageSecuredUserDataStorageVisibilityGroup } from "@main/user/data/storage/visibilityGroup/StorageSecuredUserDataStorageVisibilityGroup";
+import { UserAccountStorageBackendInfo } from "@shared/user/account/storage/backend/info/UserAccountStorageBackendInfo";
+import { userAccountStorageBackendConfigToUserAccountStorageBackendInfo } from "./backend/config/utils/userAccountStorageBackendConfigToUserAccountStorageBackendInfo";
 
 // TODO: Improve logging
 export class UserAccountStorage {
@@ -16,6 +18,7 @@ export class UserAccountStorage {
   public readonly storageId: UUID;
   public readonly name: string;
   private readonly backend: UserAccountStorageBackend;
+  public readonly backendInfo: UserAccountStorageBackendInfo;
 
   public constructor(config: IUserAccountStorageConfig, logger: LogFunctions, backendLogger: LogFunctions) {
     this.logger = logger;
@@ -25,6 +28,7 @@ export class UserAccountStorage {
     this.storageId = config.storageId;
     this.name = config.name;
     this.backend = userAccountStorageBackendFactory(config.backendConfig, backendLogger);
+    this.backendInfo = userAccountStorageBackendConfigToUserAccountStorageBackendInfo(config.backendConfig, this.logger);
   }
 
   public isOpen(): boolean {
@@ -50,7 +54,7 @@ export class UserAccountStorage {
     return {
       storageId: this.storageId,
       name: this.name,
-      type: this.getBackendTypeTitle(),
+      backend: this.backendInfo,
       isOpen: this.isOpen()
     } satisfies IUserAccountStorageInfo;
   }
@@ -58,11 +62,6 @@ export class UserAccountStorage {
   public getBackendType(): UserAccountStorageBackendType {
     this.logger.info(`Getting User Account Storage "${this.name}" with ID "${this.storageId}" backend type.`);
     return this.backend.config.type;
-  }
-
-  public getBackendTypeTitle(): string {
-    this.logger.info(`Getting User Account Storage "${this.name}" with ID "${this.storageId}" backend type title.`);
-    return this.backend.getTypeTitle();
   }
 
   public isUsernameAvailable(username: string): boolean {

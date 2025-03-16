@@ -24,7 +24,6 @@ export abstract class BaseUserAccountStorageBackend<T extends IBaseUserAccountSt
     }
   }
 
-  public abstract getTypeTitle(): string;
   public abstract open(): boolean;
   public abstract close(): boolean;
   public abstract isOpen(): boolean;

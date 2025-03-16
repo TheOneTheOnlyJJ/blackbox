@@ -1,10 +1,8 @@
 import { JSONSchemaType } from "ajv";
-import {
-  USER_DATA_STORAGE_BACKEND_TYPES,
-  UserDataStorageBackendTypes
-} from "../../../../../../../shared/user/data/storage/backend/UserDataStorageBackendType";
 import { IBaseUserDataStorageBackendConfigCreateInput } from "../../config/create/input/BaseUserDataStorageBackendConfigCreateInput";
 import { UiSchema } from "@rjsf/utils";
+import { OPTION_C_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/backend/constants/implementations/optionC/OptionCUserDataStorageBackendConstants";
+import { USER_DATA_STORAGE_BACKEND_TYPES, UserDataStorageBackendTypes } from "@shared/user/data/storage/backend/UserDataStorageBackendType";
 
 export interface IOptionCUserDataStorageBackendConfigCreateInput extends IBaseUserDataStorageBackendConfigCreateInput {
   type: UserDataStorageBackendTypes["OptionC"];
@@ -17,12 +15,12 @@ export const OPTION_C_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_JSON_SCHEMA:
     type: {
       type: "string",
       enum: [USER_DATA_STORAGE_BACKEND_TYPES.OptionC],
-      default: USER_DATA_STORAGE_BACKEND_TYPES.OptionC
+      default: USER_DATA_STORAGE_BACKEND_TYPES.OptionC,
+      ...OPTION_C_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS.type
     },
     optionC: {
       type: "string",
-      title: "This is Option C Title",
-      minLength: 10
+      ...OPTION_C_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS.optionC
     }
   },
   required: ["type", "optionC"],
@@ -30,7 +28,7 @@ export const OPTION_C_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_JSON_SCHEMA:
 } as const;
 
 export const OPTION_C_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_UI_SCHEMA: UiSchema<IOptionCUserDataStorageBackendConfigCreateInput> = {
-  "ui:title": "Option C",
+  "ui:title": OPTION_C_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS.type.title,
   "ui:options": {
     label: false
   },

@@ -1,6 +1,6 @@
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserAccountStorageInfo";
-import { IPublicSignedInUser } from "@shared/user/account/PublicSignedInUser";
+import { ISignedInUserInfo } from "@shared/user/account/SignedInUserInfo";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 import { IUserSignUpDTO } from "@shared/user/account/UserSignUpDTO";
 import { IUserSignInDTO } from "@shared/user/account/UserSignInDTO";
@@ -15,7 +15,7 @@ import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/v
 // Utility types
 export type UserAccountStorageChangedCallback = (newUserAccountStorageInfo: IUserAccountStorageInfo | null) => void;
 export type UserAccountStorageOpenChangedCallback = (newIsUserAccountStorageOpen: boolean) => void;
-export type SignedInUserChangedCallback = (newPublicSignedInUser: IPublicSignedInUser | null) => void;
+export type SignedInUserChangedCallback = (newSignedInUserInfo: ISignedInUserInfo | null) => void;
 export type AvailableUserDataStoragesChangedCallback = (
   encryptedAvailableUserDataStoragesInfoChangedDiff: IEncryptedData<IUserDataStoragesInfoChangedDiff>
 ) => void;
@@ -27,13 +27,13 @@ export type OpenUserDataStorageVisibilityGroupsChangedCallback = (
 export interface IUserAPI {
   signUp: (encryptedUserSignUpDTO: IEncryptedData<IUserSignUpDTO>) => IPCAPIResponse<boolean>;
   signIn: (encryptedUserSignInDTO: IEncryptedData<IUserSignInDTO>) => IPCAPIResponse<boolean>;
-  signOut: () => IPCAPIResponse<IPublicSignedInUser | null>;
+  signOut: () => IPCAPIResponse<ISignedInUserInfo | null>;
   isUserAccountStorageOpen: () => IPCAPIResponse<boolean>;
   isUsernameAvailable: (username: string) => IPCAPIResponse<boolean>;
   isUserDataStorageVisibilityGroupNameAvailableForSignedInUser: (name: string) => IPCAPIResponse<boolean>;
   getUserCount: () => IPCAPIResponse<number>;
   getUsernameForUserId: (userId: string) => IPCAPIResponse<string | null>;
-  getSignedInUser: () => IPCAPIResponse<IPublicSignedInUser | null>;
+  getSignedInUserInfo: () => IPCAPIResponse<ISignedInUserInfo | null>;
   addUserDataStorageConfig: (encryptedUserDataStorageConfigCreateDTO: IEncryptedData<IUserDataStorageConfigCreateDTO>) => IPCAPIResponse<boolean>;
   addUserDataStorageVisibilityGroup: (
     encryptedUserDataStorageVisibilityGroupCreateDTO: IEncryptedData<IUserDataStorageVisibilityGroupCreateDTO>
@@ -61,7 +61,7 @@ export const USER_API_IPC_CHANNELS = {
   isUserDataStorageVisibilityGroupNameAvailableForSignedInUser: "userAPI:isUserDataStorageVisibilityGroupNameAvailableForSignedInUser",
   getUserCount: "userAPI:getUserCount",
   getUsernameForUserId: "userAPI:getUsernameForUserId",
-  getSignedInUser: "userAPI:getSignedInUser",
+  getSignedInUserInfo: "userAPI:getSignedInUserInfo",
   addUserDataStorageConfig: "userAPI:addUserDataStorageConfig",
   addUserDataStorageVisibilityGroup: "userAPI:addUserDataStorageVisibilityGroup",
   openUserDataStorageVisibilityGroups: "userAPI:openUserDataStorageVisibilityGroups",

@@ -69,14 +69,14 @@ const DashboardLayoutRoot: FC = () => {
       <DashboardAppBar
         ref={dashboardAppBarRef}
         title={dashboardAppBarTitle}
-        signedInUserId={signedInRootContext.signedInUser.userId}
+        signedInUserId={signedInRootContext.signedInUserInfo.userId}
         dashboardNavigationArea={dashboardNavigationArea}
       />
       <DashboardNavigationBar
         ref={dashboardNavigationBarRef}
         width={dashboardNavigationBarWidth}
         heightOffset={dashboardAppBarHeight}
-        signedInUserId={signedInRootContext.signedInUser.userId}
+        signedInUserId={signedInRootContext.signedInUserInfo.userId}
         dashboardNavigationArea={dashboardNavigationArea}
       />
       <Box

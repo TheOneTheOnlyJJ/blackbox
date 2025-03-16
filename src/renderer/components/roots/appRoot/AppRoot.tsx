@@ -6,7 +6,7 @@ import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { enqueueSnackbar, SnackbarProvider } from "notistack";
 import Box from "@mui/material/Box/Box";
-import { IPublicSignedInUser } from "@shared/user/account/PublicSignedInUser";
+import { ISignedInUserInfo } from "@shared/user/account/SignedInUserInfo";
 import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserAccountStorageInfo";
 
 const IS_IPC_TLS_READY_UPDATE_TIMEOUT_DELAY_MS = 1_000;
@@ -23,7 +23,7 @@ const AppRoot: FC = () => {
   }, [isMainIPCTLSReady, isRendererIPCTLSReady]);
   // User
   const [userAccountStorageInfo, setUserAccountStorageInfo] = useState<IUserAccountStorageInfo | null>(null);
-  const [signedInUser, setSignedInUser] = useState<IPublicSignedInUser | null>(null);
+  const [signedInUserInfo, setSignedInUserInfo] = useState<ISignedInUserInfo | null>(null);
   // Navigation
   const [signedInNavigationEntryIndex, setSignedInNavigationEntryIndex] = useState<number>(0);
   // Timeouts
@@ -41,13 +41,13 @@ const AppRoot: FC = () => {
 
   // Monitor signed in user; Navigate on sign in/out
   useEffect((): void => {
-    appLogger.info(`Signed in user changed: ${JSON.stringify(signedInUser, null, 2)}.`);
+    appLogger.info(`Signed in user info changed: ${JSON.stringify(signedInUserInfo, null, 2)}.`);
     let navigationPath: string;
-    if (signedInUser === null) {
+    if (signedInUserInfo === null) {
       navigationPath = "/";
       setSignedInNavigationEntryIndex(0);
     } else {
-      navigationPath = `/users/${signedInUser.userId}/dashboard`;
+      navigationPath = `/users/${signedInUserInfo.userId}/dashboard`;
       if (window.navigation.currentEntry === null) {
         appLogger.error("Window DOM navigation API current entry is null!");
         setSignedInNavigationEntryIndex(0);
@@ -62,7 +62,7 @@ const AppRoot: FC = () => {
     // Wipe the history stack and navigate to the required path
     appLogger.debug("Wiping window navigation history.");
     navigate(navigationPath, { replace: true });
-  }, [navigate, signedInUser]);
+  }, [navigate, signedInUserInfo]);
 
   // Monitor IPC TLS API readiness
   useEffect((): void => {
@@ -104,12 +104,12 @@ const AppRoot: FC = () => {
     } else {
       setUserAccountStorageInfo(GET_USER_ACCOUNT_STORAGE_INFO_RESPONSE.data);
     }
-    const GET_SIGNED_IN_USER_RESPONSE: IPCAPIResponse<IPublicSignedInUser | null> = window.userAPI.getSignedInUser();
-    if (GET_SIGNED_IN_USER_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
-      enqueueSnackbar({ message: "Error getting signed in user.", variant: "error" });
-      setSignedInUser(null);
+    const GET_SIGNED_IN_USER_INFO_RESPONSE: IPCAPIResponse<ISignedInUserInfo | null> = window.userAPI.getSignedInUserInfo();
+    if (GET_SIGNED_IN_USER_INFO_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
+      enqueueSnackbar({ message: "Error getting signed in user info.", variant: "error" });
+      setSignedInUserInfo(null);
     } else {
-      setSignedInUser(GET_SIGNED_IN_USER_RESPONSE.data);
+      setSignedInUserInfo(GET_SIGNED_IN_USER_INFO_RESPONSE.data);
     }
     setIsMainIPCTLSReady(window.IPCTLSAPI.getMainReadiness());
     setIsRendererIPCTLSReady(window.IPCTLSAPI.getRendererReadiness());
@@ -125,8 +125,8 @@ const AppRoot: FC = () => {
     );
     // Monitor changes to signed in user
     const removeOnSignedInUserChangedListener: () => void = window.userAPI.onSignedInUserChanged(
-      (newSignedInUser: IPublicSignedInUser | null): void => {
-        setSignedInUser(newSignedInUser);
+      (newSignedInUserInfo: ISignedInUserInfo | null): void => {
+        setSignedInUserInfo(newSignedInUserInfo);
       }
     );
     // Monitor changes to User Account Storage
@@ -171,7 +171,7 @@ const AppRoot: FC = () => {
       <Outlet
         context={
           {
-            signedInUser: signedInUser,
+            signedInUserInfo: signedInUserInfo,
             signedInNavigationEntryIndex: signedInNavigationEntryIndex,
             userAccountStorageInfo: userAccountStorageInfo,
             isIPCTLSReady: {
