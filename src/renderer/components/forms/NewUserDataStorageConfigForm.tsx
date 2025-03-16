@@ -1,7 +1,7 @@
 import { Dispatch, FC, SetStateAction, useCallback } from "react";
 import { FormProps, IChangeEvent, withTheme } from "@rjsf/core";
 import { Theme } from "@rjsf/mui";
-import { CustomValidator, ErrorTransformer, FormValidation, RJSFSchema, RJSFValidationError } from "@rjsf/utils";
+import { ErrorTransformer, RJSFSchema, RJSFValidationError } from "@rjsf/utils";
 import { customizeValidator } from "@rjsf/validator-ajv8";
 import { appLogger } from "@renderer/utils/loggers";
 import { errorCapitalizerErrorTransformer } from "@renderer/utils/RJSF/errorTransformers/errorCapitalizerErrorTransformer";
@@ -44,16 +44,16 @@ const newUserDataStorageConfigFormErrorTransformer: ErrorTransformer<IUserDataSt
 };
 
 // TODO: This may not be required anymore
-const newUserDataStorageConfigFormValidator: CustomValidator<IUserDataStorageConfigCreateInput> = (
-  formData: IUserDataStorageConfigCreateInput | undefined,
-  errors: FormValidation<IUserDataStorageConfigCreateInput>
-): FormValidation<IUserDataStorageConfigCreateInput> => {
-  // Skip if no form data or errors
-  if (formData === undefined) {
-    return errors;
-  }
-  return errors;
-};
+// const newUserDataStorageConfigFormValidator: CustomValidator<IUserDataStorageConfigCreateInput> = (
+//   formData: IUserDataStorageConfigCreateInput | undefined,
+//   errors: FormValidation<IUserDataStorageConfigCreateInput>
+// ): FormValidation<IUserDataStorageConfigCreateInput> => {
+//   // Skip if no form data or errors
+//   if (formData === undefined) {
+//     return errors;
+//   }
+//   return errors;
+// };
 
 export interface INewUserDataStorageConfigFormProps {
   formRef: FormProps["ref"];
@@ -128,7 +128,7 @@ const NewUserDataStorageConfigForm: FC<INewUserDataStorageConfigFormProps> = (pr
       omitExtraData={true}
       liveOmit={true}
       showErrorList={false}
-      customValidate={newUserDataStorageConfigFormValidator}
+      // customValidate={newUserDataStorageConfigFormValidator}
       transformErrors={newUserDataStorageConfigFormErrorTransformer}
       onSubmit={handleFormSubmit}
       noHtml5Validate={true}

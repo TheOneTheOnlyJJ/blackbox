@@ -16,7 +16,9 @@ import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/v
 export type UserAccountStorageChangedCallback = (newUserAccountStorageInfo: IUserAccountStorageInfo | null) => void;
 export type UserAccountStorageOpenChangedCallback = (newIsUserAccountStorageOpen: boolean) => void;
 export type SignedInUserChangedCallback = (newPublicSignedInUser: IPublicSignedInUser | null) => void;
-export type UserDataStoragesChangedCallback = (encryptedUserDataStoragesInfoChangedDiff: IEncryptedData<IUserDataStoragesInfoChangedDiff>) => void;
+export type AvailableUserDataStoragesChangedCallback = (
+  encryptedAvailableUserDataStoragesInfoChangedDiff: IEncryptedData<IUserDataStoragesInfoChangedDiff>
+) => void;
 export type OpenUserDataStorageVisibilityGroupsChangedCallback = (
   encryptedUserDataStorageVisibilityGroupsInfoChangedDiff: IEncryptedData<IUserDataStorageVisibilityGroupsInfoChangedDiff>
 ) => void;
@@ -28,6 +30,7 @@ export interface IUserAPI {
   signOut: () => IPCAPIResponse<IPublicSignedInUser | null>;
   isUserAccountStorageOpen: () => IPCAPIResponse<boolean>;
   isUsernameAvailable: (username: string) => IPCAPIResponse<boolean>;
+  isUserDataStorageVisibilityGroupNameAvailableForSignedInUser: (name: string) => IPCAPIResponse<boolean>;
   getUserCount: () => IPCAPIResponse<number>;
   getUsernameForUserId: (userId: string) => IPCAPIResponse<string | null>;
   getSignedInUser: () => IPCAPIResponse<IPublicSignedInUser | null>;
@@ -40,12 +43,12 @@ export interface IUserAPI {
   ) => IPCAPIResponse<number>;
   closeUserDataStorageVisibilityGroups: (userDataStorageVisibilityGroupIds: string[]) => IPCAPIResponse<number>;
   getUserAccountStorageInfo: () => IPCAPIResponse<IUserAccountStorageInfo | null>;
-  getAllSignedInUserDataStoragesInfo: () => IPCAPIResponse<IEncryptedData<IUserDataStorageInfo[]>>;
+  getAllSignedInUserAvailableDataStoragesInfo: () => IPCAPIResponse<IEncryptedData<IUserDataStorageInfo[]>>;
   getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo: () => IPCAPIResponse<IEncryptedData<IUserDataStorageVisibilityGroupInfo[]>>;
   onUserAccountStorageChanged: (callback: UserAccountStorageChangedCallback) => () => void;
   onUserAccountStorageOpenChanged: (callback: UserAccountStorageOpenChangedCallback) => () => void;
   onSignedInUserChanged: (callback: SignedInUserChangedCallback) => () => void;
-  onUserDataStoragesChanged: (callback: UserDataStoragesChangedCallback) => () => void;
+  onAvailableUserDataStoragesChanged: (callback: AvailableUserDataStoragesChangedCallback) => () => void;
   onOpenUserDataStorageVisibilityGroupsChanged: (callback: OpenUserDataStorageVisibilityGroupsChangedCallback) => () => void;
 }
 
@@ -55,6 +58,7 @@ export const USER_API_IPC_CHANNELS = {
   signOut: "userAPI:signOut",
   isUserAccountStorageOpen: "userAPI:isUserAccountStorageOpen",
   isUsernameAvailable: "userAPI:isUsernameAvailable",
+  isUserDataStorageVisibilityGroupNameAvailableForSignedInUser: "userAPI:isUserDataStorageVisibilityGroupNameAvailableForSignedInUser",
   getUserCount: "userAPI:getUserCount",
   getUsernameForUserId: "userAPI:getUsernameForUserId",
   getSignedInUser: "userAPI:getSignedInUser",
@@ -63,12 +67,12 @@ export const USER_API_IPC_CHANNELS = {
   openUserDataStorageVisibilityGroups: "userAPI:openUserDataStorageVisibilityGroups",
   closeUserDataStorageVisibilityGroups: "userAPI:closeUserDataStorageVisibilityGroups",
   getUserAccountStorageInfo: "userAPI:getUserAccountStorageInfo",
-  getAllSignedInUserDataStoragesInfo: "userAPI:getAllSignedInUserDataStoragesInfo",
+  getAllSignedInUserAvailableDataStoragesInfo: "userAPI:getAllSignedInUserAvailableDataStoragesInfo",
   getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo: "userAPI:getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo",
   onUserAccountStorageChanged: "userAPI:onUserAccountStorageChanged",
   onUserAccountStorageOpenChanged: "userAPI:onUserAccountStorageOpenChanged",
   onSignedInUserChanged: "userAPI:onSignedInUserChanged",
-  onUserDataStoragesChanged: "userAPI:onUserDataStoragesChanged",
+  onAvailableUserDataStoragesChanged: "userAPI:onAvailableUserDataStoragesChanged",
   onOpenUserDataStorageVisibilityGroupsChanged: "userAPI:onOpenUserDataStorageVisibilityGroupsChanged"
 } as const;
 export type UserAPIIPCChannels = typeof USER_API_IPC_CHANNELS;

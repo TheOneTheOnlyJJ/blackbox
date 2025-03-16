@@ -3,7 +3,7 @@ import { AJV } from "@shared/utils/AJVJSONValidator";
 import { USER_DATA_STORAGE_VISIBILITY_GROUP_INFO_JSON_SCHEMA, IUserDataStorageVisibilityGroupInfo } from "./UserDataStorageVisibilityGroupInfo";
 
 export interface IUserDataStorageVisibilityGroupsInfoChangedDiff {
-  deleted: string[]; // UUIDs of deleted visibility groups
+  removed: string[]; // Visibility group IDs
   added: IUserDataStorageVisibilityGroupInfo[];
 }
 
@@ -11,9 +11,9 @@ export const USER_DATA_STORAGES_VISIBILITY_GROUPS_INFO_CHANGED_DIFF_JSON_SCHEMA:
   $schema: "http://json-schema.org/draft-07/schema#",
   type: "object",
   properties: {
-    deleted: {
+    removed: {
       type: "array",
-      title: "Deleted",
+      title: "Removed",
       items: { type: "string", format: "uuid" }
     },
     added: {
@@ -22,7 +22,7 @@ export const USER_DATA_STORAGES_VISIBILITY_GROUPS_INFO_CHANGED_DIFF_JSON_SCHEMA:
       items: USER_DATA_STORAGE_VISIBILITY_GROUP_INFO_JSON_SCHEMA
     }
   },
-  required: ["deleted", "added"],
+  required: ["removed", "added"],
   additionalProperties: false
 } as const;
 

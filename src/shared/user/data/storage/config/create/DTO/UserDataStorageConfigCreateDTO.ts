@@ -4,6 +4,7 @@ import {
   UserDataStorageBackendConfigCreateDTO
 } from "../../../backend/config/create/DTO/UserDataStorageBackendConfigCreateDTO";
 import { AJV } from "@shared/utils/AJVJSONValidator";
+import { USER_DATA_STORAGE_CONFIG_CREATE_JSON_SCHEMA_CONSTANTS } from "../UserDataStorageConfigCreateConstants";
 
 export interface IUserDataStorageConfigCreateDTO {
   userId: string;
@@ -17,16 +18,16 @@ export const USER_DATA_STORAGE_CONFIG_CREATE_DTO_JSON_SCHEMA: JSONSchemaType<IUs
   $schema: "http://json-schema.org/draft-07/schema#",
   type: "object",
   properties: {
-    userId: { type: "string", title: "User ID", format: "uuid" },
-    name: { type: "string", title: "Name" },
+    userId: { type: "string", ...USER_DATA_STORAGE_CONFIG_CREATE_JSON_SCHEMA_CONSTANTS.userId },
+    name: { type: "string", ...USER_DATA_STORAGE_CONFIG_CREATE_JSON_SCHEMA_CONSTANTS.name },
     visibilityGroupId: {
       type: "string",
-      format: "uuid",
+      ...USER_DATA_STORAGE_CONFIG_CREATE_JSON_SCHEMA_CONSTANTS.visibilityGroupId,
       nullable: true as false // https://github.com/ajv-validator/ajv/issues/2163#issuecomment-2085689455
     },
     description: {
       type: "string",
-      title: "Description",
+      ...USER_DATA_STORAGE_CONFIG_CREATE_JSON_SCHEMA_CONSTANTS.description,
       nullable: true as false // https://github.com/ajv-validator/ajv/issues/2163#issuecomment-2085689455
     },
     backendConfigCreateDTO: USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_DTO_JSON_SCHEMA

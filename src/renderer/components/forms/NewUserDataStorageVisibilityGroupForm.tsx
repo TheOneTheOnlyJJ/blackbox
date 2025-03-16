@@ -13,6 +13,7 @@ import { CustomValidator, FormValidation, RJSFSchema } from "@rjsf/utils";
 import { customizeValidator } from "@rjsf/validator-ajv8";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
+import { PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS } from "@shared/user/data/storage/visibilityGroup/constants";
 import { IUserDataStorageVisibilityGroupCreateDTO } from "@shared/user/data/storage/visibilityGroup/create/DTO/UserDataStorageVisibilityGroupCreateDTO";
 import { IUserDataStorageVisibilityGroupsOpenRequestDTO } from "@shared/user/data/storage/visibilityGroup/openRequest/DTO/UserDataStorageVisibilityGroupsOpenRequestDTO";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
@@ -28,8 +29,21 @@ const newUserDataStorageVisibilityGroupFormValidator: CustomValidator<IUserDataS
   errors: FormValidation<IUserDataStorageVisibilityGroupCreateInput>
 ): FormValidation<IUserDataStorageVisibilityGroupCreateInput> => {
   // Skip if no form data or errors
-  if (formData === undefined || errors.password === undefined || errors.confirmPassword === undefined) {
+  if (formData === undefined || errors.name === undefined || errors.password === undefined || errors.confirmPassword === undefined) {
     return errors;
+  }
+  if (formData.name.toLowerCase() === PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS.name.toLowerCase()) {
+    errors.name.addError('Naming a Visibility Group "Public" is forbidden. Why would you even attempt to do that?');
+  } else {
+    const IS_DATA_VISIBILITY_GROUP_AVAILABLE_RESPONSE: IPCAPIResponse<boolean> =
+      window.userAPI.isUserDataStorageVisibilityGroupNameAvailableForSignedInUser(formData.name);
+    if (IS_DATA_VISIBILITY_GROUP_AVAILABLE_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
+      errors.name.addError("Could not get name availability.");
+    } else {
+      if (!IS_DATA_VISIBILITY_GROUP_AVAILABLE_RESPONSE.data) {
+        errors.name.addError(`Name "${formData.name}" is not available.`);
+      }
+    }
   }
   if (formData.password !== formData.confirmPassword) {
     errors.confirmPassword.addError("Does not match Password.");
@@ -47,8 +61,6 @@ export interface INewUserDataStorageVisibilityGroupFormProps {
   setIsAddUserDataStorageVisibilityGroupPending: Dispatch<SetStateAction<boolean>>;
 }
 
-// TODO: Disallow duplicate visibility group names and Public visibility group name
-// TODO: Both here and on the main process side
 const NewUserDataStorageVisibilityGroupForm: FC<INewUserDataStorageVisibilityGroupFormProps> = (
   props: INewUserDataStorageVisibilityGroupFormProps
 ) => {
@@ -67,7 +79,7 @@ const NewUserDataStorageVisibilityGroupForm: FC<INewUserDataStorageVisibilityGro
         enqueueSnackbar({ message: "Missing form data.", variant: "error" });
         return;
       }
-      const DO_OPEN_AFTER_CREATING: boolean = data.formData.openAfterCreating;
+      const DO_OPEN_AFTER_CREATING: boolean | undefined = data.formData.openAfterCreating;
       const USER_DATA_STORAGE_VISIBILITY_GROUP_CREATE_DTO: IUserDataStorageVisibilityGroupCreateDTO =
         userDataStorageVisibilityGroupCreateInputToUserDataStorageVisibilityGroupCreateDTO(userIdToAddTo, data.formData, appLogger);
       window.IPCTLSAPI.encrypt<IUserDataStorageVisibilityGroupCreateDTO>(
@@ -81,9 +93,9 @@ const NewUserDataStorageVisibilityGroupForm: FC<INewUserDataStorageVisibilityGro
             );
             if (ADD_USER_DATA_STORAGE_VISIBILITY_GROUP_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
               if (ADD_USER_DATA_STORAGE_VISIBILITY_GROUP_RESPONSE.data) {
-                enqueueSnackbar({ message: "Added User Data Storage Visibility Group.", variant: "success" });
+                enqueueSnackbar({ message: "Added data storage visibility group.", variant: "success" });
                 onAddedSuccessfully();
-                if (DO_OPEN_AFTER_CREATING) {
+                if (DO_OPEN_AFTER_CREATING === true) {
                   try {
                     const ENCRYPTED_USER_DATA_STORAGE_VISIBILITY_GROUP_OPEN_REQUEST_DTO: IEncryptedData<IUserDataStorageVisibilityGroupsOpenRequestDTO> =
                       await window.IPCTLSAPI.encrypt<IUserDataStorageVisibilityGroupsOpenRequestDTO>(
@@ -98,41 +110,43 @@ const NewUserDataStorageVisibilityGroupForm: FC<INewUserDataStorageVisibilityGro
                     if (OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
                       if (OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS_RESPONSE.data > 0) {
                         enqueueSnackbar({
-                          message: `Opened ${OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS_RESPONSE.data.toString()} new User Data Storage Visibility Group${
-                            OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS_RESPONSE.data === 1 ? "" : "s"
-                          }.`,
-                          variant: "success"
+                          message: `Opened ${
+                            OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS_RESPONSE.data === 1
+                              ? "a"
+                              : OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS_RESPONSE.data.toString()
+                          } new data storage visibility group${OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS_RESPONSE.data === 1 ? "" : "s"}.`,
+                          variant: "info"
                         });
                         onOpenedSuccessfully();
                       } else {
-                        enqueueSnackbar({ message: "No new User Data Storage Visibility Group opened.", variant: "error" });
+                        enqueueSnackbar({ message: "No new data storage visibility group opened.", variant: "error" });
                       }
                     } else {
-                      enqueueSnackbar({ message: "Error opening User Data Storage Visibility Group.", variant: "error" });
+                      enqueueSnackbar({ message: "Error opening data storage visibility group.", variant: "error" });
                     }
                   } catch (error: unknown) {
                     const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
                     appLogger.error(`Could not open newly created User Data Storage Visibility Group. Reason: ${ERROR_MESSAGE}.`);
-                    enqueueSnackbar({ message: "User Data Storage Visibility Group open error.", variant: "error" });
+                    enqueueSnackbar({ message: "Data storage visibility group open error.", variant: "error" });
                   }
                 }
               } else {
-                enqueueSnackbar({ message: "Could not add User Data Storage Visibility Group.", variant: "error" });
+                enqueueSnackbar({ message: "Could not add data storage visibility group.", variant: "error" });
               }
             } else {
-              enqueueSnackbar({ message: "Error adding User Data Storage Visibility Group.", variant: "error" });
+              enqueueSnackbar({ message: "Error adding data storage visibility group.", variant: "error" });
             }
           },
           (reason: unknown): void => {
             const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
             appLogger.error(`Could not encrypt User Data Storage Visibility Group Create DTO. Reason: ${REASON_MESSAGE}.`);
-            enqueueSnackbar({ message: "User Data Storage Visibility Group encryption error.", variant: "error" });
+            enqueueSnackbar({ message: "Data storage visibility group encryption error.", variant: "error" });
           }
         )
         .catch((error: unknown): void => {
           const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
           appLogger.error(`Could not encrypt User Data Storage Visibility Group Create DTO. Reason: ${ERROR_MESSAGE}.`);
-          enqueueSnackbar({ message: "User Data Storage Visibility Group encryption error.", variant: "error" });
+          enqueueSnackbar({ message: "Data storage visibility group encryption error.", variant: "error" });
         })
         .finally((): void => {
           props.setIsAddUserDataStorageVisibilityGroupPending(false);

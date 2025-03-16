@@ -31,7 +31,6 @@ import { storageSecuredUserDataStorageVisibilityGroupToSecuredUserDataStorageVis
 import { IUserDataStorageVisibilityGroupsInfoChangedDiff } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfoChangedDiff";
 import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
 import { securedUserDataStorageVisibilityGroupToUserDataStorageVisibilityGroupInfo } from "./data/storage/visibilityGroup/utils/securedUserDataStorageVisibilityGroupToUserDataStorageVisibilityGroupInfo";
-import { PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS } from "@shared/user/data/storage/visibilityGroup/constants";
 
 export class UserManager {
   private readonly logger: LogFunctions;
@@ -47,11 +46,10 @@ export class UserManager {
   public onUserAccountStorageChangedCallback: UserAccountStorageChangedCallback;
   private onUserAccountStorageOpenChangedCallback: UserAccountStorageOpenChangedCallback;
 
-  // User Data Storage
-  private onUserDataStoragesChangedCallback: (userDataStoragesInfoChangedDiff: IUserDataStoragesInfoChangedDiff) => void;
+  // Available User Data Storages
+  private onAvailableUserDataStoragesChangedCallback: (availableUserDataStoragesInfoChangedDiff: IUserDataStoragesInfoChangedDiff) => void;
 
   // Open User Data Storage Visibility Groups
-  // TODO: Clear on signIn, signOut
   private OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS: Map<UUID, Buffer>;
   private onOpenUserDataStorageVisibilityGroupsChangedCallback: (
     userDataStorageVisibilityGroupInfoChangedDiff: IUserDataStorageVisibilityGroupsInfoChangedDiff
@@ -64,7 +62,7 @@ export class UserManager {
     onSignedInUserChangedCallback?: SignedInUserChangedCallback,
     onUserAccountStorageChangedCallback?: UserAccountStorageChangedCallback,
     onUserAccountStorageOpenChangedCallback?: UserAccountStorageOpenChangedCallback,
-    onUserDataStoragesChangedCallback?: (userDataStoragesInfoChangedDiff: IUserDataStoragesInfoChangedDiff) => void,
+    onAvailableUserDataStoragesChangedCallback?: (availableUserDataStoragesInfoChangedDiff: IUserDataStoragesInfoChangedDiff) => void,
     onOpenUserDataStorageVisibilityGroupsChangedCallback?: (
       userDataStorageVisibilityGroupsInfoChangedDiff: IUserDataStorageVisibilityGroupsInfoChangedDiff
     ) => void
@@ -148,8 +146,8 @@ export class UserManager {
       }
     );
     // User Data Storage
-    this.onUserDataStoragesChangedCallback =
-      onUserDataStoragesChangedCallback ??
+    this.onAvailableUserDataStoragesChangedCallback =
+      onAvailableUserDataStoragesChangedCallback ??
       ((): void => {
         this.logger.silly("No User Data Storages changed callback set.");
       });
@@ -256,8 +254,28 @@ export class UserManager {
     return this.userAccountStorage.value.isUsernameAvailable(username);
   }
 
-  private hashPassword(plainTextPassword: string, salt: Buffer, passwordPurposeToLog?: string): Buffer {
-    this.logger.debug(`Hashing ${passwordPurposeToLog ? passwordPurposeToLog + " " : ""}password.`);
+  public isUserDataStorageVisibilityGroupNameAvailableForSignedInUer(name: string): boolean {
+    this.logger.debug(`Getting User Data Storage Visibility Group name "${name}" availability for signed in user.`);
+    if (this.userAccountStorage.value === null) {
+      throw new Error("Null User Account Storage");
+    }
+    if (this.signedInUser.value === null) {
+      throw new Error("No signed in user");
+    }
+    const SECURED_VISIBILITY_GROUPS: ISecuredUserDataStorageVisibilityGroup[] = this.getSignedInUserSecuredUserDataStorageVisibilityGroups({
+      includeIds: "all",
+      excludeIds: null
+    });
+    for (const SECURED_VISIBILITY_GROUP of SECURED_VISIBILITY_GROUPS) {
+      if (SECURED_VISIBILITY_GROUP.name === name) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private hashPassword(plainTextPassword: string, salt: Buffer, logger: LogFunctions | null, passwordPurposeToLog?: string): Buffer {
+    logger?.debug(`Hashing ${passwordPurposeToLog ? passwordPurposeToLog + " " : ""}password.`);
     // TODO: Change scrypt to argon2 once it becomes available
     return scryptSync(plainTextPassword, salt, 64);
   }
@@ -341,7 +359,7 @@ export class UserManager {
         userSignUpPayload,
         this.PASSWORD_SALT_LENGTH,
         (userPassword: string, userPasswordSalt: Buffer): string => {
-          return this.hashPassword(userPassword, userPasswordSalt, "user sign up").toString("base64");
+          return this.hashPassword(userPassword, userPasswordSalt, this.logger, "user sign up").toString("base64");
         },
         this.logger
       )
@@ -371,6 +389,7 @@ export class UserManager {
     const SIGN_IN_PASSWORD_HASH: Buffer = this.hashPassword(
       userSignInPayload.password,
       Buffer.from(SECURED_USER_PASSWORD.salt, "base64"),
+      this.logger,
       "user sign in"
     );
     if (!timingSafeEqual(SIGN_IN_PASSWORD_HASH, Buffer.from(SECURED_USER_PASSWORD.hash, "base64"))) {
@@ -397,18 +416,9 @@ export class UserManager {
       return null;
     }
     this.logger.debug(`Signing out user: "${this.signedInUser.value.username}".`);
+    this.closeUserDataStorageVisibilityGroups(Array.from(this.OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS.keys()));
     const PUBLIC_SIGNED_OUT_USER: IPublicSignedInUser = signedInUserToPublicSignedInUser(this.signedInUser.value, this.logger);
     this.signedInUser.value = null; // AES key gets corrupted in proxy
-    const ALL_OPEN_USER_DATA_STORAGE_VISIBILITY_GROUP_IDS: UUID[] = Array.from(this.OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS.keys());
-    // Corrupt data storage visibility group AES keys
-    this.OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS.forEach((AESKey: Buffer): void => {
-      crypto.getRandomValues(AESKey);
-    });
-    this.OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS.clear();
-    this.onOpenUserDataStorageVisibilityGroupsChangedCallback({
-      deleted: ALL_OPEN_USER_DATA_STORAGE_VISIBILITY_GROUP_IDS,
-      added: []
-    } satisfies IUserDataStorageVisibilityGroupsInfoChangedDiff);
     return PUBLIC_SIGNED_OUT_USER;
   }
 
@@ -448,35 +458,28 @@ export class UserManager {
     if (userDataStorageConfig.visibilityGroupId === null) {
       encryptionAESKey = this.signedInUser.value.userDataAESKey;
     } else {
-      const VISIBILITY_GROUP_DATA_ENCRYPTION_AES_KEY: Buffer | undefined = this.OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS.get(
-        userDataStorageConfig.visibilityGroupId
-      );
-      if (VISIBILITY_GROUP_DATA_ENCRYPTION_AES_KEY === undefined) {
+      const VISIBILITY_GROUP_AES_KEY: Buffer | undefined = this.OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS.get(userDataStorageConfig.visibilityGroupId);
+      if (VISIBILITY_GROUP_AES_KEY === undefined) {
         throw new Error(
-          `User Data Storage Visibility Group "${userDataStorageConfig.visibilityGroupId}" missing from open User Data Storage Visibility Groups! Cannot encrypt new User Data Storage Config`
+          `User Data Storage Visibility Group "${userDataStorageConfig.visibilityGroupId}" not open! Cannot encrypt new User Data Storage Config`
         );
       }
-      encryptionAESKey = VISIBILITY_GROUP_DATA_ENCRYPTION_AES_KEY;
+      encryptionAESKey = VISIBILITY_GROUP_AES_KEY;
     }
-    const IS_ADDED_SUCCESSFULLY: boolean = this.userAccountStorage.value.addStorageSecuredUserDataStorageConfig(
+    const WAS_ADDED: boolean = this.userAccountStorage.value.addStorageSecuredUserDataStorageConfig(
       securedUserDataStorageConfigToStorageSecuredUserDataStorageConfig(SECURED_USER_DATA_STORAGE_CONFIG, encryptionAESKey, this.logger)
     );
-    if (IS_ADDED_SUCCESSFULLY) {
+    if (WAS_ADDED) {
       const VISIBILITY_GROUP: ISecuredUserDataStorageVisibilityGroup | null = this.getSecuredUserDataStorageVisibilityGroupForConfigId(
         SECURED_USER_DATA_STORAGE_CONFIG.storageId
       );
-      this.onUserDataStoragesChangedCallback({
-        deleted: [],
-        added: [
-          securedUserDataStorageConfigToUserDataStorageInfo(
-            SECURED_USER_DATA_STORAGE_CONFIG,
-            VISIBILITY_GROUP === null ? PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS.name : VISIBILITY_GROUP.name,
-            this.logger
-          )
-        ]
+      const VISIBILITY_GROUP_NAME: string | null = VISIBILITY_GROUP === null ? null : VISIBILITY_GROUP.name;
+      this.onAvailableUserDataStoragesChangedCallback({
+        removed: [],
+        added: [securedUserDataStorageConfigToUserDataStorageInfo(SECURED_USER_DATA_STORAGE_CONFIG, VISIBILITY_GROUP_NAME, this.logger)]
       } satisfies IUserDataStoragesInfoChangedDiff);
     }
-    return IS_ADDED_SUCCESSFULLY;
+    return WAS_ADDED;
   }
 
   public addUserDataStorageVisibilityGroup(userDataStorageVisibilityGroup: IUserDataStorageVisibilityGroup): boolean {
@@ -500,7 +503,7 @@ export class UserManager {
         userDataStorageVisibilityGroup,
         this.PASSWORD_SALT_LENGTH,
         (visibilityPassword: string, visibilityPasswordSalt: Buffer): string => {
-          return this.hashPassword(visibilityPassword, visibilityPasswordSalt, "User Data Storage Visibility Group").toString("base64");
+          return this.hashPassword(visibilityPassword, visibilityPasswordSalt, this.logger, "User Data Storage Visibility Group").toString("base64");
         },
         this.logger
       );
@@ -543,10 +546,9 @@ export class UserManager {
         const ATTEMPTED_PASSWORD_HASH: Buffer = this.hashPassword(
           userDataStorageVisibilityGroupOpenRequest.password,
           Buffer.from(securedUserDataStorageVisibilityGroup.securedPassword.salt, "base64"),
-          "User Data Storage Visibility Group attempted"
+          null
         );
         if (timingSafeEqual(ATTEMPTED_PASSWORD_HASH, Buffer.from(securedUserDataStorageVisibilityGroup.securedPassword.hash, "base64"))) {
-          this.logger.debug("Password hashes match.");
           // Add to open user data storage visibility groups
           this.OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS.set(
             securedUserDataStorageVisibilityGroup.visibilityGroupId,
@@ -561,13 +563,18 @@ export class UserManager {
         }
       }
     );
-    if (NEWLY_OPENED_USER_DATA_STORAGE_VISIBILITY_GROUPS_INFO.length) {
+    this.logger.debug(
+      `Opened ${NEWLY_OPENED_USER_DATA_STORAGE_VISIBILITY_GROUPS_INFO.length.toString()} User Data Storage Visibility Group${
+        NEWLY_OPENED_USER_DATA_STORAGE_VISIBILITY_GROUPS_INFO.length === 1 ? "" : "s"
+      }.`
+    );
+    if (NEWLY_OPENED_USER_DATA_STORAGE_VISIBILITY_GROUPS_INFO.length > 0) {
       this.onOpenUserDataStorageVisibilityGroupsChangedCallback({
-        deleted: [],
+        removed: [],
         added: NEWLY_OPENED_USER_DATA_STORAGE_VISIBILITY_GROUPS_INFO
       } satisfies IUserDataStorageVisibilityGroupsInfoChangedDiff);
-      this.onUserDataStoragesChangedCallback({
-        deleted: [],
+      this.onAvailableUserDataStoragesChangedCallback({
+        removed: [],
         added: this.getSignedInUserSecuredUserDataStorageConfigs({
           includeIds: "all",
           excludeIds: null,
@@ -601,11 +608,6 @@ export class UserManager {
         })
       } satisfies IUserDataStoragesInfoChangedDiff);
     }
-    this.logger.debug(
-      `Opened ${NEWLY_OPENED_USER_DATA_STORAGE_VISIBILITY_GROUPS_INFO.length.toString()} User Data Storage Visibility Group${
-        NEWLY_OPENED_USER_DATA_STORAGE_VISIBILITY_GROUPS_INFO.length === 1 ? "" : "s"
-      }.`
-    );
     return NEWLY_OPENED_USER_DATA_STORAGE_VISIBILITY_GROUPS_INFO.length;
   }
 
@@ -625,34 +627,21 @@ export class UserManager {
       if (this.OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS.has(visibilityGroupId)) {
         VISIBILITY_GROUP_IDS_TO_CLOSE.push(visibilityGroupId);
       } else {
-        this.logger.warn(
-          `User Data Storage Visibility Group ID "${visibilityGroupId}" missing from open User Data Storage Visibility Groups map. Skipping.`
-        );
+        this.logger.warn(`User Data Storage Visibility Group ID "${visibilityGroupId}" not open. Skipping.`);
       }
     });
-    // Execute on change functions
-    if (VISIBILITY_GROUP_IDS_TO_CLOSE.length) {
-      this.onOpenUserDataStorageVisibilityGroupsChangedCallback({
-        deleted: VISIBILITY_GROUP_IDS_TO_CLOSE,
-        added: []
-      } satisfies IUserDataStorageVisibilityGroupsInfoChangedDiff);
-      this.onUserDataStoragesChangedCallback({
-        deleted: this.getSignedInUserSecuredUserDataStorageConfigs({
-          includeIds: "all",
-          excludeIds: null,
-          visibilityGroups: { includeIds: VISIBILITY_GROUP_IDS_TO_CLOSE, excludeIds: null }
-        }).map((securedUserDataStorageConfig: ISecuredUserDataStorageConfig): UUID => {
-          return securedUserDataStorageConfig.storageId;
-        }),
-        added: []
-      } satisfies IUserDataStoragesInfoChangedDiff);
-    }
-    // Corrupt AES keys and remove form open visibility groups map
-    visibilityGroupIds.map((visibilityGroupId: UUID): void => {
-      // Corrupt the visibility group data encryption AES key
+    const NOW_UNAVAILABLE_USER_DATA_STORAGE_CONFIG_IDS: UUID[] = this.getSignedInUserSecuredUserDataStorageConfigs({
+      includeIds: "all",
+      excludeIds: null,
+      visibilityGroups: { includeIds: VISIBILITY_GROUP_IDS_TO_CLOSE, excludeIds: null }
+    }).map((securedUserDataStorageConfig: ISecuredUserDataStorageConfig): UUID => {
+      return securedUserDataStorageConfig.storageId;
+    });
+    // Corrupt AES keys and remove from open visibility groups map
+    VISIBILITY_GROUP_IDS_TO_CLOSE.map((visibilityGroupId: UUID): void => {
       const DATA_ENCRYPTION_AES_KEY: Buffer | undefined = this.OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS.get(visibilityGroupId);
       if (DATA_ENCRYPTION_AES_KEY === undefined) {
-        this.logger.warn(`User Data Storage Visibility Group ID "${visibilityGroupId}" missing from open User Data Storage Visibility Groups map.`);
+        this.logger.warn(`User Data Storage Visibility Group ID "${visibilityGroupId}" not open.`);
         return;
       }
       crypto.getRandomValues(DATA_ENCRYPTION_AES_KEY);
@@ -663,6 +652,17 @@ export class UserManager {
         VISIBILITY_GROUP_IDS_TO_CLOSE.length === 1 ? "" : "s"
       }.`
     );
+    // Execute on change functions
+    if (VISIBILITY_GROUP_IDS_TO_CLOSE.length > 0) {
+      this.onOpenUserDataStorageVisibilityGroupsChangedCallback({
+        removed: VISIBILITY_GROUP_IDS_TO_CLOSE,
+        added: []
+      } satisfies IUserDataStorageVisibilityGroupsInfoChangedDiff);
+      this.onAvailableUserDataStoragesChangedCallback({
+        removed: NOW_UNAVAILABLE_USER_DATA_STORAGE_CONFIG_IDS,
+        added: []
+      } satisfies IUserDataStoragesInfoChangedDiff);
+    }
     return VISIBILITY_GROUP_IDS_TO_CLOSE.length;
   }
 
@@ -739,8 +739,8 @@ export class UserManager {
     );
   }
 
-  public getAllSignedInUserDataStoragesInfo(): IUserDataStorageInfo[] {
-    this.logger.debug("Getting all signed in user's User Data Storages Info.");
+  public getAllSignedInUserAvailableDataStoragesInfo(): IUserDataStorageInfo[] {
+    this.logger.debug("Getting all signed in user's available User Data Storages Info.");
     const SECURED_USER_DATA_STORAGE_CONFIGS: ISecuredUserDataStorageConfig[] = this.getSignedInUserSecuredUserDataStorageConfigs({
       includeIds: "all",
       excludeIds: null,
@@ -750,14 +750,12 @@ export class UserManager {
       }
     });
     return SECURED_USER_DATA_STORAGE_CONFIGS.map((securedUserDataStorageConfig: ISecuredUserDataStorageConfig): IUserDataStorageInfo => {
+      // TODO: Make this one call for all to not destroy the network
       const VISIBILITY_GROUP: ISecuredUserDataStorageVisibilityGroup | null = this.getSecuredUserDataStorageVisibilityGroupForConfigId(
         securedUserDataStorageConfig.storageId
       );
-      return securedUserDataStorageConfigToUserDataStorageInfo(
-        securedUserDataStorageConfig,
-        VISIBILITY_GROUP === null ? PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS.name : VISIBILITY_GROUP.name,
-        null
-      );
+      const VISIBILITY_GROUP_NAME: string | null = VISIBILITY_GROUP === null ? null : VISIBILITY_GROUP.name;
+      return securedUserDataStorageConfigToUserDataStorageInfo(securedUserDataStorageConfig, VISIBILITY_GROUP_NAME, null);
     });
     // TODO: Change isOpen to true on the configs that are open
   }

@@ -3,7 +3,7 @@ import { IUserDataStorageInfo, USER_DATA_STORAGE_INFO_JSON_SCHEMA } from "./User
 import { AJV } from "@shared/utils/AJVJSONValidator";
 
 export interface IUserDataStoragesInfoChangedDiff {
-  deleted: string[]; // UUIDs of deleted storages
+  removed: string[]; // Storages IDs
   added: IUserDataStorageInfo[];
 }
 
@@ -11,9 +11,9 @@ export const USER_DATA_STORAGES_INFO_CHANGED_DIFF_JSON_SCHEMA: JSONSchemaType<IU
   $schema: "http://json-schema.org/draft-07/schema#",
   type: "object",
   properties: {
-    deleted: {
+    removed: {
       type: "array",
-      title: "Deleted",
+      title: "Removed",
       items: { type: "string", format: "uuid" }
     },
     added: {
@@ -22,7 +22,7 @@ export const USER_DATA_STORAGES_INFO_CHANGED_DIFF_JSON_SCHEMA: JSONSchemaType<IU
       items: USER_DATA_STORAGE_INFO_JSON_SCHEMA
     }
   },
-  required: ["deleted", "added"],
+  required: ["removed", "added"],
   additionalProperties: false
 } as const;
 

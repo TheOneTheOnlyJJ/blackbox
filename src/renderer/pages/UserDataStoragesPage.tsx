@@ -3,7 +3,7 @@ import Button from "@mui/material/Button/Button";
 import { appLogger } from "@renderer/utils/loggers";
 import NewUserDataStorageConfigFormDialog from "@renderer/components/dialogs/NewUserDataStorageConfigFormDialog";
 import UserDataStoragesDataGrid from "@renderer/components/dataGrids/UserDataStoragesDataGrid";
-import { Box, Stack } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 import { DASHBOARD_NAVIGATION_AREAS } from "@renderer/navigationAreas/DashboardNavigationAreas";
 import {
   IUserDataStoragesLayoutRootContext,
@@ -41,8 +41,8 @@ const UserDataStoragesPage: FC = () => {
   useEffect((): void => {
     userDataStoragesLayoutRootContext.setDashboardNavigationArea(DASHBOARD_NAVIGATION_AREAS.userDataStorages);
     userDataStoragesLayoutRootContext.setUserStoragesNavigationArea(USER_DATA_STORAGES_NAVIGATION_AREAS.storages);
-    userDataStoragesLayoutRootContext.setAppBarTitle("Data Storages");
-    userDataStoragesLayoutRootContext.setForbiddenLocationName("Data Storages");
+    userDataStoragesLayoutRootContext.setAppBarTitle("Available Data Storages");
+    userDataStoragesLayoutRootContext.setForbiddenLocationName("Available Data Storages");
   }, [userDataStoragesLayoutRootContext]);
 
   return (
@@ -60,7 +60,9 @@ const UserDataStoragesPage: FC = () => {
             New Data Storage
           </Button>
         </Stack>
-
+        <Typography variant="h6" sx={{ marginTop: ".5rem" }}>
+          Available Data Storages:
+        </Typography>
         <Box sx={{ flex: 1, minHeight: 0, marginTop: ".5rem" }}>
           <UserDataStoragesDataGrid />
         </Box>

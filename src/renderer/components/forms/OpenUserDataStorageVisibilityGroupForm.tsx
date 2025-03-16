@@ -77,29 +77,31 @@ const OpenUserDataStorageVisibilityGroupForm: FC<IOpenUserDataStorageVisibilityG
             if (OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
               if (OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS_RESPONSE.data > 0) {
                 enqueueSnackbar({
-                  message: `Opened ${OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS_RESPONSE.data.toString()} new User Data Storage Visibility Group${
-                    OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS_RESPONSE.data === 1 ? "" : "s"
-                  }.`,
+                  message: `Opened ${
+                    OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS_RESPONSE.data === 1
+                      ? "a"
+                      : OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS_RESPONSE.data.toString()
+                  } new data storage visibility group${OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS_RESPONSE.data === 1 ? "" : "s"}.`,
                   variant: "info"
                 });
                 onOpenedSuccessfully();
               } else {
-                enqueueSnackbar({ message: "No new User Data Storage Visibility Group opened.", variant: "info" });
+                enqueueSnackbar({ message: "No new data storage visibility group opened.", variant: "info" });
               }
             } else {
-              enqueueSnackbar({ message: "Error opening User Data Storage Visibility Group.", variant: "error" });
+              enqueueSnackbar({ message: "Error opening data storage visibility group.", variant: "error" });
             }
           },
           (reason: unknown): void => {
             const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
             appLogger.error(`Could not encrypt User Data Storage Visibility Group Open DTO. Reason: ${REASON_MESSAGE}.`);
-            enqueueSnackbar({ message: "User Data Storage Visibility Group password encryption error.", variant: "error" });
+            enqueueSnackbar({ message: "Data storage visibility group password encryption error.", variant: "error" });
           }
         )
         .catch((error: unknown): void => {
           const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
           appLogger.error(`Could not encrypt User Data Storage Visibility Group Create DTO. Reason: ${ERROR_MESSAGE}.`);
-          enqueueSnackbar({ message: "User Data Storage Visibility Group encryption error.", variant: "error" });
+          enqueueSnackbar({ message: "Data storage visibility group encryption error.", variant: "error" });
         })
         .finally((): void => {
           props.setIsOpenUserDataStorageVisibilityGroupPending(false);

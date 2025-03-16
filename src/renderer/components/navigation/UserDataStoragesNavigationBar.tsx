@@ -32,7 +32,7 @@ const UserDataStoragesNavigationBar = forwardRef<HTMLDivElement, IUserDataStorag
   >((): IUserDataStoragesNavigationBarDrawerItem[] => {
     return [
       {
-        name: "Storages",
+        name: "Available Storages",
         icon: ViewListOutlinedIcon,
         userDataStoragesNavigationArea: USER_DATA_STORAGES_NAVIGATION_AREAS.storages,
         path: `/users/${props.signedInUserId}/dataStorages`,

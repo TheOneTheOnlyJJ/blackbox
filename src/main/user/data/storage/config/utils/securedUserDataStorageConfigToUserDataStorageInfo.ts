@@ -4,7 +4,7 @@ import { LogFunctions } from "electron-log";
 
 export const securedUserDataStorageConfigToUserDataStorageInfo = (
   securedUserDataStorageConfig: ISecuredUserDataStorageConfig,
-  visibilityGroupName: string,
+  visibilityGroupName: string | null,
   logger: LogFunctions | null
 ): IUserDataStorageInfo => {
   logger?.debug("Converting Secured User Data Storage Config to User Data Storage Info.");

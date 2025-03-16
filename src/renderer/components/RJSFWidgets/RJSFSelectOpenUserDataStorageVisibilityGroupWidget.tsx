@@ -59,7 +59,7 @@ const RJSFSelectOpenUserDataStorageVisibilityGroupWidget: FC<WidgetProps> = (pro
         inputProps={{ readOnly: readonly }}
         defaultValue={undefined}
       >
-        <MenuItem value="">
+        <MenuItem value="" divider={true}>
           <em>{PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS.name}</em>
         </MenuItem>
         {signedInRootContext.openUserDataStorageVisibilityGroupsInfo.map((visibilityGroupInfo: IUserDataStorageVisibilityGroupInfo) => {

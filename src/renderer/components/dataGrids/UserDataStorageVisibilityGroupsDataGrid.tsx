@@ -16,7 +16,7 @@ const USER_DATA_STORAGE_VISIBILIY_GROUPS_DATA_GRID_COLUMNS: GridColDef[] = [
     type: "actions",
     headerName: "Close",
     getActions: (params: GridRowParams<IUserDataStorageVisibilityGroupInfo>) => {
-      return [<CloseUserDataStorageVisibilityGroupActionItem key="close" visibilityGroupId={params.row.visibilityGroupId} />];
+      return [<CloseUserDataStorageVisibilityGroupActionItem key="close" visibilityGroupInfo={params.row} />];
     }
   }
 ];

@@ -13,8 +13,8 @@ const USER_DATA_STORAGES_DATA_GRID_COLUMNS: GridColDef[] = [
     type: "string",
     headerName: USER_DATA_STORAGE_INFO_JSON_SCHEMA_CONSTANTS.visibilityGroupName.title,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    renderCell: (params: GridRenderCellParams<any, string>) => {
-      return params.value === PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS.name ? <em>{params.value}</em> : params.value;
+    renderCell: (params: GridRenderCellParams<any, string | null>) => {
+      return params.value === null ? <em>{PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS.name}</em> : params.value;
     }
   },
   { field: "type", type: "string", headerName: USER_DATA_STORAGE_INFO_JSON_SCHEMA_CONSTANTS.type.title },
