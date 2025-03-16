@@ -22,7 +22,7 @@ export const USER_DATA_STORAGE_CONFIG_CREATE_INPUT_JSON_SCHEMA: JSONSchemaType<I
   properties: {
     name: { type: "string", ...USER_DATA_STORAGE_CONFIG_CREATE_JSON_SCHEMA_CONSTANTS.name },
     description: { type: "string", ...USER_DATA_STORAGE_CONFIG_CREATE_JSON_SCHEMA_CONSTANTS.description, nullable: true },
-    visibilityGroupId: { type: "string", format: "uuid", nullable: true },
+    visibilityGroupId: { type: "string", ...USER_DATA_STORAGE_CONFIG_CREATE_JSON_SCHEMA_CONSTANTS.visibilityGroupId, nullable: true },
     backendConfigCreateInput: USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_JSON_SCHEMA
   },
   required: ["name", "backendConfigCreateInput"],
