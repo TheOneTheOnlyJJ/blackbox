@@ -1,9 +1,8 @@
-import { UUID } from "node:crypto";
+import { randomUUID, UUID } from "node:crypto";
 import { IUserAccountStorageConfig } from "./config/UserAccountStorageConfig";
 import { userAccountStorageBackendFactory } from "./backend/userAccountStorageBackendFactory";
 import { LogFunctions } from "electron-log";
 import { UserAccountStorageBackend } from "./backend/UserAccountStorageBackend";
-import { UserAccountStorageBackendType } from "./backend/UserAccountStorageBackendType";
 import { ISecuredUserSignUpPayload } from "../SecuredUserSignUpPayload";
 import { ISecuredPassword } from "@main/utils/encryption/SecuredPassword";
 import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserAccountStorageInfo";
@@ -11,6 +10,7 @@ import { IStorageSecuredUserDataStorageConfig } from "@main/user/data/storage/co
 import { IStorageSecuredUserDataStorageVisibilityGroup } from "@main/user/data/storage/visibilityGroup/StorageSecuredUserDataStorageVisibilityGroup";
 import { UserAccountStorageBackendInfo } from "@shared/user/account/storage/backend/info/UserAccountStorageBackendInfo";
 import { userAccountStorageBackendConfigToUserAccountStorageBackendInfo } from "./backend/config/utils/userAccountStorageBackendConfigToUserAccountStorageBackendInfo";
+import { IDataStorageConfigFilter, IDataStorageVisibilityGroupFilter } from "./backend/BaseUserAccountStorageBackend";
 
 // TODO: Improve logging
 export class UserAccountStorage {
@@ -49,6 +49,42 @@ export class UserAccountStorage {
     return this.backend.close();
   }
 
+  public generateRandomUserId(): UUID {
+    this.logger.info("Generating random user ID.");
+    let userId: UUID = randomUUID({ disableEntropyCache: true });
+    this.logger.debug(`Checking user ID "${userId}" availability.`);
+    while (!this.isUserIdAvailable(userId)) {
+      this.logger.debug(`User ID "${userId}" not available. Generating a new random one.`);
+      userId = randomUUID({ disableEntropyCache: true });
+    }
+    this.logger.debug(`Generated random User ID "${userId}".`);
+    return userId;
+  }
+
+  public generateRandomUserDataStorageId(): UUID {
+    this.logger.debug("Generating random User Data Storage ID.");
+    let storageId: UUID = randomUUID({ disableEntropyCache: true });
+    this.logger.debug(`Checking User Data Storage ID "${storageId}" availability.`);
+    while (!this.isUserDataStorageIdAvailable(storageId)) {
+      this.logger.debug(`User Data Storage ID "${storageId}" not available. Generating a new random one.`);
+      storageId = randomUUID({ disableEntropyCache: true });
+    }
+    this.logger.debug(`Generated random User Data Storage ID "${storageId}".`);
+    return storageId;
+  }
+
+  public generateRandomUserDataStorageVisibilityGroupId(): UUID {
+    this.logger.debug("Generating random User Data Storage Visibility Group ID.");
+    let dataStorageVisibilityGroupId: UUID = randomUUID({ disableEntropyCache: true });
+    this.logger.debug(`Checking User Data Storage Visibility Group ID "${dataStorageVisibilityGroupId}" availability.`);
+    while (!this.isUserDataStorageVisibilityGroupIdAvailable(dataStorageVisibilityGroupId)) {
+      this.logger.debug(`User Data Storage Visibility Group ID "${dataStorageVisibilityGroupId}" not available. Generating a new random one.`);
+      dataStorageVisibilityGroupId = randomUUID({ disableEntropyCache: true });
+    }
+    this.logger.debug(`Generated random User Data Storage Visibility Group ID "${dataStorageVisibilityGroupId}".`);
+    return dataStorageVisibilityGroupId;
+  }
+
   public getUserAccountStorageInfo(): IUserAccountStorageInfo {
     this.logger.info("Getting User Account Storage Info.");
     return {
@@ -57,11 +93,6 @@ export class UserAccountStorage {
       backend: this.backendInfo,
       isOpen: this.isOpen()
     } satisfies IUserAccountStorageInfo;
-  }
-
-  public getBackendType(): UserAccountStorageBackendType {
-    this.logger.info(`Getting User Account Storage "${this.name}" with ID "${this.storageId}" backend type.`);
-    return this.backend.config.type;
   }
 
   public isUsernameAvailable(username: string): boolean {
@@ -138,26 +169,16 @@ export class UserAccountStorage {
     return this.backend.addStorageSecuredUserDataStorageVisibilityGroup(storageSecuredUserDataStorageVisibilityGroup);
   }
 
-  public getStorageSecuredUserDataStorageVisibilityGroups(options: {
-    userId: UUID;
-    includeIds: UUID[] | "all";
-    excludeIds: UUID[] | null;
-  }): IStorageSecuredUserDataStorageVisibilityGroup[] {
+  public getStorageSecuredUserDataStorageVisibilityGroups(
+    options: IDataStorageVisibilityGroupFilter
+  ): IStorageSecuredUserDataStorageVisibilityGroup[] {
     this.logger.info(
       `Getting Storage Secured User Data Storage Visibility Groups for user with ID "${options.userId}" from User Account Storage "${this.name}" with ID "${this.storageId}".`
     );
     return this.backend.getStorageSecuredUserDataStorageVisibilityGroups(options);
   }
 
-  public getStorageSecuredUserDataStorageConfigs(options: {
-    userId: UUID;
-    includeIds: UUID[] | "all";
-    excludeIds: UUID[] | null;
-    visibilityGroups: {
-      includeIds: (UUID | null)[] | "all";
-      excludeIds: UUID[] | null;
-    };
-  }): IStorageSecuredUserDataStorageConfig[] {
+  public getStorageSecuredUserDataStorageConfigs(options: IDataStorageConfigFilter): IStorageSecuredUserDataStorageConfig[] {
     this.logger.info(
       `Getting Storage Secured User Data Storage Configs for user with ID "${options.userId}" from User Account Storage "${this.name}" with ID "${this.storageId}".`
     );

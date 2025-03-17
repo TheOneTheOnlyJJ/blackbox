@@ -1,4 +1,4 @@
-import { BaseUserAccountStorageBackend } from "../../BaseUserAccountStorageBackend";
+import { BaseUserAccountStorageBackend, IDataStorageConfigFilter, IDataStorageVisibilityGroupFilter } from "../../BaseUserAccountStorageBackend";
 import DatabaseConstructor, { Database, RunResult } from "better-sqlite3";
 import { LogFunctions } from "electron-log";
 import { existsSync, mkdirSync } from "node:fs";
@@ -377,15 +377,7 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     }
   }
 
-  public getStorageSecuredUserDataStorageConfigs(options: {
-    userId: UUID;
-    includeIds: UUID[] | "all";
-    excludeIds: UUID[] | null;
-    visibilityGroups: {
-      includeIds: (UUID | null)[] | "all";
-      excludeIds: UUID[] | null;
-    };
-  }): IStorageSecuredUserDataStorageConfig[] {
+  public getStorageSecuredUserDataStorageConfigs(options: IDataStorageConfigFilter): IStorageSecuredUserDataStorageConfig[] {
     const { userId, includeIds, excludeIds, visibilityGroups } = options;
     this.logger.debug(`Getting Storage Secured User Data Storage Configs for user: "${userId}".`);
     if (this.db === null) {
@@ -529,11 +521,9 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     }
   }
 
-  public getStorageSecuredUserDataStorageVisibilityGroups(options: {
-    userId: UUID;
-    includeIds: UUID[] | "all";
-    excludeIds: UUID[] | null;
-  }): IStorageSecuredUserDataStorageVisibilityGroup[] {
+  public getStorageSecuredUserDataStorageVisibilityGroups(
+    options: IDataStorageVisibilityGroupFilter
+  ): IStorageSecuredUserDataStorageVisibilityGroup[] {
     const { userId, includeIds, excludeIds } = options;
     // TODO: Improve logging
     this.logger.debug(`Getting Storage Secured User Data Storage Visibility Groups for user: "${userId}".`);

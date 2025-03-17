@@ -132,7 +132,14 @@ const AppRoot: FC = () => {
     // Monitor changes to User Account Storage
     const removeOnUserAccountStorageChangedListener: () => void = window.userAPI.onUserAccountStorageChanged(
       (newUserAccountStorageInfo: IUserAccountStorageInfo | null): void => {
-        setUserAccountStorageInfo(newUserAccountStorageInfo);
+        setUserAccountStorageInfo((prevUserAccountStorageInfo: IUserAccountStorageInfo | null): IUserAccountStorageInfo | null => {
+          if (newUserAccountStorageInfo !== null) {
+            enqueueSnackbar({ message: `Set ${newUserAccountStorageInfo.name} user account storage.`, variant: "info" });
+          } else if (prevUserAccountStorageInfo !== null) {
+            enqueueSnackbar({ message: `Unset ${prevUserAccountStorageInfo.name} user account storage.`, variant: "warning" });
+          }
+          return newUserAccountStorageInfo;
+        });
       }
     );
     // Monitor changes to User Account Storage open status
@@ -143,6 +150,11 @@ const AppRoot: FC = () => {
             appLogger.warn("User Account Storage open state changed callback invoked with no User Account Storage set! No-op.");
             enqueueSnackbar({ message: "User Account Storage open state received without being set.", variant: "warning" });
             return null;
+          }
+          if (newIsUserAccountStorageOpen) {
+            enqueueSnackbar({ message: "Opened user account storage.", variant: "info" });
+          } else {
+            enqueueSnackbar({ message: "Closed user account storage.", variant: "warning" });
           }
           return {
             ...prevUserAccountStorageInfo,

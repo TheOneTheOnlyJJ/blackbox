@@ -1,13 +1,11 @@
 import { LogFunctions } from "electron-log";
-import { UserAccountStorageBackendType } from "./account/storage/backend/UserAccountStorageBackendType";
-import { randomUUID, scryptSync, timingSafeEqual, UUID } from "node:crypto";
+import { timingSafeEqual, UUID } from "node:crypto";
 import { ISignedInUser, isSignedInUserValid } from "@main/user/account/SignedInUser";
 import { SignedInUserChangedCallback, UserAccountStorageChangedCallback, UserAccountStorageOpenChangedCallback } from "@shared/IPC/APIs/UserAPI";
 import { isDeepStrictEqual } from "node:util";
 import { IUserDataStorageConfig } from "./data/storage/config/UserDataStorageConfig";
-import { ISecuredPassword } from "@main/utils/encryption/SecuredPassword";
-import { IUserSignInPayload, USER_SIGN_IN_PAYLOAD_VALIDATE_FUNCTION } from "./account/UserSignInPayload";
-import { IUserSignUpPayload, USER_SIGN_UP_PAYLOAD_VALIDATE_FUNCTION } from "./account/UserSignUpPayload";
+import { IUserSignInPayload } from "./account/UserSignInPayload";
+import { IUserSignUpPayload } from "./account/UserSignUpPayload";
 import { UserAccountStorage } from "./account/storage/UserAccountStorage";
 import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserAccountStorageInfo";
 import { signedInUserToSignedInUserInfo } from "./account/utils/signedInUserToSignedInUserInfo";
@@ -15,7 +13,6 @@ import { ISignedInUserInfo } from "@shared/user/account/SignedInUserInfo";
 import { IStorageSecuredUserDataStorageConfig } from "./data/storage/config/StorageSecuredUserDataStorageConfig";
 import { userDataStorageConfigToSecuredUserDataStorageConfig } from "./data/storage/config/utils/userDataStorageConfigToSecuredUserDataStorageConfig";
 import { securedUserDataStorageConfigToStorageSecuredUserDataStorageConfig } from "./data/storage/config/utils/securedUserDataStorageConfigToStorageSecuredUserDataStorageConfig";
-import { userSignUpPayloadToSecuredUserSignUpPayload } from "./account/utils/userSignUpPayloadToSecuredUserSignUpPayload";
 import { ISecuredUserDataStorageConfig } from "./data/storage/config/SecuredUserDataStorageConfig";
 import { storageSecuredUserDataStorageConfigToSecuredUserDataStorageConfig } from "./data/storage/config/utils/storageSecuredUserDataStorageConfigToSecuredUserDataStorageConfig";
 import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
@@ -31,45 +28,52 @@ import { storageSecuredUserDataStorageVisibilityGroupToSecuredUserDataStorageVis
 import { IUserDataStorageVisibilityGroupsInfoChangedDiff } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfoChangedDiff";
 import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
 import { securedUserDataStorageVisibilityGroupToUserDataStorageVisibilityGroupInfo } from "./data/storage/visibilityGroup/utils/securedUserDataStorageVisibilityGroupToUserDataStorageVisibilityGroupInfo";
+import { deriveAESKey } from "@main/utils/encryption/deriveAESKey";
+import { hashPassword } from "@main/utils/encryption/hashPassword";
+import { UserAuthenticator } from "./UserAuthenticator";
+import { PASSWORD_SALT_LENGTH_BYTES } from "@main/utils/encryption/constants";
 
 export class UserManager {
   private readonly logger: LogFunctions;
 
+  private readonly AUTHENTICATOR: UserAuthenticator;
+
   // Signed in user
   // Must be wrapped in an object because it is a proxy
   private signedInUser: { value: ISignedInUser | null };
-  public onSignedInUserChangedCallback: SignedInUserChangedCallback;
+  private onSignedInUserChangedCallback: SignedInUserChangedCallback;
 
   // User Account Storage
   // Must be wrapped in an object because it too is a proxy
   private userAccountStorage: { value: UserAccountStorage | null };
-  public onUserAccountStorageChangedCallback: UserAccountStorageChangedCallback;
-  private onUserAccountStorageOpenChangedCallback: UserAccountStorageOpenChangedCallback;
+  private onAccountStorageChangedCallback: UserAccountStorageChangedCallback;
+  private onAccountStorageOpenChangedCallback: UserAccountStorageOpenChangedCallback;
 
   // Available User Data Storages
-  private onAvailableUserDataStoragesChangedCallback: (availableUserDataStoragesInfoChangedDiff: IUserDataStoragesInfoChangedDiff) => void;
+  // private availableDataStorages: { value: UserDataStorage[] } // TODO: Implement UserDataStorage
+  private onAvailableDataStoragesChangedCallback: (availableUserDataStoragesInfoChangedDiff: IUserDataStoragesInfoChangedDiff) => void;
 
   // Open User Data Storage Visibility Groups
-  private OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS: Map<UUID, Buffer>;
-  private onOpenUserDataStorageVisibilityGroupsChangedCallback: (
-    userDataStorageVisibilityGroupInfoChangedDiff: IUserDataStorageVisibilityGroupsInfoChangedDiff
+  private OPEN_DATA_STORAGE_VISIBILITY_GROUPS: Map<UUID, Buffer>;
+  private onOpenDataStorageVisibilityGroupsChangedCallback: (
+    dataStorageVisibilityGroupsInfoChangedDiff: IUserDataStorageVisibilityGroupsInfoChangedDiff
   ) => void;
-
-  private readonly PASSWORD_SALT_LENGTH = 32;
 
   public constructor(
     logger: LogFunctions,
+    userAuthenticatorLogger: LogFunctions,
     onSignedInUserChangedCallback?: SignedInUserChangedCallback,
     onUserAccountStorageChangedCallback?: UserAccountStorageChangedCallback,
     onUserAccountStorageOpenChangedCallback?: UserAccountStorageOpenChangedCallback,
     onAvailableUserDataStoragesChangedCallback?: (availableUserDataStoragesInfoChangedDiff: IUserDataStoragesInfoChangedDiff) => void,
     onOpenUserDataStorageVisibilityGroupsChangedCallback?: (
-      userDataStorageVisibilityGroupsInfoChangedDiff: IUserDataStorageVisibilityGroupsInfoChangedDiff
+      dataStorageVisibilityGroupsInfoChangedDiff: IUserDataStorageVisibilityGroupsInfoChangedDiff
     ) => void
   ) {
     // Loggers
     this.logger = logger;
     this.logger.debug("Initialising new User Manager.");
+    this.AUTHENTICATOR = new UserAuthenticator(userAuthenticatorLogger);
     // Signed in user
     this.onSignedInUserChangedCallback =
       onSignedInUserChangedCallback ??
@@ -97,6 +101,7 @@ export class UserManager {
           if (target[property] !== null) {
             this.logger.info("Corrupting previous user data AES key buffer.");
             crypto.getRandomValues(target[property].userDataAESKey);
+            this.closeUserDataStorageVisibilityGroups(Array.from(this.OPEN_DATA_STORAGE_VISIBILITY_GROUPS.keys()));
           } else {
             this.logger.info("No previous user data key buffer to corrupt.");
           }
@@ -112,12 +117,12 @@ export class UserManager {
       }
     );
     // User Account Storage
-    this.onUserAccountStorageChangedCallback =
+    this.onAccountStorageChangedCallback =
       onUserAccountStorageChangedCallback ??
       ((): void => {
         this.logger.silly("No User Account Storage changed callback set.");
       });
-    this.onUserAccountStorageOpenChangedCallback =
+    this.onAccountStorageOpenChangedCallback =
       onUserAccountStorageOpenChangedCallback ??
       ((): void => {
         this.logger.silly("No User Account Storage open status changed callback set.");
@@ -136,38 +141,56 @@ export class UserManager {
           target[property] = value;
           if (value === null) {
             this.logger.info("Set User Account Storage to null (unavailable).");
-            this.onUserAccountStorageChangedCallback(null);
+            this.onAccountStorageChangedCallback(null);
           } else {
             this.logger.info(`Set "${value.name}" User Account Storage (ID "${value.storageId}") (available).`);
-            this.onUserAccountStorageChangedCallback(value.getUserAccountStorageInfo());
+            this.onAccountStorageChangedCallback(value.getUserAccountStorageInfo());
+            // Proxy the open function to invoke the changed callback
+            type OpenFunctionType = typeof value.open;
+            type OpenFunctionParametersType = Parameters<OpenFunctionType>;
+            type OpenFunctionReturnType = ReturnType<OpenFunctionType>;
+            value.open = new Proxy<OpenFunctionType>(value.open.bind(value), {
+              apply: (target: OpenFunctionType, thisArg: unknown, argArray: OpenFunctionParametersType): OpenFunctionReturnType => {
+                const IS_OPEN: boolean = value.isOpen();
+                const NEW_IS_OPEN: boolean = Reflect.apply(target, thisArg, argArray);
+                if (IS_OPEN !== NEW_IS_OPEN) {
+                  this.onAccountStorageOpenChangedCallback(NEW_IS_OPEN);
+                }
+                return NEW_IS_OPEN;
+              }
+            });
+            // Proxy the close function to invoke the changed callback
+            type CloseFunctionType = typeof value.close;
+            type CloseFunctionParametersType = Parameters<CloseFunctionType>;
+            type CloseFunctionReturnType = ReturnType<CloseFunctionType>;
+            value.close = new Proxy<CloseFunctionType>(value.close.bind(value), {
+              apply: (target: CloseFunctionType, thisArg: unknown, argArray: CloseFunctionParametersType): CloseFunctionReturnType => {
+                const IS_CLOSED: boolean = value.isClosed();
+                const NEW_IS_CLOSED: boolean = Reflect.apply(target, thisArg, argArray);
+                if (IS_CLOSED !== NEW_IS_CLOSED) {
+                  this.onAccountStorageOpenChangedCallback(!NEW_IS_CLOSED); // IS_OPEN
+                }
+                return NEW_IS_CLOSED;
+              }
+            });
           }
           return true;
         }
       }
     );
     // User Data Storage
-    this.onAvailableUserDataStoragesChangedCallback =
+    this.onAvailableDataStoragesChangedCallback =
       onAvailableUserDataStoragesChangedCallback ??
       ((): void => {
         this.logger.silly("No User Data Storages changed callback set.");
       });
     // User Data Storage Visibility groups
-    this.OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS = new Map<UUID, Buffer>();
-    this.onOpenUserDataStorageVisibilityGroupsChangedCallback =
+    this.OPEN_DATA_STORAGE_VISIBILITY_GROUPS = new Map<UUID, Buffer>();
+    this.onOpenDataStorageVisibilityGroupsChangedCallback =
       onOpenUserDataStorageVisibilityGroupsChangedCallback ??
       ((): void => {
         this.logger.silly("No User Data Storage Visibility Groups changed callback set.");
       });
-  }
-
-  public getUserAccountStorageBackendType(): UserAccountStorageBackendType {
-    this.logger.debug("Getting User Account Storage Backend type.");
-    if (this.userAccountStorage.value === null) {
-      throw new Error("Null User Account Storage");
-    }
-    const BACKEND_TYPE: UserAccountStorageBackendType = this.userAccountStorage.value.getBackendType();
-    this.logger.debug(`User Account Storage Backend type: "${BACKEND_TYPE}".`);
-    return BACKEND_TYPE;
   }
 
   public isUserAccountStorageOpen(): boolean {
@@ -231,9 +254,7 @@ export class UserManager {
     if (this.userAccountStorage.value === null) {
       throw new Error("Null User Account Storage");
     }
-    const IS_OPEN: boolean = this.userAccountStorage.value.open();
-    this.onUserAccountStorageOpenChangedCallback(IS_OPEN);
-    return IS_OPEN;
+    return this.userAccountStorage.value.open();
   }
 
   public closeUserAccountStorage(): boolean {
@@ -241,9 +262,7 @@ export class UserManager {
     if (this.userAccountStorage.value === null) {
       throw new Error("Null User Account Storage");
     }
-    const IS_CLOSED: boolean = this.userAccountStorage.value.close();
-    this.onUserAccountStorageOpenChangedCallback(!IS_CLOSED); // IS_OPEN
-    return IS_CLOSED;
+    return this.userAccountStorage.value.close();
   }
 
   public isUsernameAvailable(username: string): boolean {
@@ -254,7 +273,7 @@ export class UserManager {
     return this.userAccountStorage.value.isUsernameAvailable(username);
   }
 
-  public isUserDataStorageVisibilityGroupNameAvailableForSignedInUer(name: string): boolean {
+  public isUserDataStorageVisibilityGroupNameAvailableForSignedInUser(name: string): boolean {
     this.logger.debug(`Getting User Data Storage Visibility Group name "${name}" availability for signed in user.`);
     if (this.userAccountStorage.value === null) {
       throw new Error("Null User Account Storage");
@@ -262,6 +281,7 @@ export class UserManager {
     if (this.signedInUser.value === null) {
       throw new Error("No signed in user");
     }
+    // There is no method to directly get this from the account storage because it is encrypted
     const SECURED_VISIBILITY_GROUPS: ISecuredUserDataStorageVisibilityGroup[] = this.getSignedInUserSecuredUserDataStorageVisibilityGroups({
       includeIds: "all",
       excludeIds: null
@@ -274,30 +294,12 @@ export class UserManager {
     return true;
   }
 
-  private hashPassword(plainTextPassword: string, salt: Buffer, logger: LogFunctions | null, passwordPurposeToLog?: string): Buffer {
-    logger?.debug(`Hashing ${passwordPurposeToLog ? passwordPurposeToLog + " " : ""}password.`);
-    // TODO: Change scrypt to argon2 once it becomes available
-    return scryptSync(plainTextPassword, salt, 64);
-  }
-
-  private deriveDataEncryptionAESKey(plainTextPassword: string, salt: Buffer): Buffer {
-    this.logger.debug("Deriving data encryption AES key.");
-    return scryptSync(plainTextPassword, salt, 32);
-  }
-
   public generateRandomUserId(): UUID {
     this.logger.debug("Generating random User ID.");
     if (this.userAccountStorage.value === null) {
       throw new Error("Null User Account Storage");
     }
-    let userId: UUID = randomUUID({ disableEntropyCache: true });
-    this.logger.debug(`Checking user ID "${userId}" availability.`);
-    while (!this.userAccountStorage.value.isUserIdAvailable(userId)) {
-      this.logger.debug(`User ID "${userId}" not available. Generating a new random one.`);
-      userId = randomUUID({ disableEntropyCache: true });
-    }
-    this.logger.debug(`Generated random User ID "${userId}".`);
-    return userId;
+    return this.userAccountStorage.value.generateRandomUserId();
   }
 
   public generateRandomUserDataStorageId(): UUID {
@@ -305,14 +307,7 @@ export class UserManager {
     if (this.userAccountStorage.value === null) {
       throw new Error("Null User Account Storage");
     }
-    let storageId: UUID = randomUUID({ disableEntropyCache: true });
-    this.logger.debug(`Checking User Data Storage ID "${storageId}" availability.`);
-    while (!this.userAccountStorage.value.isUserDataStorageIdAvailable(storageId)) {
-      this.logger.debug(`User Data Storage ID "${storageId}" not available. Generating a new random one.`);
-      storageId = randomUUID({ disableEntropyCache: true });
-    }
-    this.logger.debug(`Generated random User Data Storage ID "${storageId}".`);
-    return storageId;
+    return this.userAccountStorage.value.generateRandomUserDataStorageId();
   }
 
   public generateRandomUserDataStorageVisibilityGroupId(): UUID {
@@ -320,14 +315,7 @@ export class UserManager {
     if (this.userAccountStorage.value === null) {
       throw new Error("Null User Account Storage");
     }
-    let dataStorageVisibilityGroupId: UUID = randomUUID({ disableEntropyCache: true });
-    this.logger.debug(`Checking User Data Storage Visibility Group ID "${dataStorageVisibilityGroupId}" availability.`);
-    while (!this.userAccountStorage.value.isUserDataStorageVisibilityGroupIdAvailable(dataStorageVisibilityGroupId)) {
-      this.logger.debug(`User Data Storage Visibility Group ID "${dataStorageVisibilityGroupId}" not available. Generating a new random one.`);
-      dataStorageVisibilityGroupId = randomUUID({ disableEntropyCache: true });
-    }
-    this.logger.debug(`Generated random User Data Storage Visibility Group ID "${dataStorageVisibilityGroupId}".`);
-    return dataStorageVisibilityGroupId;
+    return this.userAccountStorage.value.generateRandomUserDataStorageVisibilityGroupId();
   }
 
   public getUserCount(): number {
@@ -351,19 +339,9 @@ export class UserManager {
     if (this.userAccountStorage.value === null) {
       throw new Error("Null User Account Storage");
     }
-    if (!USER_SIGN_UP_PAYLOAD_VALIDATE_FUNCTION(userSignUpPayload)) {
-      throw new Error("Invalid user sign up payload");
-    }
-    return this.userAccountStorage.value.addUser(
-      userSignUpPayloadToSecuredUserSignUpPayload(
-        userSignUpPayload,
-        this.PASSWORD_SALT_LENGTH,
-        (userPassword: string, userPasswordSalt: Buffer): string => {
-          return this.hashPassword(userPassword, userPasswordSalt, this.logger, "user sign up").toString("base64");
-        },
-        this.logger
-      )
-    );
+    return this.AUTHENTICATOR.signUp(this.userAccountStorage.value, userSignUpPayload, (userPassword: string, userPasswordSalt: Buffer): string => {
+      return hashPassword(userPassword, userPasswordSalt, this.logger, "user sign up").toString("base64");
+    });
   }
 
   public signInUser(userSignInPayload: IUserSignInPayload): boolean {
@@ -374,52 +352,12 @@ export class UserManager {
     if (this.userAccountStorage.value === null) {
       throw new Error("Null User Account Storage");
     }
-    if (!USER_SIGN_IN_PAYLOAD_VALIDATE_FUNCTION(userSignInPayload)) {
-      throw new Error("Invalid user sign in payload");
-    }
-    const USER_ID: UUID | null = this.userAccountStorage.value.getUserId(userSignInPayload.username);
-    if (USER_ID === null) {
-      this.logger.debug("No user ID for given username.");
-      return false;
-    }
-    const SECURED_USER_PASSWORD: ISecuredPassword | null = this.userAccountStorage.value.getSecuredUserPassword(USER_ID);
-    if (SECURED_USER_PASSWORD === null) {
-      throw new Error(`No password hash and salt for user: "${USER_ID}"`);
-    }
-    const SIGN_IN_PASSWORD_HASH: Buffer = this.hashPassword(
-      userSignInPayload.password,
-      Buffer.from(SECURED_USER_PASSWORD.salt, "base64"),
-      this.logger,
-      "user sign in"
-    );
-    if (!timingSafeEqual(SIGN_IN_PASSWORD_HASH, Buffer.from(SECURED_USER_PASSWORD.hash, "base64"))) {
-      this.logger.debug("Password hashes do not match.");
-      return false;
-    }
-    this.logger.debug("Password hashes matched!");
-    const DATA_ENCRYPTION_KEY_SALT: string | null = this.userAccountStorage.value.getUserDataEncryptionAESKeySalt(USER_ID);
-    if (DATA_ENCRYPTION_KEY_SALT === null) {
-      throw new Error(`No data encryption key salt for given user ID: "${USER_ID}"`);
-    }
-    this.signedInUser.value = {
-      userId: USER_ID,
-      username: userSignInPayload.username,
-      userDataAESKey: this.deriveDataEncryptionAESKey(userSignInPayload.password, Buffer.from(DATA_ENCRYPTION_KEY_SALT, "base64"))
-    };
-    return true;
+    return this.AUTHENTICATOR.signIn(this.userAccountStorage.value, userSignInPayload, this.signedInUser);
   }
 
   public signOutUser(): ISignedInUserInfo | null {
     this.logger.debug("Signing out.");
-    if (this.signedInUser.value === null) {
-      this.logger.debug("No signed in user.");
-      return null;
-    }
-    this.logger.debug(`Signing out user: "${this.signedInUser.value.username}".`);
-    this.closeUserDataStorageVisibilityGroups(Array.from(this.OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS.keys()));
-    const SIGNED_OUT_USER_INFO: ISignedInUserInfo = signedInUserToSignedInUserInfo(this.signedInUser.value, this.logger);
-    this.signedInUser.value = null; // AES key gets corrupted in proxy
-    return SIGNED_OUT_USER_INFO;
+    return this.AUTHENTICATOR.signOut(this.signedInUser);
   }
 
   public getSignedInUserInfo(): ISignedInUserInfo | null {
@@ -458,7 +396,7 @@ export class UserManager {
     if (userDataStorageConfig.visibilityGroupId === null) {
       encryptionAESKey = this.signedInUser.value.userDataAESKey;
     } else {
-      const VISIBILITY_GROUP_AES_KEY: Buffer | undefined = this.OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS.get(userDataStorageConfig.visibilityGroupId);
+      const VISIBILITY_GROUP_AES_KEY: Buffer | undefined = this.OPEN_DATA_STORAGE_VISIBILITY_GROUPS.get(userDataStorageConfig.visibilityGroupId);
       if (VISIBILITY_GROUP_AES_KEY === undefined) {
         throw new Error(
           `User Data Storage Visibility Group "${userDataStorageConfig.visibilityGroupId}" not open! Cannot encrypt new User Data Storage Config`
@@ -474,7 +412,7 @@ export class UserManager {
         SECURED_USER_DATA_STORAGE_CONFIG.storageId
       );
       const VISIBILITY_GROUP_NAME: string | null = VISIBILITY_GROUP === null ? null : VISIBILITY_GROUP.name;
-      this.onAvailableUserDataStoragesChangedCallback({
+      this.onAvailableDataStoragesChangedCallback({
         removed: [],
         added: [securedUserDataStorageConfigToUserDataStorageInfo(SECURED_USER_DATA_STORAGE_CONFIG, VISIBILITY_GROUP_NAME, this.logger)]
       } satisfies IUserDataStoragesInfoChangedDiff);
@@ -495,15 +433,16 @@ export class UserManager {
         `User Data Storage Visibility Group user ID "${userDataStorageVisibilityGroup.userId}" does not match signed in user ID "${this.signedInUser.value.userId}"`
       );
     }
+    // TODO: Delete this check?
     if (this.userAccountStorage.value.isUserIdAvailable(userDataStorageVisibilityGroup.userId)) {
       throw new Error(`Cannot add User Data Storage Visibility Group to user "${userDataStorageVisibilityGroup.userId}" because it does not exist`);
     }
     const SECURED_USER_DATA_STORAGE_VISIBILITY_GROUP: ISecuredUserDataStorageVisibilityGroup =
       userDataStorageVisibilityGroupToSecuredUserDataStorageVisibilityGroup(
         userDataStorageVisibilityGroup,
-        this.PASSWORD_SALT_LENGTH,
+        PASSWORD_SALT_LENGTH_BYTES,
         (visibilityPassword: string, visibilityPasswordSalt: Buffer): string => {
-          return this.hashPassword(visibilityPassword, visibilityPasswordSalt, this.logger, "User Data Storage Visibility Group").toString("base64");
+          return hashPassword(visibilityPassword, visibilityPasswordSalt, this.logger, "User Data Storage Visibility Group").toString("base64");
         },
         this.logger
       );
@@ -537,24 +476,25 @@ export class UserManager {
     const NOT_OPEN_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUPS: ISecuredUserDataStorageVisibilityGroup[] =
       this.getSignedInUserSecuredUserDataStorageVisibilityGroups({
         includeIds: "all",
-        excludeIds: this.OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS.size > 0 ? Array.from(this.OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS.keys()) : null
+        excludeIds: this.OPEN_DATA_STORAGE_VISIBILITY_GROUPS.size > 0 ? Array.from(this.OPEN_DATA_STORAGE_VISIBILITY_GROUPS.keys()) : null
       });
     const NEWLY_OPENED_USER_DATA_STORAGE_VISIBILITY_GROUPS_INFO: IUserDataStorageVisibilityGroupInfo[] = [];
     // Try to match passwords for every secured user data storage visibility group
     NOT_OPEN_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUPS.map(
       (securedUserDataStorageVisibilityGroup: ISecuredUserDataStorageVisibilityGroup): void => {
-        const ATTEMPTED_PASSWORD_HASH: Buffer = this.hashPassword(
+        const ATTEMPTED_PASSWORD_HASH: Buffer = hashPassword(
           userDataStorageVisibilityGroupOpenRequest.password,
           Buffer.from(securedUserDataStorageVisibilityGroup.securedPassword.salt, "base64"),
           null
         );
         if (timingSafeEqual(ATTEMPTED_PASSWORD_HASH, Buffer.from(securedUserDataStorageVisibilityGroup.securedPassword.hash, "base64"))) {
           // Add to open user data storage visibility groups
-          this.OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS.set(
+          this.OPEN_DATA_STORAGE_VISIBILITY_GROUPS.set(
             securedUserDataStorageVisibilityGroup.visibilityGroupId,
-            this.deriveDataEncryptionAESKey(
+            deriveAESKey(
               userDataStorageVisibilityGroupOpenRequest.password,
-              Buffer.from(securedUserDataStorageVisibilityGroup.AESKeySalt, "base64")
+              Buffer.from(securedUserDataStorageVisibilityGroup.AESKeySalt, "base64"),
+              null
             )
           );
           NEWLY_OPENED_USER_DATA_STORAGE_VISIBILITY_GROUPS_INFO.push(
@@ -569,11 +509,11 @@ export class UserManager {
       }.`
     );
     if (NEWLY_OPENED_USER_DATA_STORAGE_VISIBILITY_GROUPS_INFO.length > 0) {
-      this.onOpenUserDataStorageVisibilityGroupsChangedCallback({
+      this.onOpenDataStorageVisibilityGroupsChangedCallback({
         removed: [],
         added: NEWLY_OPENED_USER_DATA_STORAGE_VISIBILITY_GROUPS_INFO
       } satisfies IUserDataStorageVisibilityGroupsInfoChangedDiff);
-      this.onAvailableUserDataStoragesChangedCallback({
+      this.onAvailableDataStoragesChangedCallback({
         removed: [],
         added: this.getSignedInUserSecuredUserDataStorageConfigs({
           includeIds: "all",
@@ -613,7 +553,7 @@ export class UserManager {
 
   public closeUserDataStorageVisibilityGroups(visibilityGroupIds: UUID[]): number {
     this.logger.debug(`Closing User Data Storage Visibility Groups. Count: ${visibilityGroupIds.length.toString()}.`);
-    if (this.OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS.size === 0) {
+    if (this.OPEN_DATA_STORAGE_VISIBILITY_GROUPS.size === 0) {
       this.logger.warn("No open User Data Storage Visibility Groups to close.");
       return 0;
     }
@@ -624,7 +564,7 @@ export class UserManager {
     // Filter any extra IDs
     const VISIBILITY_GROUP_IDS_TO_CLOSE: UUID[] = [];
     visibilityGroupIds.map((visibilityGroupId: UUID): void => {
-      if (this.OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS.has(visibilityGroupId)) {
+      if (this.OPEN_DATA_STORAGE_VISIBILITY_GROUPS.has(visibilityGroupId)) {
         VISIBILITY_GROUP_IDS_TO_CLOSE.push(visibilityGroupId);
       } else {
         this.logger.warn(`User Data Storage Visibility Group ID "${visibilityGroupId}" not open. Skipping.`);
@@ -639,13 +579,13 @@ export class UserManager {
     });
     // Corrupt AES keys and remove from open visibility groups map
     VISIBILITY_GROUP_IDS_TO_CLOSE.map((visibilityGroupId: UUID): void => {
-      const DATA_ENCRYPTION_AES_KEY: Buffer | undefined = this.OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS.get(visibilityGroupId);
+      const DATA_ENCRYPTION_AES_KEY: Buffer | undefined = this.OPEN_DATA_STORAGE_VISIBILITY_GROUPS.get(visibilityGroupId);
       if (DATA_ENCRYPTION_AES_KEY === undefined) {
         this.logger.warn(`User Data Storage Visibility Group ID "${visibilityGroupId}" not open.`);
         return;
       }
       crypto.getRandomValues(DATA_ENCRYPTION_AES_KEY);
-      this.OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS.delete(visibilityGroupId);
+      this.OPEN_DATA_STORAGE_VISIBILITY_GROUPS.delete(visibilityGroupId);
     });
     this.logger.debug(
       `Closed ${VISIBILITY_GROUP_IDS_TO_CLOSE.length.toString()} User Data Storage Visibility Group${
@@ -654,11 +594,11 @@ export class UserManager {
     );
     // Execute on change functions
     if (VISIBILITY_GROUP_IDS_TO_CLOSE.length > 0) {
-      this.onOpenUserDataStorageVisibilityGroupsChangedCallback({
+      this.onOpenDataStorageVisibilityGroupsChangedCallback({
         removed: VISIBILITY_GROUP_IDS_TO_CLOSE,
         added: []
       } satisfies IUserDataStorageVisibilityGroupsInfoChangedDiff);
-      this.onAvailableUserDataStoragesChangedCallback({
+      this.onAvailableDataStoragesChangedCallback({
         removed: NOW_UNAVAILABLE_USER_DATA_STORAGE_CONFIG_IDS,
         added: []
       } satisfies IUserDataStoragesInfoChangedDiff);
@@ -693,7 +633,7 @@ export class UserManager {
         if (storageSecuredUserDataStorageConfig.visibilityGroupId === null) {
           decryptionAESKey = this.signedInUser.value.userDataAESKey;
         } else {
-          const VISIBILITY_GROUP_DATA_DECRYPTION_AES_KEY: Buffer | undefined = this.OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS.get(
+          const VISIBILITY_GROUP_DATA_DECRYPTION_AES_KEY: Buffer | undefined = this.OPEN_DATA_STORAGE_VISIBILITY_GROUPS.get(
             storageSecuredUserDataStorageConfig.visibilityGroupId
           );
           if (VISIBILITY_GROUP_DATA_DECRYPTION_AES_KEY === undefined) {
@@ -745,7 +685,7 @@ export class UserManager {
       includeIds: "all",
       excludeIds: null,
       visibilityGroups: {
-        includeIds: [null, ...Array.from(this.OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS.keys())],
+        includeIds: [null, ...Array.from(this.OPEN_DATA_STORAGE_VISIBILITY_GROUPS.keys())],
         excludeIds: null
       }
     });
@@ -768,13 +708,13 @@ export class UserManager {
     if (this.signedInUser.value === null) {
       throw new Error("No signed in user");
     }
-    if (this.OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS.size === 0) {
+    if (this.OPEN_DATA_STORAGE_VISIBILITY_GROUPS.size === 0) {
       this.logger.debug("No open User Data Storage Visibility Groups.");
       return [];
     }
     const SECURED_USER_DATA_STORAGE_VISIBILITY_GROUPS: ISecuredUserDataStorageVisibilityGroup[] =
       this.getSignedInUserSecuredUserDataStorageVisibilityGroups({
-        includeIds: Array.from(this.OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS.keys()),
+        includeIds: Array.from(this.OPEN_DATA_STORAGE_VISIBILITY_GROUPS.keys()),
         excludeIds: null
       });
     const USER_DATA_STORAGE_VISIBILITY_GROUPS_INFO: IUserDataStorageVisibilityGroupInfo[] = SECURED_USER_DATA_STORAGE_VISIBILITY_GROUPS.map(

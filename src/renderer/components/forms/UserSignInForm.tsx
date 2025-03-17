@@ -1,4 +1,4 @@
-import { Dispatch, FC, SetStateAction, useCallback, useState } from "react";
+import { Dispatch, FC, SetStateAction, useCallback, useMemo, useState } from "react";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IChangeEvent, withTheme } from "@rjsf/core";
 import { Theme } from "@rjsf/mui";
@@ -15,6 +15,7 @@ import { IUserSignInInput, USER_SIGN_IN_INPUT_JSON_SCHEMA, USER_SIGN_IN_INPUT_UI
 import { userSignInInputToUserSignInDTO } from "@renderer/user/account/utils/userSignInInputToUserSignInDTO";
 import { IUserSignInDTO } from "@shared/user/account/UserSignInDTO";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
+import { IAppRootContext, useAppRootContext } from "../roots/appRoot/AppRootContext";
 
 const MUIForm = withTheme<IUserSignInInput>(Theme);
 
@@ -38,7 +39,13 @@ export interface IUserSignInFormProps {
 }
 
 const UserSignInForm: FC<IUserSignInFormProps> = (props: IUserSignInFormProps) => {
+  const appRootContext: IAppRootContext = useAppRootContext();
   const [wasSignInSuccessful, setWasSignInSuccessful] = useState<boolean>(true);
+
+  const isSubmitButtonDisabled = useMemo<boolean>((): boolean => {
+    return props.isSignInPending || appRootContext.userAccountStorageInfo === null ? true : !appRootContext.userAccountStorageInfo.isOpen;
+  }, [props.isSignInPending, appRootContext.userAccountStorageInfo]);
+
   const handleFormSubmit = useCallback(
     (data: IChangeEvent<IUserSignInInput>): void => {
       appLogger.info("Submitted user Sign In form.");
@@ -105,7 +112,7 @@ const UserSignInForm: FC<IUserSignInFormProps> = (props: IUserSignInFormProps) =
         </Alert>
       )}
       {props.renderSubmitButton && (
-        <Button type="submit" disabled={props.isSignInPending} variant="contained" size="large" sx={{ marginTop: "1vw", marginBottom: "1vw" }}>
+        <Button type="submit" disabled={isSubmitButtonDisabled} variant="contained" size="large" sx={{ marginTop: "1vw", marginBottom: "1vw" }}>
           {props.isSignInPending ? "Signing In..." : "Sign In"}
         </Button>
       )}

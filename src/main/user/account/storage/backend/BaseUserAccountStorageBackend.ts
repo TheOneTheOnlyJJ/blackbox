@@ -8,6 +8,22 @@ import { IStorageSecuredUserDataStorageConfig } from "@main/user/data/storage/co
 import { AJV } from "@shared/utils/AJVJSONValidator";
 import { IStorageSecuredUserDataStorageVisibilityGroup } from "@main/user/data/storage/visibilityGroup/StorageSecuredUserDataStorageVisibilityGroup";
 
+export interface IDataStorageConfigFilter {
+  userId: UUID;
+  includeIds: UUID[] | "all";
+  excludeIds: UUID[] | null;
+  visibilityGroups: {
+    includeIds: (UUID | null)[] | "all";
+    excludeIds: UUID[] | null;
+  };
+}
+
+export interface IDataStorageVisibilityGroupFilter {
+  userId: UUID;
+  includeIds: UUID[] | "all";
+  excludeIds: UUID[] | null;
+}
+
 export abstract class BaseUserAccountStorageBackend<T extends IBaseUserAccountStorageBackendConfig> {
   protected readonly logger: LogFunctions;
   public readonly config: T;
@@ -43,20 +59,10 @@ export abstract class BaseUserAccountStorageBackend<T extends IBaseUserAccountSt
   public abstract addStorageSecuredUserDataStorageVisibilityGroup(
     storageSecuredUserDataStorageVisibilityGroup: IStorageSecuredUserDataStorageVisibilityGroup
   ): boolean;
-  public abstract getStorageSecuredUserDataStorageConfigs(options: {
-    userId: UUID;
-    includeIds: UUID[] | "all";
-    excludeIds: UUID[] | null;
-    visibilityGroups: {
-      includeIds: (UUID | null)[] | "all";
-      excludeIds: UUID[] | null;
-    };
-  }): IStorageSecuredUserDataStorageConfig[];
-  public abstract getStorageSecuredUserDataStorageVisibilityGroups(options: {
-    userId: UUID;
-    includeIds: UUID[] | "all";
-    excludeIds: UUID[] | null;
-  }): IStorageSecuredUserDataStorageVisibilityGroup[];
+  public abstract getStorageSecuredUserDataStorageConfigs(filter: IDataStorageConfigFilter): IStorageSecuredUserDataStorageConfig[];
+  public abstract getStorageSecuredUserDataStorageVisibilityGroups(
+    filter: IDataStorageVisibilityGroupFilter
+  ): IStorageSecuredUserDataStorageVisibilityGroup[];
   public abstract getStorageSecuredUserDataStorageVisibilityGroupForConfigId(
     userId: UUID,
     userDataStorageConfigId: UUID

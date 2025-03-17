@@ -96,6 +96,7 @@ export class App {
   private readonly UserAPILogger: LogFunctions = log.scope("main-user-api");
   private readonly UtilsAPILogger: LogFunctions = log.scope("main-utils-api");
   private readonly userManagerLogger: LogFunctions = log.scope("main-user-manager");
+  private readonly userAuthenticatorLogger: LogFunctions = log.scope("main-user-authenticator");
   private readonly userAccountStorageLogger: LogFunctions = log.scope("main-user-account-storage");
   private readonly userAccountStorageBackendLogger: LogFunctions = log.scope("main-user-account-storage-backend");
 
@@ -355,7 +356,7 @@ export class App {
       try {
         return {
           status: IPC_API_RESPONSE_STATUSES.SUCCESS,
-          data: this.userManager.isUserDataStorageVisibilityGroupNameAvailableForSignedInUer(name)
+          data: this.userManager.isUserDataStorageVisibilityGroupNameAvailableForSignedInUser(name)
         };
       } catch (error: unknown) {
         const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
@@ -684,6 +685,7 @@ export class App {
     this.bootstrapLogger.debug(`Using app settings: ${JSON.stringify(this.settingsManager.getSettings(), null, 2)}.`);
     this.userManager = new UserManager(
       this.userManagerLogger,
+      this.userAuthenticatorLogger,
       this.USER_API_HANDLERS.sendSignedInUserChanged,
       this.USER_API_HANDLERS.sendUserAccountStorageChanged,
       this.USER_API_HANDLERS.sendUserAccountStorageOpenChanged,
@@ -906,6 +908,28 @@ export class App {
       new UserAccountStorage(this.DEFAULT_USER_ACCOUNT_STORAGE_CONFIG, this.userAccountStorageLogger, this.userAccountStorageBackendLogger)
     );
     this.userManager.openUserAccountStorage();
+    // TODO: Delete comment
+    // let isOpen = this.userManager.isUserAccountStorageOpen();
+    // setInterval(() => {
+    //   if (!this.userManager.isUserAccountStorageSet()) {
+    //     return;
+    //   }
+    //   if (isOpen) {
+    //     this.userManager.closeUserAccountStorage();
+    //   } else {
+    //     this.userManager.openUserAccountStorage();
+    //   }
+    //   isOpen = !isOpen;
+    // }, 5_000);
+    // setInterval((): void => {
+    //   if (this.userManager.isUserAccountStorageSet()) {
+    //     this.userManager.unsetUserAccountStorage();
+    //   } else {
+    //     this.userManager.setUserAccountStorage(
+    //       new UserAccountStorage(this.DEFAULT_USER_ACCOUNT_STORAGE_CONFIG, this.userAccountStorageLogger, this.userAccountStorageBackendLogger)
+    //     );
+    //   }
+    // }, 7_500);
     this.createWindow();
     this.appLogger.debug("Registering app activate event handler.");
     app.on("activate", (): void => {

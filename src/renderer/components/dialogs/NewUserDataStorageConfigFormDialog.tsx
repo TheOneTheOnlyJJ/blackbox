@@ -1,5 +1,5 @@
 import Dialog, { DialogProps } from "@mui/material/Dialog/Dialog";
-import { FC, Ref, useCallback, useRef, useState } from "react";
+import { FC, Ref, useCallback, useMemo, useRef, useState } from "react";
 import DialogContent from "@mui/material/DialogContent/DialogContent";
 import DialogActions from "@mui/material/DialogActions/DialogActions";
 import NewUserDataStorageConfigForm from "../forms/NewUserDataStorageConfigForm";
@@ -7,6 +7,7 @@ import Form from "@rjsf/core";
 import Button from "@mui/material/Button/Button";
 import { appLogger } from "@renderer/utils/loggers";
 import { enqueueSnackbar } from "notistack";
+import { IAppRootContext, useAppRootContext } from "../roots/appRoot/AppRootContext";
 
 export interface INewUserDataStorageConfigFormDialogProps {
   userIdToAddTo: string;
@@ -16,8 +17,13 @@ export interface INewUserDataStorageConfigFormDialogProps {
 }
 
 const NewUserDataStorageConfigFormDialog: FC<INewUserDataStorageConfigFormDialogProps> = (props: INewUserDataStorageConfigFormDialogProps) => {
+  const appRootContext: IAppRootContext = useAppRootContext();
   const formRef: Ref<Form> = useRef<Form>(null);
   const [isAddUserDataStorageConfigPending, setIsAddUserDataStorageConfigPending] = useState<boolean>(false);
+
+  const isSubmitButtonDisabled = useMemo<boolean>((): boolean => {
+    return isAddUserDataStorageConfigPending || appRootContext.userAccountStorageInfo === null ? true : !appRootContext.userAccountStorageInfo.isOpen;
+  }, [isAddUserDataStorageConfigPending, appRootContext.userAccountStorageInfo]);
 
   const handleSubmitButtonClick = useCallback((): void => {
     appLogger.info("New User Data Storage Config form Submit button clicked.");
@@ -48,7 +54,7 @@ const NewUserDataStorageConfigFormDialog: FC<INewUserDataStorageConfigFormDialog
       </DialogContent>
       <DialogActions>
         <Button onClick={props.onClose}>Cancel</Button>
-        <Button variant="contained" disabled={isAddUserDataStorageConfigPending} onClick={handleSubmitButtonClick}>
+        <Button variant="contained" disabled={isSubmitButtonDisabled} onClick={handleSubmitButtonClick}>
           {isAddUserDataStorageConfigPending ? "Submitting..." : "Submit"}
         </Button>
       </DialogActions>

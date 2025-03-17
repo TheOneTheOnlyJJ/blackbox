@@ -5,12 +5,12 @@ import { randomBytes } from "node:crypto";
 
 export const userDataStorageVisibilityGroupToSecuredUserDataStorageVisibilityGroup = (
   userDataStorageVisibilityGroup: IUserDataStorageVisibilityGroup,
-  passwordSaltLength: number,
+  passwordSaltLengthBytes: number,
   hashPasswordFunction: (password: string, passwordSalt: Buffer) => string,
   logger: LogFunctions | null
 ): ISecuredUserDataStorageVisibilityGroup => {
   logger?.debug("Converting User Data Storage Visibility Group to Secured User Data Storage Visibility Group.");
-  const PASSWORD_SALT: Buffer = randomBytes(passwordSaltLength);
+  const PASSWORD_SALT: Buffer = randomBytes(passwordSaltLengthBytes);
   return {
     visibilityGroupId: userDataStorageVisibilityGroup.visibilityGroupId,
     userId: userDataStorageVisibilityGroup.userId,

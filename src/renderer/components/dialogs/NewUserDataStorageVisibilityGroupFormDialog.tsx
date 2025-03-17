@@ -2,8 +2,9 @@ import { Button, Dialog, DialogActions, DialogContent, DialogProps } from "@mui/
 import { appLogger } from "@renderer/utils/loggers";
 import Form from "@rjsf/core";
 import { enqueueSnackbar } from "notistack";
-import { FC, Ref, useCallback, useRef, useState } from "react";
+import { FC, Ref, useCallback, useMemo, useRef, useState } from "react";
 import NewUserDataStorageVisibilityGroupForm from "../forms/NewUserDataStorageVisibilityGroupForm";
+import { IAppRootContext, useAppRootContext } from "../roots/appRoot/AppRootContext";
 
 export interface INewUserDataStorageVisibilityGroupFormDialogProps {
   userIdToAddTo: string;
@@ -16,8 +17,15 @@ export interface INewUserDataStorageVisibilityGroupFormDialogProps {
 const NewUserDataStorageVisibilityGroupFormDialog: FC<INewUserDataStorageVisibilityGroupFormDialogProps> = (
   props: INewUserDataStorageVisibilityGroupFormDialogProps
 ) => {
+  const appRootContext: IAppRootContext = useAppRootContext();
   const formRef: Ref<Form> = useRef<Form>(null);
   const [isAddUserDataStorageVisibilityGroupPending, setIsAddUserDataStorageVisibilityGroupPending] = useState<boolean>(false);
+
+  const isSubmitButtonDisabled = useMemo<boolean>((): boolean => {
+    return isAddUserDataStorageVisibilityGroupPending || appRootContext.userAccountStorageInfo === null
+      ? true
+      : !appRootContext.userAccountStorageInfo.isOpen;
+  }, [isAddUserDataStorageVisibilityGroupPending, appRootContext.userAccountStorageInfo]);
 
   const handleSubmitButtonClick = useCallback((): void => {
     appLogger.info("New User Data Storage Visibility Group form Submit button clicked.");
@@ -49,7 +57,7 @@ const NewUserDataStorageVisibilityGroupFormDialog: FC<INewUserDataStorageVisibil
       </DialogContent>
       <DialogActions>
         <Button onClick={props.onClose}>Cancel</Button>
-        <Button variant="contained" disabled={isAddUserDataStorageVisibilityGroupPending} onClick={handleSubmitButtonClick}>
+        <Button variant="contained" disabled={isSubmitButtonDisabled} onClick={handleSubmitButtonClick}>
           {isAddUserDataStorageVisibilityGroupPending ? "Submitting..." : "Submit"}
         </Button>
       </DialogActions>

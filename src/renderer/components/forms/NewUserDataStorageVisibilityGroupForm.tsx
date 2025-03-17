@@ -18,7 +18,8 @@ import { IUserDataStorageVisibilityGroupCreateDTO } from "@shared/user/data/stor
 import { IUserDataStorageVisibilityGroupsOpenRequestDTO } from "@shared/user/data/storage/visibilityGroup/openRequest/DTO/UserDataStorageVisibilityGroupsOpenRequestDTO";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 import { enqueueSnackbar } from "notistack";
-import { Dispatch, FC, SetStateAction, useCallback } from "react";
+import { Dispatch, FC, SetStateAction, useCallback, useMemo } from "react";
+import { IAppRootContext, useAppRootContext } from "../roots/appRoot/AppRootContext";
 
 const MUIForm = withTheme<IUserDataStorageVisibilityGroupCreateInput>(Theme);
 
@@ -64,7 +65,14 @@ export interface INewUserDataStorageVisibilityGroupFormProps {
 const NewUserDataStorageVisibilityGroupForm: FC<INewUserDataStorageVisibilityGroupFormProps> = (
   props: INewUserDataStorageVisibilityGroupFormProps
 ) => {
+  const appRootContext: IAppRootContext = useAppRootContext();
   const { userIdToAddTo, onAddedSuccessfully, onOpenedSuccessfully } = props;
+
+  const isSubmitButtonDisabled = useMemo<boolean>((): boolean => {
+    return props.isAddUserDataStorageVisibilityGroupPending || appRootContext.userAccountStorageInfo === null
+      ? true
+      : !appRootContext.userAccountStorageInfo.isOpen;
+  }, [props.isAddUserDataStorageVisibilityGroupPending, appRootContext.userAccountStorageInfo]);
 
   const handleFormSubmit = useCallback(
     (data: IChangeEvent<IUserDataStorageVisibilityGroupCreateInput>): void => {
@@ -170,13 +178,7 @@ const NewUserDataStorageVisibilityGroupForm: FC<INewUserDataStorageVisibilityGro
       noHtml5Validate={true}
     >
       {props.renderSubmitButton && (
-        <Button
-          type="submit"
-          disabled={props.isAddUserDataStorageVisibilityGroupPending}
-          variant="contained"
-          size="large"
-          sx={{ marginTop: "1vw", marginBottom: "1vw" }}
-        >
+        <Button type="submit" disabled={isSubmitButtonDisabled} variant="contained" size="large" sx={{ marginTop: "1vw", marginBottom: "1vw" }}>
           {props.isAddUserDataStorageVisibilityGroupPending ? "Submitting..." : "Submit"}
         </Button>
       )}

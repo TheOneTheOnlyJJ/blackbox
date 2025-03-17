@@ -1,4 +1,4 @@
-import { Dispatch, FC, SetStateAction, useCallback, useState } from "react";
+import { Dispatch, FC, SetStateAction, useCallback, useMemo, useState } from "react";
 import { IUserSignUpInput, USER_SIGN_UP_INPUT_JSON_SCHEMA, USER_SIGN_UP_INPUT_UI_SCHEMA } from "@renderer/user/account/UserSignUpInput";
 import { Theme } from "@rjsf/mui";
 import { customizeValidator } from "@rjsf/validator-ajv8";
@@ -16,6 +16,7 @@ import { userSignUpInputToUserSignInDTO } from "@renderer/user/account/utils/use
 import { IUserSignUpDTO } from "@shared/user/account/UserSignUpDTO";
 import { IUserSignInDTO } from "@shared/user/account/UserSignInDTO";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
+import { IAppRootContext, useAppRootContext } from "../roots/appRoot/AppRootContext";
 
 const MUIForm = withTheme<IUserSignUpInput>(Theme);
 
@@ -69,12 +70,18 @@ export interface IUserSignUpFormProps {
 }
 
 const UserSignUpForm: FC<IUserSignUpFormProps> = (props: IUserSignUpFormProps) => {
+  const appRootContext: IAppRootContext = useAppRootContext();
   const [successfulUserSignUpDialogProps, setSuccessfulUserSignUpDialogProps] = useState<ISuccessfulUserSignUpDialogProps>({
     open: false,
     username: "",
     userCount: null,
     encryptedNewUserSignInDTO: null
   });
+
+  const isSubmitButtonDisabled = useMemo<boolean>((): boolean => {
+    return props.isSignUpPending || appRootContext.userAccountStorageInfo === null ? true : !appRootContext.userAccountStorageInfo.isOpen;
+  }, [props.isSignUpPending, appRootContext.userAccountStorageInfo]);
+
   const signUpUser = useCallback(
     (data: IChangeEvent<IUserSignUpInput>): void => {
       appLogger.debug("Submitted user Sign Up form.");
@@ -163,7 +170,7 @@ const UserSignUpForm: FC<IUserSignUpFormProps> = (props: IUserSignUpFormProps) =
         noHtml5Validate={true}
       >
         {props.renderSubmitButton && (
-          <Button type="submit" disabled={props.isSignUpPending} variant="contained" size="large" sx={{ marginTop: "1vw", marginBottom: "1vw" }}>
+          <Button type="submit" disabled={isSubmitButtonDisabled} variant="contained" size="large" sx={{ marginTop: "1vw", marginBottom: "1vw" }}>
             {props.isSignUpPending ? "Signing Up..." : "Sign Up"}
           </Button>
         )}

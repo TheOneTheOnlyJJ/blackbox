@@ -1,4 +1,4 @@
-import { Dispatch, FC, SetStateAction, useCallback } from "react";
+import { Dispatch, FC, SetStateAction, useCallback, useMemo } from "react";
 import { FormProps, IChangeEvent, withTheme } from "@rjsf/core";
 import { Theme } from "@rjsf/mui";
 import { ErrorTransformer, RJSFSchema, RJSFValidationError } from "@rjsf/utils";
@@ -17,6 +17,7 @@ import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { userDataStorageConfigCreateInputToUserDataStorageConfigCreateDTO } from "@renderer/user/data/storage/config/create/input/utils/userDataStorageConfigCreateInputToUserDataStorageConfigCreateDTO";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 import Button from "@mui/material/Button/Button";
+import { IAppRootContext, useAppRootContext } from "../roots/appRoot/AppRootContext";
 
 const MUIForm = withTheme<IUserDataStorageConfigCreateInput>(Theme);
 
@@ -65,7 +66,15 @@ export interface INewUserDataStorageConfigFormProps {
 }
 
 const NewUserDataStorageConfigForm: FC<INewUserDataStorageConfigFormProps> = (props: INewUserDataStorageConfigFormProps) => {
+  const appRootContext: IAppRootContext = useAppRootContext();
   const { userIdToAddTo, onAddedSuccessfully } = props;
+
+  const isSubmitButtonDisabled = useMemo<boolean>((): boolean => {
+    return props.isAddUserDataStorageConfigPending || appRootContext.userAccountStorageInfo === null
+      ? true
+      : !appRootContext.userAccountStorageInfo.isOpen;
+  }, [props.isAddUserDataStorageConfigPending, appRootContext.userAccountStorageInfo]);
+
   const handleFormSubmit = useCallback(
     (data: IChangeEvent<IUserDataStorageConfigCreateInput>): void => {
       appLogger.info("Submitted new User Data Storage Config form.");
@@ -134,13 +143,7 @@ const NewUserDataStorageConfigForm: FC<INewUserDataStorageConfigFormProps> = (pr
       noHtml5Validate={true}
     >
       {props.renderSubmitButton && (
-        <Button
-          type="submit"
-          disabled={props.isAddUserDataStorageConfigPending}
-          variant="contained"
-          size="large"
-          sx={{ marginTop: "1vw", marginBottom: "1vw" }}
-        >
+        <Button type="submit" disabled={isSubmitButtonDisabled} variant="contained" size="large" sx={{ marginTop: "1vw", marginBottom: "1vw" }}>
           {props.isAddUserDataStorageConfigPending ? "Submitting..." : "Submit"}
         </Button>
       )}

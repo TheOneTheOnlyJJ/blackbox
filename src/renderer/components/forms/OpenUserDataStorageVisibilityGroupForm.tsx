@@ -16,7 +16,8 @@ import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { IUserDataStorageVisibilityGroupsOpenRequestDTO } from "@shared/user/data/storage/visibilityGroup/openRequest/DTO/UserDataStorageVisibilityGroupsOpenRequestDTO";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 import { enqueueSnackbar } from "notistack";
-import { Dispatch, FC, SetStateAction, useCallback } from "react";
+import { Dispatch, FC, SetStateAction, useCallback, useMemo } from "react";
+import { IAppRootContext, useAppRootContext } from "../roots/appRoot/AppRootContext";
 
 const MUIForm = withTheme<IUserDataStorageVisibilityGroupOpenRequestInput>(Theme);
 
@@ -64,7 +65,14 @@ export interface IOpenUserDataStorageVisibilityGroupFormProps {
 const OpenUserDataStorageVisibilityGroupForm: FC<IOpenUserDataStorageVisibilityGroupFormProps> = (
   props: IOpenUserDataStorageVisibilityGroupFormProps
 ) => {
+  const appRootContext: IAppRootContext = useAppRootContext();
   const { userIdToOpenFor, onOpenedSuccessfully } = props;
+
+  const isSubmitButtonDisabled = useMemo<boolean>((): boolean => {
+    return props.isOpenUserDataStorageVisibilityGroupPending || appRootContext.userAccountStorageInfo === null
+      ? true
+      : !appRootContext.userAccountStorageInfo.isOpen;
+  }, [props.isOpenUserDataStorageVisibilityGroupPending, appRootContext.userAccountStorageInfo]);
 
   const handleFormSubmit = useCallback(
     (data: IChangeEvent<IUserDataStorageVisibilityGroupOpenRequestInput>): void => {
@@ -144,13 +152,7 @@ const OpenUserDataStorageVisibilityGroupForm: FC<IOpenUserDataStorageVisibilityG
       noHtml5Validate={true}
     >
       {props.renderSubmitButton && (
-        <Button
-          type="submit"
-          disabled={props.isOpenUserDataStorageVisibilityGroupPending}
-          variant="contained"
-          size="large"
-          sx={{ marginTop: "1vw", marginBottom: "1vw" }}
-        >
+        <Button type="submit" disabled={isSubmitButtonDisabled} variant="contained" size="large" sx={{ marginTop: "1vw", marginBottom: "1vw" }}>
           {props.isOpenUserDataStorageVisibilityGroupPending ? "Opening..." : "Open"}
         </Button>
       )}
