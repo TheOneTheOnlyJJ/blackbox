@@ -42,6 +42,6 @@ export const USER_DATA_STORAGE_VISIBILITY_GROUP_CREATE_INPUT_UI_SCHEMA: UiSchema
   },
   openAfterCreating: {
     "ui:help": "Will open the new Visibility Group **and all other visibility groups with the same password**, if any.",
-    "ui:enableMarkdownInDescription": true // TODO: Open issue as this does not work
+    "ui:enableMarkdownInDescription": true // TODO: Open issue as this does not work. Done: https://github.com/rjsf-team/react-jsonschema-form/issues/4527 Now wait for fix
   }
 } as const;

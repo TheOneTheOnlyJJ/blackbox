@@ -1,3 +1,4 @@
+import { TransformToIPCAPIChannels } from "../IPCAPIChannels";
 import { IPCAPIResponse } from "../IPCAPIResponse";
 
 export interface IIPCTLSBootstrapAPI {
@@ -5,9 +6,10 @@ export interface IIPCTLSBootstrapAPI {
   sendWrappedIPCTLSAESKey: (wrappedIPCTLSAESKeyIPCAPIResponse: IPCAPIResponse<ArrayBuffer>) => void;
 }
 
-export const IPC_TLS_BOOTSTRAP_API_IPC_CHANNELS = {
+export type IPCTLSBootstrapAPIIPCChannels = TransformToIPCAPIChannels<"IPCTLSBootstrap", IIPCTLSBootstrapAPI>;
+export type IPCTLSBootstrapAPIIPCChannel = IPCTLSBootstrapAPIIPCChannels[keyof IPCTLSBootstrapAPIIPCChannels];
+
+export const IPC_TLS_BOOTSTRAP_API_IPC_CHANNELS: IPCTLSBootstrapAPIIPCChannels = {
   generateAndGetMainProcessIPCTLSPublicRSAKeyDER: "IPCTLSBootstrap:generateAndGetMainProcessIPCTLSPublicRSAKeyDER",
   sendWrappedIPCTLSAESKey: "IPCTLSBootstrap:sendWrappedIPCTLSAESKey"
 } as const;
-export type IPCTLSBootstrapAPIIPCChannels = typeof IPC_TLS_BOOTSTRAP_API_IPC_CHANNELS;
-export type IPCTLSBootstrapAPIIPCChannel = IPCTLSBootstrapAPIIPCChannels[keyof IPCTLSBootstrapAPIIPCChannels];

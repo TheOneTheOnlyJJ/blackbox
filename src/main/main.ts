@@ -1,6 +1,5 @@
 import { App } from "@main/App";
 
-// TODO: Check constraints of data storage config
 // TODO: Rename create to createRequest? Make a new requests folder?
 // TODO: Edit & delete user data storage configs from frontend
 // TODO: Explore RBAC user data storage access

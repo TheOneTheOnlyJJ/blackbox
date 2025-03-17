@@ -1,5 +1,6 @@
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 import { IPCAPIResponse } from "../IPCAPIResponse";
+import { TransformToIPCAPIChannels } from "../IPCAPIChannels";
 
 export interface IGetDirectoryWithPickerOptions {
   pickerTitle: string;
@@ -10,8 +11,9 @@ export interface IUtilsAPI {
   getDirectoryPathWithPicker: (options: IGetDirectoryWithPickerOptions) => Promise<IPCAPIResponse<IEncryptedData<string[]> | null>>;
 }
 
-export const UTILS_API_IPC_CHANNELS = {
-  getDirectoryPathWithPicker: "utilsAPI:getDirectoryPathWithPicker"
-} as const;
-export type UtilsAPIIPCChannels = typeof UTILS_API_IPC_CHANNELS;
+export type UtilsAPIIPCChannels = TransformToIPCAPIChannels<"Utils", IUtilsAPI>;
 export type UtilsAPIIPCChannel = UtilsAPIIPCChannels[keyof UtilsAPIIPCChannels];
+
+export const UTILS_API_IPC_CHANNELS: UtilsAPIIPCChannels = {
+  getDirectoryPathWithPicker: "Utils:getDirectoryPathWithPicker"
+} as const;

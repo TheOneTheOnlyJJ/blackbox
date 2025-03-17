@@ -1,5 +1,6 @@
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 import { ValidateFunction } from "ajv";
+import { TransformToIPCAPIChannels } from "../IPCAPIChannels";
 
 // Utility types
 export type IPCTLSReadinessChangedCallback = (isIPCTLSReady: boolean) => void;
@@ -10,12 +11,13 @@ export interface IIPCTLSAPIMain {
   onMainReadinessChanged: (callback: IPCTLSReadinessChangedCallback) => () => void;
 }
 
-export const IPC_TLS_API_IPC_CHANNELS = {
-  getMainReadiness: "IPCTLSAPI:getMainReadiness",
-  onMainReadinessChanged: "IPCTLSAPI:onMainReadinessChanged"
-} as const;
-export type IPCTLSAPIIPCChannels = typeof IPC_TLS_API_IPC_CHANNELS;
+export type IPCTLSAPIIPCChannels = TransformToIPCAPIChannels<"IPCTLS", IIPCTLSAPIMain>;
 export type IPCTLSAPIIPCChannel = IPCTLSAPIIPCChannels[keyof IPCTLSAPIIPCChannels];
+
+export const IPC_TLS_API_IPC_CHANNELS: IPCTLSAPIIPCChannels = {
+  getMainReadiness: "IPCTLS:getMainReadiness",
+  onMainReadinessChanged: "IPCTLS:onMainReadinessChanged"
+} as const;
 
 // Complete API
 export interface IIPCTLSAPI extends IIPCTLSAPIMain {
