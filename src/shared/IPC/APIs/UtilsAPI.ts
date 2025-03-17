@@ -11,9 +11,9 @@ export interface IUtilsAPI {
   getDirectoryPathWithPicker: (options: IGetDirectoryWithPickerOptions) => Promise<IPCAPIResponse<IEncryptedData<string[]> | null>>;
 }
 
-export type UtilsAPIIPCChannels = TransformToIPCAPIChannels<"Utils", IUtilsAPI>;
+export type UtilsAPIIPCChannels = TransformToIPCAPIChannels<"UtilsAPI", IUtilsAPI>;
 export type UtilsAPIIPCChannel = UtilsAPIIPCChannels[keyof UtilsAPIIPCChannels];
 
 export const UTILS_API_IPC_CHANNELS: UtilsAPIIPCChannels = {
-  getDirectoryPathWithPicker: "Utils:getDirectoryPathWithPicker"
+  getDirectoryPathWithPicker: "UtilsAPI:getDirectoryPathWithPicker"
 } as const;

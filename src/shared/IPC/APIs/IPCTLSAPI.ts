@@ -11,12 +11,12 @@ export interface IIPCTLSAPIMain {
   onMainReadinessChanged: (callback: IPCTLSReadinessChangedCallback) => () => void;
 }
 
-export type IPCTLSAPIIPCChannels = TransformToIPCAPIChannels<"IPCTLS", IIPCTLSAPIMain>;
+export type IPCTLSAPIIPCChannels = TransformToIPCAPIChannels<"IPCTLSAPI", IIPCTLSAPIMain>;
 export type IPCTLSAPIIPCChannel = IPCTLSAPIIPCChannels[keyof IPCTLSAPIIPCChannels];
 
 export const IPC_TLS_API_IPC_CHANNELS: IPCTLSAPIIPCChannels = {
-  getMainReadiness: "IPCTLS:getMainReadiness",
-  onMainReadinessChanged: "IPCTLS:onMainReadinessChanged"
+  getMainReadiness: "IPCTLSAPI:getMainReadiness",
+  onMainReadinessChanged: "IPCTLSAPI:onMainReadinessChanged"
 } as const;
 
 // Complete API
