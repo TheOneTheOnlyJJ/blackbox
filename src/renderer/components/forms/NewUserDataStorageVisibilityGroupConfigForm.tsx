@@ -36,12 +36,12 @@ const newUserDataStorageVisibilityGroupConfigFormValidator: CustomValidator<IUse
   if (formData.name.toLowerCase() === PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS.name.toLowerCase()) {
     errors.name.addError('"Public" is a reserved Visibility Group name. Try something else.');
   } else {
-    const IS_DATA_VISIBILITY_GROUP_AVAILABLE_RESPONSE: IPCAPIResponse<boolean> =
+    const IS_DATA_VISIBILITY_GROUP_NAME_AVAILABLE_RESPONSE: IPCAPIResponse<boolean> =
       window.userAPI.isUserDataStorageVisibilityGroupNameAvailableForSignedInUser(formData.name);
-    if (IS_DATA_VISIBILITY_GROUP_AVAILABLE_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
+    if (IS_DATA_VISIBILITY_GROUP_NAME_AVAILABLE_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
       errors.name.addError("Could not get name availability.");
     } else {
-      if (!IS_DATA_VISIBILITY_GROUP_AVAILABLE_RESPONSE.data) {
+      if (!IS_DATA_VISIBILITY_GROUP_NAME_AVAILABLE_RESPONSE.data) {
         errors.name.addError(`Name "${formData.name}" is not available.`);
       }
     }

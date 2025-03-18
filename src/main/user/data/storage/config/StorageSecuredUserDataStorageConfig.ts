@@ -12,6 +12,7 @@ export interface IStorageSecuredUserDataStorageConfig {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const isStorageSecuredUserDataStorageConfigValid = (data: any): data is IStorageSecuredUserDataStorageConfig => {
   return (
+    // TODO: Use typeof here? And there is one more place 9secured password?
     typeof data === "object" &&
     data !== null &&
     "storageId" in data &&

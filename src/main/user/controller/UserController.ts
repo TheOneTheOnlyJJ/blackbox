@@ -337,8 +337,8 @@ export class UserController {
     return this.DATA_STORAGE_CONFIG_SERVICE.addUserDataStorageConfig(userDataStorageConfig);
   }
 
-  public addUserDataStorageVisibilityGroupConfig(dataStorageVisibilityGroup: IUserDataStorageVisibilityGroupConfig): boolean {
-    return this.DATA_STORAGE_VISIBILITY_GROUP_SERVICE.addUserDataStorageVisibilityGroupConfig(dataStorageVisibilityGroup);
+  public addUserDataStorageVisibilityGroupConfig(dataStorageVisibilityGroupConfig: IUserDataStorageVisibilityGroupConfig): boolean {
+    return this.DATA_STORAGE_VISIBILITY_GROUP_SERVICE.addUserDataStorageVisibilityGroupConfig(dataStorageVisibilityGroupConfig);
   }
 
   public openUserDataStorageVisibilityGroups(userDataStorageVisibilityGroupOpenRequest: IUserDataStorageVisibilityGroupsOpenRequest): number {

@@ -90,28 +90,32 @@ export class UserDataStorageVisibilityGroupService {
   }
 
   public addUserDataStorageVisibilityGroupConfig(dataStorageVisibilityGroupConfig: IUserDataStorageVisibilityGroupConfig): boolean {
-    this.logger.debug(`Adding User Data Storage Visibility Group to user: "${dataStorageVisibilityGroupConfig.userId}".`);
+    this.logger.debug(`Adding User Data Storage Visibility Group Config to user: "${dataStorageVisibilityGroupConfig.userId}".`);
     if (this.CONTEXT.accountStorage.value === null) {
       throw new Error("Null User Account Storage");
     }
     if (this.CONTEXT.signedInUser.value === null) {
-      throw new Error("Cannot encrypt Secured User Data Storage Visibility Group with no signed in user");
+      throw new Error("Cannot encrypt Secured User Data Storage Visibility Group Config with no signed in user");
     }
     if (this.CONTEXT.signedInUser.value.userId !== dataStorageVisibilityGroupConfig.userId) {
       throw new Error(
-        `User Data Storage Visibility Group user ID "${dataStorageVisibilityGroupConfig.userId}" does not match signed in user ID "${this.CONTEXT.signedInUser.value.userId}"`
+        `User Data Storage Visibility Group Config user ID "${dataStorageVisibilityGroupConfig.userId}" does not match signed in user ID "${this.CONTEXT.signedInUser.value.userId}"`
       );
     }
     // TODO: Delete this check?
     if (this.CONTEXT.accountStorage.value.isUserIdAvailable(dataStorageVisibilityGroupConfig.userId)) {
-      throw new Error(`Cannot add User Data Storage Visibility Group to user "${dataStorageVisibilityGroupConfig.userId}" because it does not exist`);
+      throw new Error(
+        `Cannot add User Data Storage Visibility Group Config to user "${dataStorageVisibilityGroupConfig.userId}" because it does not exist`
+      );
     }
     const SECURED_USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIG: ISecuredUserDataStorageVisibilityGroupConfig =
       userDataStorageVisibilityGroupConfigToSecuredUserDataStorageVisibilityGroupConfig(
         dataStorageVisibilityGroupConfig,
         PASSWORD_SALT_LENGTH_BYTES,
         (visibilityPassword: string, visibilityPasswordSalt: Buffer): string => {
-          return hashPassword(visibilityPassword, visibilityPasswordSalt, this.logger, "User Data Storage Visibility Group").toString("base64");
+          return hashPassword(visibilityPassword, visibilityPasswordSalt, this.logger, "User Data Storage Visibility Group Config").toString(
+            "base64"
+          );
         },
         this.logger
       );
@@ -240,7 +244,7 @@ export class UserDataStorageVisibilityGroupService {
       if (this.OPEN_DATA_STORAGE_VISIBILITY_GROUPS.has(visibilityGroupId)) {
         VISIBILITY_GROUP_IDS_TO_CLOSE.push(visibilityGroupId);
       } else {
-        this.logger.warn(`User Data Storage Visibility Group ID "${visibilityGroupId}" not open. Skipping.`);
+        this.logger.warn(`User Data Storage Visibility Group "${visibilityGroupId}" not open. Skipping.`);
       }
     });
     const NOW_UNAVAILABLE_USER_DATA_STORAGE_CONFIG_IDS: UUID[] = this.getSignedInUserSecuredUserDataStorageConfigs({
@@ -254,7 +258,7 @@ export class UserDataStorageVisibilityGroupService {
     VISIBILITY_GROUP_IDS_TO_CLOSE.map((visibilityGroupId: UUID): void => {
       const DATA_ENCRYPTION_AES_KEY: Buffer | undefined = this.OPEN_DATA_STORAGE_VISIBILITY_GROUPS.get(visibilityGroupId);
       if (DATA_ENCRYPTION_AES_KEY === undefined) {
-        this.logger.warn(`User Data Storage Visibility Group ID "${visibilityGroupId}" not open.`);
+        this.logger.warn(`User Data Storage Visibility Group "${visibilityGroupId}" not open.`);
         return;
       }
       crypto.getRandomValues(DATA_ENCRYPTION_AES_KEY);
@@ -284,9 +288,9 @@ export class UserDataStorageVisibilityGroupService {
     excludeIds: UUID[] | null;
   }): ISecuredUserDataStorageVisibilityGroupConfig[] {
     if (this.CONTEXT.signedInUser.value === null) {
-      throw new Error("Cannot decrypt Storage Secured User Data Storage Visibility Groups with no signed in user");
+      throw new Error("Cannot decrypt Storage Secured User Data Storage Visibility Group Configs with no signed in user");
     }
-    return this.ACCOUNT_STORAGE_MANAGER.getSecuredDataStorageVisibilityGroups(
+    return this.ACCOUNT_STORAGE_MANAGER.getSecuredDataStorageVisibilityGroupConfigs(
       { ...options, userId: this.CONTEXT.signedInUser.value.userId },
       this.CONTEXT.signedInUser.value.userDataAESKey
     );
@@ -333,7 +337,7 @@ export class UserDataStorageVisibilityGroupService {
       throw new Error("No signed in user");
     }
     const STORAGE_SECURED_USER_DATA_STORAGE_VISIBILITY_GROU_CONFIGS: IStorageSecuredUserDataStorageVisibilityGroupConfig | null =
-      this.CONTEXT.accountStorage.value.getStorageSecuredUserDataStorageVisibilityGroupForConfigId(
+      this.CONTEXT.accountStorage.value.getStorageSecuredUserDataStorageVisibilityGroupConfigForConfigId(
         this.CONTEXT.signedInUser.value.userId,
         userDataStorageConfigId
       );

@@ -66,9 +66,8 @@ export class UserDataStorageConfigService {
       securedUserDataStorageConfigToStorageSecuredUserDataStorageConfig(SECURED_USER_DATA_STORAGE_CONFIG, encryptionAESKey, this.logger)
     );
     if (WAS_ADDED) {
-      const VISIBILITY_GROUP_CONFIG: ISecuredUserDataStorageVisibilityGroupConfig | null = this.getSecuredUserDataStorageVisibilityGroupForConfigId(
-        SECURED_USER_DATA_STORAGE_CONFIG.storageId
-      );
+      const VISIBILITY_GROUP_CONFIG: ISecuredUserDataStorageVisibilityGroupConfig | null =
+        this.getSecuredUserDataStorageVisibilityGroupConfigForConfigId(SECURED_USER_DATA_STORAGE_CONFIG.storageId);
       const VISIBILITY_GROUP_NAME: string | null = VISIBILITY_GROUP_CONFIG === null ? null : VISIBILITY_GROUP_CONFIG.name;
       this.onAvailableDataStoragesChangedCallback?.({
         removed: [],

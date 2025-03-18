@@ -58,7 +58,7 @@ const UserDataStorageVisibilityGroupsPage: FC = () => {
       return;
     }
     appLogger.debug(
-      `${isNewUserDataStorageVisibilityGroupConfigFormDialogOpen ? "Opened" : "Closed"} New User Data Storage Visibility Group form dialog.`
+      `${isNewUserDataStorageVisibilityGroupConfigFormDialogOpen ? "Opened" : "Closed"} New User Data Storage Visibility Group Config form dialog.`
     );
   }, [isNewUserDataStorageVisibilityGroupConfigFormDialogOpen]);
 

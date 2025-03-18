@@ -185,7 +185,7 @@ export class UserAccountStorage {
     return this.backend.getStorageSecuredUserDataStorageConfigs(options);
   }
 
-  public getStorageSecuredUserDataStorageVisibilityGroupForConfigId(
+  public getStorageSecuredUserDataStorageVisibilityGroupConfigForConfigId(
     userId: UUID,
     userDataStorageConfigId: UUID
   ): IStorageSecuredUserDataStorageVisibilityGroupConfig | null {
