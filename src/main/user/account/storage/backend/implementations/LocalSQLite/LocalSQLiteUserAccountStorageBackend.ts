@@ -15,9 +15,12 @@ import {
   isStorageSecuredUserDataStorageConfigValid
 } from "@main/user/data/storage/config/StorageSecuredUserDataStorageConfig";
 import {
-  isStorageSecuredUserDataStorageVisibilityGroupValid,
-  IStorageSecuredUserDataStorageVisibilityGroup
-} from "@main/user/data/storage/visibilityGroup/StorageSecuredUserDataStorageVisibilityGroup";
+  isStorageSecuredUserDataStorageVisibilityGroupConfigValid,
+  IStorageSecuredUserDataStorageVisibilityGroupConfig
+} from "@main/user/data/storage/visibilityGroup/config/StorageSecuredUserDataStorageVisibilityGroupConfig";
+import { getSQLiteVersion } from "@main/utils/SQLite/getSQLiteVersion";
+import { getSQLiteJournalModePragmaResult } from "@main/utils/SQLite/getSQLiteJournalModePragmaResult";
+import { getSQLiteForeignKeysPragmaResult } from "@main/utils/SQLite/getSQLiteForeignKeysPragmaResult";
 
 export interface ILocalSQLiteUserAccountStorageBackendConfig extends IBaseUserAccountStorageBackendConfig {
   type: UserAccountStorageBackendTypes["LocalSQLite"];
@@ -26,12 +29,6 @@ export interface ILocalSQLiteUserAccountStorageBackendConfig extends IBaseUserAc
 }
 
 // TODO: Move these to utils dir
-type SQLiteJournalModePragmaResult = undefined | null | string;
-type SQLiteForeignKeysPragmaResult = undefined | null | 0 | 1;
-
-interface ISQLiteVersion {
-  version: string;
-}
 
 interface IRawStorageSecuredUserDataStorageConfig {
   storageId: UUID;
@@ -45,7 +42,7 @@ const rawStorageSecuredUserDataStorageConfigToStorageSecuredUserDataStorageConfi
   userId: UUID,
   logger: LogFunctions | null
 ): IStorageSecuredUserDataStorageConfig => {
-  logger?.debug("Converting Raw Storage Secured User Data Storage Visibility Group to Storage Secured User Data Storage Visibility Group.");
+  logger?.debug("Converting Raw Storage Secured User Data Config to Storage Secured User Data Storage Config.");
   return {
     storageId: rawStorageSecuredUserDataStorageConfig.storageId,
     userId: userId,
@@ -57,26 +54,28 @@ const rawStorageSecuredUserDataStorageConfigToStorageSecuredUserDataStorageConfi
   } satisfies IStorageSecuredUserDataStorageConfig;
 };
 
-interface IRawStorageSecuredUserDataStorageVisibilityGroup {
+interface IRawStorageSecuredUserDataStorageVisibilityGroupConfig {
   visibilityGroupId: UUID;
   userDataStorageVisibilityGroupIV: Buffer;
   userDataStorageVisibilityGroupData: Buffer;
 }
 
-const rawStorageSecuredUserDataStorageVisibilityGroupToStorageSecuredUserDataStorageVisibilityGroup = (
-  rawStorageSecuredUserDataStorageVisibilityGroup: IRawStorageSecuredUserDataStorageVisibilityGroup,
+const rawStorageSecuredUserDataStorageVisibilityGroupConfigToStorageSecuredUserDataStorageVisibilityGroupConfig = (
+  rawStorageSecuredUserDataStorageVisibilityGroupConfig: IRawStorageSecuredUserDataStorageVisibilityGroupConfig,
   userId: UUID,
   logger: LogFunctions | null
-): IStorageSecuredUserDataStorageVisibilityGroup => {
-  logger?.debug("Converting Raw Storage Secured User Data Storage Visibility Group to Storage Secured User Data Storage Visibility Group.");
+): IStorageSecuredUserDataStorageVisibilityGroupConfig => {
+  logger?.debug(
+    "Converting Raw Storage Secured User Data Storage Visibility Group Config to Storage Secured User Data Storage Visibility Group Config."
+  );
   return {
-    visibilityGroupId: rawStorageSecuredUserDataStorageVisibilityGroup.visibilityGroupId,
+    visibilityGroupId: rawStorageSecuredUserDataStorageVisibilityGroupConfig.visibilityGroupId,
     userId: userId,
-    encryptedPrivateStorageSecuredUserDataStorageVisibilityGroup: {
-      data: rawStorageSecuredUserDataStorageVisibilityGroup.userDataStorageVisibilityGroupData,
-      iv: rawStorageSecuredUserDataStorageVisibilityGroup.userDataStorageVisibilityGroupIV
+    encryptedPrivateStorageSecuredUserDataStorageVisibilityGroupConfig: {
+      data: rawStorageSecuredUserDataStorageVisibilityGroupConfig.userDataStorageVisibilityGroupData,
+      iv: rawStorageSecuredUserDataStorageVisibilityGroupConfig.userDataStorageVisibilityGroupIV
     }
-  } satisfies IStorageSecuredUserDataStorageVisibilityGroup;
+  } satisfies IStorageSecuredUserDataStorageVisibilityGroupConfig;
 };
 
 export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorageBackend<ILocalSQLiteUserAccountStorageBackendConfig> {
@@ -140,17 +139,16 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
       }
       this.db = new DatabaseConstructor(DB_FILE_PATH);
       this.logger.debug("Created database.");
-      // Log SQLite version
-      this.logger.debug(`SQLite version: ${(this.db.prepare("SELECT sqlite_version() AS version").get() as ISQLiteVersion).version}.`);
+      // SQLite version
+      this.logger.debug(`SQLite version: ${getSQLiteVersion(this.db)}.`);
       // Journal mode
       this.db.pragma("journal_mode = WAL");
-      const JOURNAL_MODE: SQLiteJournalModePragmaResult = this.db.pragma("journal_mode", { simple: true }) as SQLiteJournalModePragmaResult;
-      this.logger.debug(`Journal mode: "${String(JOURNAL_MODE)}".`);
+      this.logger.debug(`Journal mode: "${getSQLiteJournalModePragmaResult(this.db)}".`);
       // Foreign keys
       this.db.pragma("foreign_keys = ON");
-      const FOREIGN_KEYS: SQLiteForeignKeysPragmaResult = this.db.pragma("foreign_keys", { simple: true }) as SQLiteForeignKeysPragmaResult;
-      this.logger.debug(`Foreign keys: ${String(FOREIGN_KEYS)}.`);
-      if (FOREIGN_KEYS !== 1) {
+      const ARE_FOREIGN_KEYS_ENABLED: boolean = getSQLiteForeignKeysPragmaResult(this.db);
+      this.logger.debug(`Foreign keys: ${ARE_FOREIGN_KEYS_ENABLED.toString()}.`);
+      if (!ARE_FOREIGN_KEYS_ENABLED) {
         throw new Error("Could not enable foreign keys");
       }
       // Create tables
@@ -187,22 +185,6 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
   public isLocal(): boolean {
     return true;
   }
-
-  // TODO: Delete comment
-  // private isJSONValidInSQLite(json: object | string, jsonPurposeToLog: string): boolean {
-  //   if (typeof json === "object") {
-  //     json = JSON.stringify(json, null, 2);
-  //   }
-  //   this.logger.log(`Performing SQLite JSON validation on ${jsonPurposeToLog}.`);
-  //   if (this.db === null) {
-  //     throw new Error(`Closed "${this.config.type}" User Account Storage Backend`);
-  //   }
-  //   const IS_JSON_VALID_SQL = "SELECT json_valid(@json) AS isValid";
-  //   const RESULT = this.db.prepare(IS_JSON_VALID_SQL).get({ json: json }) as { isValid: 0 | 1 };
-  //   const IS_VALID: boolean = RESULT.isValid === 0 ? false : true;
-  //   this.logger.debug(`JSON validity in SQLite: ${IS_VALID.toString()}.`);
-  //   return IS_VALID;
-  // }
 
   public isUserIdAvailable(userId: UUID): boolean {
     this.logger.debug(`Checking if user ID "${userId}" is available.`);
@@ -480,18 +462,18 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     throw new Error(`Found multiple (${RESULT.count.toString()}) User Data Storage Visibility Groups with same ID "${dataStorageVisibilityGroupId}"`);
   }
 
-  public addStorageSecuredUserDataStorageVisibilityGroup(
-    storageSecuredUserDataStorageVisibilityGroup: IStorageSecuredUserDataStorageVisibilityGroup
+  public addStorageSecuredUserDataStorageVisibilityGroupConfig(
+    storageSecuredUserDataStorageVisibilityGroupConfig: IStorageSecuredUserDataStorageVisibilityGroupConfig
   ): boolean {
     this.logger.debug(
-      `Adding new Storage Secured User Data Storage Visibility Group to user with ID: "${storageSecuredUserDataStorageVisibilityGroup.userId}".`
+      `Adding new Storage Secured User Data Storage Visibility Group Config to user with ID: "${storageSecuredUserDataStorageVisibilityGroupConfig.userId}".`
     );
     if (this.db === null) {
       throw new Error(`Closed "${this.config.type}" User Account Storage Backend`);
     }
     // Validate visibility group
     this.logger.debug("Validating Storage Secured User Data Storage Visibility Group.");
-    if (!isStorageSecuredUserDataStorageVisibilityGroupValid(storageSecuredUserDataStorageVisibilityGroup)) {
+    if (!isStorageSecuredUserDataStorageVisibilityGroupConfigValid(storageSecuredUserDataStorageVisibilityGroupConfig)) {
       this.logger.debug("Invalid Storage Secured User Data Storage Visibility Group.");
       return false;
     }
@@ -503,13 +485,13 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     )`;
     try {
       const RUN_RESULT: RunResult = this.db.prepare(SQL_QUERY).run({
-        visibilityGroupId: storageSecuredUserDataStorageVisibilityGroup.visibilityGroupId,
-        userId: storageSecuredUserDataStorageVisibilityGroup.userId,
+        visibilityGroupId: storageSecuredUserDataStorageVisibilityGroupConfig.visibilityGroupId,
+        userId: storageSecuredUserDataStorageVisibilityGroupConfig.userId,
         userDataStorageVisibilityGroupIV: Buffer.from(
-          storageSecuredUserDataStorageVisibilityGroup.encryptedPrivateStorageSecuredUserDataStorageVisibilityGroup.iv
+          storageSecuredUserDataStorageVisibilityGroupConfig.encryptedPrivateStorageSecuredUserDataStorageVisibilityGroupConfig.iv
         ),
         userDataStorageVisibilityGroupData: Buffer.from(
-          storageSecuredUserDataStorageVisibilityGroup.encryptedPrivateStorageSecuredUserDataStorageVisibilityGroup.data
+          storageSecuredUserDataStorageVisibilityGroupConfig.encryptedPrivateStorageSecuredUserDataStorageVisibilityGroupConfig.data
         )
       });
       this.logger.silly(`Number of changes: ${RUN_RESULT.changes.toString()}. Last inserted row ID: ${RUN_RESULT.lastInsertRowid.toString()}.`);
@@ -521,12 +503,12 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     }
   }
 
-  public getStorageSecuredUserDataStorageVisibilityGroups(
+  public getStorageSecuredUserDataStorageVisibilityGroupConfigs(
     options: IDataStorageVisibilityGroupFilter
-  ): IStorageSecuredUserDataStorageVisibilityGroup[] {
+  ): IStorageSecuredUserDataStorageVisibilityGroupConfig[] {
     const { userId, includeIds, excludeIds } = options;
     // TODO: Improve logging
-    this.logger.debug(`Getting Storage Secured User Data Storage Visibility Groups for user: "${userId}".`);
+    this.logger.debug(`Getting Storage Secured User Data Storage Visibility Group Configs for user: "${userId}".`);
     if (this.db === null) {
       throw new Error(`Closed "${this.config.type}" User Account Storage Backend`);
     }
@@ -555,38 +537,38 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
       SQLQuery += " AND visibility_group_id NOT IN (SELECT value FROM json_each(@excludeIdsString))";
       SQL_QUERY_ARGUMENTS.set("excludeIdsString", JSON.stringify(excludeIds));
     }
-    const RESULTS: IRawStorageSecuredUserDataStorageVisibilityGroup[] = this.db
+    const RESULTS: IRawStorageSecuredUserDataStorageVisibilityGroupConfig[] = this.db
       .prepare(SQLQuery)
-      .all(Object.fromEntries(SQL_QUERY_ARGUMENTS.entries())) as IRawStorageSecuredUserDataStorageVisibilityGroup[];
-    const STORAGE_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUPS: IStorageSecuredUserDataStorageVisibilityGroup[] = RESULTS.map(
+      .all(Object.fromEntries(SQL_QUERY_ARGUMENTS.entries())) as IRawStorageSecuredUserDataStorageVisibilityGroupConfig[];
+    const STORAGE_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIGS: IStorageSecuredUserDataStorageVisibilityGroupConfig[] = RESULTS.map(
       (
-        rawStorageSecuredUserDataStorageVisibilityGroup: IRawStorageSecuredUserDataStorageVisibilityGroup,
+        rawStorageSecuredUserDataStorageVisibilityGroupConfig: IRawStorageSecuredUserDataStorageVisibilityGroupConfig,
         idx: number
-      ): IStorageSecuredUserDataStorageVisibilityGroup => {
-        const STORAGE_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUP: IStorageSecuredUserDataStorageVisibilityGroup =
-          rawStorageSecuredUserDataStorageVisibilityGroupToStorageSecuredUserDataStorageVisibilityGroup(
-            rawStorageSecuredUserDataStorageVisibilityGroup,
+      ): IStorageSecuredUserDataStorageVisibilityGroupConfig => {
+        const STORAGE_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUP: IStorageSecuredUserDataStorageVisibilityGroupConfig =
+          rawStorageSecuredUserDataStorageVisibilityGroupConfigToStorageSecuredUserDataStorageVisibilityGroupConfig(
+            rawStorageSecuredUserDataStorageVisibilityGroupConfig,
             userId,
             null
           );
-        if (!isStorageSecuredUserDataStorageVisibilityGroupValid(STORAGE_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUP)) {
+        if (!isStorageSecuredUserDataStorageVisibilityGroupConfigValid(STORAGE_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUP)) {
           throw new Error(`Invalid Storage Secured User Data Storage Visibility Group at index: ${idx.toString()}`);
         }
         return STORAGE_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUP;
       }
     );
     this.logger.debug(
-      `Returning ${STORAGE_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUPS.length.toString()} Storage Secured User Data Storage Visibility Group${
-        STORAGE_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUPS.length === 1 ? "" : "s"
+      `Returning ${STORAGE_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIGS.length.toString()} Storage Secured User Data Storage Visibility Group${
+        STORAGE_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIGS.length === 1 ? "" : "s"
       }.`
     );
-    return STORAGE_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUPS;
+    return STORAGE_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIGS;
   }
 
-  public getStorageSecuredUserDataStorageVisibilityGroupForConfigId(
+  public getStorageSecuredUserDataStorageVisibilityGroupConfigForConfigId(
     userId: UUID,
     userDataStorageConfigId: UUID
-  ): IStorageSecuredUserDataStorageVisibilityGroup | null {
+  ): IStorageSecuredUserDataStorageVisibilityGroupConfig | null {
     this.logger.debug(`Getting Storage Secured User Data Storage Visibility Group for User Data Storage Config "${userDataStorageConfigId}".`);
     if (this.db === null) {
       throw new Error(`Closed "${this.config.type}" User Account Storage Backend`);
@@ -608,14 +590,14 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
         c.storage_id = @userDataStorageConfigId
     `;
     const RESULT = this.db.prepare(SQL_QUERY).get({ userId: userId, userDataStorageConfigId: userDataStorageConfigId }) as
-      | IRawStorageSecuredUserDataStorageVisibilityGroup
+      | IRawStorageSecuredUserDataStorageVisibilityGroupConfig
       | undefined;
     if (RESULT === undefined) {
       this.logger.silly(`User Data Storage "${userDataStorageConfigId}" has no User Data Storage Visibility Group.`);
       return null;
     }
     this.logger.silly(`User Data Storage "${userDataStorageConfigId}" has User Data Storage Visibility Group "${RESULT.visibilityGroupId}".`);
-    return rawStorageSecuredUserDataStorageVisibilityGroupToStorageSecuredUserDataStorageVisibilityGroup(RESULT, userId, null);
+    return rawStorageSecuredUserDataStorageVisibilityGroupConfigToStorageSecuredUserDataStorageVisibilityGroupConfig(RESULT, userId, null);
   }
 
   private createUsersTable(): void {

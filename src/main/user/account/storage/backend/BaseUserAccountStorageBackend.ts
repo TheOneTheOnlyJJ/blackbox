@@ -6,7 +6,7 @@ import { ISecuredPassword } from "@main/utils/encryption/SecuredPassword";
 import { IBaseUserAccountStorageBackendConfig } from "./config/BaseUserAccountStorageBackendConfig";
 import { IStorageSecuredUserDataStorageConfig } from "@main/user/data/storage/config/StorageSecuredUserDataStorageConfig";
 import { AJV } from "@shared/utils/AJVJSONValidator";
-import { IStorageSecuredUserDataStorageVisibilityGroup } from "@main/user/data/storage/visibilityGroup/StorageSecuredUserDataStorageVisibilityGroup";
+import { IStorageSecuredUserDataStorageVisibilityGroupConfig } from "@main/user/data/storage/visibilityGroup/config/StorageSecuredUserDataStorageVisibilityGroupConfig";
 
 export interface IDataStorageConfigFilter {
   userId: UUID;
@@ -56,17 +56,17 @@ export abstract class BaseUserAccountStorageBackend<T extends IBaseUserAccountSt
   public abstract isUserDataStorageIdAvailable(storageId: UUID): boolean;
   public abstract isUserDataStorageVisibilityGroupIdAvailable(dataStorageVisibilityGroupId: UUID): boolean;
   public abstract addStorageSecuredUserDataStorageConfig(storageSecuredUserDataStorageConfig: IStorageSecuredUserDataStorageConfig): boolean;
-  public abstract addStorageSecuredUserDataStorageVisibilityGroup(
-    storageSecuredUserDataStorageVisibilityGroup: IStorageSecuredUserDataStorageVisibilityGroup
+  public abstract addStorageSecuredUserDataStorageVisibilityGroupConfig(
+    storageSecuredUserDataStorageVisibilityGroupConfig: IStorageSecuredUserDataStorageVisibilityGroupConfig
   ): boolean;
   public abstract getStorageSecuredUserDataStorageConfigs(filter: IDataStorageConfigFilter): IStorageSecuredUserDataStorageConfig[];
-  public abstract getStorageSecuredUserDataStorageVisibilityGroups(
+  public abstract getStorageSecuredUserDataStorageVisibilityGroupConfigs(
     filter: IDataStorageVisibilityGroupFilter
-  ): IStorageSecuredUserDataStorageVisibilityGroup[];
-  public abstract getStorageSecuredUserDataStorageVisibilityGroupForConfigId(
+  ): IStorageSecuredUserDataStorageVisibilityGroupConfig[];
+  public abstract getStorageSecuredUserDataStorageVisibilityGroupConfigForConfigId(
     userId: UUID,
     userDataStorageConfigId: UUID
-  ): IStorageSecuredUserDataStorageVisibilityGroup | null;
+  ): IStorageSecuredUserDataStorageVisibilityGroupConfig | null;
 
   private isConfigValid(): boolean {
     this.logger.debug("Validating User Acount Storage Backend Config.");

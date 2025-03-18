@@ -8,31 +8,32 @@ import {
 } from "@renderer/components/roots/userDataStoragesLayoutRoot/UserDataStoragesLayoutRootContext";
 import { FC, MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
 import { appLogger } from "@renderer/utils/loggers";
-import NewUserDataStorageVisibilityGroupFormDialog from "@renderer/components/dialogs/NewUserDataStorageVisibilityGroupFormDialog";
+import NewUserDataStorageVisibilityGroupConfigFormDialog from "@renderer/components/dialogs/NewUserDataStorageVisibilityGroupConfigFormDialog";
 import OpenUserDataStorageVisibilityGroupFormDialog from "@renderer/components/dialogs/OpenUserDataStorageVisibilityGroupFormDialog";
 
 const UserDataStorageVisibilityGroupsPage: FC = () => {
   const userDataStoragesLayoutRootContext: IUserDataStoragesLayoutRootContext = useUserDataStoragesLayoutRootContext();
-  const [isNewUserDataStorageVisibilityGroupFormDialogOpen, setIsNewUserDataStorageVisibilityGroupFormDialogOpen] = useState<boolean>(false);
+  const [isNewUserDataStorageVisibilityGroupConfigFormDialogOpen, setIsNewUserDataStorageVisibilityGroupConfigFormDialogOpen] =
+    useState<boolean>(false);
   const isInitialMountNew: MutableRefObject<boolean> = useRef<boolean>(true);
   const [isOpenUserDataStorageVisibilityGroupFormDialogOpen, setIsOpenUserDataStorageVisibilityGroupFormDialogOpen] = useState<boolean>(false);
   const isInitialMountOpen: MutableRefObject<boolean> = useRef<boolean>(true);
 
   // New visibility group
-  const handleNewUserDataStorageVisibilityGroupButtonClick = useCallback((): void => {
-    appLogger.debug("New User Data Storage Visibility Group button clicked.");
-    setIsNewUserDataStorageVisibilityGroupFormDialogOpen(true);
+  const handleNewUserDataStorageVisibilityGroupConfigButtonClick = useCallback((): void => {
+    appLogger.debug("New User Data Storage Visibility Group Config button clicked.");
+    setIsNewUserDataStorageVisibilityGroupConfigFormDialogOpen(true);
   }, []);
 
-  const handleNewUserDataStorageVisibilityGroupFormDialogClose = useCallback((): void => {
-    setIsNewUserDataStorageVisibilityGroupFormDialogOpen(false);
+  const handleNewUserDataStorageVisibilityGroupConfigFormDialogClose = useCallback((): void => {
+    setIsNewUserDataStorageVisibilityGroupConfigFormDialogOpen(false);
   }, []);
 
-  const handleSuccessfullyAddedNewUserDataStorageVisibilityGroup = useCallback((): void => {
-    handleNewUserDataStorageVisibilityGroupFormDialogClose();
-  }, [handleNewUserDataStorageVisibilityGroupFormDialogClose]);
+  const handleSuccessfullyAddedNewUserDataStorageVisibilityGroupConfig = useCallback((): void => {
+    handleNewUserDataStorageVisibilityGroupConfigFormDialogClose();
+  }, [handleNewUserDataStorageVisibilityGroupConfigFormDialogClose]);
 
-  const handleSuccessfullyOpenedNewlyAddedUserDataStorageVisibilityGroup = useCallback((): void => {
+  const handleSuccessfullyOpenedNewlyAddedUserDataStorageVisibilityGroupConfig = useCallback((): void => {
     // No-op
   }, []);
 
@@ -56,8 +57,10 @@ const UserDataStorageVisibilityGroupsPage: FC = () => {
       isInitialMountNew.current = false;
       return;
     }
-    appLogger.debug(`${isNewUserDataStorageVisibilityGroupFormDialogOpen ? "Opened" : "Closed"} New User Data Storage Visibility Group form dialog.`);
-  }, [isNewUserDataStorageVisibilityGroupFormDialogOpen]);
+    appLogger.debug(
+      `${isNewUserDataStorageVisibilityGroupConfigFormDialogOpen ? "Opened" : "Closed"} New User Data Storage Visibility Group form dialog.`
+    );
+  }, [isNewUserDataStorageVisibilityGroupConfigFormDialogOpen]);
 
   useEffect((): void => {
     if (isInitialMountOpen.current) {
@@ -88,7 +91,7 @@ const UserDataStorageVisibilityGroupsPage: FC = () => {
         }}
       >
         <Stack direction="row" spacing={2}>
-          <Button variant="contained" size="large" onClick={handleNewUserDataStorageVisibilityGroupButtonClick}>
+          <Button variant="contained" size="large" onClick={handleNewUserDataStorageVisibilityGroupConfigButtonClick}>
             New Visibility Group
           </Button>
           <Button variant="contained" size="large" onClick={handleOpenUserDataStorageVisibilityGroupButtonClick}>
@@ -102,12 +105,12 @@ const UserDataStorageVisibilityGroupsPage: FC = () => {
           <UserDataStorageVisibilityGroupsDataGrid />
         </Box>
       </Box>
-      <NewUserDataStorageVisibilityGroupFormDialog
+      <NewUserDataStorageVisibilityGroupConfigFormDialog
         userIdToAddTo={userDataStoragesLayoutRootContext.signedInUserInfo.userId}
-        onAddedSuccessfully={handleSuccessfullyAddedNewUserDataStorageVisibilityGroup}
-        onOpenedSuccessfully={handleSuccessfullyOpenedNewlyAddedUserDataStorageVisibilityGroup}
-        open={isNewUserDataStorageVisibilityGroupFormDialogOpen}
-        onClose={handleNewUserDataStorageVisibilityGroupFormDialogClose}
+        onAddedSuccessfully={handleSuccessfullyAddedNewUserDataStorageVisibilityGroupConfig}
+        onOpenedSuccessfully={handleSuccessfullyOpenedNewlyAddedUserDataStorageVisibilityGroupConfig}
+        open={isNewUserDataStorageVisibilityGroupConfigFormDialogOpen}
+        onClose={handleNewUserDataStorageVisibilityGroupConfigFormDialogClose}
       />
       <OpenUserDataStorageVisibilityGroupFormDialog
         userIdToOpenFor={userDataStoragesLayoutRootContext.signedInUserInfo.userId}

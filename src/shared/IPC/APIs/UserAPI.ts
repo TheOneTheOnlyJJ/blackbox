@@ -7,7 +7,7 @@ import { IUserSignInDTO } from "@shared/user/account/UserSignInDTO";
 import { IUserDataStorageConfigCreateDTO } from "@shared/user/data/storage/config/create/DTO/UserDataStorageConfigCreateDTO";
 import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
 import { IUserDataStoragesInfoChangedDiff } from "@shared/user/data/storage/info/UserDataStoragesInfoChangedDiff";
-import { IUserDataStorageVisibilityGroupCreateDTO } from "@shared/user/data/storage/visibilityGroup/create/DTO/UserDataStorageVisibilityGroupCreateDTO";
+import { IUserDataStorageVisibilityGroupConfigCreateDTO } from "@shared/user/data/storage/visibilityGroup/config/create/DTO/UserDataStorageVisibilityGroupConfigCreateDTO";
 import { IUserDataStorageVisibilityGroupsOpenRequestDTO } from "@shared/user/data/storage/visibilityGroup/openRequest/DTO/UserDataStorageVisibilityGroupsOpenRequestDTO";
 import { IUserDataStorageVisibilityGroupsInfoChangedDiff } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfoChangedDiff";
 import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
@@ -36,8 +36,8 @@ export interface IUserAPI {
   getUsernameForUserId: (userId: string) => IPCAPIResponse<string | null>;
   getSignedInUserInfo: () => IPCAPIResponse<ISignedInUserInfo | null>;
   addUserDataStorageConfig: (encryptedUserDataStorageConfigCreateDTO: IEncryptedData<IUserDataStorageConfigCreateDTO>) => IPCAPIResponse<boolean>;
-  addUserDataStorageVisibilityGroup: (
-    encryptedUserDataStorageVisibilityGroupCreateDTO: IEncryptedData<IUserDataStorageVisibilityGroupCreateDTO>
+  addUserDataStorageVisibilityGroupConfig: (
+    encryptedUserDataStorageVisibilityGroupConfigCreateDTO: IEncryptedData<IUserDataStorageVisibilityGroupConfigCreateDTO>
   ) => IPCAPIResponse<boolean>;
   openUserDataStorageVisibilityGroups: (
     encryptedUserDataStorageVisibilityGroupsOpenRequestDTO: IEncryptedData<IUserDataStorageVisibilityGroupsOpenRequestDTO>
@@ -67,7 +67,7 @@ export const USER_API_IPC_CHANNELS: UserAPIIPCChannels = {
   getUsernameForUserId: "UserAPI:getUsernameForUserId",
   getSignedInUserInfo: "UserAPI:getSignedInUserInfo",
   addUserDataStorageConfig: "UserAPI:addUserDataStorageConfig",
-  addUserDataStorageVisibilityGroup: "UserAPI:addUserDataStorageVisibilityGroup",
+  addUserDataStorageVisibilityGroupConfig: "UserAPI:addUserDataStorageVisibilityGroupConfig",
   openUserDataStorageVisibilityGroups: "UserAPI:openUserDataStorageVisibilityGroups",
   closeUserDataStorageVisibilityGroups: "UserAPI:closeUserDataStorageVisibilityGroups",
   getUserAccountStorageInfo: "UserAPI:getUserAccountStorageInfo",

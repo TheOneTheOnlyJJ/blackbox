@@ -7,7 +7,7 @@ import { ISecuredUserSignUpPayload } from "../SecuredUserSignUpPayload";
 import { ISecuredPassword } from "@main/utils/encryption/SecuredPassword";
 import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserAccountStorageInfo";
 import { IStorageSecuredUserDataStorageConfig } from "@main/user/data/storage/config/StorageSecuredUserDataStorageConfig";
-import { IStorageSecuredUserDataStorageVisibilityGroup } from "@main/user/data/storage/visibilityGroup/StorageSecuredUserDataStorageVisibilityGroup";
+import { IStorageSecuredUserDataStorageVisibilityGroupConfig } from "@main/user/data/storage/visibilityGroup/config/StorageSecuredUserDataStorageVisibilityGroupConfig";
 import { UserAccountStorageBackendInfo } from "@shared/user/account/storage/backend/info/UserAccountStorageBackendInfo";
 import { userAccountStorageBackendConfigToUserAccountStorageBackendInfo } from "./backend/config/utils/userAccountStorageBackendConfigToUserAccountStorageBackendInfo";
 import { IDataStorageConfigFilter, IDataStorageVisibilityGroupFilter } from "./backend/BaseUserAccountStorageBackend";
@@ -18,7 +18,7 @@ export class UserAccountStorage {
   public readonly storageId: UUID;
   public readonly name: string;
   private readonly backend: UserAccountStorageBackend;
-  public readonly backendInfo: UserAccountStorageBackendInfo;
+  public readonly backendInfo: UserAccountStorageBackendInfo; // TODO: get this dynamically from account storage
 
   public constructor(config: IUserAccountStorageConfig, logger: LogFunctions, backendLogger: LogFunctions) {
     this.logger = logger;
@@ -85,7 +85,7 @@ export class UserAccountStorage {
     return dataStorageVisibilityGroupId;
   }
 
-  public getUserAccountStorageInfo(): IUserAccountStorageInfo {
+  public getInfo(): IUserAccountStorageInfo {
     this.logger.info("Getting User Account Storage Info.");
     return {
       storageId: this.storageId,
@@ -160,22 +160,22 @@ export class UserAccountStorage {
     return this.backend.addStorageSecuredUserDataStorageConfig(storageSecuredUserDataStorageConfig);
   }
 
-  public addStorageSecuredUserDataStorageVisibilityGroup(
-    storageSecuredUserDataStorageVisibilityGroup: IStorageSecuredUserDataStorageVisibilityGroup
+  public addStorageSecuredUserDataStorageVisibilityGroupConfig(
+    storageSecuredUserDataStorageVisibilityGroupConfig: IStorageSecuredUserDataStorageVisibilityGroupConfig
   ): boolean {
     this.logger.info(
-      `Adding Storage Secured User Data Storage Visibility Group to user with ID "${storageSecuredUserDataStorageVisibilityGroup.userId}" to User Account Storage "${this.name}" with ID "${this.storageId}".`
+      `Adding Storage Secured User Data Storage Visibility Group Config to user with ID "${storageSecuredUserDataStorageVisibilityGroupConfig.userId}" to User Account Storage "${this.name}" with ID "${this.storageId}".`
     );
-    return this.backend.addStorageSecuredUserDataStorageVisibilityGroup(storageSecuredUserDataStorageVisibilityGroup);
+    return this.backend.addStorageSecuredUserDataStorageVisibilityGroupConfig(storageSecuredUserDataStorageVisibilityGroupConfig);
   }
 
-  public getStorageSecuredUserDataStorageVisibilityGroups(
+  public getStorageSecuredUserDataStorageVisibilityGroupConfigs(
     options: IDataStorageVisibilityGroupFilter
-  ): IStorageSecuredUserDataStorageVisibilityGroup[] {
+  ): IStorageSecuredUserDataStorageVisibilityGroupConfig[] {
     this.logger.info(
-      `Getting Storage Secured User Data Storage Visibility Groups for user with ID "${options.userId}" from User Account Storage "${this.name}" with ID "${this.storageId}".`
+      `Getting Storage Secured User Data Storage Visibility Groups Configs for user with ID "${options.userId}" from User Account Storage "${this.name}" with ID "${this.storageId}".`
     );
-    return this.backend.getStorageSecuredUserDataStorageVisibilityGroups(options);
+    return this.backend.getStorageSecuredUserDataStorageVisibilityGroupConfigs(options);
   }
 
   public getStorageSecuredUserDataStorageConfigs(options: IDataStorageConfigFilter): IStorageSecuredUserDataStorageConfig[] {
@@ -188,10 +188,10 @@ export class UserAccountStorage {
   public getStorageSecuredUserDataStorageVisibilityGroupForConfigId(
     userId: UUID,
     userDataStorageConfigId: UUID
-  ): IStorageSecuredUserDataStorageVisibilityGroup | null {
+  ): IStorageSecuredUserDataStorageVisibilityGroupConfig | null {
     this.logger.info(
-      `Getting Storage Secured User Data Storage Visibility Group for User Data Storage "${userDataStorageConfigId}" from User Account Storage "${this.name}" with ID "${this.storageId}".`
+      `Getting Storage Secured User Data Storage Visibility Group Config for User Data Storage "${userDataStorageConfigId}" from User Account Storage "${this.name}" with ID "${this.storageId}".`
     );
-    return this.backend.getStorageSecuredUserDataStorageVisibilityGroupForConfigId(userId, userDataStorageConfigId);
+    return this.backend.getStorageSecuredUserDataStorageVisibilityGroupConfigForConfigId(userId, userDataStorageConfigId);
   }
 }

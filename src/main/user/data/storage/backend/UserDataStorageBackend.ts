@@ -3,11 +3,11 @@ import { LocalSQLiteUserDataStorageBackend } from "./implementations/LocalSQLite
 import { OptionBUserDataStorageBackend } from "./implementations/optionB/optionB";
 import { OptionCUserDataStorageBackend } from "./implementations/optionC/optionC";
 
-// Map of every user account storage backend type to its corresponding config type
+// Map of every user data storage backend type to its corresponding config type
 export interface IUserDataStorageBackendMap {
   [USER_DATA_STORAGE_BACKEND_TYPES.LocalSQLite]: LocalSQLiteUserDataStorageBackend;
   [USER_DATA_STORAGE_BACKEND_TYPES.OptionB]: OptionBUserDataStorageBackend;
   [USER_DATA_STORAGE_BACKEND_TYPES.OptionC]: OptionCUserDataStorageBackend;
 }
-// Union of all user account storage backend config concrete implementation interfaces
-export type UserAccountStorageBackend = IUserDataStorageBackendMap[keyof IUserDataStorageBackendMap];
+// Union of all user data storage backend config concrete implementation interfaces
+export type UserDataStorageBackend = IUserDataStorageBackendMap[keyof IUserDataStorageBackendMap];

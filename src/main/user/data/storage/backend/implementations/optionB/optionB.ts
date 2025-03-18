@@ -1,5 +1,5 @@
 import { USER_DATA_STORAGE_BACKEND_TYPES, UserDataStorageBackendTypes } from "@shared/user/data/storage/backend/UserDataStorageBackendType";
-import Ajv, { JSONSchemaType } from "ajv";
+import { JSONSchemaType } from "ajv";
 import { IBaseUserDataStorageBackendConfig } from "../../config/BaseUserDataStorageBackendConfig";
 import { BaseUserDataStorageBackend } from "../../BaseUserDataStorageBackend";
 import { LogFunctions } from "electron-log";
@@ -29,8 +29,27 @@ export class OptionBUserDataStorageBackend extends BaseUserDataStorageBackend<IO
     additionalProperties: false
   } as const;
 
-  public constructor(config: IOptionBUserDataStorageBackendConfig, logger: LogFunctions, ajv: Ajv) {
-    super(config, OptionBUserDataStorageBackend.CONFIG_JSON_SCHEMA, logger, ajv);
-    throw new Error("Option B User Account Storage is only a mock");
+  public constructor(config: IOptionBUserDataStorageBackendConfig, logger: LogFunctions) {
+    super(config, OptionBUserDataStorageBackend.CONFIG_JSON_SCHEMA, logger);
+  }
+
+  public isOpen(): boolean {
+    return false;
+  }
+
+  public isClosed(): boolean {
+    return true;
+  }
+
+  public open(): boolean {
+    throw new Error("Cannot open Option B User Account Storage as it is mock");
+  }
+
+  public close(): boolean {
+    throw new Error("Cannot close Option B User Account Storage as it is mock");
+  }
+
+  public isLocal(): boolean {
+    return true;
   }
 }
