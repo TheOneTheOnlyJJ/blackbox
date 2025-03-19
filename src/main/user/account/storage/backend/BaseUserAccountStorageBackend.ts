@@ -1,4 +1,4 @@
-import { LogFunctions } from "electron-log";
+import log, { LogFunctions } from "electron-log";
 import { JSONSchemaType, ValidateFunction } from "ajv";
 import { ISecuredUserSignUpPayload } from "../../SecuredUserSignUpPayload";
 import { UUID } from "node:crypto";
@@ -29,8 +29,8 @@ export abstract class BaseUserAccountStorageBackend<T extends IBaseUserAccountSt
   public readonly config: T;
   private readonly USER_ACCOUNT_STORAGE_BACKEND_CONFIG_VALIDATE_FUNCTION: ValidateFunction<T>;
 
-  public constructor(config: T, configSchema: JSONSchemaType<T>, logger: LogFunctions) {
-    this.logger = logger;
+  public constructor(config: T, configSchema: JSONSchemaType<T>, logScope: string) {
+    this.logger = log.scope(logScope);
     this.logger.info("Initialising User Acount Storage Backend.");
     this.config = config;
     this.logger.silly(`Config: ${JSON.stringify(this.config, null, 2)}.`);

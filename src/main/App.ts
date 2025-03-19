@@ -6,7 +6,7 @@ import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 import { JSONSchemaType } from "ajv/dist/types/json-schema";
 import { IIPCTLSBootstrapAPI, IPC_TLS_BOOTSTRAP_API_IPC_CHANNELS } from "@shared/IPC/APIs/IPCTLSBootstrapAPI";
 import { USER_API_IPC_CHANNELS, UserAPIIPCChannel } from "@shared/IPC/APIs/UserAPI";
-import { UserFacade } from "@main/user/facade/UserFacade";
+import { IUserFacadeConstructorProps, UserFacade } from "@main/user/facade/UserFacade";
 import { USER_ACCOUNT_STORAGE_BACKEND_TYPES } from "@main/user/account/storage/backend/UserAccountStorageBackendType";
 import { adjustWindowBounds } from "@main/utils/window/adjustWindowBounds";
 import { IpcMainEvent, IpcMainInvokeEvent, OpenDialogReturnValue } from "electron";
@@ -56,6 +56,7 @@ import { userDataStorageVisibilityGroupsOpenRequestDTOToUserDataStorageVisibilit
 import { USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIG_CONSTANTS } from "./user/data/storage/visibilityGroup/config/UserDataStorageVisibilityGroupConfig";
 import { IUserDataStorageVisibilityGroupsInfoChangedDiff } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfoChangedDiff";
 import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
+import { IUserContextHandlers } from "./user/facade/UserContext";
 
 type WindowPositionSetting = Rectangle | WindowStates["FullScreen"] | WindowStates["Maximized"];
 
@@ -96,14 +97,13 @@ export class App {
   private readonly UserAPILogger: LogFunctions = log.scope("main-user-api");
   private readonly UtilsAPILogger: LogFunctions = log.scope("main-utils-api");
   private readonly userFacadeLogger: LogFunctions = log.scope("main-user-facade");
+  private readonly userContextLogger: LogFunctions = log.scope("main-user-context");
   private readonly userContextProviderLogger: LogFunctions = log.scope("main-user-context-provider");
   private readonly userAuthServiceLogger: LogFunctions = log.scope("main-user-auth-service");
   private readonly userAccountServiceLogger: LogFunctions = log.scope("main-user-account-service");
   private readonly userAccountStorageServiceLogger: LogFunctions = log.scope("main-user-account-storage-service");
   private readonly userDataStorageConfigServiceLogger: LogFunctions = log.scope("main-user-data-storage-config-service");
   private readonly userDataStorageVisibilityGroupServiceLogger: LogFunctions = log.scope("main-user-data-storage-visibility-group-service");
-  private readonly userAccountStorageLogger: LogFunctions = log.scope("main-user-account-storage");
-  private readonly userAccountStorageBackendLogger: LogFunctions = log.scope("main-user-account-storage-backend");
 
   // Settings
   public static readonly SETTINGS_SCHEMA: JSONSchemaType<IAppSettings> = {
@@ -688,20 +688,25 @@ export class App {
       this.settingsManager.updateSettings(this.DEFAULT_SETTINGS);
     }
     this.bootstrapLogger.debug(`Using app settings: ${JSON.stringify(this.settingsManager.getSettings(), null, 2)}.`);
-    this.userFacade = new UserFacade(
-      this.userFacadeLogger,
-      this.userContextProviderLogger,
-      this.userAuthServiceLogger,
-      this.userAccountServiceLogger,
-      this.userAccountStorageServiceLogger,
-      this.userDataStorageConfigServiceLogger,
-      this.userDataStorageVisibilityGroupServiceLogger,
-      this.USER_API_HANDLERS.sendSignedInUserChanged,
-      this.USER_API_HANDLERS.sendUserAccountStorageChanged,
-      this.USER_API_HANDLERS.sendUserAccountStorageOpenChanged,
-      this.USER_API_HANDLERS.sendAvailableUserDataStoragesChanged,
-      this.USER_API_HANDLERS.sendOpenUserDataStorageVisibilityGroupsChanged
-    );
+    this.userFacade = new UserFacade({
+      logger: this.userFacadeLogger,
+      contextLogger: this.userContextLogger,
+      contextProviderLogger: this.userContextProviderLogger,
+      serviceLoggers: {
+        auth: this.userAuthServiceLogger,
+        account: this.userAccountServiceLogger,
+        accountStorage: this.userAccountStorageServiceLogger,
+        dataStorageConfig: this.userDataStorageConfigServiceLogger,
+        dataStorageVisibilityGroup: this.userDataStorageVisibilityGroupServiceLogger
+      },
+      contextHandlers: {
+        onSignedInUserChangedCallback: this.USER_API_HANDLERS.sendSignedInUserChanged,
+        onUserAccountStorageChangedCallback: this.USER_API_HANDLERS.sendUserAccountStorageChanged,
+        onUserAccountStorageOpenChangedCallback: this.USER_API_HANDLERS.sendUserAccountStorageOpenChanged,
+        onAvailableUserDataStoragesChangedCallback: this.USER_API_HANDLERS.sendAvailableUserDataStoragesChanged,
+        onOpenUserDataStorageVisibilityGroupsChangedCallback: this.USER_API_HANDLERS.sendOpenUserDataStorageVisibilityGroupsChanged
+      } satisfies IUserContextHandlers
+    } satisfies IUserFacadeConstructorProps);
     this.IPCTLSBootstrapPrivateRSAKey = null;
     this.bootstrapLogger.debug("App constructor done.");
   }
@@ -914,9 +919,7 @@ export class App {
 
   private onceAppReady(): void {
     this.appLogger.info("App ready.");
-    this.userFacade.setAccountStorage(
-      new UserAccountStorage(this.DEFAULT_USER_ACCOUNT_STORAGE_CONFIG, this.userAccountStorageLogger, this.userAccountStorageBackendLogger)
-    );
+    this.userFacade.setAccountStorage(new UserAccountStorage(this.DEFAULT_USER_ACCOUNT_STORAGE_CONFIG, "default-user-account-storage"));
     this.userFacade.openAccountStorage();
     // TODO: Delete comment
     // let isOpen = this.userManager.isUserAccountStorageOpen();

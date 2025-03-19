@@ -1,5 +1,5 @@
 import { UserAccountStorage } from "@main/user/account/storage/UserAccountStorage";
 
 export interface IUserAccountStorageProxy {
-  value: Readonly<UserAccountStorage> | null;
+  value: UserAccountStorage | null;
 }

@@ -9,12 +9,13 @@ import { deriveAESKey } from "@main/utils/encryption/deriveAESKey";
 import { ISignedInUserInfo } from "@shared/user/account/SignedInUserInfo";
 import { signedInUserToSignedInUserInfo } from "../../account/utils/signedInUserToSignedInUserInfo";
 import { PASSWORD_SALT_LENGTH_BYTES } from "@main/utils/encryption/constants";
-import { IUserAccountStorageProxy } from "../proxies/UserAccountStorageProxy";
-import { ISignedInUserProxy } from "../proxies/SignedInUserProxy";
+import { UserAccountStorage } from "@main/user/account/storage/UserAccountStorage";
+import { ISignedInUser } from "@main/user/account/SignedInUser";
 
 export interface IUserAuthenticationServiceContext {
-  accountStorage: IUserAccountStorageProxy;
-  signedInUser: ISignedInUserProxy;
+  getAccountStorage: () => UserAccountStorage | null;
+  getSignedInUser: () => ISignedInUser | null;
+  setSignedInUser: (newSignedInUser: ISignedInUser | null) => void;
 }
 
 export class UserAuthenticationService {
@@ -32,36 +33,39 @@ export class UserAuthenticationService {
     hashUserPasswordFunction: (userPassword: string, userPasswordSalt: Buffer) => string
   ): boolean {
     this.logger.debug(`Signing up user: "${userSignUpPayload.username}".`);
-    if (this.CONTEXT.accountStorage.value === null) {
+    const ACCOUNT_STORAGE: UserAccountStorage | null = this.CONTEXT.getAccountStorage();
+    if (ACCOUNT_STORAGE === null) {
       throw new Error("Null User Account Storage");
     }
     if (!USER_SIGN_UP_PAYLOAD_VALIDATE_FUNCTION(userSignUpPayload)) {
       throw new Error("Invalid user sign up payload");
     }
-    return this.CONTEXT.accountStorage.value.addUser(
+    return ACCOUNT_STORAGE.addUser(
       userSignUpPayloadToSecuredUserSignUpPayload(userSignUpPayload, PASSWORD_SALT_LENGTH_BYTES, hashUserPasswordFunction, this.logger)
     );
   }
 
   public signIn(userSignInPayload: IUserSignInPayload): boolean {
     this.logger.debug(`Signing in user: "${userSignInPayload.username}".`);
-    if (this.CONTEXT.signedInUser.value !== null) {
+    const SIGNED_IN_USER: ISignedInUser | null = this.CONTEXT.getSignedInUser();
+    const ACCOUNT_STORAGE: UserAccountStorage | null = this.CONTEXT.getAccountStorage();
+    if (SIGNED_IN_USER !== null) {
       this.logger.warn(`A user is already signed in: "${JSON.stringify(this.getSignedInUserInfo())}".`);
     }
-    if (this.CONTEXT.accountStorage.value === null) {
+    if (ACCOUNT_STORAGE === null) {
       throw new Error("Null User Account Storage");
     }
     if (!USER_SIGN_IN_PAYLOAD_VALIDATE_FUNCTION(userSignInPayload)) {
       throw new Error("Invalid user sign in payload");
     }
     // TODO: Merge this
-    const USER_ID: UUID | null = this.CONTEXT.accountStorage.value.getUserId(userSignInPayload.username);
+    const USER_ID: UUID | null = ACCOUNT_STORAGE.getUserId(userSignInPayload.username);
     if (USER_ID === null) {
       this.logger.debug("No user ID for given username.");
       return false;
     }
     // TODO: With this
-    const SECURED_USER_PASSWORD: ISecuredPassword | null = this.CONTEXT.accountStorage.value.getSecuredUserPassword(USER_ID);
+    const SECURED_USER_PASSWORD: ISecuredPassword | null = ACCOUNT_STORAGE.getSecuredUserPassword(USER_ID);
     if (SECURED_USER_PASSWORD === null) {
       throw new Error(`No password hash and salt for user: "${USER_ID}"`);
     }
@@ -77,11 +81,11 @@ export class UserAuthenticationService {
     }
     this.logger.debug("Password hashes matched!");
     // TODO: And this?
-    const DATA_ENCRYPTION_KEY_SALT: string | null = this.CONTEXT.accountStorage.value.getUserDataEncryptionAESKeySalt(USER_ID);
+    const DATA_ENCRYPTION_KEY_SALT: string | null = ACCOUNT_STORAGE.getUserDataEncryptionAESKeySalt(USER_ID);
     if (DATA_ENCRYPTION_KEY_SALT === null) {
       throw new Error(`No data encryption key salt for given user ID: "${USER_ID}"`);
     }
-    this.CONTEXT.signedInUser.value = {
+    this.CONTEXT.setSignedInUser({
       userId: USER_ID,
       username: userSignInPayload.username,
       userDataAESKey: deriveAESKey(
@@ -90,26 +94,28 @@ export class UserAuthenticationService {
         this.logger,
         "newly signed in user's data"
       )
-    };
+    });
     return true;
   }
 
   public signOut(): ISignedInUserInfo | null {
     this.logger.debug("Signing out.");
-    if (this.CONTEXT.signedInUser.value === null) {
+    const SIGNED_IN_USER: ISignedInUser | null = this.CONTEXT.getSignedInUser();
+    if (SIGNED_IN_USER === null) {
       this.logger.debug("No signed in user.");
       return null;
     }
-    this.logger.debug(`Signing out user: "${this.CONTEXT.signedInUser.value.username}".`);
-    const SIGNED_OUT_USER_INFO: ISignedInUserInfo = signedInUserToSignedInUserInfo(this.CONTEXT.signedInUser.value, this.logger);
-    this.CONTEXT.signedInUser.value = null; // AES key gets corrupted in proxy
+    this.logger.debug(`Signing out user: "${SIGNED_IN_USER.username}".`);
+    const SIGNED_OUT_USER_INFO: ISignedInUserInfo = signedInUserToSignedInUserInfo(SIGNED_IN_USER, this.logger);
+    this.CONTEXT.setSignedInUser(null);
     return SIGNED_OUT_USER_INFO;
   }
 
   public getSignedInUserInfo(): ISignedInUserInfo | null {
-    if (this.CONTEXT.signedInUser.value === null) {
+    const SIGNED_IN_USER: ISignedInUser | null = this.CONTEXT.getSignedInUser();
+    if (SIGNED_IN_USER === null) {
       return null;
     }
-    return signedInUserToSignedInUserInfo(this.CONTEXT.signedInUser.value, this.logger);
+    return signedInUserToSignedInUserInfo(SIGNED_IN_USER, this.logger);
   }
 }

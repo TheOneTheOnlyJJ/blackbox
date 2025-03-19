@@ -103,8 +103,8 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
 
   private db: Database | null;
 
-  public constructor(config: ILocalSQLiteUserAccountStorageBackendConfig, logger: LogFunctions) {
-    super(config, LocalSQLiteUserAccountStorageBackend.CONFIG_JSON_SCHEMA, logger);
+  public constructor(config: ILocalSQLiteUserAccountStorageBackendConfig, logScope: string) {
+    super(config, LocalSQLiteUserAccountStorageBackend.CONFIG_JSON_SCHEMA, logScope);
     this.db = null;
   }
 

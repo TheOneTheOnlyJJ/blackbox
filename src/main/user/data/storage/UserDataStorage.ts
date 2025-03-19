@@ -1,5 +1,5 @@
 import { UUID } from "node:crypto";
-import { LogFunctions } from "electron-log";
+import log, { LogFunctions } from "electron-log";
 import { UserDataStorageBackend } from "./backend/UserDataStorageBackend";
 import { UserDataStorageBackendInfo } from "@shared/user/data/storage/backend/info/UserDataStorageBackendInfo";
 import { IUserDataStorageConfig } from "./config/UserDataStorageConfig";
@@ -19,8 +19,8 @@ export class UserDataStorage {
   public readonly visibilityGroupName: string | null;
   public readonly backendInfo: UserDataStorageBackendInfo; // TODO: get this dynamically from data storage
 
-  public constructor(config: IUserDataStorageConfig, visibilityGroupName: string | null, logger: LogFunctions, backendLogger: LogFunctions) {
-    this.logger = logger;
+  public constructor(config: IUserDataStorageConfig, visibilityGroupName: string | null, logScope: string) {
+    this.logger = log.scope(logScope);
     this.logger.info(
       `Initialising User Data Storage "${config.name}" with ID "${config.storageId}" and backend type "${config.backendConfig.type}".`
     );
@@ -29,7 +29,7 @@ export class UserDataStorage {
     this.visibilityGroupId = config.visibilityGroupId;
     this.name = config.name;
     this.description = config.description;
-    this.backend = userDataStorageBackendFactory(config.backendConfig, backendLogger);
+    this.backend = userDataStorageBackendFactory(config.backendConfig, `${logScope}-backend`, this.logger);
     this.visibilityGroupName = visibilityGroupName;
     this.backendInfo = userDataStorageBackendConfigToUserDataStorageBackendInfo(config.backendConfig, this.logger);
   }

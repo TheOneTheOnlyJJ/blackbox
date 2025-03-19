@@ -1,4 +1,4 @@
-import { LogFunctions } from "electron-log";
+import log, { LogFunctions } from "electron-log";
 import { JSONSchemaType, ValidateFunction } from "ajv";
 import { IBaseUserDataStorageBackendConfig } from "./config/BaseUserDataStorageBackendConfig";
 import { AJV } from "@shared/utils/AJVJSONValidator";
@@ -8,8 +8,8 @@ export abstract class BaseUserDataStorageBackend<T extends IBaseUserDataStorageB
   public readonly config: T;
   private readonly CONFIG_VALIDATE_FUNCTION: ValidateFunction<T>;
 
-  public constructor(config: T, configSchema: JSONSchemaType<T>, logger: LogFunctions) {
-    this.logger = logger;
+  public constructor(config: T, configSchema: JSONSchemaType<T>, logScope: string) {
+    this.logger = log.scope(logScope);
     this.logger.info("Initialising User Data Storage Backend.");
     this.config = config;
     this.logger.silly(`Config: ${JSON.stringify(this.config, null, 2)}.`);

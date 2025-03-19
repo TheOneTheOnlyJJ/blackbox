@@ -2,7 +2,6 @@ import { USER_DATA_STORAGE_BACKEND_TYPES, UserDataStorageBackendTypes } from "@s
 import { JSONSchemaType } from "ajv";
 import { IBaseUserDataStorageBackendConfig } from "../../config/BaseUserDataStorageBackendConfig";
 import { BaseUserDataStorageBackend } from "../../BaseUserDataStorageBackend";
-import { LogFunctions } from "electron-log";
 import { OPTION_B_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/backend/constants/implementations/optionB/OptionBUserDataStorageBackendConstants";
 
 export interface IOptionBUserDataStorageBackendConfig extends IBaseUserDataStorageBackendConfig {
@@ -29,8 +28,8 @@ export class OptionBUserDataStorageBackend extends BaseUserDataStorageBackend<IO
     additionalProperties: false
   } as const;
 
-  public constructor(config: IOptionBUserDataStorageBackendConfig, logger: LogFunctions) {
-    super(config, OptionBUserDataStorageBackend.CONFIG_JSON_SCHEMA, logger);
+  public constructor(config: IOptionBUserDataStorageBackendConfig, logScope: string) {
+    super(config, OptionBUserDataStorageBackend.CONFIG_JSON_SCHEMA, logScope);
   }
 
   public isOpen(): boolean {

@@ -1,7 +1,7 @@
 import { randomUUID, UUID } from "node:crypto";
 import { IUserAccountStorageConfig } from "./config/UserAccountStorageConfig";
 import { userAccountStorageBackendFactory } from "./backend/userAccountStorageBackendFactory";
-import { LogFunctions } from "electron-log";
+import log, { LogFunctions } from "electron-log";
 import { UserAccountStorageBackend } from "./backend/UserAccountStorageBackend";
 import { ISecuredUserSignUpPayload } from "../SecuredUserSignUpPayload";
 import { ISecuredPassword } from "@main/utils/encryption/SecuredPassword";
@@ -18,16 +18,16 @@ export class UserAccountStorage {
   public readonly storageId: UUID;
   public readonly name: string;
   private readonly backend: UserAccountStorageBackend;
-  public readonly backendInfo: UserAccountStorageBackendInfo; // TODO: get this dynamically from account storage
+  public readonly backendInfo: UserAccountStorageBackendInfo; // TODO: get this dynamically from account storage?
 
-  public constructor(config: IUserAccountStorageConfig, logger: LogFunctions, backendLogger: LogFunctions) {
-    this.logger = logger;
+  public constructor(config: IUserAccountStorageConfig, logScope: string) {
+    this.logger = log.scope(logScope);
     this.logger.info(
       `Initialising User Account Storage "${config.name}" with ID "${config.storageId}" and backend type "${config.backendConfig.type}".`
     );
     this.storageId = config.storageId;
     this.name = config.name;
-    this.backend = userAccountStorageBackendFactory(config.backendConfig, backendLogger);
+    this.backend = userAccountStorageBackendFactory(config.backendConfig, `${logScope}-backend`, this.logger);
     this.backendInfo = userAccountStorageBackendConfigToUserAccountStorageBackendInfo(config.backendConfig, this.logger);
   }
 

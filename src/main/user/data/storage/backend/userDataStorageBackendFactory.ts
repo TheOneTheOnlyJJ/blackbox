@@ -6,15 +6,19 @@ import { OptionBUserDataStorageBackend } from "./implementations/optionB/optionB
 import { OptionCUserDataStorageBackend } from "./implementations/optionC/optionC";
 import { UserDataStorageBackend } from "./UserDataStorageBackend";
 
-export function userDataStorageBackendFactory(config: UserDataStorageBackendConfig, logger: LogFunctions): UserDataStorageBackend {
-  logger.debug("Running User Data Storage Backend factory.");
+export function userDataStorageBackendFactory(
+  config: UserDataStorageBackendConfig,
+  logScope: string,
+  logger: LogFunctions | null
+): UserDataStorageBackend {
+  logger?.debug("Running User Data Storage Backend factory.");
   switch (config.type) {
     case USER_DATA_STORAGE_BACKEND_TYPES.LocalSQLite:
-      return new LocalSQLiteUserDataStorageBackend(config, logger);
+      return new LocalSQLiteUserDataStorageBackend(config, logScope);
     case USER_DATA_STORAGE_BACKEND_TYPES.OptionB:
-      return new OptionBUserDataStorageBackend(config, logger);
+      return new OptionBUserDataStorageBackend(config, logScope);
     case USER_DATA_STORAGE_BACKEND_TYPES.OptionC:
-      return new OptionCUserDataStorageBackend(config, logger);
+      return new OptionCUserDataStorageBackend(config, logScope);
     default:
       throw new Error(`Invalid User Data Storage Backend type received: ${(config as { type: string }).type}`);
   }

@@ -1,4 +1,3 @@
-import { LogFunctions } from "electron-log";
 import { BaseUserDataStorageBackend } from "../../BaseUserDataStorageBackend";
 import { USER_DATA_STORAGE_BACKEND_TYPES, UserDataStorageBackendTypes } from "@shared/user/data/storage/backend/UserDataStorageBackendType";
 import { JSONSchemaType } from "ajv";
@@ -42,8 +41,8 @@ export class LocalSQLiteUserDataStorageBackend extends BaseUserDataStorageBacken
 
   private db: Database | null;
 
-  public constructor(config: ILocalSQLiteUserDataStorageBackendConfig, logger: LogFunctions) {
-    super(config, LocalSQLiteUserDataStorageBackend.CONFIG_JSON_SCHEMA, logger);
+  public constructor(config: ILocalSQLiteUserDataStorageBackendConfig, logScope: string) {
+    super(config, LocalSQLiteUserDataStorageBackend.CONFIG_JSON_SCHEMA, logScope);
     this.db = null;
   }
 
