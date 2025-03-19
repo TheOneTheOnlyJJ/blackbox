@@ -1,17 +1,20 @@
 import { LogFunctions } from "electron-log";
 import { UserAccountStorage } from "../../account/storage/UserAccountStorage";
-import { UserControllerContext } from "../UserControllerContext";
-import { UUID } from "node:crypto";
 import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserAccountStorageInfo";
+import { IUserAccountStorageProxy } from "../proxies/UserAccountStorageProxy";
+
+export interface IUserAccountStorageServiceContext {
+  accountStorage: IUserAccountStorageProxy;
+}
 
 export class UserAccountStorageService {
   private logger: LogFunctions;
-  private readonly CONTEXT: UserControllerContext;
+  private readonly CONTEXT: IUserAccountStorageServiceContext;
 
-  public constructor(logger: LogFunctions, userControllerContext: UserControllerContext) {
+  public constructor(logger: LogFunctions, context: IUserAccountStorageServiceContext) {
     this.logger = logger;
     this.logger.debug("Initialising new User Account Storage Service.");
-    this.CONTEXT = userControllerContext;
+    this.CONTEXT = context;
   }
 
   public isAccountStorageOpen(): boolean {
@@ -84,38 +87,6 @@ export class UserAccountStorageService {
       throw new Error("Null User Account Storage");
     }
     return this.CONTEXT.accountStorage.value.close();
-  }
-
-  public isUsernameAvailable(username: string): boolean {
-    this.logger.debug(`Getting username availability for username: "${username}".`);
-    if (this.CONTEXT.accountStorage.value === null) {
-      throw new Error("Null User Account Storage");
-    }
-    return this.CONTEXT.accountStorage.value.isUsernameAvailable(username);
-  }
-
-  public generateRandomUserId(): UUID {
-    this.logger.debug("Generating random User ID.");
-    if (this.CONTEXT.accountStorage.value === null) {
-      throw new Error("Null User Account Storage");
-    }
-    return this.CONTEXT.accountStorage.value.generateRandomUserId();
-  }
-
-  public getUserCount(): number {
-    this.logger.debug("Getting user count.");
-    if (this.CONTEXT.accountStorage.value === null) {
-      throw new Error("Null User Account Storage");
-    }
-    return this.CONTEXT.accountStorage.value.getUserCount();
-  }
-
-  public getUsernameForUserId(userId: UUID): string | null {
-    this.logger.debug(`Getting username for user ID "${userId}".`);
-    if (this.CONTEXT.accountStorage.value === null) {
-      throw new Error("Null User Account Storage");
-    }
-    return this.CONTEXT.accountStorage.value.getUsernameForUserId(userId);
   }
 
   public getAccountStorageInfo(): IUserAccountStorageInfo | null {

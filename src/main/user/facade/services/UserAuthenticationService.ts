@@ -9,16 +9,22 @@ import { deriveAESKey } from "@main/utils/encryption/deriveAESKey";
 import { ISignedInUserInfo } from "@shared/user/account/SignedInUserInfo";
 import { signedInUserToSignedInUserInfo } from "../../account/utils/signedInUserToSignedInUserInfo";
 import { PASSWORD_SALT_LENGTH_BYTES } from "@main/utils/encryption/constants";
-import { UserControllerContext } from "../UserControllerContext";
+import { IUserAccountStorageProxy } from "../proxies/UserAccountStorageProxy";
+import { ISignedInUserProxy } from "../proxies/SignedInUserProxy";
+
+export interface IUserAuthenticationServiceContext {
+  accountStorage: IUserAccountStorageProxy;
+  signedInUser: ISignedInUserProxy;
+}
 
 export class UserAuthenticationService {
   private logger: LogFunctions;
-  private readonly CONTEXT: UserControllerContext;
+  private readonly CONTEXT: IUserAuthenticationServiceContext;
 
-  public constructor(logger: LogFunctions, userControllerContext: UserControllerContext) {
+  public constructor(logger: LogFunctions, context: IUserAuthenticationServiceContext) {
     this.logger = logger;
     this.logger.debug("Initialising new User Authentication Service.");
-    this.CONTEXT = userControllerContext;
+    this.CONTEXT = context;
   }
 
   public signUp(

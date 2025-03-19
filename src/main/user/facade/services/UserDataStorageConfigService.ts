@@ -1,5 +1,4 @@
 import { LogFunctions } from "electron-log";
-import { UserControllerContext } from "../UserControllerContext";
 import { UUID } from "crypto";
 import { IUserDataStorageConfig } from "@main/user/data/storage/config/UserDataStorageConfig";
 import { ISecuredUserDataStorageConfig } from "@main/user/data/storage/config/SecuredUserDataStorageConfig";
@@ -11,15 +10,22 @@ import { IStorageSecuredUserDataStorageConfig } from "@main/user/data/storage/co
 import { storageSecuredUserDataStorageConfigToSecuredUserDataStorageConfig } from "@main/user/data/storage/config/utils/storageSecuredUserDataStorageConfigToSecuredUserDataStorageConfig";
 import { ISecuredUserDataStorageVisibilityGroupConfig } from "@main/user/data/storage/visibilityGroup/config/SecuredUserDataStorageVisibilityGroupConfig";
 import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
+import { IUserAccountStorageProxy } from "../proxies/UserAccountStorageProxy";
+import { ISignedInUserProxy } from "../proxies/SignedInUserProxy";
+
+export interface IUserDataStorageConfigServiceContext {
+  accountStorage: IUserAccountStorageProxy;
+  signedInUser: ISignedInUserProxy;
+}
 
 export class UserDataStorageConfigService {
   private logger: LogFunctions;
-  private readonly CONTEXT: UserControllerContext;
+  private readonly CONTEXT: IUserDataStorageConfigServiceContext;
 
-  public constructor(logger: LogFunctions, userControllerContext: UserControllerContext) {
+  public constructor(logger: LogFunctions, context: IUserDataStorageConfigServiceContext) {
     this.logger = logger;
     this.logger.debug("Initialising new User Data Storage Config Service.");
-    this.CONTEXT = userControllerContext;
+    this.CONTEXT = context;
   }
 
   public generateRandomDataStorageId(): UUID {

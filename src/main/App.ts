@@ -6,7 +6,7 @@ import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 import { JSONSchemaType } from "ajv/dist/types/json-schema";
 import { IIPCTLSBootstrapAPI, IPC_TLS_BOOTSTRAP_API_IPC_CHANNELS } from "@shared/IPC/APIs/IPCTLSBootstrapAPI";
 import { USER_API_IPC_CHANNELS, UserAPIIPCChannel } from "@shared/IPC/APIs/UserAPI";
-import { UserController } from "@main/user/controller/UserController";
+import { UserFacade } from "@main/user/facade/UserFacade";
 import { USER_ACCOUNT_STORAGE_BACKEND_TYPES } from "@main/user/account/storage/backend/UserAccountStorageBackendType";
 import { adjustWindowBounds } from "@main/utils/window/adjustWindowBounds";
 import { IpcMainEvent, IpcMainInvokeEvent, OpenDialogReturnValue } from "electron";
@@ -95,8 +95,10 @@ export class App {
   private readonly IPCTLSAPILogger: LogFunctions = log.scope("main-ipc-tls-api");
   private readonly UserAPILogger: LogFunctions = log.scope("main-user-api");
   private readonly UtilsAPILogger: LogFunctions = log.scope("main-utils-api");
-  private readonly userControllerLogger: LogFunctions = log.scope("main-user-controller");
+  private readonly userFacadeLogger: LogFunctions = log.scope("main-user-facade");
+  private readonly userContextProviderLogger: LogFunctions = log.scope("main-user-context-provider");
   private readonly userAuthServiceLogger: LogFunctions = log.scope("main-user-auth-service");
+  private readonly userAccountServiceLogger: LogFunctions = log.scope("main-user-account-service");
   private readonly userAccountStorageServiceLogger: LogFunctions = log.scope("main-user-account-storage-service");
   private readonly userDataStorageConfigServiceLogger: LogFunctions = log.scope("main-user-data-storage-config-service");
   private readonly userDataStorageVisibilityGroupServiceLogger: LogFunctions = log.scope("main-user-data-storage-visibility-group-service");
@@ -172,7 +174,7 @@ export class App {
   private readonly windowPositionWatcher: WindowPositionWatcher;
 
   // Users
-  private readonly userController: UserController;
+  private readonly userFacade: UserFacade;
   private readonly DEFAULT_USER_ACCOUNT_STORAGE_CONFIG: IUserAccountStorageConfig = {
     storageId: "00000000-0000-0000-0000-000000000000",
     name: "Default",
@@ -282,7 +284,7 @@ export class App {
         }
         return {
           status: IPC_API_RESPONSE_STATUSES.SUCCESS,
-          data: this.userController.signUpUser(
+          data: this.userFacade.signUpUser(
             userSignUpDTOToUserSignUpPayload(
               decryptWithAESAndValidateJSON<IUserSignUpDTO>(
                 encryptedUserSignUpDTO,
@@ -291,7 +293,7 @@ export class App {
                 this.UserAPILogger,
                 "user sign up DTO"
               ),
-              this.userController.generateRandomUserId(),
+              this.userFacade.generateRandomUserId(),
               this.UserAPILogger
             )
           )
@@ -309,7 +311,7 @@ export class App {
         }
         return {
           status: IPC_API_RESPONSE_STATUSES.SUCCESS,
-          data: this.userController.signInUser(
+          data: this.userFacade.signInUser(
             userSignInDTOToUserSignInPayload(
               decryptWithAESAndValidateJSON<IUserSignInDTO>(
                 encryptedUserSignInDTO,
@@ -330,7 +332,7 @@ export class App {
     },
     handleSignOut: (): IPCAPIResponse<ISignedInUserInfo | null> => {
       try {
-        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userController.signOutUser() };
+        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userFacade.signOutUser() };
       } catch (error: unknown) {
         const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
         this.UserAPILogger.error(`Sign out error: ${ERROR_MESSAGE}!`);
@@ -339,7 +341,7 @@ export class App {
     },
     handleIsUserAccountStorageOpen: (): IPCAPIResponse<boolean> => {
       try {
-        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userController.isAccountStorageOpen() };
+        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userFacade.isAccountStorageOpen() };
       } catch (error: unknown) {
         const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
         this.UserAPILogger.error(`Is User Account Storage open error: ${ERROR_MESSAGE}!`);
@@ -348,7 +350,7 @@ export class App {
     },
     handleIsUsernameAvailable: (username: string): IPCAPIResponse<boolean> => {
       try {
-        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userController.isUsernameAvailable(username) };
+        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userFacade.isUsernameAvailable(username) };
       } catch (error: unknown) {
         const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
         this.UserAPILogger.error(`Is username available error: ${ERROR_MESSAGE}!`);
@@ -359,7 +361,7 @@ export class App {
       try {
         return {
           status: IPC_API_RESPONSE_STATUSES.SUCCESS,
-          data: this.userController.isDataStorageVisibilityGroupNameAvailableForSignedInUser(name)
+          data: this.userFacade.isDataStorageVisibilityGroupNameAvailableForSignedInUser(name)
         };
       } catch (error: unknown) {
         const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
@@ -369,7 +371,7 @@ export class App {
     },
     handleGetUserCount: (): IPCAPIResponse<number> => {
       try {
-        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userController.getUserCount() };
+        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userFacade.getUserCount() };
       } catch (error: unknown) {
         const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
         this.UserAPILogger.error(`Get user count error: ${ERROR_MESSAGE}!`);
@@ -378,7 +380,7 @@ export class App {
     },
     handleGetUsernameForUserId: (userId: string): IPCAPIResponse<string | null> => {
       try {
-        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userController.getUsernameForUserId(userId as UUID) };
+        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userFacade.getUsernameForUserId(userId as UUID) };
       } catch (error: unknown) {
         const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
         this.UserAPILogger.error(`Get username for user ID error: ${ERROR_MESSAGE}!`);
@@ -387,7 +389,7 @@ export class App {
     },
     handleGetSignedInUserInfo: (): IPCAPIResponse<ISignedInUserInfo | null> => {
       try {
-        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userController.getSignedInUserInfo() };
+        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userFacade.getSignedInUserInfo() };
       } catch (error: unknown) {
         const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
         this.UserAPILogger.error(`Get signed in user error: ${ERROR_MESSAGE}!`);
@@ -403,7 +405,7 @@ export class App {
         }
         return {
           status: IPC_API_RESPONSE_STATUSES.SUCCESS,
-          data: this.userController.addUserDataStorageConfig(
+          data: this.userFacade.addUserDataStorageConfig(
             userDataStorageConfigCreateDTOToUserDataStorageConfig(
               decryptWithAESAndValidateJSON<IUserDataStorageConfigCreateDTO>(
                 encryptedUserDataStorageConfigCreateDTO,
@@ -412,7 +414,7 @@ export class App {
                 this.UserAPILogger,
                 "User Data Storage Config Create DTO"
               ),
-              this.userController.generateRandomDataStorageId(),
+              this.userFacade.generateRandomDataStorageId(),
               this.UserAPILogger
             )
           )
@@ -432,7 +434,7 @@ export class App {
         }
         return {
           status: IPC_API_RESPONSE_STATUSES.SUCCESS,
-          data: this.userController.addUserDataStorageVisibilityGroupConfig(
+          data: this.userFacade.addUserDataStorageVisibilityGroupConfig(
             userDataStorageVisibilityGroupConfigCreateDTOToUserDataStorageVisibilityGroupConfig(
               decryptWithAESAndValidateJSON<IUserDataStorageVisibilityGroupConfigCreateDTO>(
                 encryptedUserDataStorageVisibilityGroupConfigCreateDTO,
@@ -441,7 +443,7 @@ export class App {
                 this.UserAPILogger,
                 "User Data Storage Visibility Group Create DTO"
               ),
-              this.userController.generateRandomDataStorageVisibilityGroupId(),
+              this.userFacade.generateRandomDataStorageVisibilityGroupId(),
               USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIG_CONSTANTS.AESKeySalt.lengthBytes,
               this.UserAPILogger
             )
@@ -462,7 +464,7 @@ export class App {
         }
         return {
           status: IPC_API_RESPONSE_STATUSES.SUCCESS,
-          data: this.userController.openUserDataStorageVisibilityGroups(
+          data: this.userFacade.openUserDataStorageVisibilityGroups(
             userDataStorageVisibilityGroupsOpenRequestDTOToUserDataStorageVisibilityGroupsOpenRequest(
               decryptWithAESAndValidateJSON<IUserDataStorageVisibilityGroupsOpenRequestDTO>(
                 encryptedUserDataStorageVisibilityGroupsOpenRequestDTO,
@@ -488,7 +490,7 @@ export class App {
         }
         return {
           status: IPC_API_RESPONSE_STATUSES.SUCCESS,
-          data: this.userController.closeUserDataStorageVisibilityGroups(userDataStorageVisibilityGroupIds as UUID[])
+          data: this.userFacade.closeUserDataStorageVisibilityGroups(userDataStorageVisibilityGroupIds as UUID[])
         };
       } catch (error: unknown) {
         const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
@@ -498,7 +500,7 @@ export class App {
     },
     handleGetUserAccountStorageInfo: (): IPCAPIResponse<IUserAccountStorageInfo | null> => {
       try {
-        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userController.getAccountStorageInfo() };
+        return { status: IPC_API_RESPONSE_STATUSES.SUCCESS, data: this.userFacade.getAccountStorageInfo() };
       } catch (error: unknown) {
         const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
         this.UserAPILogger.error(`Get User Account Storage Info error: ${ERROR_MESSAGE}!`);
@@ -513,7 +515,7 @@ export class App {
         return {
           status: IPC_API_RESPONSE_STATUSES.SUCCESS,
           data: encryptWithAES<IUserDataStorageInfo[]>(
-            this.userController.getAllSignedInUserAvailableDataStoragesInfo(),
+            this.userFacade.getAllSignedInUserAvailableDataStoragesInfo(),
             this.IPC_TLS_AES_KEY.value,
             this.UserAPILogger,
             "all signed in user's available User Data Storages Info"
@@ -533,7 +535,7 @@ export class App {
         return {
           status: IPC_API_RESPONSE_STATUSES.SUCCESS,
           data: encryptWithAES<IUserDataStorageVisibilityGroupInfo[]>(
-            this.userController.getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo(),
+            this.userFacade.getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo(),
             this.IPC_TLS_AES_KEY.value,
             this.UserAPILogger,
             "all signed in user's open User Data Storage Visibility Groups Info"
@@ -686,9 +688,11 @@ export class App {
       this.settingsManager.updateSettings(this.DEFAULT_SETTINGS);
     }
     this.bootstrapLogger.debug(`Using app settings: ${JSON.stringify(this.settingsManager.getSettings(), null, 2)}.`);
-    this.userController = new UserController(
-      this.userControllerLogger,
+    this.userFacade = new UserFacade(
+      this.userFacadeLogger,
+      this.userContextProviderLogger,
       this.userAuthServiceLogger,
+      this.userAccountServiceLogger,
       this.userAccountStorageServiceLogger,
       this.userDataStorageConfigServiceLogger,
       this.userDataStorageVisibilityGroupServiceLogger,
@@ -910,10 +914,10 @@ export class App {
 
   private onceAppReady(): void {
     this.appLogger.info("App ready.");
-    this.userController.setAccountStorage(
+    this.userFacade.setAccountStorage(
       new UserAccountStorage(this.DEFAULT_USER_ACCOUNT_STORAGE_CONFIG, this.userAccountStorageLogger, this.userAccountStorageBackendLogger)
     );
-    this.userController.openAccountStorage();
+    this.userFacade.openAccountStorage();
     // TODO: Delete comment
     // let isOpen = this.userManager.isUserAccountStorageOpen();
     // setInterval(() => {
@@ -962,12 +966,12 @@ export class App {
 
   private onceAppWillQuit(): void {
     this.appLogger.info("App will quit.");
-    this.userController.signOutUser();
+    this.userFacade.signOutUser();
     this.appLogger.debug("Unregistering all global shortcuts.");
     globalShortcut.unregisterAll();
-    if (this.userController.isAccountStorageSet()) {
-      if (this.userController.isAccountStorageOpen()) {
-        this.userController.closeAccountStorage();
+    if (this.userFacade.isAccountStorageSet()) {
+      if (this.userFacade.isAccountStorageOpen()) {
+        this.userFacade.closeAccountStorage();
       } else {
         this.appLogger.debug("No User Account Storage open.");
       }

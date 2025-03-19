@@ -1,5 +1,4 @@
 import { LogFunctions } from "electron-log";
-import { UserControllerContext } from "../UserControllerContext";
 import { timingSafeEqual, UUID } from "node:crypto";
 import { ISecuredUserDataStorageVisibilityGroupConfig } from "@main/user/data/storage/visibilityGroup/config/SecuredUserDataStorageVisibilityGroupConfig";
 import { IDataStorageVisibilityGroupFilter } from "@main/user/account/storage/backend/BaseUserAccountStorageBackend";
@@ -19,15 +18,22 @@ import { deriveAESKey } from "@main/utils/encryption/deriveAESKey";
 import { securedUserDataStorageVisibilityGroupConfigToUserDataStorageVisibilityGroupInfo } from "@main/user/data/storage/visibilityGroup/config/utils/securedUserDataStorageVisibilityGroupConfigToUserDataStorageVisibilityGroupInfo";
 import { IUserDataStorageVisibilityGroupsInfoChangedDiff } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfoChangedDiff";
 import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
+import { IUserAccountStorageProxy } from "../proxies/UserAccountStorageProxy";
+import { ISignedInUserProxy } from "../proxies/SignedInUserProxy";
+
+export interface IUserDataStorageVisibilityGroupServiceContext {
+  accountStorage: IUserAccountStorageProxy;
+  signedInUser: ISignedInUserProxy;
+}
 
 export class UserDataStorageVisibilityGroupService {
   private logger: LogFunctions;
-  private readonly CONTEXT: UserControllerContext;
+  private readonly CONTEXT: IUserDataStorageVisibilityGroupServiceContext;
 
-  public constructor(logger: LogFunctions, userControllerContext: UserControllerContext) {
+  public constructor(logger: LogFunctions, context: IUserDataStorageVisibilityGroupServiceContext) {
     this.logger = logger;
     this.logger.debug("Initialising new User Data Storage Visibility Group Service.");
-    this.CONTEXT = userControllerContext;
+    this.CONTEXT = context;
   }
 
   public generateRandomDataStorageVisibilityGroupId(): UUID {

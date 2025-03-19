@@ -25,17 +25,17 @@ import { isUserDataStorageArray } from "../data/storage/utils/isUserDataStorageA
 import { ISignedInUserProxy } from "./proxies/SignedInUserProxy";
 import { IUserAccountStorageProxy } from "./proxies/UserAccountStorageProxy";
 import { IAvailableUserDataStoragesProxy } from "./proxies/AvailableUserDataStoragesProxy";
-import { UserControllerContext as UserControllerContext } from "./UserControllerContext";
+import { UserContext, UserContextProvider } from "./UserContext";
 import { UserAccountStorageService } from "./services/UserAccountStorageService";
 import { UserDataStorageConfigService } from "./services/UserDataStorageConfigService";
 import { UserDataStorageVisibilityGroupService } from "./services/UserDataStorageVisibilityGroupService";
+import { UserAccountService } from "./services/UserAccountService";
 
-export class UserController {
+export class UserFacade {
   private readonly logger: LogFunctions;
 
-  private readonly CONTEXT: UserControllerContext;
-
   private readonly AUTH_SERVICE: UserAuthenticationService;
+  private readonly ACCOUNT_SERVICE: UserAccountService;
   private readonly ACCOUNT_STORAGE_SERVICE: UserAccountStorageService;
   private readonly DATA_STORAGE_CONFIG_SERVICE: UserDataStorageConfigService;
   private readonly DATA_STORAGE_VISIBILITY_GROUP_SERVICE: UserDataStorageVisibilityGroupService;
@@ -60,8 +60,11 @@ export class UserController {
     | null;
 
   public constructor(
+    // TODO: Make all of this an object
     logger: LogFunctions,
+    contextProviderLogger: LogFunctions,
     authServiceLogger: LogFunctions,
+    accountServiceLogger: LogFunctions,
     accountStorageServiceLogger: LogFunctions,
     dataStorageConfigServiceLogger: LogFunctions,
     dataStorageVisibilityGroupServiceLogger: LogFunctions,
@@ -240,11 +243,19 @@ export class UserController {
     this.onOpenDataStorageVisibilityGroupsChangedCallback = onOpenUserDataStorageVisibilityGroupsChangedCallback;
 
     // TODO: Only this should eventually remain in this constructor
-    this.CONTEXT = new UserControllerContext(this.accountStorage, this.signedInUser, { value: [] });
-    this.AUTH_SERVICE = new UserAuthenticationService(authServiceLogger, this.CONTEXT);
-    this.ACCOUNT_STORAGE_SERVICE = new UserAccountStorageService(accountStorageServiceLogger, this.CONTEXT);
-    this.DATA_STORAGE_CONFIG_SERVICE = new UserDataStorageConfigService(dataStorageConfigServiceLogger, this.CONTEXT);
-    this.DATA_STORAGE_VISIBILITY_GROUP_SERVICE = new UserDataStorageVisibilityGroupService(dataStorageVisibilityGroupServiceLogger, this.CONTEXT);
+    const CONTEXT_PROVIDER = new UserContextProvider(contextProviderLogger, new UserContext(this.accountStorage, this.signedInUser, { value: [] }));
+
+    this.AUTH_SERVICE = new UserAuthenticationService(authServiceLogger, CONTEXT_PROVIDER.getUserAuthenticationServiceContext());
+    this.ACCOUNT_SERVICE = new UserAccountService(accountServiceLogger, CONTEXT_PROVIDER.getUserAccountServiceContext());
+    this.ACCOUNT_STORAGE_SERVICE = new UserAccountStorageService(accountStorageServiceLogger, CONTEXT_PROVIDER.getUserAccountStorageServiceContext());
+    this.DATA_STORAGE_CONFIG_SERVICE = new UserDataStorageConfigService(
+      dataStorageConfigServiceLogger,
+      CONTEXT_PROVIDER.getUserDataStorageConfigServiceContext()
+    );
+    this.DATA_STORAGE_VISIBILITY_GROUP_SERVICE = new UserDataStorageVisibilityGroupService(
+      dataStorageVisibilityGroupServiceLogger,
+      CONTEXT_PROVIDER.getUserDataStorageVisibilityGroupServiceContext()
+    );
   }
 
   public isAccountStorageOpen(): boolean {
@@ -276,7 +287,7 @@ export class UserController {
   }
 
   public isUsernameAvailable(username: string): boolean {
-    return this.ACCOUNT_STORAGE_SERVICE.isUsernameAvailable(username);
+    return this.ACCOUNT_SERVICE.isUsernameAvailable(username);
   }
 
   public isDataStorageVisibilityGroupNameAvailableForSignedInUser(name: string): boolean {
@@ -292,7 +303,7 @@ export class UserController {
   }
 
   public generateRandomUserId(): UUID {
-    return this.ACCOUNT_STORAGE_SERVICE.generateRandomUserId();
+    return this.ACCOUNT_SERVICE.generateRandomUserId();
   }
 
   public generateRandomDataStorageId(): UUID {
@@ -304,11 +315,11 @@ export class UserController {
   }
 
   public getUserCount(): number {
-    return this.ACCOUNT_STORAGE_SERVICE.getUserCount();
+    return this.ACCOUNT_SERVICE.getUserCount();
   }
 
   public getUsernameForUserId(userId: UUID): string | null {
-    return this.ACCOUNT_STORAGE_SERVICE.getUsernameForUserId(userId);
+    return this.ACCOUNT_SERVICE.getUsernameForUserId(userId);
   }
 
   public signUpUser(userSignUpPayload: IUserSignUpPayload): boolean {
