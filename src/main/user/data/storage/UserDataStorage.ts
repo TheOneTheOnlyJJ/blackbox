@@ -6,6 +6,7 @@ import { IUserDataStorageConfig } from "./config/UserDataStorageConfig";
 import { userDataStorageBackendFactory } from "./backend/userDataStorageBackendFactory";
 import { userDataStorageBackendConfigToUserDataStorageBackendInfo } from "./backend/config/utils/userDataStorageBackendConfigToUserDataStorageBackendInfo";
 import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
+import { ISecuredUserDataStorageConfig } from "./config/SecuredUserDataStorageConfig";
 
 // TODO: Improve logging
 export class UserDataStorage {
@@ -17,9 +18,9 @@ export class UserDataStorage {
   public readonly description: string | null;
   private readonly backend: UserDataStorageBackend;
   public readonly visibilityGroupName: string | null;
-  public readonly backendInfo: UserDataStorageBackendInfo; // TODO: get this dynamically from data storage
+  public readonly backendInfo: UserDataStorageBackendInfo; // TODO: get this dynamically from data storage backend
 
-  public constructor(config: IUserDataStorageConfig, visibilityGroupName: string | null, logScope: string) {
+  public constructor(config: IUserDataStorageConfig | ISecuredUserDataStorageConfig, visibilityGroupName: string | null, logScope: string) {
     this.logger = log.scope(logScope);
     this.logger.info(
       `Initialising User Data Storage "${config.name}" with ID "${config.storageId}" and backend type "${config.backendConfig.type}".`
@@ -43,12 +44,10 @@ export class UserDataStorage {
   }
 
   public open(): boolean {
-    this.logger.info(`Opening User Data Storage "${this.name}" with ID "${this.storageId}".`);
     return this.backend.open();
   }
 
   public close(): boolean {
-    this.logger.info(`Closing User Data Storage "${this.name}" with ID "${this.storageId}".`);
     return this.backend.close();
   }
 

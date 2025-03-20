@@ -7,7 +7,7 @@ export interface ISignedInUser {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const isSignedInUserValid = (data: any): data is ISignedInUser => {
+export const isValidSignedInUser = (data: any): data is ISignedInUser => {
   return (
     typeof data === "object" &&
     data !== null &&

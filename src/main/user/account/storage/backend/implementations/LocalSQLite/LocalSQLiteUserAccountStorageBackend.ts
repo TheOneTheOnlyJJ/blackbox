@@ -119,11 +119,10 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
   public open(): boolean {
     this.logger.info(`Opening "${this.config.type}" User Account Storage Backend.`);
     if (this.isOpen()) {
-      this.logger.warn(`Already opened "${this.config.type}" User Account Storage Backend. No-op.`);
+      this.logger.warn(`Already opened "${this.config.type}" User Account Storage Backend.`);
       return true;
     }
     try {
-      // Create db and directories
       if (existsSync(this.config.dbDirPath)) {
         this.logger.debug(`Found database directory path: "${this.config.dbDirPath}".`);
       } else {
@@ -167,7 +166,8 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
   public close(): boolean {
     this.logger.info(`Closing "${this.config.type}" User Account Storage Backend.`);
     if (this.db === null) {
-      this.logger.warn(`Already closed "${this.config.type}" User Account Storage Backend. No-op.`);
+      // TODO: Remove all "No-op"s from logs?
+      this.logger.warn(`Already closed "${this.config.type}" User Account Storage Backend.`);
       return true;
     }
     try {
@@ -227,9 +227,9 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     }
     const ADD_USER_SQL = `
     INSERT INTO users (
-      user_id, username, password_hash, password_salt, data_encryption_aes_key_salt
+      user_id, username, password_hash, password_salt, data_aes_key_salt
     ) VALUES (
-      @userId, @username, @passwordHash, @passwordSalt, @dataEncryptionAESKeySalt
+      @userId, @username, @passwordHash, @passwordSalt, @dataAESKeySalt
     )`;
     try {
       const RUN_RESULT: RunResult = this.db.prepare(ADD_USER_SQL).run({
@@ -237,7 +237,7 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
         username: securedUserSignInPayload.username,
         passwordHash: securedUserSignInPayload.securedPassword.hash,
         passwordSalt: securedUserSignInPayload.securedPassword.salt,
-        dataEncryptionAESKeySalt: securedUserSignInPayload.dataEncryptionAESKeySalt
+        dataAESKeySalt: securedUserSignInPayload.dataAESKeySalt
       });
       this.logger.silly(`Number of changes: ${RUN_RESULT.changes.toString()}. Last inserted row ID: ${RUN_RESULT.lastInsertRowid.toString()}.`);
       return true;
@@ -271,15 +271,14 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     return RESULT === undefined ? null : { hash: RESULT.passwordHash, salt: RESULT.passwordSalt };
   }
 
-  public getUserDataEncryptionAESKeySalt(userId: UUID): string | null {
-    this.logger.debug(`Getting user data encryption AES key salt for user: "${userId}".`);
+  public getUserDataAESKeySalt(userId: UUID): string | null {
+    this.logger.debug(`Getting user data AES key salt for user: "${userId}".`);
     if (this.db === null) {
       throw new Error(`Closed "${this.config.type}" User Account Storage Backend`);
     }
-    const GET_USER_DATA_ENCRYPTION_KEY_SALT_SQL =
-      "SELECT data_encryption_aes_key_salt AS dataEncryptionAESKeySalt FROM users WHERE user_id = @userId LIMIT 1";
-    const RESULT = this.db.prepare(GET_USER_DATA_ENCRYPTION_KEY_SALT_SQL).get({ userId: userId }) as { dataEncryptionAESKeySalt: string } | undefined;
-    return RESULT === undefined ? null : RESULT.dataEncryptionAESKeySalt;
+    const GET_USER_DATA_KEY_SALT_SQL = "SELECT data_aes_key_salt AS dataAESKeySalt FROM users WHERE user_id = @userId LIMIT 1";
+    const RESULT = this.db.prepare(GET_USER_DATA_KEY_SALT_SQL).get({ userId: userId }) as { dataAESKeySalt: string } | undefined;
+    return RESULT === undefined ? null : RESULT.dataAESKeySalt;
   }
 
   public getUserCount(): number {
@@ -619,7 +618,7 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
         username TEXT NOT NULL UNIQUE,
         password_hash TEXT NOT NULL,
         password_salt TEXT NOT NULL,
-        data_encryption_aes_key_salt TEXT NOT NULL
+        data_aes_key_salt TEXT NOT NULL
       )
       `;
       this.db.prepare(CREATE_USERS_TABLE_SQL).run();

@@ -6,18 +6,18 @@ import { IUserSignUpPayload } from "../account/UserSignUpPayload";
 import { UserAccountStorage } from "../account/storage/UserAccountStorage";
 import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserAccountStorageInfo";
 import { ISignedInUserInfo } from "@shared/user/account/SignedInUserInfo";
-import { ISecuredUserDataStorageConfig } from "../data/storage/config/SecuredUserDataStorageConfig";
 import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
 import { IUserDataStorageVisibilityGroupConfig } from "../data/storage/visibilityGroup/config/UserDataStorageVisibilityGroupConfig";
 import { IUserDataStorageVisibilityGroupsOpenRequest } from "../data/storage/visibilityGroup/openRequest/UserDataStorageVisibilityGroupsOpenRequest";
 import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
 import { hashPassword } from "@main/utils/encryption/hashPassword";
 import { UserAuthenticationService } from "./services/UserAuthenticationService";
-import { IUserContextHandlers, UserContext, UserContextProvider } from "./UserContext";
+import { IUserContextHandlers, UserContext } from "./context/UserContext";
 import { UserAccountStorageService } from "./services/UserAccountStorageService";
 import { UserDataStorageConfigService } from "./services/UserDataStorageConfigService";
 import { UserDataStorageVisibilityGroupService } from "./services/UserDataStorageVisibilityGroupService";
 import { UserAccountService } from "./services/UserAccountService";
+import { UserContextProvider } from "./context/UserContextProvider";
 
 export interface IUserFacadeConstructorProps {
   logger: LogFunctions;
@@ -35,7 +35,6 @@ export interface IUserFacadeConstructorProps {
 
 export class UserFacade {
   private readonly logger: LogFunctions;
-  private readonly CONTEXT: UserContext;
   // Services
   private readonly AUTH_SERVICE: UserAuthenticationService;
   private readonly ACCOUNT_SERVICE: UserAccountService;
@@ -46,8 +45,7 @@ export class UserFacade {
   public constructor(props: IUserFacadeConstructorProps) {
     this.logger = props.logger;
     this.logger.debug("Initialising new User Controller.");
-    this.CONTEXT = new UserContext(props.contextLogger, props.contextHandlers);
-    const CONTEXT_PROVIDER = new UserContextProvider(props.contextProviderLogger, this.CONTEXT);
+    const CONTEXT_PROVIDER = new UserContextProvider(props.contextProviderLogger, new UserContext(props.contextLogger, props.contextHandlers));
     // Services
     this.AUTH_SERVICE = new UserAuthenticationService(props.serviceLoggers.auth, CONTEXT_PROVIDER.getUserAuthenticationServiceContext());
     this.ACCOUNT_SERVICE = new UserAccountService(props.serviceLoggers.account, CONTEXT_PROVIDER.getUserAccountServiceContext());
@@ -85,12 +83,12 @@ export class UserFacade {
     return this.ACCOUNT_STORAGE_SERVICE.unsetAccountStorage();
   }
 
-  public openAccountStorage(): boolean {
-    return this.ACCOUNT_STORAGE_SERVICE.openAccountStorage();
+  public openAccountStorage(): void {
+    this.ACCOUNT_STORAGE_SERVICE.openAccountStorage();
   }
 
-  public closeAccountStorage(): boolean {
-    return this.ACCOUNT_STORAGE_SERVICE.closeAccountStorage();
+  public closeAccountStorage(): void {
+    this.ACCOUNT_STORAGE_SERVICE.closeAccountStorage();
   }
 
   public isUsernameAvailable(username: string): boolean {
@@ -158,24 +156,6 @@ export class UserFacade {
   public closeUserDataStorageVisibilityGroups(visibilityGroupIds: UUID[]): number {
     return this.DATA_STORAGE_VISIBILITY_GROUP_SERVICE.closeUserDataStorageVisibilityGroups(visibilityGroupIds);
   }
-
-  public getSignedInUserSecuredUserDataStorageConfigs(options: {
-    includeIds: UUID[] | "all";
-    excludeIds: UUID[] | null;
-    visibilityGroups: {
-      includeIds: (UUID | null)[] | "all";
-      excludeIds: UUID[] | null;
-    };
-  }): ISecuredUserDataStorageConfig[] {
-    return this.DATA_STORAGE_CONFIG_SERVICE.getSignedInUserSecuredUserDataStorageConfigs(options);
-  }
-
-  // public getSignedInUserSecuredUserDataStorageVisibilityGroupConfigs(options: {
-  //   includeIds: UUID[] | "all";
-  //   excludeIds: UUID[] | null;
-  // }): ISecuredUserDataStorageVisibilityGroupConfig[] {
-  //   return this.DATA_STORAGE_VISIBILITY_GROUP_SERVICE.getSignedInUserSecuredUserDataStorageVisibilityGroupConfigs(options);
-  // }
 
   public getAllSignedInUserAvailableDataStoragesInfo(): IUserDataStorageInfo[] {
     return this.DATA_STORAGE_CONFIG_SERVICE.getAllSignedInUserAvailableDataStoragesInfo();

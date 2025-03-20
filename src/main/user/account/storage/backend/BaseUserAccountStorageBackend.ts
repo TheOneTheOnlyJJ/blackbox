@@ -50,7 +50,7 @@ export abstract class BaseUserAccountStorageBackend<T extends IBaseUserAccountSt
   public abstract addUser(securedUserSignInPayload: ISecuredUserSignUpPayload): boolean;
   public abstract getUserId(username: string): UUID | null;
   public abstract getSecuredUserPassword(userId: UUID): ISecuredPassword | null;
-  public abstract getUserDataEncryptionAESKeySalt(userId: UUID): string | null;
+  public abstract getUserDataAESKeySalt(userId: UUID): string | null;
   public abstract getUserCount(): number;
   public abstract getUsernameForUserId(userId: UUID): string | null;
   public abstract isUserDataStorageIdAvailable(storageId: UUID): boolean;

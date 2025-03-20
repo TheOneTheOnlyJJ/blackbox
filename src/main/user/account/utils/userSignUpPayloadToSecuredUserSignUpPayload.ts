@@ -7,6 +7,7 @@ export const userSignUpPayloadToSecuredUserSignUpPayload = (
   userSignUpPayload: IUserSignUpPayload,
   userPasswordSaltLengthBytes: number,
   hashUserPasswordFunction: (userPassword: string, userPasswordSalt: Buffer) => string,
+  userDataAESKeySaltLengthBytes: number,
   logger: LogFunctions | null
 ): ISecuredUserSignUpPayload => {
   logger?.info("Converting user sign up payload to secured user sign up payload.");
@@ -18,6 +19,6 @@ export const userSignUpPayloadToSecuredUserSignUpPayload = (
       hash: hashUserPasswordFunction(userSignUpPayload.password, PASSWORD_SALT),
       salt: PASSWORD_SALT.toString("base64")
     },
-    dataEncryptionAESKeySalt: randomBytes(userPasswordSaltLengthBytes).toString("base64")
+    dataAESKeySalt: randomBytes(userDataAESKeySaltLengthBytes).toString("base64")
   };
 };

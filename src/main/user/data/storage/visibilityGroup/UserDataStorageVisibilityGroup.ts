@@ -9,7 +9,7 @@ export interface IUserDataStorageVisibilityGroup {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const isUserDataStorageVisibilityGroupValid = (data: any): data is IUserDataStorageVisibilityGroup => {
+export const isValidUserDataStorageVisibilityGroup = (data: any): data is IUserDataStorageVisibilityGroup => {
   return (
     typeof data === "object" &&
     data !== null &&
@@ -25,19 +25,19 @@ export const isUserDataStorageVisibilityGroupValid = (data: any): data is IUserD
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     typeof data.name === "string" &&
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    typeof data.description === "string" &&
+    (data.description === null || typeof data.description === "string") &&
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     Buffer.isBuffer(data.AESKey)
   );
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const isUserDataStorageVisibilityGroupArray = (data: any): data is IUserDataStorageVisibilityGroup[] => {
+export const isValidUserDataStorageVisibilityGroupArray = (data: any): data is IUserDataStorageVisibilityGroup[] => {
   if (!Array.isArray(data)) {
     return false;
   }
   for (const ARRAY_VALUE of data) {
-    if (!isUserDataStorageVisibilityGroupValid(ARRAY_VALUE)) {
+    if (!isValidUserDataStorageVisibilityGroup(ARRAY_VALUE)) {
       return false;
     }
   }

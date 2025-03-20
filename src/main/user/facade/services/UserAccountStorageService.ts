@@ -4,7 +4,7 @@ import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserA
 
 export interface IUserAccountStorageServiceContext {
   getAccountStorage: () => UserAccountStorage | null;
-  setAccountStorage: (newAccountStorage: UserAccountStorage | null) => void;
+  setAccountStorage: (newAccountStorage: UserAccountStorage | null) => boolean;
 }
 
 export class UserAccountStorageService {
@@ -60,8 +60,7 @@ export class UserAccountStorageService {
         return false;
       }
     }
-    this.CONTEXT.setAccountStorage(newAccountStorage);
-    return true;
+    return this.CONTEXT.setAccountStorage(newAccountStorage);
   }
 
   public unsetAccountStorage(): boolean {
@@ -70,13 +69,10 @@ export class UserAccountStorageService {
     if (ACCOUNT_STORAGE === null) {
       throw new Error("Null User Account Storage");
     }
-    if (this.isAccountStorageOpen() && !this.closeAccountStorage()) {
-      this.logger.warn("No-op unset.");
-      return false;
+    if (this.isAccountStorageOpen()) {
+      ACCOUNT_STORAGE.close();
     }
-    this.CONTEXT.setAccountStorage(null);
-    this.logger.debug("Unset User Account Storage.");
-    return true;
+    return this.CONTEXT.setAccountStorage(null);
   }
 
   public openAccountStorage(): boolean {

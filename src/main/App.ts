@@ -56,7 +56,7 @@ import { userDataStorageVisibilityGroupsOpenRequestDTOToUserDataStorageVisibilit
 import { USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIG_CONSTANTS } from "./user/data/storage/visibilityGroup/config/UserDataStorageVisibilityGroupConfig";
 import { IUserDataStorageVisibilityGroupsInfoChangedDiff } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfoChangedDiff";
 import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
-import { IUserContextHandlers } from "./user/facade/UserContext";
+import { IUserContextHandlers } from "./user/facade/context/UserContext";
 
 type WindowPositionSetting = Rectangle | WindowStates["FullScreen"] | WindowStates["Maximized"];
 
@@ -184,6 +184,7 @@ export class App {
       dbFileName: "users.sqlite"
     }
   } as const;
+  private readonly DEFAULT_USER_ACCOUNT_STORAGE_LOG_SCOPE = "uas-default";
 
   // Security
   private IPCTLSBootstrapPrivateRSAKey: CryptoKey | null;
@@ -703,7 +704,7 @@ export class App {
         onSignedInUserChangedCallback: this.USER_API_HANDLERS.sendSignedInUserChanged,
         onUserAccountStorageChangedCallback: this.USER_API_HANDLERS.sendUserAccountStorageChanged,
         onUserAccountStorageOpenChangedCallback: this.USER_API_HANDLERS.sendUserAccountStorageOpenChanged,
-        onAvailableUserDataStoragesChangedCallback: this.USER_API_HANDLERS.sendAvailableUserDataStoragesChanged,
+        onAvailableUserDataStorageConfigsChangedCallback: this.USER_API_HANDLERS.sendAvailableUserDataStoragesChanged,
         onOpenUserDataStorageVisibilityGroupsChangedCallback: this.USER_API_HANDLERS.sendOpenUserDataStorageVisibilityGroupsChanged
       } satisfies IUserContextHandlers
     } satisfies IUserFacadeConstructorProps);
@@ -919,7 +920,7 @@ export class App {
 
   private onceAppReady(): void {
     this.appLogger.info("App ready.");
-    this.userFacade.setAccountStorage(new UserAccountStorage(this.DEFAULT_USER_ACCOUNT_STORAGE_CONFIG, "default-user-account-storage"));
+    this.userFacade.setAccountStorage(new UserAccountStorage(this.DEFAULT_USER_ACCOUNT_STORAGE_CONFIG, this.DEFAULT_USER_ACCOUNT_STORAGE_LOG_SCOPE));
     this.userFacade.openAccountStorage();
     // TODO: Delete comment
     // let isOpen = this.userManager.isUserAccountStorageOpen();
@@ -969,15 +970,17 @@ export class App {
 
   private onceAppWillQuit(): void {
     this.appLogger.info("App will quit.");
-    this.userFacade.signOutUser();
     this.appLogger.debug("Unregistering all global shortcuts.");
     globalShortcut.unregisterAll();
+    // TODO: Organise everything in a userfacade method?
+    this.userFacade.signOutUser();
     if (this.userFacade.isAccountStorageSet()) {
       if (this.userFacade.isAccountStorageOpen()) {
         this.userFacade.closeAccountStorage();
       } else {
         this.appLogger.debug("No User Account Storage open.");
       }
+      this.userFacade.unsetAccountStorage();
     } else {
       this.appLogger.debug("No User Account Storage set.");
     }
