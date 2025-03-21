@@ -464,6 +464,7 @@ export class App {
           throw new Error("Null IPC TLS AES key");
         }
         return {
+          // TODO: Move all of this inside user facade
           status: IPC_API_RESPONSE_STATUSES.SUCCESS,
           data: this.userFacade.openUserDataStorageVisibilityGroups(
             userDataStorageVisibilityGroupsOpenRequestDTOToUserDataStorageVisibilityGroupsOpenRequest(
@@ -560,7 +561,7 @@ export class App {
       this.UserAPILogger.debug(`Messaging renderer on channel: "${CHANNEL}".`);
       this.window.webContents.send(CHANNEL, newUserAccountStorageInfo);
     },
-    sendUserAccountStorageInfoChanged: (newUserAccountStorageInfo: IUserAccountStorageInfo): void => {
+    sendUserAccountStorageInfoChanged: (newUserAccountStorageInfo: Readonly<IUserAccountStorageInfo>): void => {
       this.UserAPILogger.debug(
         `Sending window User Account Storage open status after change: ${JSON.stringify(newUserAccountStorageInfo, null, 2).toString()}.`
       );
@@ -705,7 +706,6 @@ export class App {
       contextHandlers: {
         onSignedInUserChangedCallback: this.USER_API_HANDLERS.sendSignedInUserChanged,
         onUserAccountStorageChangedCallback: this.USER_API_HANDLERS.sendUserAccountStorageChanged,
-        onUserAccountStorageInfoChangedCallback: this.USER_API_HANDLERS.sendUserAccountStorageInfoChanged,
         onAvailableUserDataStorageConfigsChangedCallback: this.USER_API_HANDLERS.sendAvailableUserDataStoragesChanged,
         onOpenUserDataStorageVisibilityGroupsChangedCallback: this.USER_API_HANDLERS.sendOpenUserDataStorageVisibilityGroupsChanged
       } satisfies IUserContextHandlers
@@ -922,30 +922,38 @@ export class App {
 
   private onceAppReady(): void {
     this.appLogger.info("App ready.");
-    this.userFacade.setAccountStorage(new UserAccountStorage(this.DEFAULT_USER_ACCOUNT_STORAGE_CONFIG, this.DEFAULT_USER_ACCOUNT_STORAGE_LOG_SCOPE));
+    this.userFacade.setAccountStorage(
+      new UserAccountStorage(
+        this.DEFAULT_USER_ACCOUNT_STORAGE_CONFIG,
+        this.DEFAULT_USER_ACCOUNT_STORAGE_LOG_SCOPE,
+        this.USER_API_HANDLERS.sendUserAccountStorageInfoChanged
+      )
+    );
     this.userFacade.openAccountStorage();
     // TODO: Delete comment
-    // let isOpen = this.userManager.isUserAccountStorageOpen();
     // setInterval(() => {
-    //   if (!this.userManager.isUserAccountStorageSet()) {
+    //   if (!this.userFacade.isAccountStorageSet()) {
     //     return;
     //   }
-    //   if (isOpen) {
-    //     this.userManager.closeUserAccountStorage();
+    //   if (this.userFacade.isAccountStorageOpen()) {
+    //     this.userFacade.closeAccountStorage();
     //   } else {
-    //     this.userManager.openUserAccountStorage();
+    //     this.userFacade.openAccountStorage();
     //   }
-    //   isOpen = !isOpen;
     // }, 5_000);
-    setInterval((): void => {
-      if (this.userFacade.isAccountStorageSet()) {
-        this.userFacade.unsetAccountStorage();
-      } else {
-        this.userFacade.setAccountStorage(
-          new UserAccountStorage(this.DEFAULT_USER_ACCOUNT_STORAGE_CONFIG, this.DEFAULT_USER_ACCOUNT_STORAGE_LOG_SCOPE)
-        );
-      }
-    }, 7_500);
+    // setInterval((): void => {
+    //   if (this.userFacade.isAccountStorageSet()) {
+    //     this.userFacade.unsetAccountStorage();
+    //   } else {
+    //     this.userFacade.setAccountStorage(
+    //       new UserAccountStorage(
+    //         this.DEFAULT_USER_ACCOUNT_STORAGE_CONFIG,
+    //         this.DEFAULT_USER_ACCOUNT_STORAGE_LOG_SCOPE,
+    //         this.USER_API_HANDLERS.sendUserAccountStorageInfoChanged
+    //       )
+    //     );
+    //   }
+    // }, 7_500);
     this.createWindow();
     this.appLogger.debug("Registering app activate event handler.");
     app.on("activate", (): void => {

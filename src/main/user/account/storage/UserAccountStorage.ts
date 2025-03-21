@@ -21,12 +21,16 @@ export class UserAccountStorage {
   public readonly name: string;
   private readonly backend: UserAccountStorageBackend;
 
-  public constructor(config: IUserAccountStorageConfig, logScope: string) {
+  public constructor(config: IUserAccountStorageConfig, logScope: string, onInfoChanged: (newInfo: Readonly<IUserAccountStorageInfo>) => void) {
     this.logger = log.scope(logScope);
     this.logger.info(`Initialising "${config.backendConfig.type}" User Account Storage "${config.name}".`);
     this.storageId = config.storageId;
     this.name = config.name;
-    this.backend = userAccountStorageBackendFactory(config.backendConfig, `${logScope}-backend`, this.logger);
+    const onBackendInfoChanged = (): void => {
+      this.logger.info("Info changed.");
+      onInfoChanged(this.getInfo());
+    };
+    this.backend = userAccountStorageBackendFactory(config.backendConfig, `${logScope}-backend`, onBackendInfoChanged, this.logger);
   }
 
   public isOpen(): boolean {

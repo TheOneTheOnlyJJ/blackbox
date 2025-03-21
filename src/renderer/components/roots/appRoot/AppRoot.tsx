@@ -133,10 +133,13 @@ const AppRoot: FC = () => {
     const removeOnUserAccountStorageChangedListener: () => void = window.userAPI.onUserAccountStorageChanged(
       (newUserAccountStorageInfo: IUserAccountStorageInfo | null): void => {
         setUserAccountStorageInfo((prevUserAccountStorageInfo: IUserAccountStorageInfo | null): IUserAccountStorageInfo | null => {
-          if (newUserAccountStorageInfo !== null) {
+          if (newUserAccountStorageInfo !== null && prevUserAccountStorageInfo === null) {
             enqueueSnackbar({ message: `Set ${newUserAccountStorageInfo.name} user account storage.`, variant: "info" });
-          } else if (prevUserAccountStorageInfo !== null) {
+            return newUserAccountStorageInfo;
+          }
+          if (newUserAccountStorageInfo === null && prevUserAccountStorageInfo !== null) {
             enqueueSnackbar({ message: `Unset ${prevUserAccountStorageInfo.name} user account storage.`, variant: "warning" });
+            return newUserAccountStorageInfo;
           }
           return newUserAccountStorageInfo;
         });
@@ -148,8 +151,15 @@ const AppRoot: FC = () => {
         setUserAccountStorageInfo((prevUserAccountStorageInfo: IUserAccountStorageInfo | null): IUserAccountStorageInfo | null => {
           if (prevUserAccountStorageInfo === null) {
             appLogger.warn("User Account Storage info changed callback invoked with no User Account Storage set! No-op.");
-            enqueueSnackbar({ message: "New User Account Storage info received without being set.", variant: "error" });
+            enqueueSnackbar({ message: "New user account storage info received without being set.", variant: "error" });
             return null;
+          }
+          if (prevUserAccountStorageInfo.backend.isOpen !== newUserAccountStorageInfo.backend.isOpen) {
+            if (newUserAccountStorageInfo.backend.isOpen) {
+              enqueueSnackbar({ message: `Opened ${newUserAccountStorageInfo.name} user account storage.`, variant: "info" });
+            } else {
+              enqueueSnackbar({ message: `Closed ${newUserAccountStorageInfo.name} user account storage.`, variant: "warning" });
+            }
           }
           return newUserAccountStorageInfo;
         });

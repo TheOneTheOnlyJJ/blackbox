@@ -64,8 +64,20 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
 
   private db: Database | null;
 
-  public constructor(config: ILocalSQLiteUserAccountStorageBackendConfig, logScope: string) {
-    super(config, LocalSQLiteUserAccountStorageBackend.CONFIG_JSON_SCHEMA, logScope);
+  public constructor(
+    config: ILocalSQLiteUserAccountStorageBackendConfig,
+    logScope: string,
+    onInfoChanged: (newInfo: Readonly<ILocalSQLiteUserAccountStorageBackendInfo>) => void
+  ) {
+    // TODO: Config is used here but validated further down. Validate it here?
+    const INITIAL_INFO: ILocalSQLiteUserAccountStorageBackendInfo = {
+      type: config.type,
+      dbDirPath: config.dbDirPath,
+      dbFileName: config.dbFileName,
+      isOpen: false,
+      isLocal: true
+    };
+    super(config, LocalSQLiteUserAccountStorageBackend.CONFIG_JSON_SCHEMA, INITIAL_INFO, onInfoChanged, logScope);
     this.db = null;
   }
 
@@ -116,6 +128,7 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
       this.createUserDataStorageConfigsTable();
       this.createUserDataStorageVisibilityGroupConfigsTable();
       this.logger.info(`Opened "${this.config.type}" User Acount Storage Backend.`);
+      this.updateInfo({ ...this.getInfo(), isOpen: true });
       return true;
     } catch (error: unknown) {
       const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
@@ -134,22 +147,13 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
       this.db.close();
       this.db = null;
       this.logger.info(`Closed "${this.config.type}" User Account Storage Backend.`);
+      this.updateInfo({ ...this.getInfo(), isOpen: false });
       return true;
     } catch (error: unknown) {
       const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
       this.logger.error(`Could not close "${this.config.type}" User Acount Storage Backend: ${ERROR_MESSAGE}!`);
       return false;
     }
-  }
-
-  public getInfo(): ILocalSQLiteUserAccountStorageBackendInfo {
-    return {
-      type: this.config.type,
-      dbDirPath: this.config.dbDirPath,
-      dbFileName: this.config.dbFileName,
-      isOpen: this.isOpen(),
-      isLocal: true
-    };
   }
 
   public isUserIdAvailable(userId: UUID): boolean {

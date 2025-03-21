@@ -8,6 +8,7 @@ import { IStorageSecuredUserDataStorageConfig } from "@main/user/data/storage/co
 import { AJV } from "@shared/utils/AJVJSONValidator";
 import { IStorageSecuredUserDataStorageVisibilityGroupConfig } from "@main/user/data/storage/visibilityGroup/config/StorageSecuredUserDataStorageVisibilityGroupConfig";
 import { IUserAccountStorageBackendInfoMap } from "@shared/user/account/storage/backend/info/UserAccountStorageBackendInfo";
+import { deepFreeze } from "@main/utils/deepFreeze";
 
 export interface IDataStorageConfigFilter {
   userId: UUID;
@@ -28,24 +29,33 @@ export interface IDataStorageVisibilityGroupFilter {
 export abstract class BaseUserAccountStorageBackend<T extends IBaseUserAccountStorageBackendConfig> {
   protected readonly logger: LogFunctions;
   public readonly config: T;
-  private readonly USER_ACCOUNT_STORAGE_BACKEND_CONFIG_VALIDATE_FUNCTION: ValidateFunction<T>; // TODO: THis is stupid, move it
+  private info: Readonly<IUserAccountStorageBackendInfoMap[T["type"]]>;
+  private onInfoChanged: () => void;
 
-  public constructor(config: T, configSchema: JSONSchemaType<T>, logScope: string) {
+  public constructor(
+    config: T,
+    configSchema: JSONSchemaType<T>,
+    initialInfo: IUserAccountStorageBackendInfoMap[T["type"]],
+    onInfoChanged: (newInfo: Readonly<IUserAccountStorageBackendInfoMap[T["type"]]>) => void,
+    logScope: string
+  ) {
+    // TODO: Move this higher?
     this.logger = log.scope(logScope);
-    this.logger.info("Initialising User Acount Storage Backend.");
-    this.config = config;
-    this.logger.silly(`Config: ${JSON.stringify(this.config, null, 2)}.`);
-    this.USER_ACCOUNT_STORAGE_BACKEND_CONFIG_VALIDATE_FUNCTION = AJV.compile<T>(configSchema);
-    if (!this.isConfigValid()) {
+    if (!this.isValidConfig(config, AJV.compile<T>(configSchema))) {
       throw new Error(`Could not initialise User Acount Storage Backend`);
     }
+    this.config = config;
+    this.logger.info(`Initialising ${this.config.type} User Acount Storage Backend with info: ${JSON.stringify(initialInfo, null, 2)}.`);
+    this.info = deepFreeze<IUserAccountStorageBackendInfoMap[T["type"]]>(initialInfo);
+    this.onInfoChanged = (): void => {
+      onInfoChanged(this.info);
+    };
   }
 
   public abstract open(): boolean;
   public abstract close(): boolean;
   public abstract isOpen(): boolean;
   public abstract isClosed(): boolean;
-  public abstract getInfo(): IUserAccountStorageBackendInfoMap[T["type"]];
   public abstract isUserIdAvailable(userId: UUID): boolean;
   public abstract isUsernameAvailable(username: string): boolean;
   public abstract addUser(securedUserSignInPayload: ISecuredUserSignUpPayload): boolean;
@@ -69,17 +79,25 @@ export abstract class BaseUserAccountStorageBackend<T extends IBaseUserAccountSt
     userDataStorageConfigId: UUID
   ): IStorageSecuredUserDataStorageVisibilityGroupConfig | null;
 
-  private isConfigValid(): boolean {
+  private isValidConfig(data: unknown, validateFunction: ValidateFunction<T>): data is T {
     this.logger.debug("Validating User Acount Storage Backend Config.");
-    if (this.USER_ACCOUNT_STORAGE_BACKEND_CONFIG_VALIDATE_FUNCTION(this.config)) {
-      this.logger.debug(`Valid "${this.config.type}" User Account Storage Backend Config.`);
+    if (validateFunction(data)) {
       return true;
     }
     this.logger.debug("Invalid User Account Storage Backend Config.");
     this.logger.error("Validation errors:");
-    this.USER_ACCOUNT_STORAGE_BACKEND_CONFIG_VALIDATE_FUNCTION.errors?.map((error): void => {
+    validateFunction.errors?.map((error): void => {
       this.logger.error(`Path: "${error.instancePath.length > 0 ? error.instancePath : "-"}", Message: "${error.message ?? "-"}".`);
     });
     return false;
+  }
+
+  public getInfo(): Readonly<IUserAccountStorageBackendInfoMap[T["type"]]> {
+    return this.info;
+  }
+
+  protected updateInfo(newInfo: IUserAccountStorageBackendInfoMap[T["type"]]): void {
+    this.info = deepFreeze<IUserAccountStorageBackendInfoMap[T["type"]]>(newInfo);
+    this.onInfoChanged();
   }
 }

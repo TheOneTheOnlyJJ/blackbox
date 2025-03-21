@@ -20,16 +20,25 @@ const LocalSQLiteUserAccountStorageBackendInfoTypography: FC<LocalSQLiteUserAcco
         <b>{BASE_USER_ACCOUNT_STORAGE_BACKEND_INFO_JSON_SCHEMA_CONSTANTS.type.title}:</b> {USER_ACCOUNT_STORAGE_BACKEND_TYPE_NAMES.localSQLite}
       </Typography>
       <Typography>
-        <b>{LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS.dbDirPath.title}:</b> {userAccountStorageBackendInfo.dbDirPath}
+        <b>{LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS.dbDirPath.title}:</b> <em>{userAccountStorageBackendInfo.dbDirPath}</em>
       </Typography>
       <Typography>
-        <b>{LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS.dbFileName.title}:</b> {userAccountStorageBackendInfo.dbFileName}
+        <b>{LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS.dbFileName.title}:</b> <em>{userAccountStorageBackendInfo.dbFileName}</em>
       </Typography>
       <Typography>
-        <b>{BASE_USER_ACCOUNT_STORAGE_BACKEND_INFO_JSON_SCHEMA_CONSTANTS.isLocal.title}:</b> {userAccountStorageBackendInfo.isLocal ? "Yes" : "No"}
+        <b>Local:</b> {userAccountStorageBackendInfo.isLocal ? "Yes" : "No"}
       </Typography>
       <Typography>
-        <b>{BASE_USER_ACCOUNT_STORAGE_BACKEND_INFO_JSON_SCHEMA_CONSTANTS.isOpen.title}:</b> {userAccountStorageBackendInfo.isOpen ? "Yes" : "No"}
+        <b>Open:</b>{" "}
+        {userAccountStorageBackendInfo.isOpen ? (
+          <Typography color="success" component="span">
+            Yes
+          </Typography>
+        ) : (
+          <Typography color="error" component="span">
+            No
+          </Typography>
+        )}
       </Typography>
     </>
   );

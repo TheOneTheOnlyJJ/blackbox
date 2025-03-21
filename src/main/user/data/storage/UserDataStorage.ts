@@ -9,6 +9,7 @@ import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataSto
 import { ISecuredUserDataStorageConfig } from "./config/SecuredUserDataStorageConfig";
 
 // TODO: Improve logging
+// TODO: Copy from user account storage as it is much better
 export class UserDataStorage {
   private readonly logger: LogFunctions;
   public readonly storageId: UUID;
