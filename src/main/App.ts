@@ -27,10 +27,7 @@ import {
   IUserDataStorageConfigCreateDTO,
   USER_DATA_STORAGE_CONFIG_CREATE_DTO_VALIDATE_FUNCTION
 } from "@shared/user/data/storage/config/create/DTO/UserDataStorageConfigCreateDTO";
-import { userDataStorageConfigCreateDTOToUserDataStorageConfig } from "./user/data/storage/config/utils/userDataStorageConfigCreateDTOToUserDataStorageConfig";
 import { IIPCTLSAPIMain, IPC_TLS_API_IPC_CHANNELS, IPCTLSAPIIPCChannel } from "@shared/IPC/APIs/IPCTLSAPI";
-import { userSignInDTOToUserSignInPayload } from "./user/account/utils/userSignInDTOToUserSignInPayload";
-import { userSignUpDTOToUserSignUpPayload } from "./user/account/utils/userSignUpDTOToUserSignUpPayload";
 import { IUserAccountStorageConfig } from "./user/account/storage/config/UserAccountStorageConfig";
 import { UserAccountStorage } from "./user/account/storage/UserAccountStorage";
 import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserAccountStorageInfo";
@@ -47,13 +44,10 @@ import {
   IUserDataStorageVisibilityGroupConfigCreateDTO,
   USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIG_CREATE_DTO_VALIDATE_FUNCTION
 } from "@shared/user/data/storage/visibilityGroup/config/create/DTO/UserDataStorageVisibilityGroupConfigCreateDTO";
-import { userDataStorageVisibilityGroupConfigCreateDTOToUserDataStorageVisibilityGroupConfig } from "./user/data/storage/visibilityGroup/config/utils/userDataStorageVisibilityGroupConfigCreateDTOToUserDataStorageVisibilityGroupConfig";
 import {
   IUserDataStorageVisibilityGroupsOpenRequestDTO,
   USER_DATA_STORAGE_VISIBILITY_GROUPS_OPEN_REQUEST_DTO_VALIDATE_FUNCTION
 } from "@shared/user/data/storage/visibilityGroup/openRequest/DTO/UserDataStorageVisibilityGroupsOpenRequestDTO";
-import { userDataStorageVisibilityGroupsOpenRequestDTOToUserDataStorageVisibilityGroupsOpenRequest } from "./user/data/storage/visibilityGroup/openRequest/utils/userDataStorageVisibilityGroupsOpenRequestDTOToUserDataStorageVisibilityGroupsOpenRequest";
-import { USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIG_CONSTANTS } from "./user/data/storage/visibilityGroup/config/UserDataStorageVisibilityGroupConfig";
 import { IUserDataStorageVisibilityGroupsInfoChangedDiff } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfoChangedDiff";
 import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
 import { IUserContextHandlers } from "./user/facade/context/UserContext";
@@ -285,17 +279,13 @@ export class App {
         }
         return {
           status: IPC_API_RESPONSE_STATUSES.SUCCESS,
-          data: this.userFacade.signUpUser(
-            userSignUpDTOToUserSignUpPayload(
-              decryptWithAESAndValidateJSON<IUserSignUpDTO>(
-                encryptedUserSignUpDTO,
-                USER_SIGN_UP_DTO_VALIDATE_FUNCTION,
-                this.IPC_TLS_AES_KEY.value,
-                this.UserAPILogger,
-                "user sign up DTO"
-              ),
-              this.userFacade.generateRandomUserId(),
-              this.UserAPILogger
+          data: this.userFacade.signUpUserFromDTO(
+            decryptWithAESAndValidateJSON<IUserSignUpDTO>(
+              encryptedUserSignUpDTO,
+              USER_SIGN_UP_DTO_VALIDATE_FUNCTION,
+              this.IPC_TLS_AES_KEY.value,
+              this.UserAPILogger,
+              "user sign up DTO"
             )
           )
         };
@@ -312,16 +302,13 @@ export class App {
         }
         return {
           status: IPC_API_RESPONSE_STATUSES.SUCCESS,
-          data: this.userFacade.signInUser(
-            userSignInDTOToUserSignInPayload(
-              decryptWithAESAndValidateJSON<IUserSignInDTO>(
-                encryptedUserSignInDTO,
-                USER_SIGN_IN_DTO_VALIDATE_FUNCTION,
-                this.IPC_TLS_AES_KEY.value,
-                this.UserAPILogger,
-                "user sign in data"
-              ),
-              this.UserAPILogger
+          data: this.userFacade.signInUserFromDTO(
+            decryptWithAESAndValidateJSON<IUserSignInDTO>(
+              encryptedUserSignInDTO,
+              USER_SIGN_IN_DTO_VALIDATE_FUNCTION,
+              this.IPC_TLS_AES_KEY.value,
+              this.UserAPILogger,
+              "user sign in DTO"
             )
           )
         };
@@ -406,17 +393,13 @@ export class App {
         }
         return {
           status: IPC_API_RESPONSE_STATUSES.SUCCESS,
-          data: this.userFacade.addUserDataStorageConfig(
-            userDataStorageConfigCreateDTOToUserDataStorageConfig(
-              decryptWithAESAndValidateJSON<IUserDataStorageConfigCreateDTO>(
-                encryptedUserDataStorageConfigCreateDTO,
-                USER_DATA_STORAGE_CONFIG_CREATE_DTO_VALIDATE_FUNCTION,
-                this.IPC_TLS_AES_KEY.value,
-                this.UserAPILogger,
-                "User Data Storage Config Create DTO"
-              ),
-              this.userFacade.generateRandomDataStorageId(),
-              this.UserAPILogger
+          data: this.userFacade.addUserDataStorageConfigFromCreateDTO(
+            decryptWithAESAndValidateJSON<IUserDataStorageConfigCreateDTO>(
+              encryptedUserDataStorageConfigCreateDTO,
+              USER_DATA_STORAGE_CONFIG_CREATE_DTO_VALIDATE_FUNCTION,
+              this.IPC_TLS_AES_KEY.value,
+              this.UserAPILogger,
+              "User Data Storage Config Create DTO"
             )
           )
         };
@@ -435,18 +418,13 @@ export class App {
         }
         return {
           status: IPC_API_RESPONSE_STATUSES.SUCCESS,
-          data: this.userFacade.addUserDataStorageVisibilityGroupConfig(
-            userDataStorageVisibilityGroupConfigCreateDTOToUserDataStorageVisibilityGroupConfig(
-              decryptWithAESAndValidateJSON<IUserDataStorageVisibilityGroupConfigCreateDTO>(
-                encryptedUserDataStorageVisibilityGroupConfigCreateDTO,
-                USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIG_CREATE_DTO_VALIDATE_FUNCTION,
-                this.IPC_TLS_AES_KEY.value,
-                this.UserAPILogger,
-                "User Data Storage Visibility Group Create DTO"
-              ),
-              this.userFacade.generateRandomDataStorageVisibilityGroupId(),
-              USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIG_CONSTANTS.AESKeySalt.lengthBytes,
-              this.UserAPILogger
+          data: this.userFacade.addUserDataStorageVisibilityGroupConfigFromCreateDTO(
+            decryptWithAESAndValidateJSON<IUserDataStorageVisibilityGroupConfigCreateDTO>(
+              encryptedUserDataStorageVisibilityGroupConfigCreateDTO,
+              USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIG_CREATE_DTO_VALIDATE_FUNCTION,
+              this.IPC_TLS_AES_KEY.value,
+              this.UserAPILogger,
+              "User Data Storage Visibility Group Create DTO"
             )
           )
         };
@@ -464,18 +442,14 @@ export class App {
           throw new Error("Null IPC TLS AES key");
         }
         return {
-          // TODO: Move all of this inside user facade
           status: IPC_API_RESPONSE_STATUSES.SUCCESS,
-          data: this.userFacade.openUserDataStorageVisibilityGroups(
-            userDataStorageVisibilityGroupsOpenRequestDTOToUserDataStorageVisibilityGroupsOpenRequest(
-              decryptWithAESAndValidateJSON<IUserDataStorageVisibilityGroupsOpenRequestDTO>(
-                encryptedUserDataStorageVisibilityGroupsOpenRequestDTO,
-                USER_DATA_STORAGE_VISIBILITY_GROUPS_OPEN_REQUEST_DTO_VALIDATE_FUNCTION,
-                this.IPC_TLS_AES_KEY.value,
-                this.UserAPILogger,
-                "User Data Storage Visibility Group DTO"
-              ),
-              this.UserAPILogger
+          data: this.userFacade.openUserDataStorageVisibilityGroupsFromOpenRequestDTO(
+            decryptWithAESAndValidateJSON<IUserDataStorageVisibilityGroupsOpenRequestDTO>(
+              encryptedUserDataStorageVisibilityGroupsOpenRequestDTO,
+              USER_DATA_STORAGE_VISIBILITY_GROUPS_OPEN_REQUEST_DTO_VALIDATE_FUNCTION,
+              this.IPC_TLS_AES_KEY.value,
+              this.UserAPILogger,
+              "User Data Storage Visibility Group DTO"
             )
           )
         };
@@ -982,18 +956,7 @@ export class App {
     this.appLogger.info("App will quit.");
     this.appLogger.debug("Unregistering all global shortcuts.");
     globalShortcut.unregisterAll();
-    // TODO: Organise everything in a userfacade method?
-    this.userFacade.signOutUser();
-    if (this.userFacade.isAccountStorageSet()) {
-      if (this.userFacade.isAccountStorageOpen()) {
-        this.userFacade.closeAccountStorage();
-      } else {
-        this.appLogger.debug("No User Account Storage open.");
-      }
-      this.userFacade.unsetAccountStorage();
-    } else {
-      this.appLogger.debug("No User Account Storage set.");
-    }
+    this.userFacade.destroy();
     this.appLogger.silly("Pre-quit steps done.");
     appendFileSync(this.LOG_FILE_PATH, `---------- End   : ${new Date().toISOString()} ----------\n\n`, "utf-8");
   }

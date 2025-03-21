@@ -1,5 +1,5 @@
 export const deepFreeze = <T>(o: T): Readonly<T> => {
-  if (o === null || o === undefined || typeof o !== "object") {
+  if (o === null || o === undefined || typeof o !== "object" || Buffer.isBuffer(o)) {
     return o;
   }
   Object.freeze(o);

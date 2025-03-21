@@ -11,6 +11,10 @@ import { signedInUserToSignedInUserInfo } from "../../account/utils/signedInUser
 import { SALT_LENGTH_BYTES } from "@main/utils/encryption/constants";
 import { UserAccountStorage } from "@main/user/account/storage/UserAccountStorage";
 import { ISignedInUser } from "@main/user/account/SignedInUser";
+import { userSignUpDTOToUserSignUpPayload } from "@main/user/account/utils/userSignUpDTOToUserSignUpPayload";
+import { IUserSignUpDTO } from "@shared/user/account/UserSignUpDTO";
+import { IUserSignInDTO } from "@shared/user/account/UserSignInDTO";
+import { userSignInDTOToUserSignInPayload } from "@main/user/account/utils/userSignInDTOToUserSignInPayload";
 
 export interface IUserAuthenticationServiceContext {
   getAccountStorage: () => UserAccountStorage | null;
@@ -28,6 +32,28 @@ export class UserAuthenticationService {
     this.CONTEXT = context;
   }
 
+  public isUsernameAvailable(username: string): boolean {
+    this.logger.debug(`Getting username availability for username: "${username}".`);
+    const ACCOUNT_STORAGE: UserAccountStorage | null = this.CONTEXT.getAccountStorage();
+    if (ACCOUNT_STORAGE === null) {
+      throw new Error("Null User Account Storage");
+    }
+    return ACCOUNT_STORAGE.isUsernameAvailable(username);
+  }
+
+  public generateRandomUserId(): UUID {
+    this.logger.debug("Generating random User ID.");
+    const ACCOUNT_STORAGE: UserAccountStorage | null = this.CONTEXT.getAccountStorage();
+    if (ACCOUNT_STORAGE === null) {
+      throw new Error("Null User Account Storage");
+    }
+    return ACCOUNT_STORAGE.generateRandomUserId();
+  }
+
+  public signUpFromDTO(userSignUpDTO: IUserSignUpDTO, hashUserPasswordFunction: (userPassword: string, userPasswordSalt: Buffer) => string): boolean {
+    return this.signUp(userSignUpDTOToUserSignUpPayload(userSignUpDTO, this.generateRandomUserId(), this.logger), hashUserPasswordFunction);
+  }
+
   public signUp(
     userSignUpPayload: IUserSignUpPayload,
     hashUserPasswordFunction: (userPassword: string, userPasswordSalt: Buffer) => string
@@ -43,6 +69,10 @@ export class UserAuthenticationService {
     return ACCOUNT_STORAGE.addUser(
       userSignUpPayloadToSecuredUserSignUpPayload(userSignUpPayload, SALT_LENGTH_BYTES, hashUserPasswordFunction, SALT_LENGTH_BYTES, this.logger)
     );
+  }
+
+  public signInFromDTO(userSignInDTO: IUserSignInDTO): boolean {
+    return this.signIn(userSignInDTOToUserSignInPayload(userSignInDTO, this.logger));
   }
 
   public signIn(userSignInPayload: IUserSignInPayload): boolean {

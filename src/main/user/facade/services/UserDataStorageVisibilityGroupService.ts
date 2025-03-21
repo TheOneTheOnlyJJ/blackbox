@@ -4,7 +4,10 @@ import { ISecuredUserDataStorageVisibilityGroupConfig } from "@main/user/data/st
 import { IDataStorageVisibilityGroupFilter } from "@main/user/account/storage/backend/BaseUserAccountStorageBackend";
 import { IStorageSecuredUserDataStorageVisibilityGroupConfig } from "@main/user/data/storage/visibilityGroup/config/StorageSecuredUserDataStorageVisibilityGroupConfig";
 import { storageSecuredUserDataStorageVisibilityGroupConfigToSecuredUserDataStorageVisibilityGroupConfig } from "@main/user/data/storage/visibilityGroup/config/utils/storageSecuredUserDataStorageVisibilityGroupConfigToSecuredUserDataStorageVisibilityGroupConfig";
-import { IUserDataStorageVisibilityGroupConfig } from "@main/user/data/storage/visibilityGroup/config/UserDataStorageVisibilityGroupConfig";
+import {
+  IUserDataStorageVisibilityGroupConfig,
+  USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIG_CONSTANTS
+} from "@main/user/data/storage/visibilityGroup/config/UserDataStorageVisibilityGroupConfig";
 import { userDataStorageVisibilityGroupConfigToSecuredUserDataStorageVisibilityGroupConfig } from "@main/user/data/storage/visibilityGroup/config/utils/userDataStorageVisibilityGroupConfigToSecuredUserDataStorageVisibilityGroupConfig";
 import { SALT_LENGTH_BYTES } from "@main/utils/encryption/constants";
 import { IUserDataStorageVisibilityGroupsOpenRequest } from "@main/user/data/storage/visibilityGroup/openRequest/UserDataStorageVisibilityGroupsOpenRequest";
@@ -15,6 +18,10 @@ import { IUserDataStorageVisibilityGroup } from "@main/user/data/storage/visibil
 import { ISignedInUser } from "@main/user/account/SignedInUser";
 import { UserAccountStorage } from "@main/user/account/storage/UserAccountStorage";
 import { userDataStorageVisibilityGroupToUserDataStorageVisibilityGroupInfo } from "@main/user/data/storage/visibilityGroup/utils/userDataStorageVisibilityGroupToUserDataStorageVisibilityGroupInfo";
+import { IUserDataStorageVisibilityGroupConfigCreateDTO } from "@shared/user/data/storage/visibilityGroup/config/create/DTO/UserDataStorageVisibilityGroupConfigCreateDTO";
+import { userDataStorageVisibilityGroupConfigCreateDTOToUserDataStorageVisibilityGroupConfig } from "@main/user/data/storage/visibilityGroup/config/utils/userDataStorageVisibilityGroupConfigCreateDTOToUserDataStorageVisibilityGroupConfig";
+import { IUserDataStorageVisibilityGroupsOpenRequestDTO } from "@shared/user/data/storage/visibilityGroup/openRequest/DTO/UserDataStorageVisibilityGroupsOpenRequestDTO";
+import { userDataStorageVisibilityGroupsOpenRequestDTOToUserDataStorageVisibilityGroupsOpenRequest } from "@main/user/data/storage/visibilityGroup/openRequest/utils/userDataStorageVisibilityGroupsOpenRequestDTOToUserDataStorageVisibilityGroupsOpenRequest";
 
 export interface IUserDataStorageVisibilityGroupServiceContext {
   getAccountStorage: () => UserAccountStorage | null;
@@ -105,6 +112,19 @@ export class UserDataStorageVisibilityGroupService {
     );
   }
 
+  public addUserDataStorageVisibilityGroupConfigFromCreateDTO(
+    dataStorageVisibilityGroupConfigCreateDTO: IUserDataStorageVisibilityGroupConfigCreateDTO
+  ): boolean {
+    return this.addUserDataStorageVisibilityGroupConfig(
+      userDataStorageVisibilityGroupConfigCreateDTOToUserDataStorageVisibilityGroupConfig(
+        dataStorageVisibilityGroupConfigCreateDTO,
+        this.generateRandomDataStorageVisibilityGroupId(),
+        USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIG_CONSTANTS.AESKeySalt.lengthBytes,
+        this.logger
+      )
+    );
+  }
+
   public addUserDataStorageVisibilityGroupConfig(dataStorageVisibilityGroupConfig: IUserDataStorageVisibilityGroupConfig): boolean {
     this.logger.debug(`Adding User Data Storage Visibility Group Config to user: "${dataStorageVisibilityGroupConfig.userId}".`);
     const ACCOUNT_STORAGE: UserAccountStorage | null = this.CONTEXT.getAccountStorage();
@@ -140,6 +160,17 @@ export class UserDataStorageVisibilityGroupService {
     return ACCOUNT_STORAGE.addSecuredUserDataStorageVisibilityGroupConfig(
       SECURED_USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIG,
       SIGNED_IN_USER.userDataAESKey
+    );
+  }
+
+  public openUserDataStorageVisibilityGroupsFromOpenRequestDTO(
+    userDataStorageVisibilityGroupOpenRequestDTO: IUserDataStorageVisibilityGroupsOpenRequestDTO
+  ): number {
+    return this.openUserDataStorageVisibilityGroups(
+      userDataStorageVisibilityGroupsOpenRequestDTOToUserDataStorageVisibilityGroupsOpenRequest(
+        userDataStorageVisibilityGroupOpenRequestDTO,
+        this.logger
+      )
     );
   }
 

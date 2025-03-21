@@ -18,6 +18,11 @@ import { UserDataStorageConfigService } from "./services/UserDataStorageConfigSe
 import { UserDataStorageVisibilityGroupService } from "./services/UserDataStorageVisibilityGroupService";
 import { UserAccountService } from "./services/UserAccountService";
 import { UserContextProvider } from "./context/UserContextProvider";
+import { IUserSignUpDTO } from "@shared/user/account/UserSignUpDTO";
+import { IUserSignInDTO } from "@shared/user/account/UserSignInDTO";
+import { IUserDataStorageConfigCreateDTO } from "@shared/user/data/storage/config/create/DTO/UserDataStorageConfigCreateDTO";
+import { IUserDataStorageVisibilityGroupConfigCreateDTO } from "@shared/user/data/storage/visibilityGroup/config/create/DTO/UserDataStorageVisibilityGroupConfigCreateDTO";
+import { IUserDataStorageVisibilityGroupsOpenRequestDTO } from "@shared/user/data/storage/visibilityGroup/openRequest/DTO/UserDataStorageVisibilityGroupsOpenRequestDTO";
 
 export interface IUserFacadeConstructorProps {
   logger: LogFunctions;
@@ -44,7 +49,7 @@ export class UserFacade {
 
   public constructor(props: IUserFacadeConstructorProps) {
     this.logger = props.logger;
-    this.logger.debug("Initialising new User Controller.");
+    this.logger.debug("Initialising new User Facade.");
     const CONTEXT_PROVIDER = new UserContextProvider(props.contextProviderLogger, new UserContext(props.contextLogger, props.contextHandlers));
     // Services
     this.AUTH_SERVICE = new UserAuthenticationService(props.serviceLoggers.auth, CONTEXT_PROVIDER.getUserAuthenticationServiceContext());
@@ -61,6 +66,25 @@ export class UserFacade {
       props.serviceLoggers.dataStorageVisibilityGroup,
       CONTEXT_PROVIDER.getUserDataStorageVisibilityGroupServiceContext()
     );
+  }
+
+  public destroy(): void {
+    this.logger.info("Destroying User Facade.");
+    this.signOutUser();
+    if (this.isAccountStorageSet()) {
+      if (this.isAccountStorageOpen()) {
+        this.closeAccountStorage();
+      } else {
+        this.logger.debug("No User Account Storage open.");
+      }
+      this.unsetAccountStorage();
+    } else {
+      this.logger.debug("No User Account Storage set.");
+    }
+  }
+
+  private hashUserPasswordFunction(userPassword: string, userPasswordSalt: Buffer): string {
+    return hashPassword(userPassword, userPasswordSalt, this.logger, "user sign up").toString("base64");
   }
 
   public isAccountStorageOpen(): boolean {
@@ -92,7 +116,7 @@ export class UserFacade {
   }
 
   public isUsernameAvailable(username: string): boolean {
-    return this.ACCOUNT_SERVICE.isUsernameAvailable(username);
+    return this.AUTH_SERVICE.isUsernameAvailable(username);
   }
 
   public isDataStorageVisibilityGroupNameAvailableForSignedInUser(name: string): boolean {
@@ -100,7 +124,7 @@ export class UserFacade {
   }
 
   public generateRandomUserId(): UUID {
-    return this.ACCOUNT_SERVICE.generateRandomUserId();
+    return this.AUTH_SERVICE.generateRandomUserId();
   }
 
   public generateRandomDataStorageId(): UUID {
@@ -120,13 +144,19 @@ export class UserFacade {
   }
 
   public signUpUser(userSignUpPayload: IUserSignUpPayload): boolean {
-    return this.AUTH_SERVICE.signUp(userSignUpPayload, (userPassword: string, userPasswordSalt: Buffer): string => {
-      return hashPassword(userPassword, userPasswordSalt, this.logger, "user sign up").toString("base64");
-    });
+    return this.AUTH_SERVICE.signUp(userSignUpPayload, this.hashUserPasswordFunction.bind(this));
+  }
+
+  public signUpUserFromDTO(userSignUpDTO: IUserSignUpDTO): boolean {
+    return this.AUTH_SERVICE.signUpFromDTO(userSignUpDTO, this.hashUserPasswordFunction.bind(this));
   }
 
   public signInUser(userSignInPayload: IUserSignInPayload): boolean {
     return this.AUTH_SERVICE.signIn(userSignInPayload);
+  }
+
+  public signInUserFromDTO(userSignInDTO: IUserSignInDTO): boolean {
+    return this.AUTH_SERVICE.signInFromDTO(userSignInDTO);
   }
 
   public signOutUser(): ISignedInUserInfo | null {
@@ -145,12 +175,30 @@ export class UserFacade {
     return this.DATA_STORAGE_CONFIG_SERVICE.addUserDataStorageConfig(userDataStorageConfig);
   }
 
+  public addUserDataStorageConfigFromCreateDTO(userDataStorageConfigCreateDTO: IUserDataStorageConfigCreateDTO): boolean {
+    return this.DATA_STORAGE_CONFIG_SERVICE.addUserDataStorageConfigFromCreateDTO(userDataStorageConfigCreateDTO);
+  }
+
   public addUserDataStorageVisibilityGroupConfig(dataStorageVisibilityGroupConfig: IUserDataStorageVisibilityGroupConfig): boolean {
     return this.DATA_STORAGE_VISIBILITY_GROUP_SERVICE.addUserDataStorageVisibilityGroupConfig(dataStorageVisibilityGroupConfig);
   }
 
+  public addUserDataStorageVisibilityGroupConfigFromCreateDTO(
+    dataStorageVisibilityGroupConfigCreateDTO: IUserDataStorageVisibilityGroupConfigCreateDTO
+  ): boolean {
+    return this.DATA_STORAGE_VISIBILITY_GROUP_SERVICE.addUserDataStorageVisibilityGroupConfigFromCreateDTO(dataStorageVisibilityGroupConfigCreateDTO);
+  }
+
   public openUserDataStorageVisibilityGroups(userDataStorageVisibilityGroupOpenRequest: IUserDataStorageVisibilityGroupsOpenRequest): number {
     return this.DATA_STORAGE_VISIBILITY_GROUP_SERVICE.openUserDataStorageVisibilityGroups(userDataStorageVisibilityGroupOpenRequest);
+  }
+
+  public openUserDataStorageVisibilityGroupsFromOpenRequestDTO(
+    userDataStorageVisibilityGroupOpenRequestDTO: IUserDataStorageVisibilityGroupsOpenRequestDTO
+  ): number {
+    return this.DATA_STORAGE_VISIBILITY_GROUP_SERVICE.openUserDataStorageVisibilityGroupsFromOpenRequestDTO(
+      userDataStorageVisibilityGroupOpenRequestDTO
+    );
   }
 
   public closeUserDataStorageVisibilityGroups(visibilityGroupIds: UUID[]): number {

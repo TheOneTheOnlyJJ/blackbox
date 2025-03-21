@@ -16,24 +16,6 @@ export class UserAccountService {
     this.CONTEXT = context;
   }
 
-  public isUsernameAvailable(username: string): boolean {
-    this.logger.debug(`Getting username availability for username: "${username}".`);
-    const ACCOUNT_STORAGE: UserAccountStorage | null = this.CONTEXT.getAccountStorage();
-    if (ACCOUNT_STORAGE === null) {
-      throw new Error("Null User Account Storage");
-    }
-    return ACCOUNT_STORAGE.isUsernameAvailable(username);
-  }
-
-  public generateRandomUserId(): UUID {
-    this.logger.debug("Generating random User ID.");
-    const ACCOUNT_STORAGE: UserAccountStorage | null = this.CONTEXT.getAccountStorage();
-    if (ACCOUNT_STORAGE === null) {
-      throw new Error("Null User Account Storage");
-    }
-    return ACCOUNT_STORAGE.generateRandomUserId();
-  }
-
   public getUserCount(): number {
     this.logger.debug("Getting user count.");
     const ACCOUNT_STORAGE: UserAccountStorage | null = this.CONTEXT.getAccountStorage();

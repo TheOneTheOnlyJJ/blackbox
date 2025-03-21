@@ -8,6 +8,8 @@ import { ISignedInUser } from "@main/user/account/SignedInUser";
 import { UserAccountStorage } from "@main/user/account/storage/UserAccountStorage";
 import { IUserDataStorageVisibilityGroup } from "@main/user/data/storage/visibilityGroup/UserDataStorageVisibilityGroup";
 import { securedUserDataStorageConfigToUserDataStorageInfo } from "@main/user/data/storage/config/utils/securedUserDataStorageConfigToUserDataStorageInfo";
+import { IUserDataStorageConfigCreateDTO } from "@shared/user/data/storage/config/create/DTO/UserDataStorageConfigCreateDTO";
+import { userDataStorageConfigCreateDTOToUserDataStorageConfig } from "@main/user/data/storage/config/utils/userDataStorageConfigCreateDTOToUserDataStorageConfig";
 
 export interface IUserDataStorageConfigServiceContext {
   getAccountStorage: () => UserAccountStorage | null;
@@ -33,6 +35,12 @@ export class UserDataStorageConfigService {
       throw new Error("Null User Account Storage");
     }
     return ACCOUNT_STORAGE.generateRandomUserDataStorageId();
+  }
+
+  public addUserDataStorageConfigFromCreateDTO(userDataStorageConfigCreateDTO: IUserDataStorageConfigCreateDTO): boolean {
+    return this.addUserDataStorageConfig(
+      userDataStorageConfigCreateDTOToUserDataStorageConfig(userDataStorageConfigCreateDTO, this.generateRandomDataStorageId(), this.logger)
+    );
   }
 
   public addUserDataStorageConfig(userDataStorageConfig: IUserDataStorageConfig): boolean {
