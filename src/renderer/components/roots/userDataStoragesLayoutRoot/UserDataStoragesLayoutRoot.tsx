@@ -5,7 +5,7 @@ import { Outlet } from "react-router-dom";
 import { IUserDataStoragesLayoutRootContext } from "./UserDataStoragesLayoutRootContext";
 import { appLogger } from "@renderer/utils/loggers";
 import UserDataStoragesNavigationBar from "@renderer/components/navigation/UserDataStoragesNavigationBar";
-import { UserDataStoragesNavigationArea } from "@renderer/navigationAreas/UserDataStoragesNavigationAreas";
+import { UserDataNavigationArea } from "@renderer/navigationAreas/UserDataStoragesNavigationAreas";
 
 const DEFAULT_USER_DATA_STORAGES_NAVIGATION_BAR_WIDTH = 240;
 
@@ -15,7 +15,7 @@ const UserDataStoragesLayoutRoot: FC = () => {
   const [userDataStoragesNavigationBarWidth, setuserDataStoragesNavigationBarWidth] = useState<number>(
     DEFAULT_USER_DATA_STORAGES_NAVIGATION_BAR_WIDTH
   );
-  const [userStoragesNavigationArea, setUserStoragesNavigationArea] = useState<UserDataStoragesNavigationArea | null>(null);
+  const [userStoragesNavigationArea, setUserStoragesNavigationArea] = useState<UserDataNavigationArea | null>(null);
 
   const updateUserDataStoragesNavigationBarWidth = useCallback((): void => {
     if (userDataStoragesNavigationBarRef.current) {

@@ -25,7 +25,7 @@ import { securedUserDataStorageConfigToUserDataStorageInfo } from "@main/user/da
 export interface IUserContextHandlers {
   onSignedInUserChangedCallback: ((newSignedInUserInfo: ISignedInUserInfo | null) => void) | null;
   onUserAccountStorageChangedCallback: ((newUserAccountStorageInfo: IUserAccountStorageInfo | null) => void) | null;
-  onUserAccountStorageOpenChangedCallback: ((newIsUserAccountStorageOpen: boolean) => void) | null;
+  onUserAccountStorageInfoChangedCallback: ((newUserAccountStorageInfo: IUserAccountStorageInfo) => void) | null;
   onAvailableUserDataStorageConfigsChangedCallback: ((availableUserDataStoragesInfoChangedDiff: IUserDataStoragesInfoChangedDiff) => void) | null;
   onOpenUserDataStorageVisibilityGroupsChangedCallback:
     | ((dataStorageVisibilityGroupsInfoChangedDiff: IUserDataStorageVisibilityGroupsInfoChangedDiff) => void)
@@ -112,40 +112,40 @@ export class UserContext {
       newAccountStorageInfo = null;
     } else if (newAccountStorage instanceof UserAccountStorage) {
       newAccountStorageInfo = newAccountStorage.getInfo();
-      // Proxy the open function to invoke the changed callback
-      type OpenFunctionType = typeof newAccountStorage.open;
-      type OpenFunctionParametersType = Parameters<OpenFunctionType>;
-      type OpenFunctionReturnType = ReturnType<OpenFunctionType>;
-      newAccountStorage.open = new Proxy<OpenFunctionType>(newAccountStorage.open.bind(newAccountStorage), {
-        apply: (target: OpenFunctionType, thisArg: unknown, argArray: OpenFunctionParametersType): OpenFunctionReturnType => {
-          if (this.HANDLERS.onUserAccountStorageOpenChangedCallback) {
-            const IS_OPEN_BEFORE: boolean = newAccountStorage.isOpen();
-            const IS_OPEN_AFTER: OpenFunctionReturnType = Reflect.apply(target, thisArg, argArray);
-            if (IS_OPEN_BEFORE !== IS_OPEN_AFTER) {
-              this.HANDLERS.onUserAccountStorageOpenChangedCallback(IS_OPEN_AFTER);
-            }
-            return IS_OPEN_AFTER;
-          }
-          return Reflect.apply(target, thisArg, argArray);
-        }
-      } satisfies ProxyHandler<OpenFunctionType>);
-      // Proxy the close function to invoke the changed callback
-      type CloseFunctionType = typeof newAccountStorage.close;
-      type CloseFunctionParametersType = Parameters<CloseFunctionType>;
-      type CloseFunctionReturnType = ReturnType<CloseFunctionType>;
-      newAccountStorage.close = new Proxy<CloseFunctionType>(newAccountStorage.close.bind(newAccountStorage), {
-        apply: (target: CloseFunctionType, thisArg: unknown, argArray: CloseFunctionParametersType): CloseFunctionReturnType => {
-          if (this.HANDLERS.onUserAccountStorageOpenChangedCallback) {
-            const IS_CLOSED_BEFORE: boolean = newAccountStorage.isClosed();
-            const IS_CLOSED_AFTER: CloseFunctionReturnType = Reflect.apply(target, thisArg, argArray);
-            if (IS_CLOSED_BEFORE !== IS_CLOSED_AFTER) {
-              this.HANDLERS.onUserAccountStorageOpenChangedCallback(!IS_CLOSED_AFTER); // == IS_OPEN_AFTER
-            }
-            return IS_CLOSED_AFTER;
-          }
-          return Reflect.apply(target, thisArg, argArray);
-        }
-      } satisfies ProxyHandler<CloseFunctionType>);
+      // // Proxy the open function to invoke the changed callback
+      // type OpenFunctionType = typeof newAccountStorage.open;
+      // type OpenFunctionParametersType = Parameters<OpenFunctionType>;
+      // type OpenFunctionReturnType = ReturnType<OpenFunctionType>;
+      // newAccountStorage.open = new Proxy<OpenFunctionType>(newAccountStorage.open.bind(newAccountStorage), {
+      //   apply: (target: OpenFunctionType, thisArg: unknown, argArray: OpenFunctionParametersType): OpenFunctionReturnType => {
+      //     if (this.HANDLERS.onUserAccountStorageOpenChangedCallback) {
+      //       const IS_OPEN_BEFORE: boolean = newAccountStorage.isOpen();
+      //       const IS_OPEN_AFTER: OpenFunctionReturnType = Reflect.apply(target, thisArg, argArray);
+      //       if (IS_OPEN_BEFORE !== IS_OPEN_AFTER) {
+      //         this.HANDLERS.onUserAccountStorageOpenChangedCallback(IS_OPEN_AFTER);
+      //       }
+      //       return IS_OPEN_AFTER;
+      //     }
+      //     return Reflect.apply(target, thisArg, argArray);
+      //   }
+      // } satisfies ProxyHandler<OpenFunctionType>);
+      // // Proxy the close function to invoke the changed callback
+      // type CloseFunctionType = typeof newAccountStorage.close;
+      // type CloseFunctionParametersType = Parameters<CloseFunctionType>;
+      // type CloseFunctionReturnType = ReturnType<CloseFunctionType>;
+      // newAccountStorage.close = new Proxy<CloseFunctionType>(newAccountStorage.close.bind(newAccountStorage), {
+      //   apply: (target: CloseFunctionType, thisArg: unknown, argArray: CloseFunctionParametersType): CloseFunctionReturnType => {
+      //     if (this.HANDLERS.onUserAccountStorageOpenChangedCallback) {
+      //       const IS_CLOSED_BEFORE: boolean = newAccountStorage.isClosed();
+      //       const IS_CLOSED_AFTER: CloseFunctionReturnType = Reflect.apply(target, thisArg, argArray);
+      //       if (IS_CLOSED_BEFORE !== IS_CLOSED_AFTER) {
+      //         this.HANDLERS.onUserAccountStorageOpenChangedCallback(!IS_CLOSED_AFTER); // == IS_OPEN_AFTER
+      //       }
+      //       return IS_CLOSED_AFTER;
+      //     }
+      //     return Reflect.apply(target, thisArg, argArray);
+      //   }
+      // } satisfies ProxyHandler<CloseFunctionType>);
       // Proxy the add data storage config function to add it to available data storages on success
       type AddStorageSecuredUserDataStorageConfigType = typeof newAccountStorage.addSecuredUserDataStorageConfig;
       type AddStorageSecuredUserDataStorageConfigParametersType = Parameters<AddStorageSecuredUserDataStorageConfigType>;

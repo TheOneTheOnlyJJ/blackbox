@@ -7,6 +7,7 @@ import { IBaseUserAccountStorageBackendConfig } from "./config/BaseUserAccountSt
 import { IStorageSecuredUserDataStorageConfig } from "@main/user/data/storage/config/StorageSecuredUserDataStorageConfig";
 import { AJV } from "@shared/utils/AJVJSONValidator";
 import { IStorageSecuredUserDataStorageVisibilityGroupConfig } from "@main/user/data/storage/visibilityGroup/config/StorageSecuredUserDataStorageVisibilityGroupConfig";
+import { IUserAccountStorageBackendInfoMap } from "@shared/user/account/storage/backend/info/UserAccountStorageBackendInfo";
 
 export interface IDataStorageConfigFilter {
   userId: UUID;
@@ -27,7 +28,7 @@ export interface IDataStorageVisibilityGroupFilter {
 export abstract class BaseUserAccountStorageBackend<T extends IBaseUserAccountStorageBackendConfig> {
   protected readonly logger: LogFunctions;
   public readonly config: T;
-  private readonly USER_ACCOUNT_STORAGE_BACKEND_CONFIG_VALIDATE_FUNCTION: ValidateFunction<T>;
+  private readonly USER_ACCOUNT_STORAGE_BACKEND_CONFIG_VALIDATE_FUNCTION: ValidateFunction<T>; // TODO: THis is stupid, move it
 
   public constructor(config: T, configSchema: JSONSchemaType<T>, logScope: string) {
     this.logger = log.scope(logScope);
@@ -44,7 +45,7 @@ export abstract class BaseUserAccountStorageBackend<T extends IBaseUserAccountSt
   public abstract close(): boolean;
   public abstract isOpen(): boolean;
   public abstract isClosed(): boolean;
-  public abstract isLocal(): boolean;
+  public abstract getInfo(): IUserAccountStorageBackendInfoMap[T["type"]];
   public abstract isUserIdAvailable(userId: UUID): boolean;
   public abstract isUsernameAvailable(username: string): boolean;
   public abstract addUser(securedUserSignInPayload: ISecuredUserSignUpPayload): boolean;

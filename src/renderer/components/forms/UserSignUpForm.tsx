@@ -79,7 +79,7 @@ const UserSignUpForm: FC<IUserSignUpFormProps> = (props: IUserSignUpFormProps) =
   });
 
   const isSubmitButtonDisabled = useMemo<boolean>((): boolean => {
-    return props.isSignUpPending || appRootContext.userAccountStorageInfo === null ? true : !appRootContext.userAccountStorageInfo.isOpen;
+    return props.isSignUpPending || appRootContext.userAccountStorageInfo === null ? true : !appRootContext.userAccountStorageInfo.backend.isOpen;
   }, [props.isSignUpPending, appRootContext.userAccountStorageInfo]);
 
   const signUpUser = useCallback(
@@ -170,7 +170,7 @@ const UserSignUpForm: FC<IUserSignUpFormProps> = (props: IUserSignUpFormProps) =
         noHtml5Validate={true}
       >
         {props.renderSubmitButton && (
-          <Button type="submit" disabled={isSubmitButtonDisabled} variant="contained" size="large" sx={{ marginTop: "1vw", marginBottom: "1vw" }}>
+          <Button type="submit" disabled={isSubmitButtonDisabled} variant="contained" size="large" sx={{ marginTop: "1em", marginBottom: "1em" }}>
             {props.isSignUpPending ? "Signing Up..." : "Sign Up"}
           </Button>
         )}

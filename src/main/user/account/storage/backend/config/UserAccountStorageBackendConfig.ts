@@ -3,11 +3,14 @@ import {
   ILocalSQLiteUserAccountStorageBackendConfig,
   LocalSQLiteUserAccountStorageBackend
 } from "../implementations/LocalSQLite/LocalSQLiteUserAccountStorageBackend";
-import { USER_ACCOUNT_STORAGE_BACKEND_TYPES, UserAccountStorageBackendType } from "../UserAccountStorageBackendType";
+import {
+  USER_ACCOUNT_STORAGE_BACKEND_TYPES,
+  UserAccountStorageBackendType
+} from "@shared/user/account/storage/backend/UserAccountStorageBackendType";
 
 // Map of every user account storage backend type to its corresponding config type
 export interface IUserAccountStorageBackendConfigMap {
-  [USER_ACCOUNT_STORAGE_BACKEND_TYPES.LocalSQLite]: ILocalSQLiteUserAccountStorageBackendConfig;
+  [USER_ACCOUNT_STORAGE_BACKEND_TYPES.localSQLite]: ILocalSQLiteUserAccountStorageBackendConfig;
 }
 // Union of all user account storage backend config concrete implementation interfaces
 export type UserAccountStorageBackendConfig = IUserAccountStorageBackendConfigMap[keyof IUserAccountStorageBackendConfigMap];
@@ -16,7 +19,7 @@ type UserAccountStorageBackendConfigJSONSchemaMap = {
   [K in UserAccountStorageBackendType]: JSONSchemaType<IUserAccountStorageBackendConfigMap[K]>;
 };
 export const USER_ACCOUNT_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_MAP: UserAccountStorageBackendConfigJSONSchemaMap = {
-  [USER_ACCOUNT_STORAGE_BACKEND_TYPES.LocalSQLite]: LocalSQLiteUserAccountStorageBackend.CONFIG_JSON_SCHEMA
+  [USER_ACCOUNT_STORAGE_BACKEND_TYPES.localSQLite]: LocalSQLiteUserAccountStorageBackend.CONFIG_JSON_SCHEMA
 } as const;
 
 export const USER_ACCOUNT_STORAGE_BACKEND_CONFIG_JSON_SCHEMA: JSONSchemaType<UserAccountStorageBackendConfig> = {

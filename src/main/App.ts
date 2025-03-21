@@ -7,7 +7,7 @@ import { JSONSchemaType } from "ajv/dist/types/json-schema";
 import { IIPCTLSBootstrapAPI, IPC_TLS_BOOTSTRAP_API_IPC_CHANNELS } from "@shared/IPC/APIs/IPCTLSBootstrapAPI";
 import { USER_API_IPC_CHANNELS, UserAPIIPCChannel } from "@shared/IPC/APIs/UserAPI";
 import { IUserFacadeConstructorProps, UserFacade } from "@main/user/facade/UserFacade";
-import { USER_ACCOUNT_STORAGE_BACKEND_TYPES } from "@main/user/account/storage/backend/UserAccountStorageBackendType";
+import { USER_ACCOUNT_STORAGE_BACKEND_TYPES } from "@shared/user/account/storage/backend/UserAccountStorageBackendType";
 import { adjustWindowBounds } from "@main/utils/window/adjustWindowBounds";
 import { IpcMainEvent, IpcMainInvokeEvent, OpenDialogReturnValue } from "electron";
 import { IUserAPI } from "@shared/IPC/APIs/UserAPI";
@@ -179,7 +179,7 @@ export class App {
     storageId: "00000000-0000-0000-0000-000000000000",
     name: "Default",
     backendConfig: {
-      type: USER_ACCOUNT_STORAGE_BACKEND_TYPES.LocalSQLite,
+      type: USER_ACCOUNT_STORAGE_BACKEND_TYPES.localSQLite,
       dbDirPath: resolve(join(app.getAppPath(), "data")),
       dbFileName: "users.sqlite"
     }
@@ -560,15 +560,17 @@ export class App {
       this.UserAPILogger.debug(`Messaging renderer on channel: "${CHANNEL}".`);
       this.window.webContents.send(CHANNEL, newUserAccountStorageInfo);
     },
-    sendUserAccountStorageOpenChanged: (newIsUserAccountStorageOpen: boolean): void => {
-      this.UserAPILogger.debug(`Sending window User Account Storage open status after change: ${newIsUserAccountStorageOpen.toString()}.`);
+    sendUserAccountStorageInfoChanged: (newUserAccountStorageInfo: IUserAccountStorageInfo): void => {
+      this.UserAPILogger.debug(
+        `Sending window User Account Storage open status after change: ${JSON.stringify(newUserAccountStorageInfo, null, 2).toString()}.`
+      );
       if (this.window === null) {
         this.UserAPILogger.debug("Window is null. No-op.");
         return;
       }
-      const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.onUserAccountStorageOpenChanged;
+      const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.onUserAccountStorageInfoChanged;
       this.UserAPILogger.debug(`Messaging renderer on channel: "${CHANNEL}".`);
-      this.window.webContents.send(CHANNEL, newIsUserAccountStorageOpen);
+      this.window.webContents.send(CHANNEL, newUserAccountStorageInfo);
     },
     sendSignedInUserChanged: (newSignedInUserInfo: ISignedInUserInfo | null): void => {
       this.UserAPILogger.debug(`Sending window signed in user info after change: ${JSON.stringify(newSignedInUserInfo, null, 2)}.`);
@@ -703,7 +705,7 @@ export class App {
       contextHandlers: {
         onSignedInUserChangedCallback: this.USER_API_HANDLERS.sendSignedInUserChanged,
         onUserAccountStorageChangedCallback: this.USER_API_HANDLERS.sendUserAccountStorageChanged,
-        onUserAccountStorageOpenChangedCallback: this.USER_API_HANDLERS.sendUserAccountStorageOpenChanged,
+        onUserAccountStorageInfoChangedCallback: this.USER_API_HANDLERS.sendUserAccountStorageInfoChanged,
         onAvailableUserDataStorageConfigsChangedCallback: this.USER_API_HANDLERS.sendAvailableUserDataStoragesChanged,
         onOpenUserDataStorageVisibilityGroupsChangedCallback: this.USER_API_HANDLERS.sendOpenUserDataStorageVisibilityGroupsChanged
       } satisfies IUserContextHandlers
@@ -935,15 +937,15 @@ export class App {
     //   }
     //   isOpen = !isOpen;
     // }, 5_000);
-    // setInterval((): void => {
-    //   if (this.userManager.isUserAccountStorageSet()) {
-    //     this.userManager.unsetUserAccountStorage();
-    //   } else {
-    //     this.userManager.setUserAccountStorage(
-    //       new UserAccountStorage(this.DEFAULT_USER_ACCOUNT_STORAGE_CONFIG, this.userAccountStorageLogger, this.userAccountStorageBackendLogger)
-    //     );
-    //   }
-    // }, 7_500);
+    setInterval((): void => {
+      if (this.userFacade.isAccountStorageSet()) {
+        this.userFacade.unsetAccountStorage();
+      } else {
+        this.userFacade.setAccountStorage(
+          new UserAccountStorage(this.DEFAULT_USER_ACCOUNT_STORAGE_CONFIG, this.DEFAULT_USER_ACCOUNT_STORAGE_LOG_SCOPE)
+        );
+      }
+    }, 7_500);
     this.createWindow();
     this.appLogger.debug("Registering app activate event handler.");
     app.on("activate", (): void => {

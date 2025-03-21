@@ -142,24 +142,16 @@ const AppRoot: FC = () => {
         });
       }
     );
-    // Monitor changes to User Account Storage open status
-    const removeOnUserAccountStorageOpenChangedListener: () => void = window.userAPI.onUserAccountStorageOpenChanged(
-      (newIsUserAccountStorageOpen: boolean): void => {
+    // Monitor changes to User Account Storage info
+    const removeOnUserAccountStorageInfoChangedListener: () => void = window.userAPI.onUserAccountStorageInfoChanged(
+      (newUserAccountStorageInfo: IUserAccountStorageInfo): void => {
         setUserAccountStorageInfo((prevUserAccountStorageInfo: IUserAccountStorageInfo | null): IUserAccountStorageInfo | null => {
           if (prevUserAccountStorageInfo === null) {
-            appLogger.warn("User Account Storage open state changed callback invoked with no User Account Storage set! No-op.");
-            enqueueSnackbar({ message: "User Account Storage open state received without being set.", variant: "warning" });
+            appLogger.warn("User Account Storage info changed callback invoked with no User Account Storage set! No-op.");
+            enqueueSnackbar({ message: "New User Account Storage info received without being set.", variant: "error" });
             return null;
           }
-          if (newIsUserAccountStorageOpen) {
-            enqueueSnackbar({ message: "Opened user account storage.", variant: "info" });
-          } else {
-            enqueueSnackbar({ message: "Closed user account storage.", variant: "warning" });
-          }
-          return {
-            ...prevUserAccountStorageInfo,
-            isOpen: newIsUserAccountStorageOpen
-          };
+          return newUserAccountStorageInfo;
         });
       }
     );
@@ -169,7 +161,7 @@ const AppRoot: FC = () => {
       removeOnRendererIPCTLSReadinessChangedListener();
       removeOnSignedInUserChangedListener();
       removeOnUserAccountStorageChangedListener();
-      removeOnUserAccountStorageOpenChangedListener();
+      removeOnUserAccountStorageInfoChangedListener();
     };
   }, []);
 

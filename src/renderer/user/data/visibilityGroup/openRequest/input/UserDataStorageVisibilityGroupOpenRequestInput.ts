@@ -19,7 +19,7 @@ export const USER_DATA_STORAGE_VISIBILITY_GROUP_OPEN_REQUEST_INPUT_JSON_SCHEMA: 
 } as const;
 
 export const USER_DATA_STORAGE_VISIBILITY_GROUP_OPEN_REQUEST_INPUT_UI_SCHEMA: UiSchema<IUserDataStorageVisibilityGroupOpenRequestInput> = {
-  "ui:title": "Open Data Storage Visibility Group",
+  "ui:title": "Open data storage visibility group",
   password: {
     "ui:title": "Password",
     "ui:widget": RJSFPasswordWidget

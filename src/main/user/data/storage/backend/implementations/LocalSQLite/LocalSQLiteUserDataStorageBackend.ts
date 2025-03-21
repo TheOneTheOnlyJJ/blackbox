@@ -57,7 +57,7 @@ export class LocalSQLiteUserDataStorageBackend extends BaseUserDataStorageBacken
   public open(): boolean {
     this.logger.info(`Opening "${this.config.type}" User Data Storage Backend.`);
     if (this.isOpen()) {
-      this.logger.warn(`Already opened "${this.config.type}" User Data Storage Backend.`);
+      this.logger.warn(`Already opened "${this.config.type}" User Data Storage Backend. No-op.`);
       return true;
     }
     try {
@@ -102,7 +102,7 @@ export class LocalSQLiteUserDataStorageBackend extends BaseUserDataStorageBacken
   public close(): boolean {
     this.logger.info(`Closing "${this.config.type}" User Data Storage Backend.`);
     if (this.db === null) {
-      this.logger.warn(`Already closed "${this.config.type}" User Data Storage Backend.`);
+      this.logger.warn(`Already closed "${this.config.type}" User Data Storage Backend. No-op.`);
       return true;
     }
     try {

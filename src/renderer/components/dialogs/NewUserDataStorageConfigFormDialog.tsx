@@ -22,7 +22,9 @@ const NewUserDataStorageConfigFormDialog: FC<INewUserDataStorageConfigFormDialog
   const [isAddUserDataStorageConfigPending, setIsAddUserDataStorageConfigPending] = useState<boolean>(false);
 
   const isSubmitButtonDisabled = useMemo<boolean>((): boolean => {
-    return isAddUserDataStorageConfigPending || appRootContext.userAccountStorageInfo === null ? true : !appRootContext.userAccountStorageInfo.isOpen;
+    return isAddUserDataStorageConfigPending || appRootContext.userAccountStorageInfo === null
+      ? true
+      : !appRootContext.userAccountStorageInfo.backend.isOpen;
   }, [isAddUserDataStorageConfigPending, appRootContext.userAccountStorageInfo]);
 
   const handleSubmitButtonClick = useCallback((): void => {

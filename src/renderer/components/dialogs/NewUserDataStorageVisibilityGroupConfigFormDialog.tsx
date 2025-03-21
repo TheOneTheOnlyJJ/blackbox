@@ -24,7 +24,7 @@ const NewUserDataStorageVisibilityGroupConfigFormDialog: FC<INewUserDataStorageV
   const isSubmitButtonDisabled = useMemo<boolean>((): boolean => {
     return isAddUserDataStorageVisibilityGroupConfigPending || appRootContext.userAccountStorageInfo === null
       ? true
-      : !appRootContext.userAccountStorageInfo.isOpen;
+      : !appRootContext.userAccountStorageInfo.backend.isOpen;
   }, [isAddUserDataStorageVisibilityGroupConfigPending, appRootContext.userAccountStorageInfo]);
 
   const handleSubmitButtonClick = useCallback((): void => {

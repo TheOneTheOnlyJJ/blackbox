@@ -30,7 +30,7 @@ export const USER_DATA_STORAGE_CONFIG_CREATE_INPUT_JSON_SCHEMA: JSONSchemaType<I
 } as const;
 
 export const USER_DATA_STORAGE_CONFIG_CREATE_INPUT_UI_SCHEMA: UiSchema<IUserDataStorageConfigCreateInput> = {
-  "ui:title": "New Data Storage",
+  "ui:title": "New data storage",
   description: {
     "ui:widget": "textarea"
   },

@@ -80,7 +80,7 @@ const SuccessfulUserSignUpDialog: FC<ISuccessfulUserSignUpDialogProps> = (props:
             Sign up successful
           </Typography>
           <Alert severity="success" sx={{ marginBottom: "1vw" }}>
-            <AlertTitle>Welcome, {props.username}!</AlertTitle>
+            <AlertTitle>Welcome, {props.username}</AlertTitle>
             {props.userCount !== null
               ? `You're the ${ordinalize(props.userCount.toString())} registered BlackBox user!`
               : "You're now a registered BlackBox user!"}

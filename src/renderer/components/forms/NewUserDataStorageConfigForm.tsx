@@ -44,18 +44,6 @@ const newUserDataStorageConfigFormErrorTransformer: ErrorTransformer<IUserDataSt
   );
 };
 
-// TODO: This may not be required anymore
-// const newUserDataStorageConfigFormValidator: CustomValidator<IUserDataStorageConfigCreateInput> = (
-//   formData: IUserDataStorageConfigCreateInput | undefined,
-//   errors: FormValidation<IUserDataStorageConfigCreateInput>
-// ): FormValidation<IUserDataStorageConfigCreateInput> => {
-//   // Skip if no form data or errors
-//   if (formData === undefined) {
-//     return errors;
-//   }
-//   return errors;
-// };
-
 export interface INewUserDataStorageConfigFormProps {
   formRef: FormProps["ref"];
   userIdToAddTo: string;
@@ -72,7 +60,7 @@ const NewUserDataStorageConfigForm: FC<INewUserDataStorageConfigFormProps> = (pr
   const isSubmitButtonDisabled = useMemo<boolean>((): boolean => {
     return props.isAddUserDataStorageConfigPending || appRootContext.userAccountStorageInfo === null
       ? true
-      : !appRootContext.userAccountStorageInfo.isOpen;
+      : !appRootContext.userAccountStorageInfo.backend.isOpen;
   }, [props.isAddUserDataStorageConfigPending, appRootContext.userAccountStorageInfo]);
 
   const handleFormSubmit = useCallback(

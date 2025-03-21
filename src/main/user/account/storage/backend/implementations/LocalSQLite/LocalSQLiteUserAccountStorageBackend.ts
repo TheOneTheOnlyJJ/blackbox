@@ -1,10 +1,12 @@
 import { BaseUserAccountStorageBackend, IDataStorageConfigFilter, IDataStorageVisibilityGroupFilter } from "../../BaseUserAccountStorageBackend";
 import DatabaseConstructor, { Database, RunResult } from "better-sqlite3";
-import { LogFunctions } from "electron-log";
 import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { JSONSchemaType } from "ajv";
-import { USER_ACCOUNT_STORAGE_BACKEND_TYPES, UserAccountStorageBackendTypes } from "../../UserAccountStorageBackendType";
+import {
+  USER_ACCOUNT_STORAGE_BACKEND_TYPES,
+  UserAccountStorageBackendTypes
+} from "@shared/user/account/storage/backend/UserAccountStorageBackendType";
 import { ISecuredUserSignUpPayload } from "@main/user/account/SecuredUserSignUpPayload";
 import { UUID } from "crypto";
 import { ISecuredPassword } from "@main/utils/encryption/SecuredPassword";
@@ -21,62 +23,21 @@ import {
 import { getSQLiteVersion } from "@main/utils/SQLite/getSQLiteVersion";
 import { getSQLiteJournalModePragmaResult } from "@main/utils/SQLite/getSQLiteJournalModePragmaResult";
 import { getSQLiteForeignKeysPragmaResult } from "@main/utils/SQLite/getSQLiteForeignKeysPragmaResult";
+import {
+  IRawStorageSecuredUserDataStorageConfig,
+  rawStorageSecuredUserDataStorageConfigToStorageSecuredUserDataStorageConfig
+} from "./utils/RawStorageSecuredUserDataStorageConfig";
+import {
+  IRawStorageSecuredUserDataStorageVisibilityGroupConfig,
+  rawStorageSecuredUserDataStorageVisibilityGroupConfigToStorageSecuredUserDataStorageVisibilityGroupConfig
+} from "./utils/RawStorageSecuredUserDataStorageVisibilityGroupConfig";
+import { ILocalSQLiteUserAccountStorageBackendInfo } from "@shared/user/account/storage/backend/info/implementations/LocalSQLite/LocalSQLiteUserAccountStorageBackendInfo";
 
 export interface ILocalSQLiteUserAccountStorageBackendConfig extends IBaseUserAccountStorageBackendConfig {
-  type: UserAccountStorageBackendTypes["LocalSQLite"];
+  type: UserAccountStorageBackendTypes["localSQLite"];
   dbDirPath: string;
   dbFileName: string;
 }
-
-// TODO: Move these to utils dir
-
-interface IRawStorageSecuredUserDataStorageConfig {
-  storageId: UUID;
-  visibilityGroupId: UUID;
-  userDataStorageConfigIV: Buffer;
-  userDataStorageConfigData: Buffer;
-}
-
-const rawStorageSecuredUserDataStorageConfigToStorageSecuredUserDataStorageConfig = (
-  rawStorageSecuredUserDataStorageConfig: IRawStorageSecuredUserDataStorageConfig,
-  userId: UUID,
-  logger: LogFunctions | null
-): IStorageSecuredUserDataStorageConfig => {
-  logger?.debug("Converting Raw Storage Secured User Data Config to Storage Secured User Data Storage Config.");
-  return {
-    storageId: rawStorageSecuredUserDataStorageConfig.storageId,
-    userId: userId,
-    visibilityGroupId: rawStorageSecuredUserDataStorageConfig.visibilityGroupId,
-    encryptedPrivateStorageSecuredUserDataStorageConfig: {
-      data: rawStorageSecuredUserDataStorageConfig.userDataStorageConfigData,
-      iv: rawStorageSecuredUserDataStorageConfig.userDataStorageConfigIV
-    }
-  } satisfies IStorageSecuredUserDataStorageConfig;
-};
-
-interface IRawStorageSecuredUserDataStorageVisibilityGroupConfig {
-  visibilityGroupId: UUID;
-  userDataStorageVisibilityGroupConfigIV: Buffer;
-  userDataStorageVisibilityGroupConfigData: Buffer;
-}
-
-const rawStorageSecuredUserDataStorageVisibilityGroupConfigToStorageSecuredUserDataStorageVisibilityGroupConfig = (
-  rawStorageSecuredUserDataStorageVisibilityGroupConfig: IRawStorageSecuredUserDataStorageVisibilityGroupConfig,
-  userId: UUID,
-  logger: LogFunctions | null
-): IStorageSecuredUserDataStorageVisibilityGroupConfig => {
-  logger?.debug(
-    "Converting Raw Storage Secured User Data Storage Visibility Group Config to Storage Secured User Data Storage Visibility Group Config."
-  );
-  return {
-    visibilityGroupId: rawStorageSecuredUserDataStorageVisibilityGroupConfig.visibilityGroupId,
-    userId: userId,
-    encryptedPrivateStorageSecuredUserDataStorageVisibilityGroupConfig: {
-      data: rawStorageSecuredUserDataStorageVisibilityGroupConfig.userDataStorageVisibilityGroupConfigData,
-      iv: rawStorageSecuredUserDataStorageVisibilityGroupConfig.userDataStorageVisibilityGroupConfigIV
-    }
-  } satisfies IStorageSecuredUserDataStorageVisibilityGroupConfig;
-};
 
 export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorageBackend<ILocalSQLiteUserAccountStorageBackendConfig> {
   public static readonly CONFIG_JSON_SCHEMA: JSONSchemaType<ILocalSQLiteUserAccountStorageBackendConfig> = {
@@ -85,7 +46,7 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     properties: {
       type: {
         type: "string",
-        enum: [USER_ACCOUNT_STORAGE_BACKEND_TYPES.LocalSQLite],
+        enum: [USER_ACCOUNT_STORAGE_BACKEND_TYPES.localSQLite],
         ...LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS.type
       },
       dbDirPath: {
@@ -119,7 +80,7 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
   public open(): boolean {
     this.logger.info(`Opening "${this.config.type}" User Account Storage Backend.`);
     if (this.isOpen()) {
-      this.logger.warn(`Already opened "${this.config.type}" User Account Storage Backend.`);
+      this.logger.warn(`Already opened "${this.config.type}" User Account Storage Backend. No-op.`);
       return true;
     }
     try {
@@ -166,8 +127,7 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
   public close(): boolean {
     this.logger.info(`Closing "${this.config.type}" User Account Storage Backend.`);
     if (this.db === null) {
-      // TODO: Remove all "No-op"s from logs?
-      this.logger.warn(`Already closed "${this.config.type}" User Account Storage Backend.`);
+      this.logger.warn(`Already closed "${this.config.type}" User Account Storage Backend. No-op.`);
       return true;
     }
     try {
@@ -182,8 +142,14 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     }
   }
 
-  public isLocal(): boolean {
-    return true;
+  public getInfo(): ILocalSQLiteUserAccountStorageBackendInfo {
+    return {
+      type: this.config.type,
+      dbDirPath: this.config.dbDirPath,
+      dbFileName: this.config.dbFileName,
+      isOpen: this.isOpen(),
+      isLocal: true
+    };
   }
 
   public isUserIdAvailable(userId: UUID): boolean {
@@ -191,8 +157,8 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     if (this.db === null) {
       throw new Error(`Closed "${this.config.type}" User Account Storage Backend`);
     }
-    const IS_USER_ID_AVAILABLE_SQL = `SELECT COUNT(*) AS count FROM users WHERE user_id = @userId`;
-    const RESULT = this.db.prepare(IS_USER_ID_AVAILABLE_SQL).get({ userId: userId }) as { count: number };
+    const SQL_QUERY = `SELECT COUNT(*) AS count FROM users WHERE user_id = @userId`;
+    const RESULT = this.db.prepare(SQL_QUERY).get({ userId: userId }) as { count: number };
     if (RESULT.count === 0) {
       this.logger.debug(`User ID "${userId}" is available.`);
       return true;
@@ -208,8 +174,8 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     if (this.db === null) {
       throw new Error(`Closed "${this.config.type}" User Account Storage Backend`);
     }
-    const IS_USERNAME_AVAILABLE_SQL = "SELECT COUNT(*) AS count FROM users WHERE username = @username";
-    const RESULT = this.db.prepare(IS_USERNAME_AVAILABLE_SQL).get({ username: username }) as { count: number };
+    const SQL_QUERY = "SELECT COUNT(*) AS count FROM users WHERE username = @username";
+    const RESULT = this.db.prepare(SQL_QUERY).get({ username: username }) as { count: number };
     if (RESULT.count === 0) {
       this.logger.debug(`Username "${username}" is available.`);
       return true;
@@ -225,14 +191,14 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     if (this.db === null) {
       throw new Error(`Closed "${this.config.type}" User Account Storage Backend`);
     }
-    const ADD_USER_SQL = `
+    const SQL_QUERY = `
     INSERT INTO users (
       user_id, username, password_hash, password_salt, data_aes_key_salt
     ) VALUES (
       @userId, @username, @passwordHash, @passwordSalt, @dataAESKeySalt
     )`;
     try {
-      const RUN_RESULT: RunResult = this.db.prepare(ADD_USER_SQL).run({
+      const RUN_RESULT: RunResult = this.db.prepare(SQL_QUERY).run({
         userId: securedUserSignInPayload.userId,
         username: securedUserSignInPayload.username,
         passwordHash: securedUserSignInPayload.securedPassword.hash,
@@ -253,8 +219,8 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     if (this.db === null) {
       throw new Error(`Closed "${this.config.type}" User Account Storage Backend`);
     }
-    const GET_USER_ID_SQL = "SELECT user_id AS userId FROM users WHERE username = @username LIMIT 1";
-    const RESULT = this.db.prepare(GET_USER_ID_SQL).get({ username: username }) as { userId: UUID } | undefined;
+    const SQL_QUERY = "SELECT user_id AS userId FROM users WHERE username = @username LIMIT 1";
+    const RESULT = this.db.prepare(SQL_QUERY).get({ username: username }) as { userId: UUID } | undefined;
     return RESULT === undefined ? null : RESULT.userId;
   }
 
@@ -263,11 +229,8 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     if (this.db === null) {
       throw new Error(`Closed "${this.config.type}" User Account Storage Backend`);
     }
-    const GET_SECURED_USER_PASSWORD_SALT_SQL =
-      "SELECT password_hash AS passwordHash, password_salt AS passwordSalt FROM users WHERE user_id = @userId LIMIT 1";
-    const RESULT = this.db.prepare(GET_SECURED_USER_PASSWORD_SALT_SQL).get({ userId: userId }) as
-      | { passwordHash: string; passwordSalt: string }
-      | undefined;
+    const SQL_QUERY = "SELECT password_hash AS passwordHash, password_salt AS passwordSalt FROM users WHERE user_id = @userId LIMIT 1";
+    const RESULT = this.db.prepare(SQL_QUERY).get({ userId: userId }) as { passwordHash: string; passwordSalt: string } | undefined;
     return RESULT === undefined ? null : { hash: RESULT.passwordHash, salt: RESULT.passwordSalt };
   }
 
@@ -276,8 +239,8 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     if (this.db === null) {
       throw new Error(`Closed "${this.config.type}" User Account Storage Backend`);
     }
-    const GET_USER_DATA_KEY_SALT_SQL = "SELECT data_aes_key_salt AS dataAESKeySalt FROM users WHERE user_id = @userId LIMIT 1";
-    const RESULT = this.db.prepare(GET_USER_DATA_KEY_SALT_SQL).get({ userId: userId }) as { dataAESKeySalt: string } | undefined;
+    const SQL_QUERY = "SELECT data_aes_key_salt AS dataAESKeySalt FROM users WHERE user_id = @userId LIMIT 1";
+    const RESULT = this.db.prepare(SQL_QUERY).get({ userId: userId }) as { dataAESKeySalt: string } | undefined;
     return RESULT === undefined ? null : RESULT.dataAESKeySalt;
   }
 
@@ -286,8 +249,8 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     if (this.db === null) {
       throw new Error(`Closed "${this.config.type}" User Account Storage Backend`);
     }
-    const USER_COUNT_SQL = "SELECT COUNT(*) AS count FROM users";
-    const RESULT = this.db.prepare(USER_COUNT_SQL).get() as { count: number };
+    const SQL_QUERY = "SELECT COUNT(*) AS count FROM users";
+    const RESULT = this.db.prepare(SQL_QUERY).get() as { count: number };
     this.logger.debug(`User count: ${RESULT.count.toString()}.`);
     return RESULT.count;
   }
@@ -297,8 +260,8 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     if (this.db === null) {
       throw new Error(`Closed "${this.config.type}" User Account Storage Backend`);
     }
-    const GET_USERNAME_FOR_USER_ID_SQL = "SELECT username FROM users WHERE user_id = @userId";
-    const RESULT = this.db.prepare(GET_USERNAME_FOR_USER_ID_SQL).get({ userId: userId }) as { username: string } | undefined;
+    const SQL_QUERY = "SELECT username FROM users WHERE user_id = @userId";
+    const RESULT = this.db.prepare(SQL_QUERY).get({ userId: userId }) as { username: string } | undefined;
     if (RESULT === undefined) {
       this.logger.silly(`User with ID "${userId}" has no username (does not exist).`);
       return null;
@@ -312,8 +275,8 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     if (this.db === null) {
       throw new Error(`Closed "${this.config.type}" User Account Storage Backend`);
     }
-    const IS_USER_DATA_STORAGE_STORAGE_ID_AVAILABLE_SQL = `SELECT COUNT(*) AS count FROM user_data_storage_configs WHERE storage_id = @storageId`;
-    const RESULT = this.db.prepare(IS_USER_DATA_STORAGE_STORAGE_ID_AVAILABLE_SQL).get({ storageId: storageId }) as { count: number };
+    const SQL_QUERY = `SELECT COUNT(*) AS count FROM user_data_storage_configs WHERE storage_id = @storageId`;
+    const RESULT = this.db.prepare(SQL_QUERY).get({ storageId: storageId }) as { count: number };
     if (RESULT.count === 0) {
       this.logger.debug(`User Data Storage ID "${storageId}" is available.`);
       return true;
@@ -335,14 +298,14 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
       this.logger.debug("Invalid Storage Secured User Data Storage Config.");
       return false;
     }
-    const ADD_STORAGE_SECURED_USER_DATA_STORAGE_CONFIG_SQL = `
+    const SQL_QUERY = `
     INSERT INTO user_data_storage_configs (
       storage_id, user_id, visibility_group_id, user_data_storage_config_iv, user_data_storage_config_data
     ) VALUES (
       @storageId, @userId, @visibilityGroupId, @userDataStorageConfigIV, @userDataStorageConfigData
     )`;
     try {
-      const RUN_RESULT: RunResult = this.db.prepare(ADD_STORAGE_SECURED_USER_DATA_STORAGE_CONFIG_SQL).run({
+      const RUN_RESULT: RunResult = this.db.prepare(SQL_QUERY).run({
         storageId: storageSecuredUserDataStorageConfig.storageId,
         userId: storageSecuredUserDataStorageConfig.userId,
         visibilityGroupId: storageSecuredUserDataStorageConfig.visibilityGroupId,
@@ -364,7 +327,6 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     if (this.db === null) {
       throw new Error(`Closed "${this.config.type}" User Account Storage Backend`);
     }
-    // TODO: Improve logging
     let SQLQuery = `
       SELECT
         storage_id AS storageId,
@@ -444,13 +406,11 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     if (this.db === null) {
       throw new Error(`Closed "${this.config.type}" User Account Storage Backend`);
     }
-    const IS_USER_DATA_STORAGE_STORAGE_VISIBILITY_GROUP_ID_AVAILABLE_SQL = `
+    const SQL_QUERY = `
     SELECT
       COUNT(*) AS count
-    FROM user_data_storage_visibility_groups WHERE visibility_group_id = @visibilityGroupId`;
-    const RESULT = this.db
-      .prepare(IS_USER_DATA_STORAGE_STORAGE_VISIBILITY_GROUP_ID_AVAILABLE_SQL)
-      .get({ visibilityGroupId: dataStorageVisibilityGroupId }) as { count: number };
+    FROM user_data_storage_visibility_group_configs WHERE visibility_group_id = @visibilityGroupId`;
+    const RESULT = this.db.prepare(SQL_QUERY).get({ visibilityGroupId: dataStorageVisibilityGroupId }) as { count: number };
     if (RESULT.count === 0) {
       this.logger.debug(`User Data Storage Visibility Group ID "${dataStorageVisibilityGroupId}" is available.`);
       return true;
@@ -479,8 +439,8 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
       return false;
     }
     const SQL_QUERY = `
-    INSERT INTO user_data_storage_visibility_groups (
-      visibility_group_id, user_id, user_data_storage_visibility_group_iv, user_data_storage_visibility_group_data
+    INSERT INTO user_data_storage_visibility_group_configs (
+      visibility_group_id, user_id, user_data_storage_visibility_group_config_iv, user_data_storage_visibility_group_config_data
     ) VALUES (
       @visibilityGroupId, @userId, @userDataStorageVisibilityGroupConfigIV, @userDataStorageVisibilityGroupConfigData
     )`;
@@ -508,7 +468,6 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     options: IDataStorageVisibilityGroupFilter
   ): IStorageSecuredUserDataStorageVisibilityGroupConfig[] {
     const { userId, includeIds, excludeIds } = options;
-    // TODO: Improve logging
     this.logger.debug(`Getting Storage Secured User Data Storage Visibility Group Configs for user: "${userId}".`);
     if (this.db === null) {
       throw new Error(`Closed "${this.config.type}" User Account Storage Backend`);
@@ -516,10 +475,10 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     let SQLQuery = `
       SELECT
         visibility_group_id AS visibilityGroupId,
-        user_data_storage_visibility_group_iv AS userDataStorageVisibilityGroupConfigIV,
-        user_data_storage_visibility_group_data AS userDataStorageVisibilityGroupConfigData
+        user_data_storage_visibility_group_config_iv AS userDataStorageVisibilityGroupConfigIV,
+        user_data_storage_visibility_group_config_data AS userDataStorageVisibilityGroupConfigData
       FROM
-        user_data_storage_visibility_groups
+        user_data_storage_visibility_group_configs
       WHERE
         user_id = @userId
     `;
@@ -577,12 +536,12 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     const SQL_QUERY = `
       SELECT
         v.visibility_group_id AS visibilityGroupId,
-        v.user_data_storage_visibility_group_iv AS userDataStorageVisibilityGroupConfigIV,
-        v.user_data_storage_visibility_group_data AS userDataStorageVisibilityGroupConfigData
+        v.user_data_storage_visibility_group_config_iv AS userDataStorageVisibilityGroupConfigIV,
+        v.user_data_storage_visibility_group_config_data AS userDataStorageVisibilityGroupConfigData
       FROM
         user_data_storage_configs c
       JOIN
-        user_data_storage_visibility_groups v
+        user_data_storage_visibility_group_configs v
       ON
         c.visibility_group_id = v.visibility_group_id
       WHERE
@@ -606,13 +565,13 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     if (this.db === null) {
       throw new Error(`Closed "${this.config.type}" User Account Storage Backend`);
     }
-    const SELECT_USERS_TABLE_SQL = "SELECT name FROM sqlite_master WHERE type='table' AND name='users'";
-    const DOES_USERS_TABLE_EXIST: boolean = this.db.prepare(SELECT_USERS_TABLE_SQL).get() !== undefined;
-    if (DOES_USERS_TABLE_EXIST) {
+    const DOES_EXIST_SQL_QUERY = "SELECT name FROM sqlite_master WHERE type='table' AND name='users'";
+    const DOES_EXIST: boolean = this.db.prepare(DOES_EXIST_SQL_QUERY).get() !== undefined;
+    if (DOES_EXIST) {
       this.logger.debug('Found "users" table.');
     } else {
       this.logger.debug('Did not find "users" table.');
-      const CREATE_USERS_TABLE_SQL = `
+      const CREATE_SQL_QUERY = `
       CREATE TABLE IF NOT EXISTS users (
         user_id TEXT NOT NULL PRIMARY KEY,
         username TEXT NOT NULL UNIQUE,
@@ -621,7 +580,7 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
         data_aes_key_salt TEXT NOT NULL
       )
       `;
-      this.db.prepare(CREATE_USERS_TABLE_SQL).run();
+      this.db.prepare(CREATE_SQL_QUERY).run();
       this.logger.debug('Created "users" table.');
     }
   }
@@ -631,50 +590,47 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     if (this.db === null) {
       throw new Error(`Closed "${this.config.type}" User Account Storage Backend`);
     }
-    const SELECT_USER_DATA_STORAGE_CONFIGS_TABLE_SQL = "SELECT name FROM sqlite_master WHERE type='table' AND name='user_data_storage_configs'";
-    const DOES_USER_DATA_STORAGE_CONFIGS_TABLE_EXIST: boolean = this.db.prepare(SELECT_USER_DATA_STORAGE_CONFIGS_TABLE_SQL).get() !== undefined;
-    if (DOES_USER_DATA_STORAGE_CONFIGS_TABLE_EXIST) {
+    const DOES_EXIST_SQL_QUERY = "SELECT name FROM sqlite_master WHERE type='table' AND name='user_data_storage_configs'";
+    const DOES_EXIST: boolean = this.db.prepare(DOES_EXIST_SQL_QUERY).get() !== undefined;
+    if (DOES_EXIST) {
       this.logger.debug('Found "user_data_storage_configs" table.');
     } else {
       this.logger.debug('Did not find "user_data_storage_configs" table.');
-      const CREATE_USER_DATA_STORAGE_CONFIGS_TABLE_SQL = `
+      const CREATE_SQL_QUERY = `
       CREATE TABLE IF NOT EXISTS user_data_storage_configs (
         storage_id TEXT NOT NULL PRIMARY KEY,
         user_id TEXT NOT NULL REFERENCES users(user_id) ON UPDATE CASCADE ON DELETE CASCADE,
-        visibility_group_id TEXT REFERENCES user_data_storage_visibility_groups(visibility_group_id) ON UPDATE CASCADE ON DELETE CASCADE,
+        visibility_group_id TEXT REFERENCES user_data_storage_visibility_group_configs(visibility_group_id) ON UPDATE CASCADE ON DELETE CASCADE,
         user_data_storage_config_iv BLOB NOT NULL,
         user_data_storage_config_data BLOB NOT NULL
       )
       `;
-      this.db.prepare(CREATE_USER_DATA_STORAGE_CONFIGS_TABLE_SQL).run();
+      this.db.prepare(CREATE_SQL_QUERY).run();
       this.logger.debug('Created "user_data_storage_configs" table.');
     }
   }
 
   private createUserDataStorageVisibilityGroupConfigsTable(): void {
-    // TODO: Rename table and members
-    this.logger.debug('Creating "user_data_storage_visibility_groups" table.');
+    this.logger.debug('Creating "user_data_storage_visibility_group_configs" table.');
     if (this.db === null) {
       throw new Error(`Closed "${this.config.type}" User Account Storage Backend`);
     }
-    const SELECT_USER_DATA_STORAGE_VISIBILITY_GROUPS_TABLE_SQL =
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='user_data_storage_visibility_groups'";
-    const DOES_USER_DATA_STORAGE_VISIBILITY_GROUPS_TABLE_EXIST: boolean =
-      this.db.prepare(SELECT_USER_DATA_STORAGE_VISIBILITY_GROUPS_TABLE_SQL).get() !== undefined;
-    if (DOES_USER_DATA_STORAGE_VISIBILITY_GROUPS_TABLE_EXIST) {
-      this.logger.debug('Found "user_data_storage_visibility_groups" table.');
+    const DOES_EXIST_SQL_QUERY = "SELECT name FROM sqlite_master WHERE type='table' AND name='user_data_storage_visibility_group_configs'";
+    const DOES_EXIST: boolean = this.db.prepare(DOES_EXIST_SQL_QUERY).get() !== undefined;
+    if (DOES_EXIST) {
+      this.logger.debug('Found "user_data_storage_visibility_group_configs" table.');
     } else {
-      this.logger.debug('Did not find "user_data_storage_visibility_groups" table.');
-      const CREATE_USER_DATA_STORAGE_VISIBILITY_GROUPS_TABLE_SQL = `
-      CREATE TABLE IF NOT EXISTS user_data_storage_visibility_groups (
+      this.logger.debug('Did not find "user_data_storage_visibility_group_configs" table.');
+      const CREATE_SQL_QUERY = `
+      CREATE TABLE IF NOT EXISTS user_data_storage_visibility_group_configs (
         visibility_group_id TEXT NOT NULL PRIMARY KEY,
         user_id TEXT NOT NULL REFERENCES users(user_id) ON UPDATE CASCADE ON DELETE CASCADE,
-        user_data_storage_visibility_group_iv BLOB NOT NULL,
-        user_data_storage_visibility_group_data BLOB NOT NULL
+        user_data_storage_visibility_group_config_iv BLOB NOT NULL,
+        user_data_storage_visibility_group_config_data BLOB NOT NULL
       )
       `;
-      this.db.prepare(CREATE_USER_DATA_STORAGE_VISIBILITY_GROUPS_TABLE_SQL).run();
-      this.logger.debug('Created "user_data_storage_visibility_groups" table.');
+      this.db.prepare(CREATE_SQL_QUERY).run();
+      this.logger.debug('Created "user_data_storage_visibility_group_configs" table.');
     }
   }
 }

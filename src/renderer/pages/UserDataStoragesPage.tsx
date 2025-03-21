@@ -1,4 +1,4 @@
-import { FC, MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
+import { FC, useCallback, useEffect } from "react";
 import Button from "@mui/material/Button/Button";
 import { appLogger } from "@renderer/utils/loggers";
 import NewUserDataStorageConfigFormDialog from "@renderer/components/dialogs/NewUserDataStorageConfigFormDialog";
@@ -9,38 +9,32 @@ import {
   IUserDataStoragesLayoutRootContext,
   useUserDataStoragesLayoutRootContext
 } from "@renderer/components/roots/userDataStoragesLayoutRoot/UserDataStoragesLayoutRootContext";
-import { USER_DATA_STORAGES_NAVIGATION_AREAS } from "@renderer/navigationAreas/UserDataStoragesNavigationAreas";
+import { USER_DATA_NAVIGATION_AREAS } from "@renderer/navigationAreas/UserDataStoragesNavigationAreas";
+import { useDialogOpenState } from "@renderer/hooks/useDialogState";
 
 const UserDataStoragesPage: FC = () => {
   const userDataStoragesLayoutRootContext: IUserDataStoragesLayoutRootContext = useUserDataStoragesLayoutRootContext();
-  const [isNewUserDataStorageConfigFormDialogOpen, setIsNewUserDataStorageConfigFormDialogOpen] = useState<boolean>(false);
-  const isInitialMount: MutableRefObject<boolean> = useRef<boolean>(true);
+  const [isNewUserDataStorageConfigFormDialogOpen, setIsNewUserDataStorageConfigFormDialogOpen] = useDialogOpenState(
+    appLogger,
+    "new User Data Storage Config form"
+  );
 
   const handleNewDataStorageButtonClick = useCallback((): void => {
     appLogger.debug("New User Data Storage button clicked.");
     setIsNewUserDataStorageConfigFormDialogOpen(true);
-  }, []);
+  }, [setIsNewUserDataStorageConfigFormDialogOpen]);
 
   const handleNewUserDataStorageConfigFormDialogClose = useCallback((): void => {
     setIsNewUserDataStorageConfigFormDialogOpen(false);
-  }, []);
+  }, [setIsNewUserDataStorageConfigFormDialogOpen]);
 
   const handleSuccessfullyAddedNewUserDataStorageConfig = useCallback((): void => {
     handleNewUserDataStorageConfigFormDialogClose();
   }, [handleNewUserDataStorageConfigFormDialogClose]);
 
   useEffect((): void => {
-    if (isInitialMount.current) {
-      // Skip logging on the initial render
-      isInitialMount.current = false;
-      return;
-    }
-    appLogger.debug(`${isNewUserDataStorageConfigFormDialogOpen ? "Opened" : "Closed"} new User Data Storage Config form dialog.`);
-  }, [isNewUserDataStorageConfigFormDialogOpen]);
-
-  useEffect((): void => {
     userDataStoragesLayoutRootContext.setDashboardNavigationArea(DASHBOARD_NAVIGATION_AREAS.userDataStorages);
-    userDataStoragesLayoutRootContext.setUserStoragesNavigationArea(USER_DATA_STORAGES_NAVIGATION_AREAS.availableStorages);
+    userDataStoragesLayoutRootContext.setUserStoragesNavigationArea(USER_DATA_NAVIGATION_AREAS.availableStorages);
     userDataStoragesLayoutRootContext.setAppBarTitle("Available Data Storages");
     userDataStoragesLayoutRootContext.setForbiddenLocationName("Available Data Storages");
   }, [userDataStoragesLayoutRootContext]);

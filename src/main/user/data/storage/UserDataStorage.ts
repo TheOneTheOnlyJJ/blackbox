@@ -57,7 +57,7 @@ export class UserDataStorage {
       storageId: this.storageId,
       name: this.name,
       description: this.description,
-      visibilityGroupName: this.visibilityGroupName, // TODO: Move this higher up?
+      visibilityGroupName: this.visibilityGroupName, // TODO: Move this higher up? This should be the ID and the renderer should get it dynamically
       backend: this.backendInfo,
       isOpen: this.isOpen()
     } satisfies IUserDataStorageInfo;

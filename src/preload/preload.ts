@@ -4,10 +4,11 @@ import {
   IUserAPI,
   USER_API_IPC_CHANNELS,
   UserAccountStorageChangedCallback,
-  UserAccountStorageOpenChangedCallback,
+  // UserAccountStorageOpenChangedCallback,
   UserAPIIPCChannel,
   AvailableUserDataStoragesChangedCallback,
-  OpenUserDataStorageVisibilityGroupsChangedCallback
+  OpenUserDataStorageVisibilityGroupsChangedCallback,
+  UserAccountStorageInfoChangedCallback
 } from "@shared/IPC/APIs/UserAPI";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IIPCTLSAPI, IPC_TLS_API_IPC_CHANNELS, IPCTLSAPIIPCChannel, IPCTLSReadinessChangedCallback } from "@shared/IPC/APIs/IPCTLSAPI";
@@ -319,12 +320,12 @@ const USER_API: IUserAPI = {
       ipcRenderer.removeListener(CHANNEL, LISTENER);
     };
   },
-  onUserAccountStorageOpenChanged: (callback: UserAccountStorageOpenChangedCallback): (() => void) => {
-    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.onUserAccountStorageOpenChanged;
+  onUserAccountStorageInfoChanged: (callback: UserAccountStorageInfoChangedCallback): (() => void) => {
+    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.onUserAccountStorageInfoChanged;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Adding listener from main on channel: "${CHANNEL}".`);
-    const LISTENER = (_: IpcRendererEvent, newIsUserAccountStorageOpen: boolean): void => {
+    const LISTENER = (_: IpcRendererEvent, newUserAccountStorageInfo: IUserAccountStorageInfo): void => {
       sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Received message from main on channel: "${CHANNEL}".`);
-      callback(newIsUserAccountStorageOpen);
+      callback(newUserAccountStorageInfo);
     };
     ipcRenderer.on(CHANNEL, LISTENER);
     return (): void => {

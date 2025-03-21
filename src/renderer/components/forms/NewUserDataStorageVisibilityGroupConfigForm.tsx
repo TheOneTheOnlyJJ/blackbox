@@ -71,7 +71,7 @@ const NewUserDataStorageVisibilityGroupConfigForm: FC<INewUserDataStorageVisibil
   const isSubmitButtonDisabled = useMemo<boolean>((): boolean => {
     return props.isAddUserDataStorageVisibilityGroupConfigPending || appRootContext.userAccountStorageInfo === null
       ? true
-      : !appRootContext.userAccountStorageInfo.isOpen;
+      : !appRootContext.userAccountStorageInfo.backend.isOpen;
   }, [props.isAddUserDataStorageVisibilityGroupConfigPending, appRootContext.userAccountStorageInfo]);
 
   const handleFormSubmit = useCallback(

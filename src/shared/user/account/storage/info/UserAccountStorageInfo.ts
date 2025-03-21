@@ -4,5 +4,4 @@ export interface IUserAccountStorageInfo {
   storageId: string;
   name: string;
   backend: UserAccountStorageBackendInfo;
-  isOpen: boolean;
 }

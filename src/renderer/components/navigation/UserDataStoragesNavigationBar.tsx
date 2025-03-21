@@ -4,12 +4,12 @@ import ViewListOutlinedIcon from "@mui/icons-material/ViewListOutlined";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
 import DebouncedLink from "./DebouncedLink";
-import { USER_DATA_STORAGES_NAVIGATION_AREAS, UserDataStoragesNavigationArea } from "@renderer/navigationAreas/UserDataStoragesNavigationAreas";
+import { USER_DATA_NAVIGATION_AREAS, UserDataNavigationArea } from "@renderer/navigationAreas/UserDataStoragesNavigationAreas";
 
 interface IUserDataStoragesNavigationBarDrawerItem {
   name: string;
   icon: SvgIconComponent;
-  userDataStoragesNavigationArea: UserDataStoragesNavigationArea;
+  userDataNavigationArea: UserDataNavigationArea;
   path: string;
   divider: boolean;
 }
@@ -19,7 +19,7 @@ export interface IUserDataStoragesNavigationBarProps {
   leftOffset: number;
   heightOffset: number;
   signedInUserId: string;
-  userStoragesNavigationArea: UserDataStoragesNavigationArea | null;
+  userStoragesNavigationArea: UserDataNavigationArea | null;
 }
 
 const UserDataStoragesNavigationBar = forwardRef<HTMLDivElement, IUserDataStoragesNavigationBarProps>(function UserDataStoragesNavigationBar(
@@ -34,14 +34,14 @@ const UserDataStoragesNavigationBar = forwardRef<HTMLDivElement, IUserDataStorag
       {
         name: "Available Storages",
         icon: ViewListOutlinedIcon,
-        userDataStoragesNavigationArea: USER_DATA_STORAGES_NAVIGATION_AREAS.availableStorages,
+        userDataNavigationArea: USER_DATA_NAVIGATION_AREAS.availableStorages,
         path: `/users/${props.signedInUserId}/dataStorages`,
         divider: false
       },
       {
         name: "Visibility Groups",
         icon: VisibilityIcon,
-        userDataStoragesNavigationArea: USER_DATA_STORAGES_NAVIGATION_AREAS.visibilityGroups,
+        userDataNavigationArea: USER_DATA_NAVIGATION_AREAS.visibilityGroups,
         path: `/users/${props.signedInUserId}/dataStorages/visibilityGroups`,
         divider: false
       }
@@ -67,11 +67,7 @@ const UserDataStoragesNavigationBar = forwardRef<HTMLDivElement, IUserDataStorag
           {DRAWER_ITEMS.map(
             (item: IUserDataStoragesNavigationBarDrawerItem, index: number): React.JSX.Element => (
               <ListItem key={index} disablePadding divider={item.divider}>
-                <ListItemButton
-                  component={DebouncedLink}
-                  to={item.path}
-                  selected={props.userStoragesNavigationArea === item.userDataStoragesNavigationArea}
-                >
+                <ListItemButton component={DebouncedLink} to={item.path} selected={props.userStoragesNavigationArea === item.userDataNavigationArea}>
                   <ListItemIcon>
                     <item.icon />
                   </ListItemIcon>

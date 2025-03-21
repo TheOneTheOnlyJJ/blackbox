@@ -15,7 +15,7 @@ import { TransformToIPCAPIChannels } from "../IPCAPIChannels";
 
 // Utility types
 export type UserAccountStorageChangedCallback = (newUserAccountStorageInfo: IUserAccountStorageInfo | null) => void;
-export type UserAccountStorageOpenChangedCallback = (newIsUserAccountStorageOpen: boolean) => void;
+export type UserAccountStorageInfoChangedCallback = (newUserAccountStorageInfo: IUserAccountStorageInfo) => void;
 export type SignedInUserChangedCallback = (newSignedInUserInfo: ISignedInUserInfo | null) => void;
 export type AvailableUserDataStoragesChangedCallback = (
   encryptedAvailableUserDataStoragesInfoChangedDiff: IEncryptedData<IUserDataStoragesInfoChangedDiff>
@@ -47,7 +47,7 @@ export interface IUserAPI {
   getAllSignedInUserAvailableDataStoragesInfo: () => IPCAPIResponse<IEncryptedData<IUserDataStorageInfo[]>>;
   getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo: () => IPCAPIResponse<IEncryptedData<IUserDataStorageVisibilityGroupInfo[]>>;
   onUserAccountStorageChanged: (callback: UserAccountStorageChangedCallback) => () => void;
-  onUserAccountStorageOpenChanged: (callback: UserAccountStorageOpenChangedCallback) => () => void;
+  onUserAccountStorageInfoChanged: (callback: UserAccountStorageInfoChangedCallback) => () => void;
   onSignedInUserChanged: (callback: SignedInUserChangedCallback) => () => void;
   onAvailableUserDataStoragesChanged: (callback: AvailableUserDataStoragesChangedCallback) => () => void;
   onOpenUserDataStorageVisibilityGroupsChanged: (callback: OpenUserDataStorageVisibilityGroupsChangedCallback) => () => void;
@@ -74,7 +74,7 @@ export const USER_API_IPC_CHANNELS: UserAPIIPCChannels = {
   getAllSignedInUserAvailableDataStoragesInfo: "UserAPI:getAllSignedInUserAvailableDataStoragesInfo",
   getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo: "UserAPI:getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo",
   onUserAccountStorageChanged: "UserAPI:onUserAccountStorageChanged",
-  onUserAccountStorageOpenChanged: "UserAPI:onUserAccountStorageOpenChanged",
+  onUserAccountStorageInfoChanged: "UserAPI:onUserAccountStorageInfoChanged",
   onSignedInUserChanged: "UserAPI:onSignedInUserChanged",
   onAvailableUserDataStoragesChanged: "UserAPI:onAvailableUserDataStoragesChanged",
   onOpenUserDataStorageVisibilityGroupsChanged: "UserAPI:onOpenUserDataStorageVisibilityGroupsChanged"

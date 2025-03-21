@@ -26,7 +26,7 @@ export const USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIG_CREATE_INPUT_JSON_SCHEMA:
 } as const;
 
 export const USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIG_CREATE_INPUT_UI_SCHEMA: UiSchema<IUserDataStorageVisibilityGroupConfigCreateInput> = {
-  "ui:title": "New Data Storage Visibility Group",
+  "ui:title": "New data storage visibility group",
   description: {
     "ui:widget": "textarea"
   },

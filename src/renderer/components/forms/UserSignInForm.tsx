@@ -43,7 +43,7 @@ const UserSignInForm: FC<IUserSignInFormProps> = (props: IUserSignInFormProps) =
   const [wasSignInSuccessful, setWasSignInSuccessful] = useState<boolean>(true);
 
   const isSubmitButtonDisabled = useMemo<boolean>((): boolean => {
-    return props.isSignInPending || appRootContext.userAccountStorageInfo === null ? true : !appRootContext.userAccountStorageInfo.isOpen;
+    return props.isSignInPending || appRootContext.userAccountStorageInfo === null ? true : !appRootContext.userAccountStorageInfo.backend.isOpen;
   }, [props.isSignInPending, appRootContext.userAccountStorageInfo]);
 
   const handleFormSubmit = useCallback(
@@ -106,13 +106,13 @@ const UserSignInForm: FC<IUserSignInFormProps> = (props: IUserSignInFormProps) =
       noHtml5Validate={true}
     >
       {!wasSignInSuccessful && (
-        <Alert severity="error" sx={{ marginTop: "1vw" }}>
+        <Alert severity="error" sx={{ marginTop: "1em" }}>
           <AlertTitle>Invalid credentials!</AlertTitle>
           The username or password you entered are incorrect!
         </Alert>
       )}
       {props.renderSubmitButton && (
-        <Button type="submit" disabled={isSubmitButtonDisabled} variant="contained" size="large" sx={{ marginTop: "1vw", marginBottom: "1vw" }}>
+        <Button type="submit" disabled={isSubmitButtonDisabled} variant="contained" size="large" sx={{ marginTop: "1em", marginBottom: "1em" }}>
           {props.isSignInPending ? "Signing In..." : "Sign In"}
         </Button>
       )}

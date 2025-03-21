@@ -1,4 +1,7 @@
-import { USER_ACCOUNT_STORAGE_BACKEND_TYPES, UserAccountStorageBackendType } from "@main/user/account/storage/backend/UserAccountStorageBackendType";
+import {
+  USER_ACCOUNT_STORAGE_BACKEND_TYPES,
+  UserAccountStorageBackendType
+} from "@shared/user/account/storage/backend/UserAccountStorageBackendType";
 import { JSONSchemaType } from "ajv";
 import {
   ILocalSQLiteUserAccountStorageBackendInfo,
@@ -7,7 +10,7 @@ import {
 
 // Map of every user account storage backend type to its corresponding info type
 export interface IUserAccountStorageBackendInfoMap {
-  [USER_ACCOUNT_STORAGE_BACKEND_TYPES.LocalSQLite]: ILocalSQLiteUserAccountStorageBackendInfo;
+  [USER_ACCOUNT_STORAGE_BACKEND_TYPES.localSQLite]: ILocalSQLiteUserAccountStorageBackendInfo;
 }
 // Union of all concrete user account storage backend config info interfaces
 export type UserAccountStorageBackendInfo = IUserAccountStorageBackendInfoMap[keyof IUserAccountStorageBackendInfoMap];
@@ -16,7 +19,7 @@ type UserAccountStorageBackendInfoJSONSchemaMap = {
   [K in UserAccountStorageBackendType]: JSONSchemaType<IUserAccountStorageBackendInfoMap[K]>;
 };
 export const USER_ACCOUNT_STORAGE_BACKEND_INFO_JSON_SCHEMA_MAP: UserAccountStorageBackendInfoJSONSchemaMap = {
-  [USER_ACCOUNT_STORAGE_BACKEND_TYPES.LocalSQLite]: LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_INFO_JSON_SCHEMA
+  [USER_ACCOUNT_STORAGE_BACKEND_TYPES.localSQLite]: LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_INFO_JSON_SCHEMA
 } as const;
 
 export const USER_ACCOUNT_STORAGE_BACKEND_INFO_JSON_SCHEMA: JSONSchemaType<UserAccountStorageBackendInfo> = {

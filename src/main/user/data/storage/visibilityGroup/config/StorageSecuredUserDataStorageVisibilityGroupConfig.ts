@@ -11,7 +11,6 @@ export interface IStorageSecuredUserDataStorageVisibilityGroupConfig {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const isStorageSecuredUserDataStorageVisibilityGroupConfigValid = (data: any): data is IStorageSecuredUserDataStorageVisibilityGroupConfig => {
   return (
-    // TODO: Use typeof here?
     typeof data === "object" &&
     data !== null &&
     "visibilityGroupId" in data &&

@@ -53,7 +53,7 @@ const SignOutPage: FC = () => {
           overflow: "auto"
         }}
       >
-        <Typography variant="h1">Signing Out...</Typography>
+        <Typography variant="h1">Signing out...</Typography>
       </Paper>
     </Box>
   );
