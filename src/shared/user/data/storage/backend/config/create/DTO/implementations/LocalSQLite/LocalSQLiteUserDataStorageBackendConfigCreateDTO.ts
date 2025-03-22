@@ -17,8 +17,7 @@ export const LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_DTO_JSON_SCHEM
       type: {
         type: "string",
         enum: [USER_DATA_STORAGE_BACKEND_TYPES.localSQLite],
-        default: USER_DATA_STORAGE_BACKEND_TYPES.localSQLite,
-        ...LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS.type
+        default: USER_DATA_STORAGE_BACKEND_TYPES.localSQLite
       },
       dbDirPath: {
         type: "string",

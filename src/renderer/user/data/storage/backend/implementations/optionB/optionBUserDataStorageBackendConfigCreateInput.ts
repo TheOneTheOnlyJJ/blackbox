@@ -6,6 +6,8 @@ import {
 import { IBaseUserDataStorageBackendConfigCreateInput } from "../../config/create/input/BaseUserDataStorageBackendConfigCreateInput";
 import { UiSchema } from "@rjsf/utils";
 import { OPTION_B_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/backend/constants/implementations/optionB/OptionBUserDataStorageBackendConstants";
+import { BASE_USER_DATA_STORAGE_BACKEND_CONFIG_INFO_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/backend/config/info/BaseUserDataStorageBackendConfigInfo";
+import { USER_DATA_STORAGE_BACKEND_TYPE_NAMES } from "@shared/user/data/storage/backend/UserDataStorageBackendTypeName";
 
 export interface IOptionBUserDataStorageBackendConfigCreateInput extends IBaseUserDataStorageBackendConfigCreateInput {
   type: UserDataStorageBackendTypes["optionB"];
@@ -19,7 +21,7 @@ export const OPTION_B_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_JSON_SCHEMA:
       type: "string",
       enum: [USER_DATA_STORAGE_BACKEND_TYPES.optionB],
       default: USER_DATA_STORAGE_BACKEND_TYPES.optionB,
-      ...OPTION_B_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS.type
+      ...BASE_USER_DATA_STORAGE_BACKEND_CONFIG_INFO_JSON_SCHEMA_CONSTANTS.type
     },
     optionB: {
       type: "string",
@@ -31,7 +33,7 @@ export const OPTION_B_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_JSON_SCHEMA:
 } as const;
 
 export const OPTION_B_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_UI_SCHEMA: UiSchema<IOptionBUserDataStorageBackendConfigCreateInput> = {
-  "ui:title": OPTION_B_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS.type.title,
+  "ui:title": USER_DATA_STORAGE_BACKEND_TYPE_NAMES[USER_DATA_STORAGE_BACKEND_TYPES.optionB],
   "ui:options": {
     label: false
   },

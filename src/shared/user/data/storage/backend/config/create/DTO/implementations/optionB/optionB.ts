@@ -14,8 +14,7 @@ export const OPTION_B_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_DTO_JSON_SCHEMA: J
     type: {
       type: "string",
       enum: [USER_DATA_STORAGE_BACKEND_TYPES.optionB],
-      default: USER_DATA_STORAGE_BACKEND_TYPES.optionB,
-      ...OPTION_B_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS.type
+      default: USER_DATA_STORAGE_BACKEND_TYPES.optionB
     },
     optionB: {
       type: "string",
