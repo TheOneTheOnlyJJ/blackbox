@@ -14,7 +14,6 @@ import { securedUserDataStorageConfigToStorageSecuredUserDataStorageConfig } fro
 import { ISecuredUserDataStorageVisibilityGroupConfig } from "@main/user/data/storage/visibilityGroup/config/SecuredUserDataStorageVisibilityGroupConfig";
 import { securedUserDataStorageVisibilityGroupConfigToStorageSecuredUserDataStorageVisibilityGroupConfig } from "@main/user/data/storage/visibilityGroup/config/utils/securedUserDataStorageVisibilityGroupConfigToStorageSecuredUserDataStorageVisibilityGroupConfig";
 
-// TODO: Add on info update when opening, closing, etc. As of now renderer gets no updates
 export class UserAccountStorage {
   private readonly logger: LogFunctions;
   public readonly storageId: UUID;

@@ -1,15 +1,11 @@
 import { UUID } from "node:crypto";
 import log, { LogFunctions } from "electron-log";
 import { UserDataStorageBackend } from "./backend/UserDataStorageBackend";
-import { UserDataStorageBackendInfo } from "@shared/user/data/storage/backend/info/UserDataStorageBackendInfo";
 import { IUserDataStorageConfig } from "./config/UserDataStorageConfig";
 import { userDataStorageBackendFactory } from "./backend/userDataStorageBackendFactory";
-import { userDataStorageBackendConfigToUserDataStorageBackendInfo } from "./backend/config/utils/userDataStorageBackendConfigToUserDataStorageBackendInfo";
 import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
 import { ISecuredUserDataStorageConfig } from "./config/SecuredUserDataStorageConfig";
 
-// TODO: Improve logging
-// TODO: Copy from user account storage as it is much better
 export class UserDataStorage {
   private readonly logger: LogFunctions;
   public readonly storageId: UUID;
@@ -18,10 +14,12 @@ export class UserDataStorage {
   public readonly name: string;
   public readonly description: string | null;
   private readonly backend: UserDataStorageBackend;
-  public readonly visibilityGroupName: string | null;
-  public readonly backendInfo: UserDataStorageBackendInfo; // TODO: get this dynamically from data storage backend
 
-  public constructor(config: IUserDataStorageConfig | ISecuredUserDataStorageConfig, visibilityGroupName: string | null, logScope: string) {
+  public constructor(
+    config: IUserDataStorageConfig | ISecuredUserDataStorageConfig,
+    logScope: string,
+    onInfoChanged: (newInfo: Readonly<IUserDataStorageInfo>) => void
+  ) {
     this.logger = log.scope(logScope);
     this.logger.info(
       `Initialising User Data Storage "${config.name}" with ID "${config.storageId}" and backend type "${config.backendConfig.type}".`
@@ -31,9 +29,11 @@ export class UserDataStorage {
     this.visibilityGroupId = config.visibilityGroupId;
     this.name = config.name;
     this.description = config.description;
-    this.backend = userDataStorageBackendFactory(config.backendConfig, `${logScope}-backend`, this.logger);
-    this.visibilityGroupName = visibilityGroupName;
-    this.backendInfo = userDataStorageBackendConfigToUserDataStorageBackendInfo(config.backendConfig, this.logger);
+    const onBackendInfoChanged = (): void => {
+      this.logger.info("Info changed.");
+      onInfoChanged(this.getInfo());
+    };
+    this.backend = userDataStorageBackendFactory(config.backendConfig, `${logScope}-backend`, onBackendInfoChanged, this.logger);
   }
 
   public isOpen(): boolean {
@@ -58,9 +58,8 @@ export class UserDataStorage {
       storageId: this.storageId,
       name: this.name,
       description: this.description,
-      visibilityGroupName: this.visibilityGroupName, // TODO: Move this higher up? This should be the ID and the renderer should get it dynamically
-      backend: this.backendInfo,
-      isOpen: this.isOpen()
+      visibilityGroupId: this.visibilityGroupId,
+      backend: this.backend.getInfo()
     } satisfies IUserDataStorageInfo;
   }
 }

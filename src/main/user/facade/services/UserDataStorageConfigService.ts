@@ -3,13 +3,13 @@ import { UUID } from "crypto";
 import { IUserDataStorageConfig } from "@main/user/data/storage/config/UserDataStorageConfig";
 import { ISecuredUserDataStorageConfig } from "@main/user/data/storage/config/SecuredUserDataStorageConfig";
 import { userDataStorageConfigToSecuredUserDataStorageConfig } from "@main/user/data/storage/config/utils/userDataStorageConfigToSecuredUserDataStorageConfig";
-import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
 import { ISignedInUser } from "@main/user/account/SignedInUser";
 import { UserAccountStorage } from "@main/user/account/storage/UserAccountStorage";
 import { IUserDataStorageVisibilityGroup } from "@main/user/data/storage/visibilityGroup/UserDataStorageVisibilityGroup";
-import { securedUserDataStorageConfigToUserDataStorageInfo } from "@main/user/data/storage/config/utils/securedUserDataStorageConfigToUserDataStorageInfo";
+import { securedUserDataStorageConfigToUserDataStorageConfigInfo } from "@main/user/data/storage/config/utils/securedUserDataStorageConfigToUserDataStorageConfigInfo";
 import { IUserDataStorageConfigCreateDTO } from "@shared/user/data/storage/config/create/DTO/UserDataStorageConfigCreateDTO";
 import { userDataStorageConfigCreateDTOToUserDataStorageConfig } from "@main/user/data/storage/config/utils/userDataStorageConfigCreateDTOToUserDataStorageConfig";
+import { IUserDataStorageConfigInfo } from "@shared/user/data/storage/config/info/UserDataStorageConfigInfo";
 
 export interface IUserDataStorageConfigServiceContext {
   getAccountStorage: () => UserAccountStorage | null;
@@ -87,10 +87,10 @@ export class UserDataStorageConfigService {
     return ACCOUNT_STORAGE.addSecuredUserDataStorageConfig(SECURED_USER_DATA_STORAGE_CONFIG, encryptionAESKey);
   }
 
-  public getAllSignedInUserAvailableDataStoragesInfo(): IUserDataStorageInfo[] {
+  public getAllSignedInUserAvailableDataStorageConfigsInfo(): IUserDataStorageConfigInfo[] {
     this.logger.debug("Getting all signed in user's available User Data Storages Info.");
-    return this.CONTEXT.getAvailableDataStorageConfigs().map((dataStorageConfig: IUserDataStorageConfig): IUserDataStorageInfo => {
-      return securedUserDataStorageConfigToUserDataStorageInfo(dataStorageConfig, "VISGROUPNAME", null); // TODO: Remove name and have ID instead
+    return this.CONTEXT.getAvailableDataStorageConfigs().map((dataStorageConfig: IUserDataStorageConfig): IUserDataStorageConfigInfo => {
+      return securedUserDataStorageConfigToUserDataStorageConfigInfo(dataStorageConfig, null);
     });
   }
 }

@@ -36,6 +36,6 @@ export const USER_DATA_STORAGE_CONFIG_CREATE_DTO_JSON_SCHEMA: JSONSchemaType<IUs
   additionalProperties: false
 } as const;
 
-export const USER_DATA_STORAGE_CONFIG_CREATE_DTO_VALIDATE_FUNCTION: ValidateFunction<IUserDataStorageConfigCreateDTO> = AJV.compile(
+export const isValidUserDataStorageConfigCreateDTO: ValidateFunction<IUserDataStorageConfigCreateDTO> = AJV.compile(
   USER_DATA_STORAGE_CONFIG_CREATE_DTO_JSON_SCHEMA
 );

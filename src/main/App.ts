@@ -12,12 +12,12 @@ import { adjustWindowBounds } from "@main/utils/window/adjustWindowBounds";
 import { IpcMainEvent, IpcMainInvokeEvent, OpenDialogReturnValue } from "electron";
 import { IUserAPI } from "@shared/IPC/APIs/UserAPI";
 import { MainProcessIPCAPIHandlers } from "@main/utils/IPC/MainProcessIPCAPIHandlers";
-import { IUserSignUpDTO, USER_SIGN_UP_DTO_VALIDATE_FUNCTION } from "@shared/user/account/UserSignUpDTO";
+import { IUserSignUpDTO, isValidUserSignUpDTO } from "@shared/user/account/UserSignUpDTO";
 import { generateKeyPairSync, UUID, webcrypto } from "node:crypto";
 import { isAESKeyValid } from "@main/utils/encryption/isAESKeyValid";
 import { bufferToArrayBuffer } from "@main/utils/typeConversions/bufferToArrayBuffer";
 import { decryptWithAESAndValidateJSON } from "@main/utils/encryption/decryptWithAESAndValidateJSON";
-import { IUserSignInDTO, USER_SIGN_IN_DTO_VALIDATE_FUNCTION } from "@shared/user/account/UserSignInDTO";
+import { IUserSignInDTO, isValidUserSignInDTO } from "@shared/user/account/UserSignInDTO";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { settingsManagerFactory } from "@main/settings/settingsManagerFactory";
@@ -25,7 +25,7 @@ import { SETTINGS_MANAGER_TYPE } from "@main/settings/SettingsManagerType";
 import { WINDOW_STATES, WindowPosition, WindowPositionWatcher, WindowStates } from "@main/settings/WindowPositionWatcher";
 import {
   IUserDataStorageConfigCreateDTO,
-  USER_DATA_STORAGE_CONFIG_CREATE_DTO_VALIDATE_FUNCTION
+  isValidUserDataStorageConfigCreateDTO
 } from "@shared/user/data/storage/config/create/DTO/UserDataStorageConfigCreateDTO";
 import { IIPCTLSAPIMain, IPC_TLS_API_IPC_CHANNELS, IPCTLSAPIIPCChannel } from "@shared/IPC/APIs/IPCTLSAPI";
 import { IUserAccountStorageConfig } from "./user/account/storage/config/UserAccountStorageConfig";
@@ -35,22 +35,22 @@ import { SettingsManager } from "./settings/SettingsManager";
 import { BaseSettings } from "./settings/BaseSettings";
 import { SettingsManagerConfig } from "./settings/SettingsManagerConfig";
 import { ISignedInUserInfo } from "@shared/user/account/SignedInUserInfo";
-import { IUserDataStoragesInfoChangedDiff } from "@shared/user/data/storage/info/UserDataStoragesInfoChangedDiff";
 import { encryptWithAES } from "./utils/encryption/encryptWithAES";
-import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 import { IGetDirectoryWithPickerOptions, IUtilsAPI, UTILS_API_IPC_CHANNELS } from "@shared/IPC/APIs/UtilsAPI";
 import {
   IUserDataStorageVisibilityGroupConfigCreateDTO,
-  USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIG_CREATE_DTO_VALIDATE_FUNCTION
+  isValidUserDataStorageVisibilityGroupConfigCreateDTO
 } from "@shared/user/data/storage/visibilityGroup/config/create/DTO/UserDataStorageVisibilityGroupConfigCreateDTO";
 import {
   IUserDataStorageVisibilityGroupsOpenRequestDTO,
-  USER_DATA_STORAGE_VISIBILITY_GROUPS_OPEN_REQUEST_DTO_VALIDATE_FUNCTION
+  isValidUserDataStorageVisibilityGroupsOpenRequestDTO
 } from "@shared/user/data/storage/visibilityGroup/openRequest/DTO/UserDataStorageVisibilityGroupsOpenRequestDTO";
 import { IUserDataStorageVisibilityGroupsInfoChangedDiff } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfoChangedDiff";
 import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
 import { IUserContextHandlers } from "./user/facade/context/UserContext";
+import { IUserDataStorageConfigInfo } from "@shared/user/data/storage/config/info/UserDataStorageConfigInfo";
+import { IUserDataStorageConfigsInfoChangedDiff } from "@shared/user/data/storage/config/info/UserDataStorageConfigsInfoChangedDiff";
 
 type WindowPositionSetting = Rectangle | WindowStates["FullScreen"] | WindowStates["Maximized"];
 
@@ -282,7 +282,7 @@ export class App {
           data: this.userFacade.signUpUserFromDTO(
             decryptWithAESAndValidateJSON<IUserSignUpDTO>(
               encryptedUserSignUpDTO,
-              USER_SIGN_UP_DTO_VALIDATE_FUNCTION,
+              isValidUserSignUpDTO,
               this.IPC_TLS_AES_KEY.value,
               this.UserAPILogger,
               "user sign up DTO"
@@ -305,7 +305,7 @@ export class App {
           data: this.userFacade.signInUserFromDTO(
             decryptWithAESAndValidateJSON<IUserSignInDTO>(
               encryptedUserSignInDTO,
-              USER_SIGN_IN_DTO_VALIDATE_FUNCTION,
+              isValidUserSignInDTO,
               this.IPC_TLS_AES_KEY.value,
               this.UserAPILogger,
               "user sign in DTO"
@@ -396,7 +396,7 @@ export class App {
           data: this.userFacade.addUserDataStorageConfigFromCreateDTO(
             decryptWithAESAndValidateJSON<IUserDataStorageConfigCreateDTO>(
               encryptedUserDataStorageConfigCreateDTO,
-              USER_DATA_STORAGE_CONFIG_CREATE_DTO_VALIDATE_FUNCTION,
+              isValidUserDataStorageConfigCreateDTO,
               this.IPC_TLS_AES_KEY.value,
               this.UserAPILogger,
               "User Data Storage Config Create DTO"
@@ -421,7 +421,7 @@ export class App {
           data: this.userFacade.addUserDataStorageVisibilityGroupConfigFromCreateDTO(
             decryptWithAESAndValidateJSON<IUserDataStorageVisibilityGroupConfigCreateDTO>(
               encryptedUserDataStorageVisibilityGroupConfigCreateDTO,
-              USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIG_CREATE_DTO_VALIDATE_FUNCTION,
+              isValidUserDataStorageVisibilityGroupConfigCreateDTO,
               this.IPC_TLS_AES_KEY.value,
               this.UserAPILogger,
               "User Data Storage Visibility Group Create DTO"
@@ -446,7 +446,7 @@ export class App {
           data: this.userFacade.openUserDataStorageVisibilityGroupsFromOpenRequestDTO(
             decryptWithAESAndValidateJSON<IUserDataStorageVisibilityGroupsOpenRequestDTO>(
               encryptedUserDataStorageVisibilityGroupsOpenRequestDTO,
-              USER_DATA_STORAGE_VISIBILITY_GROUPS_OPEN_REQUEST_DTO_VALIDATE_FUNCTION,
+              isValidUserDataStorageVisibilityGroupsOpenRequestDTO,
               this.IPC_TLS_AES_KEY.value,
               this.UserAPILogger,
               "User Data Storage Visibility Group DTO"
@@ -483,18 +483,18 @@ export class App {
         return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
       }
     },
-    handleGetAllSignedInUserAvailableDataStoragesInfo: (): IPCAPIResponse<IEncryptedData<IUserDataStorageInfo[]>> => {
+    handleGetAllSignedInUserAvailableDataStorageConfigsInfo: (): IPCAPIResponse<IEncryptedData<IUserDataStorageConfigInfo[]>> => {
       try {
         if (this.IPC_TLS_AES_KEY.value === null) {
           throw new Error("Null IPC TLS AES key");
         }
         return {
           status: IPC_API_RESPONSE_STATUSES.SUCCESS,
-          data: encryptWithAES<IUserDataStorageInfo[]>(
-            this.userFacade.getAllSignedInUserAvailableDataStoragesInfo(),
+          data: encryptWithAES<IUserDataStorageConfigInfo[]>(
+            this.userFacade.getAllSignedInUserAvailableDataStorageConfigsInfo(),
             this.IPC_TLS_AES_KEY.value,
             this.UserAPILogger,
-            "all signed in user's available User Data Storages Info"
+            "all signed in user's available User Data Storage Configs Info"
           )
         };
       } catch (error: unknown) {
@@ -557,9 +557,9 @@ export class App {
       this.UserAPILogger.debug(`Messaging renderer on channel: "${CHANNEL}".`);
       this.window.webContents.send(CHANNEL, newSignedInUserInfo);
     },
-    sendAvailableUserDataStoragesChanged: (availableUserDataStoragesInfoChangedDiff: IUserDataStoragesInfoChangedDiff): void => {
+    sendAvailableUserDataStorageConfigsChanged: (availableUserDataStorageConfigsInfoChangedDiff: IUserDataStorageConfigsInfoChangedDiff): void => {
       this.UserAPILogger.debug(
-        `Sending window available User Data Storages Info Changed Diff. Removals: ${availableUserDataStoragesInfoChangedDiff.removed.length.toString()}. Additions: ${availableUserDataStoragesInfoChangedDiff.added.length.toString()}.`
+        `Sending window available User Data Storage Configs Info Changed Diff. Removals: ${availableUserDataStorageConfigsInfoChangedDiff.removed.length.toString()}. Additions: ${availableUserDataStorageConfigsInfoChangedDiff.added.length.toString()}.`
       );
       if (this.window === null) {
         this.UserAPILogger.debug("Window is null. No-op.");
@@ -568,15 +568,15 @@ export class App {
       if (this.IPC_TLS_AES_KEY.value === null) {
         throw new Error("Null IPC TLS AES key");
       }
-      const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.onAvailableUserDataStoragesChanged;
+      const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.onAvailableUserDataStorageConfigsChanged;
       this.UserAPILogger.debug(`Messaging renderer on channel: "${CHANNEL}".`);
       this.window.webContents.send(
         CHANNEL,
-        encryptWithAES<IUserDataStoragesInfoChangedDiff>(
-          availableUserDataStoragesInfoChangedDiff,
+        encryptWithAES<IUserDataStorageConfigsInfoChangedDiff>(
+          availableUserDataStorageConfigsInfoChangedDiff,
           this.IPC_TLS_AES_KEY.value,
           this.UserAPILogger,
-          "available User Data Storages Info Changed Diff"
+          "available User Data Storage Configs Info Changed Diff"
         )
       );
     },
@@ -680,7 +680,7 @@ export class App {
       contextHandlers: {
         onSignedInUserChangedCallback: this.USER_API_HANDLERS.sendSignedInUserChanged,
         onUserAccountStorageChangedCallback: this.USER_API_HANDLERS.sendUserAccountStorageChanged,
-        onAvailableUserDataStorageConfigsChangedCallback: this.USER_API_HANDLERS.sendAvailableUserDataStoragesChanged,
+        onAvailableUserDataStorageConfigsChangedCallback: this.USER_API_HANDLERS.sendAvailableUserDataStorageConfigsChanged,
         onOpenUserDataStorageVisibilityGroupsChangedCallback: this.USER_API_HANDLERS.sendOpenUserDataStorageVisibilityGroupsChanged
       } satisfies IUserContextHandlers
     } satisfies IUserFacadeConstructorProps);
@@ -1079,9 +1079,11 @@ export class App {
       this.UserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.getUserAccountStorageInfo}".`);
       event.returnValue = this.USER_API_HANDLERS.handleGetUserAccountStorageInfo();
     });
-    ipcMain.on(USER_API_IPC_CHANNELS.getAllSignedInUserAvailableDataStoragesInfo, (event: IpcMainEvent): void => {
-      this.UserAPILogger.debug(`Received message from renderer on channel: "${USER_API_IPC_CHANNELS.getAllSignedInUserAvailableDataStoragesInfo}".`);
-      event.returnValue = this.USER_API_HANDLERS.handleGetAllSignedInUserAvailableDataStoragesInfo();
+    ipcMain.on(USER_API_IPC_CHANNELS.getAllSignedInUserAvailableDataStorageConfigsInfo, (event: IpcMainEvent): void => {
+      this.UserAPILogger.debug(
+        `Received message from renderer on channel: "${USER_API_IPC_CHANNELS.getAllSignedInUserAvailableDataStorageConfigsInfo}".`
+      );
+      event.returnValue = this.USER_API_HANDLERS.handleGetAllSignedInUserAvailableDataStorageConfigsInfo();
     });
     ipcMain.on(USER_API_IPC_CHANNELS.getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo, (event: IpcMainEvent): void => {
       this.UserAPILogger.debug(

@@ -3,7 +3,7 @@ import { ISecuredUserDataStorageVisibilityGroupConfig } from "../SecuredUserData
 import { IStorageSecuredUserDataStorageVisibilityGroupConfig } from "../StorageSecuredUserDataStorageVisibilityGroupConfig";
 import {
   IPrivateStorageSecuredUserDataStorageVisibilityGroupConfig,
-  PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIG_VALIDATE_FUNCTION
+  isValidPrivateStorageSecuredUserDataStorageVisibilityGroupConfig
 } from "../PrivateStorageSecuredUserDataStorageVisibilityGroupConfig";
 import { decryptWithAESAndValidateJSON } from "@main/utils/encryption/decryptWithAESAndValidateJSON";
 
@@ -16,7 +16,7 @@ export const storageSecuredUserDataStorageVisibilityGroupConfigToSecuredUserData
   const DECRYPTED_PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIG: IPrivateStorageSecuredUserDataStorageVisibilityGroupConfig =
     decryptWithAESAndValidateJSON<IPrivateStorageSecuredUserDataStorageVisibilityGroupConfig>(
       storageSecuredUserDataStorageVisibilityGroupConfig.encryptedPrivateStorageSecuredUserDataStorageVisibilityGroupConfig,
-      PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIG_VALIDATE_FUNCTION,
+      isValidPrivateStorageSecuredUserDataStorageVisibilityGroupConfig,
       decryptionAESKey,
       logger,
       "Private Storage Secured User Data Storage Config"

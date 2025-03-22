@@ -8,8 +8,7 @@ export interface IUserDataStorageVisibilityGroup {
   AESKey: Buffer;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const isValidUserDataStorageVisibilityGroup = (data: any): data is IUserDataStorageVisibilityGroup => {
+export const isValidUserDataStorageVisibilityGroup = (data: unknown): data is IUserDataStorageVisibilityGroup => {
   return (
     typeof data === "object" &&
     data !== null &&
@@ -18,21 +17,15 @@ export const isValidUserDataStorageVisibilityGroup = (data: any): data is IUserD
     "name" in data &&
     "description" in data &&
     "AESKey" in data &&
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     typeof data.visibilityGroupId === "string" &&
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     typeof data.userId === "string" &&
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     typeof data.name === "string" &&
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     (data.description === null || typeof data.description === "string") &&
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     Buffer.isBuffer(data.AESKey)
   );
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const isValidUserDataStorageVisibilityGroupArray = (data: any): data is IUserDataStorageVisibilityGroup[] => {
+export const isValidUserDataStorageVisibilityGroupArray = (data: unknown): data is IUserDataStorageVisibilityGroup[] => {
   if (!Array.isArray(data)) {
     return false;
   }

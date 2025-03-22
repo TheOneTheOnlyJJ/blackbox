@@ -6,7 +6,6 @@ import { IUserSignUpPayload } from "../account/UserSignUpPayload";
 import { UserAccountStorage } from "../account/storage/UserAccountStorage";
 import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserAccountStorageInfo";
 import { ISignedInUserInfo } from "@shared/user/account/SignedInUserInfo";
-import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
 import { IUserDataStorageVisibilityGroupConfig } from "../data/storage/visibilityGroup/config/UserDataStorageVisibilityGroupConfig";
 import { IUserDataStorageVisibilityGroupsOpenRequest } from "../data/storage/visibilityGroup/openRequest/UserDataStorageVisibilityGroupsOpenRequest";
 import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
@@ -23,6 +22,7 @@ import { IUserSignInDTO } from "@shared/user/account/UserSignInDTO";
 import { IUserDataStorageConfigCreateDTO } from "@shared/user/data/storage/config/create/DTO/UserDataStorageConfigCreateDTO";
 import { IUserDataStorageVisibilityGroupConfigCreateDTO } from "@shared/user/data/storage/visibilityGroup/config/create/DTO/UserDataStorageVisibilityGroupConfigCreateDTO";
 import { IUserDataStorageVisibilityGroupsOpenRequestDTO } from "@shared/user/data/storage/visibilityGroup/openRequest/DTO/UserDataStorageVisibilityGroupsOpenRequestDTO";
+import { IUserDataStorageConfigInfo } from "@shared/user/data/storage/config/info/UserDataStorageConfigInfo";
 
 export interface IUserFacadeConstructorProps {
   logger: LogFunctions;
@@ -205,8 +205,8 @@ export class UserFacade {
     return this.DATA_STORAGE_VISIBILITY_GROUP_SERVICE.closeUserDataStorageVisibilityGroups(visibilityGroupIds);
   }
 
-  public getAllSignedInUserAvailableDataStoragesInfo(): IUserDataStorageInfo[] {
-    return this.DATA_STORAGE_CONFIG_SERVICE.getAllSignedInUserAvailableDataStoragesInfo();
+  public getAllSignedInUserAvailableDataStorageConfigsInfo(): IUserDataStorageConfigInfo[] {
+    return this.DATA_STORAGE_CONFIG_SERVICE.getAllSignedInUserAvailableDataStorageConfigsInfo();
   }
 
   public getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo(): IUserDataStorageVisibilityGroupInfo[] {

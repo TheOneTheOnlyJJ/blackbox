@@ -5,7 +5,7 @@ import { OPTION_C_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS } from "@share
 import { USER_DATA_STORAGE_BACKEND_TYPES, UserDataStorageBackendTypes } from "@shared/user/data/storage/backend/UserDataStorageBackendType";
 
 export interface IOptionCUserDataStorageBackendConfigCreateInput extends IBaseUserDataStorageBackendConfigCreateInput {
-  type: UserDataStorageBackendTypes["OptionC"];
+  type: UserDataStorageBackendTypes["optionC"];
   optionC: string;
 }
 
@@ -14,8 +14,8 @@ export const OPTION_C_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_JSON_SCHEMA:
   properties: {
     type: {
       type: "string",
-      enum: [USER_DATA_STORAGE_BACKEND_TYPES.OptionC],
-      default: USER_DATA_STORAGE_BACKEND_TYPES.OptionC,
+      enum: [USER_DATA_STORAGE_BACKEND_TYPES.optionC],
+      default: USER_DATA_STORAGE_BACKEND_TYPES.optionC,
       ...OPTION_C_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS.type
     },
     optionC: {

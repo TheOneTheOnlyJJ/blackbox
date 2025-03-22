@@ -3,7 +3,7 @@ import { USER_DATA_STORAGE_BACKEND_TYPES, UserDataStorageBackendType } from "@sh
 import {
   ILocalSQLiteUserDataStorageBackendInfo,
   LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_INFO_JSON_SCHEMA
-} from "./implementations/LocalSQLite/LocalSQLiteUserDataStorageBackendInfo";
+} from "./implementations/localSQLite/LocalSQLiteUserDataStorageBackendInfo";
 import {
   IOptionBUserDataStorageBackendInfo,
   OPTION_B_USER_DATA_STORAGE_BACKEND_INFO_JSON_SCHEMA
@@ -15,20 +15,20 @@ import {
 
 // Map of every user data storage backend type to its corresponding info type
 export interface IUserDataStorageBackendInfoMap {
-  [USER_DATA_STORAGE_BACKEND_TYPES.LocalSQLite]: ILocalSQLiteUserDataStorageBackendInfo;
-  [USER_DATA_STORAGE_BACKEND_TYPES.OptionB]: IOptionBUserDataStorageBackendInfo;
-  [USER_DATA_STORAGE_BACKEND_TYPES.OptionC]: IOptionCUserDataStorageBackendInfo;
+  [USER_DATA_STORAGE_BACKEND_TYPES.localSQLite]: ILocalSQLiteUserDataStorageBackendInfo;
+  [USER_DATA_STORAGE_BACKEND_TYPES.optionB]: IOptionBUserDataStorageBackendInfo;
+  [USER_DATA_STORAGE_BACKEND_TYPES.optionC]: IOptionCUserDataStorageBackendInfo;
 }
-// Union of all concrete user data storage backend config info interfaces
+// Union of all concrete user data storage backend info interfaces
 export type UserDataStorageBackendInfo = IUserDataStorageBackendInfoMap[keyof IUserDataStorageBackendInfoMap];
 
 type UserDataStorageBackendInfoJSONSchemaMap = {
   [K in UserDataStorageBackendType]: JSONSchemaType<IUserDataStorageBackendInfoMap[K]>;
 };
 export const USER_DATA_STORAGE_BACKEND_INFO_JSON_SCHEMA_MAP: UserDataStorageBackendInfoJSONSchemaMap = {
-  [USER_DATA_STORAGE_BACKEND_TYPES.LocalSQLite]: LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_INFO_JSON_SCHEMA,
-  [USER_DATA_STORAGE_BACKEND_TYPES.OptionB]: OPTION_B_USER_DATA_STORAGE_BACKEND_INFO_JSON_SCHEMA,
-  [USER_DATA_STORAGE_BACKEND_TYPES.OptionC]: OPTION_C_USER_DATA_STORAGE_BACKEND_INFO_JSON_SCHEMA
+  [USER_DATA_STORAGE_BACKEND_TYPES.localSQLite]: LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_INFO_JSON_SCHEMA,
+  [USER_DATA_STORAGE_BACKEND_TYPES.optionB]: OPTION_B_USER_DATA_STORAGE_BACKEND_INFO_JSON_SCHEMA,
+  [USER_DATA_STORAGE_BACKEND_TYPES.optionC]: OPTION_C_USER_DATA_STORAGE_BACKEND_INFO_JSON_SCHEMA
 } as const;
 
 export const USER_DATA_STORAGE_BACKEND_INFO_JSON_SCHEMA: JSONSchemaType<UserDataStorageBackendInfo> = {

@@ -1,7 +1,7 @@
 import { UserAccountStorageBackendInfo } from "@shared/user/account/storage/backend/info/UserAccountStorageBackendInfo";
 import { USER_ACCOUNT_STORAGE_BACKEND_TYPES } from "@shared/user/account/storage/backend/UserAccountStorageBackendType";
 import { FC } from "react";
-import LocalSQLiteUserAccountStorageBackendInfoTypography from "./implementations/LocalSQLite/LocalSQLiteUserAccountStorageBackendInfoTypography";
+import LocalSQLiteUserAccountStorageBackendInfoTypography from "./implementations/localSQLite/LocalSQLiteUserAccountStorageBackendInfoTypography";
 
 export interface IUserAccountStorageBackendInfoTypographyProps {
   userAccountStorageBackendInfo: UserAccountStorageBackendInfo;

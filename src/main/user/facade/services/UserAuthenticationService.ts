@@ -1,7 +1,7 @@
 import { LogFunctions } from "electron-log";
-import { IUserSignUpPayload, USER_SIGN_UP_PAYLOAD_VALIDATE_FUNCTION } from "../../account/UserSignUpPayload";
+import { IUserSignUpPayload, isValidUserSignUpPayload } from "../../account/UserSignUpPayload";
 import { userSignUpPayloadToSecuredUserSignUpPayload } from "../../account/utils/userSignUpPayloadToSecuredUserSignUpPayload";
-import { IUserSignInPayload, USER_SIGN_IN_PAYLOAD_VALIDATE_FUNCTION } from "../../account/UserSignInPayload";
+import { IUserSignInPayload, isValidUserSignInPayload } from "../../account/UserSignInPayload";
 import { timingSafeEqual, UUID } from "node:crypto";
 import { ISecuredPassword } from "@main/utils/encryption/SecuredPassword";
 import { hashPassword } from "@main/utils/encryption/hashPassword";
@@ -63,7 +63,7 @@ export class UserAuthenticationService {
     if (ACCOUNT_STORAGE === null) {
       throw new Error("Null User Account Storage");
     }
-    if (!USER_SIGN_UP_PAYLOAD_VALIDATE_FUNCTION(userSignUpPayload)) {
+    if (!isValidUserSignUpPayload(userSignUpPayload)) {
       throw new Error("Invalid user sign up payload");
     }
     return ACCOUNT_STORAGE.addUser(
@@ -85,7 +85,7 @@ export class UserAuthenticationService {
     if (ACCOUNT_STORAGE === null) {
       throw new Error("Null User Account Storage");
     }
-    if (!USER_SIGN_IN_PAYLOAD_VALIDATE_FUNCTION(userSignInPayload)) {
+    if (!isValidUserSignInPayload(userSignInPayload)) {
       throw new Error("Invalid user sign in payload");
     }
     // TODO: Merge this

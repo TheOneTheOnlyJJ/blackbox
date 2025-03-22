@@ -3,7 +3,7 @@ import { ISecuredUserDataStorageConfig } from "../SecuredUserDataStorageConfig";
 import { IStorageSecuredUserDataStorageConfig } from "../StorageSecuredUserDataStorageConfig";
 import {
   IPrivateStorageSecuredUserDataStorageConfig,
-  PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION
+  isValidPrivateStorageSecuredUserDataStorageConfig
 } from "../PrivateStorageSecuredUserDataStorageConfig";
 import { decryptWithAESAndValidateJSON } from "@main/utils/encryption/decryptWithAESAndValidateJSON";
 
@@ -16,7 +16,7 @@ export const storageSecuredUserDataStorageConfigToSecuredUserDataStorageConfig =
   const DECRYPTED_PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_CONFIG: IPrivateStorageSecuredUserDataStorageConfig =
     decryptWithAESAndValidateJSON<IPrivateStorageSecuredUserDataStorageConfig>(
       storageSecuredUserDataStorageConfig.encryptedPrivateStorageSecuredUserDataStorageConfig,
-      PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION,
+      isValidPrivateStorageSecuredUserDataStorageConfig,
       decryptionAESKey,
       logger,
       "Private Storage Secured User Data Storage Config"

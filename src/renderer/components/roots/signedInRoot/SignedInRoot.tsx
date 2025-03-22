@@ -3,23 +3,23 @@ import { Navigate, Outlet } from "react-router-dom";
 import { IAppRootContext, useAppRootContext } from "@renderer/components/roots/appRoot/AppRootContext";
 import { ISignedInRootContext } from "./SignedInRootContext";
 import { appLogger } from "@renderer/utils/loggers";
-import { IUserDataStorageInfo, LIST_OF_USER_DATA_STORAGES_INFO_VALIDATE_FUNCTION } from "@shared/user/data/storage/info/UserDataStorageInfo";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { enqueueSnackbar } from "notistack";
-import {
-  IUserDataStoragesInfoChangedDiff,
-  USER_DATA_STORAGES_INFO_CHANGED_DIFF_VALIDATE_FUNCTION
-} from "@shared/user/data/storage/info/UserDataStoragesInfoChangedDiff";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 import {
   IUserDataStorageVisibilityGroupInfo,
-  LIST_OF_USER_DATA_STORAGES_VISIBILITY_GROUP_INFO_VALIDATE_FUNCTION
+  isValidUserDataStorageVisibilityGroupInfoArray
 } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
 import {
   IUserDataStorageVisibilityGroupsInfoChangedDiff,
-  USER_DATA_STORAGES_VISIBILITY_GROUPS_INFO_CHANGED_DIFF_VALIDATE_FUNCTION
+  isValidUserDataStorageVisibilityGroupsInfoChangedDiff
 } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfoChangedDiff";
+import { isValidUserDataStorageConfigInfoArray, IUserDataStorageConfigInfo } from "@shared/user/data/storage/config/info/UserDataStorageConfigInfo";
+import {
+  isValidUserDataStorageConfigsInfoChangedDiff,
+  IUserDataStorageConfigsInfoChangedDiff
+} from "@shared/user/data/storage/config/info/UserDataStorageConfigsInfoChangedDiff";
 
 const DEFAULT_FORBIDDEN_LOCATION_NAME = "this";
 
@@ -37,12 +37,12 @@ const SignedInRoot: FC = () => {
       setForbiddenLocationName(newForbiddenLocationname);
     }
   }, []);
-  const [availableUserDataStoragesInfo, setAvailableUserDataStoragesInfo] = useState<IUserDataStorageInfo[]>([]);
+  const [availableUserDataStorageConfigsInfo, setAvailableUserDataStorageConfigsInfo] = useState<IUserDataStorageConfigInfo[]>([]);
   const [openUserDataStorageVisibilityGroupsInfo, setOpenUserDataStorageVisibilityGroupsInfo] = useState<IUserDataStorageVisibilityGroupInfo[]>([]);
 
   useEffect((): void => {
-    appLogger.info(`Available User Data Storages Info changed. Count: ${availableUserDataStoragesInfo.length.toString()}.`);
-  }, [availableUserDataStoragesInfo]);
+    appLogger.info(`Available User Data Storage Configs Info changed. Count: ${availableUserDataStorageConfigsInfo.length.toString()}.`);
+  }, [availableUserDataStorageConfigsInfo]);
 
   useEffect((): void => {
     appLogger.info(`Open User Data Storage Visibility Groups Info changed. Count: ${openUserDataStorageVisibilityGroupsInfo.length.toString()}.`);
@@ -51,64 +51,66 @@ const SignedInRoot: FC = () => {
   useEffect((): (() => void) => {
     appLogger.debug("Rendering Signed In Root component.");
     // Get all available User Data Storage Configs
-    const GET_ALL_SIGNED_IN_USER_AVAILABLE_DATA_STORAGES_INFO_RESPONSE: IPCAPIResponse<IEncryptedData<IUserDataStorageInfo[]>> =
-      window.userAPI.getAllSignedInUserAvailableDataStoragesInfo();
-    if (GET_ALL_SIGNED_IN_USER_AVAILABLE_DATA_STORAGES_INFO_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
+    const GET_ALL_SIGNED_IN_USER_AVAILABLE_DATA_STORAGE_CONFIGS_INFO_RESPONSE: IPCAPIResponse<IEncryptedData<IUserDataStorageConfigInfo[]>> =
+      window.userAPI.getAllSignedInUserAvailableDataStorageConfigsInfo();
+    if (GET_ALL_SIGNED_IN_USER_AVAILABLE_DATA_STORAGE_CONFIGS_INFO_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
       appLogger.error(
-        `Could not get all signed in user's available User Data Storages Info! Reason: ${GET_ALL_SIGNED_IN_USER_AVAILABLE_DATA_STORAGES_INFO_RESPONSE.error}!`
+        `Could not get all signed in user's available User Data Storage Configs Info! Reason: ${GET_ALL_SIGNED_IN_USER_AVAILABLE_DATA_STORAGE_CONFIGS_INFO_RESPONSE.error}!`
       );
-      enqueueSnackbar({ message: "Error getting available data storages' information.", variant: "error" });
+      enqueueSnackbar({ message: "Error getting available data storage configs' information.", variant: "error" });
     } else {
-      window.IPCTLSAPI.decryptAndValidateJSON<IUserDataStorageInfo[]>(
-        GET_ALL_SIGNED_IN_USER_AVAILABLE_DATA_STORAGES_INFO_RESPONSE.data,
-        LIST_OF_USER_DATA_STORAGES_INFO_VALIDATE_FUNCTION,
-        "all signed in user's available User Data Storages Info"
+      window.IPCTLSAPI.decryptAndValidateJSON<IUserDataStorageConfigInfo[]>(
+        GET_ALL_SIGNED_IN_USER_AVAILABLE_DATA_STORAGE_CONFIGS_INFO_RESPONSE.data,
+        isValidUserDataStorageConfigInfoArray,
+        "all signed in user's available User Data Storage Configs Info"
       )
         .then(
-          (allSignedInUserAvailableDataStoragesInfo: IUserDataStorageInfo[]): void => {
-            setAvailableUserDataStoragesInfo(allSignedInUserAvailableDataStoragesInfo);
+          (allSignedInUserAvailableDataStorageConfigsInfo: IUserDataStorageConfigInfo[]): void => {
+            setAvailableUserDataStorageConfigsInfo(allSignedInUserAvailableDataStorageConfigsInfo);
           },
           (reason: unknown): void => {
             const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
-            appLogger.error(`Could not decrypt all signed in user's available User Data Storages Info. Reason: ${REASON_MESSAGE}.`);
-            enqueueSnackbar({ message: "Error decrypting data storages' information.", variant: "error" });
+            appLogger.error(`Could not decrypt all signed in user's available User Data Storage Configs Info. Reason: ${REASON_MESSAGE}.`);
+            enqueueSnackbar({ message: "Error decrypting data storage configs' information.", variant: "error" });
           }
         )
         .catch((error: unknown): void => {
           const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
-          appLogger.error(`Could not decrypt all signed in user's available User Data Storages Info. Reason: ${ERROR_MESSAGE}.`);
-          enqueueSnackbar({ message: "Error decrypting data storages' information.", variant: "error" });
+          appLogger.error(`Could not decrypt all signed in user's available User Data Storage Configs Info. Reason: ${ERROR_MESSAGE}.`);
+          enqueueSnackbar({ message: "Error decrypting data storage configs' information.", variant: "error" });
         });
     }
     // Monitor changes to User Data Storages Info
-    const removeAvailableUserDataStoragesChangedListener: () => void = window.userAPI.onAvailableUserDataStoragesChanged(
-      (encryptedAvailableUserDataStoragesInfoChangedDiff: IEncryptedData<IUserDataStoragesInfoChangedDiff>): void => {
-        window.IPCTLSAPI.decryptAndValidateJSON<IUserDataStoragesInfoChangedDiff>(
-          encryptedAvailableUserDataStoragesInfoChangedDiff,
-          USER_DATA_STORAGES_INFO_CHANGED_DIFF_VALIDATE_FUNCTION,
-          "available User Data Storages Info Changed Diff"
+    const removeAvailableUserDataStorageConfigsChangedListener: () => void = window.userAPI.onAvailableUserDataStorageConfigsChanged(
+      (encryptedAvailableUserDataStorageConfigsInfoChangedDiff: IEncryptedData<IUserDataStorageConfigsInfoChangedDiff>): void => {
+        window.IPCTLSAPI.decryptAndValidateJSON<IUserDataStorageConfigsInfoChangedDiff>(
+          encryptedAvailableUserDataStorageConfigsInfoChangedDiff,
+          isValidUserDataStorageConfigsInfoChangedDiff,
+          "available User Data Storage Configs Info Changed Diff"
         )
           .then(
-            (availableUserDataStoragesInfoChangedDiff: IUserDataStoragesInfoChangedDiff): void => {
-              setAvailableUserDataStoragesInfo((prevAvailableUserDataStoragesInfo: IUserDataStorageInfo[]): IUserDataStorageInfo[] => {
-                return [
-                  ...prevAvailableUserDataStoragesInfo.filter((configInfo: IUserDataStorageInfo): boolean => {
-                    return !availableUserDataStoragesInfoChangedDiff.removed.includes(configInfo.storageId);
-                  }),
-                  ...availableUserDataStoragesInfoChangedDiff.added
-                ];
-              });
+            (availableUserDataStorageConfigsInfoChangedDiff: IUserDataStorageConfigsInfoChangedDiff): void => {
+              setAvailableUserDataStorageConfigsInfo(
+                (prevAvailableUserDataStorageConfigsInfo: IUserDataStorageConfigInfo[]): IUserDataStorageConfigInfo[] => {
+                  return [
+                    ...prevAvailableUserDataStorageConfigsInfo.filter((configInfo: IUserDataStorageConfigInfo): boolean => {
+                      return !availableUserDataStorageConfigsInfoChangedDiff.removed.includes(configInfo.storageId);
+                    }),
+                    ...availableUserDataStorageConfigsInfoChangedDiff.added
+                  ];
+                }
+              );
             },
             (reason: unknown): void => {
               const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
-              appLogger.error(`Could not decrypt available User Data Storages Info Changed Diff. Reason: ${REASON_MESSAGE}.`);
-              enqueueSnackbar({ message: "Error decrypting available data storages' information changes.", variant: "error" });
+              appLogger.error(`Could not decrypt available User Data Storage Configs Info Changed Diff. Reason: ${REASON_MESSAGE}.`);
+              enqueueSnackbar({ message: "Error decrypting available data storage configs' information changes.", variant: "error" });
             }
           )
           .catch((reason: unknown): void => {
             const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
-            appLogger.error(`Could not decrypt available User Data Storages Info Changed Diff. Reason: ${REASON_MESSAGE}.`);
-            enqueueSnackbar({ message: "Error decrypting available data storages' information changes.", variant: "error" });
+            appLogger.error(`Could not decrypt available User Data Storage Configs Info Changed Diff. Reason: ${REASON_MESSAGE}.`);
+            enqueueSnackbar({ message: "Error decrypting available data storage configs' information changes.", variant: "error" });
           });
       }
     );
@@ -124,7 +126,7 @@ const SignedInRoot: FC = () => {
     } else {
       window.IPCTLSAPI.decryptAndValidateJSON<IUserDataStorageVisibilityGroupInfo[]>(
         GET_ALL_SIGNED_IN_USER_OPEN_DATA_STORAGE_VISIBILITY_GROUPS_INFO_RESPONSE.data,
-        LIST_OF_USER_DATA_STORAGES_VISIBILITY_GROUP_INFO_VALIDATE_FUNCTION,
+        isValidUserDataStorageVisibilityGroupInfoArray,
         "all signed in user's open User Data Storage Visibility Groups Info"
       )
         .then(
@@ -148,7 +150,7 @@ const SignedInRoot: FC = () => {
       (encryptedOpenUserDataStorageVisibilityGroupsInfoChangedDiff: IEncryptedData<IUserDataStorageVisibilityGroupsInfoChangedDiff>): void => {
         window.IPCTLSAPI.decryptAndValidateJSON<IUserDataStorageVisibilityGroupsInfoChangedDiff>(
           encryptedOpenUserDataStorageVisibilityGroupsInfoChangedDiff,
-          USER_DATA_STORAGES_VISIBILITY_GROUPS_INFO_CHANGED_DIFF_VALIDATE_FUNCTION,
+          isValidUserDataStorageVisibilityGroupsInfoChangedDiff,
           "User Data Storage Visibility Groups Info Changed Diff"
         )
           .then(
@@ -180,7 +182,7 @@ const SignedInRoot: FC = () => {
 
     return (): void => {
       appLogger.debug("Removing Signed In Root event listeners.");
-      removeAvailableUserDataStoragesChangedListener();
+      removeAvailableUserDataStorageConfigsChangedListener();
       removeOpenUserDataStorageVisibilityGroupsChangedListener();
     };
   }, []);
@@ -191,7 +193,7 @@ const SignedInRoot: FC = () => {
         {
           ...appRootContext,
           signedInUserInfo: appRootContext.signedInUserInfo,
-          userDataStoragesInfo: availableUserDataStoragesInfo,
+          availableUserDataStorageConfigsInfo: availableUserDataStorageConfigsInfo,
           openUserDataStorageVisibilityGroupsInfo: openUserDataStorageVisibilityGroupsInfo,
           setForbiddenLocationName: URIencodeAndSetForbiddenLocationName
         } satisfies ISignedInRootContext

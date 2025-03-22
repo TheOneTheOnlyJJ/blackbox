@@ -24,5 +24,6 @@ export const PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_CONFIG_JSON_SCHEMA: JSONS
   additionalProperties: false
 } as const;
 
-export const PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_CONFIG_VALIDATE_FUNCTION: ValidateFunction<IPrivateStorageSecuredUserDataStorageConfig> =
-  AJV.compile(PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_CONFIG_JSON_SCHEMA);
+export const isValidPrivateStorageSecuredUserDataStorageConfig: ValidateFunction<IPrivateStorageSecuredUserDataStorageConfig> = AJV.compile(
+  PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_CONFIG_JSON_SCHEMA
+);

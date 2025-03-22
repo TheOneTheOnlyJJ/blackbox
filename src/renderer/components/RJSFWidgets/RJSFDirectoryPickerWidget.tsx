@@ -11,7 +11,7 @@ import { JSONSchemaType, ValidateFunction } from "ajv";
 import { AJV } from "@shared/utils/AJVJSONValidator";
 import { enqueueSnackbar } from "notistack";
 
-const LIST_OF_STRINGS_JSON_VALIDATE_FUNCTION: ValidateFunction<string[]> = AJV.compile({
+const isValidStringArray: ValidateFunction<string[]> = AJV.compile({
   $schema: "http://json-schema.org/draft-07/schema#",
   type: "array",
   items: { type: "string" }
@@ -60,7 +60,7 @@ const RJSFDirectoryPickerWidget: FC<WidgetProps> = (props: WidgetProps) => {
             const CHOSEN_DIRECTORY_PATH: string = (
               await window.IPCTLSAPI.decryptAndValidateJSON<string[]>(
                 getDirectoryPathWithPickerResponse.data,
-                LIST_OF_STRINGS_JSON_VALIDATE_FUNCTION,
+                isValidStringArray,
                 "picked directory path"
               )
             )[0];

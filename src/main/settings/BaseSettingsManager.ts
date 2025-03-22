@@ -14,7 +14,7 @@ export abstract class BaseSettingsManager<SettingsType extends BaseSettings, Con
   protected readonly logger: LogFunctions;
   // Own config
   public readonly config: ConfigType;
-  private readonly SETTINGS_MANAGER_CONFIG_VALIDATE_FUNCTION: ValidateFunction<ConfigType>;
+  private readonly SETTINGS_MANAGER_CONFIG_VALIDATE_FUNCTION: ValidateFunction<ConfigType>; // TODO: Move this, it is stupuid
   // Settings
   protected settings: SettingsType | null;
   protected readonly SETTINGS_VALIDATE_FUNCTION: ValidateFunction<SettingsType>;

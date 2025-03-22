@@ -1,22 +1,35 @@
 import log, { LogFunctions } from "electron-log";
-import { JSONSchemaType, ValidateFunction } from "ajv";
+import { ValidateFunction } from "ajv";
 import { IBaseUserDataStorageBackendConfig } from "./config/BaseUserDataStorageBackendConfig";
-import { AJV } from "@shared/utils/AJVJSONValidator";
+import { IUserDataStorageBackendInfoMap } from "@shared/user/data/storage/backend/info/UserDataStorageBackendInfo";
+import { deepFreeze } from "@main/utils/deepFreeze";
 
 export abstract class BaseUserDataStorageBackend<T extends IBaseUserDataStorageBackendConfig> {
   protected readonly logger: LogFunctions;
   public readonly config: T;
-  private readonly CONFIG_VALIDATE_FUNCTION: ValidateFunction<T>;
+  private info: Readonly<IUserDataStorageBackendInfoMap[T["type"]]>;
+  private onInfoChanged: () => void;
 
-  public constructor(config: T, configSchema: JSONSchemaType<T>, logScope: string) {
+  public constructor(
+    config: T,
+    initialInfo: IUserDataStorageBackendInfoMap[T["type"]],
+    logScope: string,
+    onInfoChanged: (newInfo: Readonly<IUserDataStorageBackendInfoMap[T["type"]]>) => void
+  ) {
     this.logger = log.scope(logScope);
-    this.logger.info("Initialising User Data Storage Backend.");
     this.config = config;
-    this.logger.silly(`Config: ${JSON.stringify(this.config, null, 2)}.`);
-    this.CONFIG_VALIDATE_FUNCTION = AJV.compile<T>(configSchema);
-    if (!this.isConfigValid()) {
-      throw new Error("Could not initialise User Data Storage Backend");
+    this.logger.info(`Initialising ${this.config.type} User Data Storage Backend with info: ${JSON.stringify(initialInfo, null, 2)}.`);
+    this.info = deepFreeze<IUserDataStorageBackendInfoMap[T["type"]]>(initialInfo);
+    this.onInfoChanged = (): void => {
+      onInfoChanged(this.info);
+    };
+  }
+
+  public static isValidConfig<T extends IBaseUserDataStorageBackendConfig>(data: unknown, validateFunction: ValidateFunction<T>): data is T {
+    if (validateFunction(data)) {
+      return true;
     }
+    return false;
   }
 
   public abstract open(): boolean;
@@ -25,17 +38,12 @@ export abstract class BaseUserDataStorageBackend<T extends IBaseUserDataStorageB
   public abstract isClosed(): boolean;
   public abstract isLocal(): boolean;
 
-  public isConfigValid(): boolean {
-    this.logger.silly("Validating User Data Storage Backend Config.");
-    if (this.CONFIG_VALIDATE_FUNCTION(this.config)) {
-      this.logger.debug(`Valid "${this.config.type}" User Data Storage Backend Config.`);
-      return true;
-    }
-    this.logger.debug("Invalid User Data Storage Backend Config.");
-    this.logger.error("Validation errors:");
-    this.CONFIG_VALIDATE_FUNCTION.errors?.map((error) => {
-      this.logger.error(`Path: "${error.instancePath.length > 0 ? error.instancePath : "-"}", Message: "${error.message ?? "-"}".`);
-    });
-    return false;
+  public getInfo(): Readonly<IUserDataStorageBackendInfoMap[T["type"]]> {
+    return this.info;
+  }
+
+  protected updateInfo(newInfo: IUserDataStorageBackendInfoMap[T["type"]]): void {
+    this.info = deepFreeze<IUserDataStorageBackendInfoMap[T["type"]]>(newInfo);
+    this.onInfoChanged();
   }
 }

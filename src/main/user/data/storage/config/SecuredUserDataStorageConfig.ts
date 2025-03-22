@@ -1,6 +1,7 @@
 import { UUID } from "node:crypto";
 import { USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA, UserDataStorageBackendConfig } from "../backend/config/UserDataStorageBackendConfig";
-import { JSONSchemaType } from "ajv";
+import { JSONSchemaType, ValidateFunction } from "ajv";
+import { AJV } from "@shared/utils/AJVJSONValidator";
 
 export interface ISecuredUserDataStorageConfig {
   storageId: UUID;
@@ -32,3 +33,19 @@ export const SECURED_USER_DATA_STORAGE_CONFIG_JSON_SCHEMA: JSONSchemaType<ISecur
   required: ["storageId", "userId", "visibilityGroupId", "name", "description", "backendConfig"],
   additionalProperties: false
 } as const;
+
+export const isValidSecuredUserDataStorageConfig: ValidateFunction<ISecuredUserDataStorageConfig> = AJV.compile<ISecuredUserDataStorageConfig>(
+  SECURED_USER_DATA_STORAGE_CONFIG_JSON_SCHEMA
+);
+
+export const isValidSecuredUserDataStorageConfigArray = (data: unknown): data is ISecuredUserDataStorageConfig[] => {
+  if (!Array.isArray(data)) {
+    return false;
+  }
+  for (const ARRAY_VALUE of data) {
+    if (!isValidSecuredUserDataStorageConfig(ARRAY_VALUE)) {
+      return false;
+    }
+  }
+  return true;
+};

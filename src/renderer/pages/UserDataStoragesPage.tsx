@@ -2,7 +2,7 @@ import { FC, useCallback, useEffect } from "react";
 import Button from "@mui/material/Button/Button";
 import { appLogger } from "@renderer/utils/loggers";
 import NewUserDataStorageConfigFormDialog from "@renderer/components/dialogs/NewUserDataStorageConfigFormDialog";
-import UserDataStoragesDataGrid from "@renderer/components/dataGrids/UserDataStoragesDataGrid";
+import AvailableUserDataStorageConfigsDataGrid from "@renderer/components/dataGrids/AvailableUserDataStorageConfigsDataGrid";
 import { Box, Stack, Typography } from "@mui/material";
 import { DASHBOARD_NAVIGATION_AREAS } from "@renderer/navigationAreas/DashboardNavigationAreas";
 import {
@@ -58,7 +58,7 @@ const UserDataStoragesPage: FC = () => {
           Available Data Storages:
         </Typography>
         <Box sx={{ flex: 1, minHeight: 0, marginTop: ".5rem" }}>
-          <UserDataStoragesDataGrid />
+          <AvailableUserDataStorageConfigsDataGrid />
         </Box>
         {
           // TODO: Add edit config & delete config (with optional delete resources)

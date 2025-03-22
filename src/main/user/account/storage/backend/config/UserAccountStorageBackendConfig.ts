@@ -2,7 +2,7 @@ import { JSONSchemaType } from "ajv";
 import {
   ILocalSQLiteUserAccountStorageBackendConfig,
   LocalSQLiteUserAccountStorageBackend
-} from "../implementations/LocalSQLite/LocalSQLiteUserAccountStorageBackend";
+} from "../implementations/localSQLite/LocalSQLiteUserAccountStorageBackend";
 import {
   USER_ACCOUNT_STORAGE_BACKEND_TYPES,
   UserAccountStorageBackendType

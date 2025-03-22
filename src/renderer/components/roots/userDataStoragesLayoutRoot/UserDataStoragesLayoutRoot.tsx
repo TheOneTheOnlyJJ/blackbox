@@ -4,18 +4,19 @@ import { Box } from "@mui/material";
 import { Outlet } from "react-router-dom";
 import { IUserDataStoragesLayoutRootContext } from "./UserDataStoragesLayoutRootContext";
 import { appLogger } from "@renderer/utils/loggers";
-import UserDataStoragesNavigationBar from "@renderer/components/navigation/UserDataStoragesNavigationBar";
+import UserDataNavigationBar from "@renderer/components/navigation/UserDataStoragesNavigationBar";
 import { UserDataNavigationArea } from "@renderer/navigationAreas/UserDataStoragesNavigationAreas";
 
 const DEFAULT_USER_DATA_STORAGES_NAVIGATION_BAR_WIDTH = 240;
 
+// TODO: Rename this to just user Data navigation Area
 const UserDataStoragesLayoutRoot: FC = () => {
   const dashboardLayoutRootContext: IDashboardLayoutRootContext = useDashboardLayoutRootContext();
   const userDataStoragesNavigationBarRef: MutableRefObject<HTMLDivElement | null> = useRef(null);
   const [userDataStoragesNavigationBarWidth, setuserDataStoragesNavigationBarWidth] = useState<number>(
     DEFAULT_USER_DATA_STORAGES_NAVIGATION_BAR_WIDTH
   );
-  const [userStoragesNavigationArea, setUserStoragesNavigationArea] = useState<UserDataNavigationArea | null>(null);
+  const [userDataNavigationArea, setUserDataNavigationArea] = useState<UserDataNavigationArea | null>(null);
 
   const updateUserDataStoragesNavigationBarWidth = useCallback((): void => {
     if (userDataStoragesNavigationBarRef.current) {
@@ -40,10 +41,8 @@ const UserDataStoragesLayoutRoot: FC = () => {
   }, [updateUserDataStoragesLayoutComponentDimensions]);
 
   useEffect((): void => {
-    appLogger.info(
-      `User data storages navigation area changed: ${userStoragesNavigationArea === null ? "null" : `"${userStoragesNavigationArea}"`}.`
-    );
-  }, [userStoragesNavigationArea]);
+    appLogger.info(`User data navigation area changed: ${userDataNavigationArea === null ? "null" : `"${userDataNavigationArea}"`}.`);
+  }, [userDataNavigationArea]);
 
   useEffect((): void => {
     appLogger.debug("Rendering User Data Storages Layout Root component.");
@@ -51,13 +50,13 @@ const UserDataStoragesLayoutRoot: FC = () => {
 
   return (
     <>
-      <UserDataStoragesNavigationBar
+      <UserDataNavigationBar
         ref={userDataStoragesNavigationBarRef}
         width={userDataStoragesNavigationBarWidth}
         leftOffset={dashboardLayoutRootContext.layout.dashboardNavigationBarWidth}
         heightOffset={dashboardLayoutRootContext.layout.dashboardAppBarHeight}
         signedInUserId={dashboardLayoutRootContext.signedInUserInfo.userId}
-        userStoragesNavigationArea={userStoragesNavigationArea}
+        userStoragesNavigationArea={userDataNavigationArea}
       />
       <Box
         component="main"
@@ -79,8 +78,8 @@ const UserDataStoragesLayoutRoot: FC = () => {
                 ...dashboardLayoutRootContext.layout,
                 userDataStoragesNavigationbarWidth: userDataStoragesNavigationBarWidth
               },
-              userStoragesNavigationArea: userStoragesNavigationArea,
-              setUserStoragesNavigationArea: setUserStoragesNavigationArea
+              userStoragesNavigationArea: userDataNavigationArea,
+              setUserStoragesNavigationArea: setUserDataNavigationArea
             } satisfies IUserDataStoragesLayoutRootContext
           }
         />

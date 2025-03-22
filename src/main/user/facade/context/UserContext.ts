@@ -1,14 +1,12 @@
 import { LogFunctions } from "electron-log";
 import { ISignedInUserInfo } from "@shared/user/account/SignedInUserInfo";
 import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserAccountStorageInfo";
-import { IUserDataStoragesInfoChangedDiff } from "@shared/user/data/storage/info/UserDataStoragesInfoChangedDiff";
 import { IUserDataStorageVisibilityGroupsInfoChangedDiff } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfoChangedDiff";
 import { UUID } from "node:crypto";
 import { ISignedInUser, isValidSignedInUser } from "../../account/SignedInUser";
 import { signedInUserToSignedInUserInfo } from "../../account/utils/signedInUserToSignedInUserInfo";
 import { isDeepStrictEqual } from "node:util";
 import { UserAccountStorage } from "../../account/storage/UserAccountStorage";
-import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
 import {
   isValidUserDataStorageVisibilityGroupArray,
   IUserDataStorageVisibilityGroup
@@ -19,14 +17,18 @@ import { userDataStorageVisibilityGroupToUserDataStorageVisibilityGroupInfo } fr
 import { isValidUUIDArray } from "@main/utils/dataValidation/isValidUUID";
 import { IStorageSecuredUserDataStorageConfig } from "../../data/storage/config/StorageSecuredUserDataStorageConfig";
 import { storageSecuredUserDataStorageConfigToSecuredUserDataStorageConfig } from "../../data/storage/config/utils/storageSecuredUserDataStorageConfigToSecuredUserDataStorageConfig";
-import { ISecuredUserDataStorageConfig } from "../../data/storage/config/SecuredUserDataStorageConfig";
-import { securedUserDataStorageConfigToUserDataStorageInfo } from "@main/user/data/storage/config/utils/securedUserDataStorageConfigToUserDataStorageInfo";
+import { ISecuredUserDataStorageConfig, isValidSecuredUserDataStorageConfigArray } from "../../data/storage/config/SecuredUserDataStorageConfig";
+import { securedUserDataStorageConfigToUserDataStorageConfigInfo } from "@main/user/data/storage/config/utils/securedUserDataStorageConfigToUserDataStorageConfigInfo";
 import { deepFreeze } from "@main/utils/deepFreeze";
+import { IUserDataStorageConfigInfo } from "@shared/user/data/storage/config/info/UserDataStorageConfigInfo";
+import { IUserDataStorageConfigsInfoChangedDiff } from "@shared/user/data/storage/config/info/UserDataStorageConfigsInfoChangedDiff";
 
 export interface IUserContextHandlers {
   onSignedInUserChangedCallback: ((newSignedInUserInfo: ISignedInUserInfo | null) => void) | null;
   onUserAccountStorageChangedCallback: ((newUserAccountStorageInfo: IUserAccountStorageInfo | null) => void) | null;
-  onAvailableUserDataStorageConfigsChangedCallback: ((availableUserDataStoragesInfoChangedDiff: IUserDataStoragesInfoChangedDiff) => void) | null;
+  onAvailableUserDataStorageConfigsChangedCallback:
+    | ((availableUserDataStorageConfigsInfoChangedDiff: IUserDataStorageConfigsInfoChangedDiff) => void)
+    | null;
   onOpenUserDataStorageVisibilityGroupsChangedCallback:
     | ((dataStorageVisibilityGroupsInfoChangedDiff: IUserDataStorageVisibilityGroupsInfoChangedDiff) => void)
     | null;
@@ -155,10 +157,9 @@ export class UserContext {
     this.logger.info(
       `Adding ${newDataStorageConfigs.length.toString()} new available User Data Storage Config${newDataStorageConfigs.length === 1 ? "" : "s"}.`
     );
-    // TODO: This
-    // if (!isValidUserDataStorageArray(newDataStorageConfigs)) {
-    //   throw new Error("Invalid new User Data Storages array");
-    // }
+    if (!isValidSecuredUserDataStorageConfigArray(newDataStorageConfigs)) {
+      throw new Error("Invalid newly available Secured User Data Storage Config array");
+    }
     if (newDataStorageConfigs.length === 0) {
       this.logger.warn("Given no new User Data Storage Configs to add.");
       return 0;
@@ -183,10 +184,10 @@ export class UserContext {
     if (NEW_DATA_STORAGES.length > 0) {
       this.HANDLERS.onAvailableUserDataStorageConfigsChangedCallback?.({
         removed: [],
-        added: NEW_DATA_STORAGES.map((newDataStorageConfig: ISecuredUserDataStorageConfig): IUserDataStorageInfo => {
-          return securedUserDataStorageConfigToUserDataStorageInfo(newDataStorageConfig, "VISGROUPNAME", null); // TODO: Send visibility group ID instead of name
+        added: NEW_DATA_STORAGES.map((newDataStorageConfig: ISecuredUserDataStorageConfig): IUserDataStorageConfigInfo => {
+          return securedUserDataStorageConfigToUserDataStorageConfigInfo(newDataStorageConfig, null);
         })
-      } satisfies IUserDataStoragesInfoChangedDiff);
+      } satisfies IUserDataStorageConfigsInfoChangedDiff);
     }
     return NEW_DATA_STORAGES.length;
   }
@@ -227,7 +228,7 @@ export class UserContext {
       this.HANDLERS.onAvailableUserDataStorageConfigsChangedCallback?.({
         removed: DATA_STORAGE_IDS,
         added: []
-      } satisfies IUserDataStoragesInfoChangedDiff);
+      } satisfies IUserDataStorageConfigsInfoChangedDiff);
     }
     return DATA_STORAGE_IDS.length;
   }
@@ -249,7 +250,7 @@ export class UserContext {
     this.HANDLERS.onAvailableUserDataStorageConfigsChangedCallback?.({
       removed: AVAILABLE_DATA_STORAGE_CONFIG_IDS,
       added: []
-    } satisfies IUserDataStoragesInfoChangedDiff);
+    } satisfies IUserDataStorageConfigsInfoChangedDiff);
     return AVAILABLE_DATA_STORAGE_CONFIG_IDS.length;
   }
 

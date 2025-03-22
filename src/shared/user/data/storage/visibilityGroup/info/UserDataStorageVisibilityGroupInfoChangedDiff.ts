@@ -7,7 +7,7 @@ export interface IUserDataStorageVisibilityGroupsInfoChangedDiff {
   added: IUserDataStorageVisibilityGroupInfo[];
 }
 
-export const USER_DATA_STORAGES_VISIBILITY_GROUPS_INFO_CHANGED_DIFF_JSON_SCHEMA: JSONSchemaType<IUserDataStorageVisibilityGroupsInfoChangedDiff> = {
+export const USER_DATA_STORAGE_VISIBILITY_GROUPS_INFO_CHANGED_DIFF_JSON_SCHEMA: JSONSchemaType<IUserDataStorageVisibilityGroupsInfoChangedDiff> = {
   $schema: "http://json-schema.org/draft-07/schema#",
   type: "object",
   properties: {
@@ -26,5 +26,6 @@ export const USER_DATA_STORAGES_VISIBILITY_GROUPS_INFO_CHANGED_DIFF_JSON_SCHEMA:
   additionalProperties: false
 } as const;
 
-export const USER_DATA_STORAGES_VISIBILITY_GROUPS_INFO_CHANGED_DIFF_VALIDATE_FUNCTION: ValidateFunction<IUserDataStorageVisibilityGroupsInfoChangedDiff> =
-  AJV.compile(USER_DATA_STORAGES_VISIBILITY_GROUPS_INFO_CHANGED_DIFF_JSON_SCHEMA);
+export const isValidUserDataStorageVisibilityGroupsInfoChangedDiff: ValidateFunction<IUserDataStorageVisibilityGroupsInfoChangedDiff> = AJV.compile(
+  USER_DATA_STORAGE_VISIBILITY_GROUPS_INFO_CHANGED_DIFF_JSON_SCHEMA
+);

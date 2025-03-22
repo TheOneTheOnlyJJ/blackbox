@@ -30,5 +30,5 @@ export const PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIG_J
     additionalProperties: false
   } as const;
 
-export const PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIG_VALIDATE_FUNCTION: ValidateFunction<IPrivateStorageSecuredUserDataStorageVisibilityGroupConfig> =
+export const isValidPrivateStorageSecuredUserDataStorageVisibilityGroupConfig: ValidateFunction<IPrivateStorageSecuredUserDataStorageVisibilityGroupConfig> =
   AJV.compile(PRIVATE_STORAGE_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIG_JSON_SCHEMA);

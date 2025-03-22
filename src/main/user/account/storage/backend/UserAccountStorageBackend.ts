@@ -1,6 +1,6 @@
 import { BaseUserAccountStorageBackend } from "./BaseUserAccountStorageBackend";
 import { IBaseUserAccountStorageBackendConfig } from "./config/BaseUserAccountStorageBackendConfig";
-import { LocalSQLiteUserAccountStorageBackend } from "./implementations/LocalSQLite/LocalSQLiteUserAccountStorageBackend";
+import { LocalSQLiteUserAccountStorageBackend } from "./implementations/localSQLite/LocalSQLiteUserAccountStorageBackend";
 import {
   USER_ACCOUNT_STORAGE_BACKEND_TYPES,
   UserAccountStorageBackendType

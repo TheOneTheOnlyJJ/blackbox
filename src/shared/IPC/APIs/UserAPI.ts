@@ -5,20 +5,20 @@ import { IEncryptedData } from "@shared/utils/EncryptedData";
 import { IUserSignUpDTO } from "@shared/user/account/UserSignUpDTO";
 import { IUserSignInDTO } from "@shared/user/account/UserSignInDTO";
 import { IUserDataStorageConfigCreateDTO } from "@shared/user/data/storage/config/create/DTO/UserDataStorageConfigCreateDTO";
-import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
-import { IUserDataStoragesInfoChangedDiff } from "@shared/user/data/storage/info/UserDataStoragesInfoChangedDiff";
 import { IUserDataStorageVisibilityGroupConfigCreateDTO } from "@shared/user/data/storage/visibilityGroup/config/create/DTO/UserDataStorageVisibilityGroupConfigCreateDTO";
 import { IUserDataStorageVisibilityGroupsOpenRequestDTO } from "@shared/user/data/storage/visibilityGroup/openRequest/DTO/UserDataStorageVisibilityGroupsOpenRequestDTO";
 import { IUserDataStorageVisibilityGroupsInfoChangedDiff } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfoChangedDiff";
 import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
 import { TransformToIPCAPIChannels } from "../IPCAPIChannels";
+import { IUserDataStorageConfigsInfoChangedDiff } from "@shared/user/data/storage/config/info/UserDataStorageConfigsInfoChangedDiff";
+import { IUserDataStorageConfigInfo } from "@shared/user/data/storage/config/info/UserDataStorageConfigInfo";
 
 // Utility types
 export type UserAccountStorageChangedCallback = (newUserAccountStorageInfo: IUserAccountStorageInfo | null) => void;
 export type UserAccountStorageInfoChangedCallback = (newUserAccountStorageInfo: IUserAccountStorageInfo) => void;
 export type SignedInUserChangedCallback = (newSignedInUserInfo: ISignedInUserInfo | null) => void;
-export type AvailableUserDataStoragesChangedCallback = (
-  encryptedAvailableUserDataStoragesInfoChangedDiff: IEncryptedData<IUserDataStoragesInfoChangedDiff>
+export type AvailableUserDataStorageConfigsChangedCallback = (
+  encryptedAvailableUserDataStorageConfigsInfoChangedDiff: IEncryptedData<IUserDataStorageConfigsInfoChangedDiff>
 ) => void;
 export type OpenUserDataStorageVisibilityGroupsChangedCallback = (
   encryptedUserDataStorageVisibilityGroupsInfoChangedDiff: IEncryptedData<IUserDataStorageVisibilityGroupsInfoChangedDiff>
@@ -44,12 +44,12 @@ export interface IUserAPI {
   ) => IPCAPIResponse<number>;
   closeUserDataStorageVisibilityGroups: (userDataStorageVisibilityGroupIds: string[]) => IPCAPIResponse<number>;
   getUserAccountStorageInfo: () => IPCAPIResponse<IUserAccountStorageInfo | null>;
-  getAllSignedInUserAvailableDataStoragesInfo: () => IPCAPIResponse<IEncryptedData<IUserDataStorageInfo[]>>;
+  getAllSignedInUserAvailableDataStorageConfigsInfo: () => IPCAPIResponse<IEncryptedData<IUserDataStorageConfigInfo[]>>;
   getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo: () => IPCAPIResponse<IEncryptedData<IUserDataStorageVisibilityGroupInfo[]>>;
   onUserAccountStorageChanged: (callback: UserAccountStorageChangedCallback) => () => void;
   onUserAccountStorageInfoChanged: (callback: UserAccountStorageInfoChangedCallback) => () => void;
   onSignedInUserChanged: (callback: SignedInUserChangedCallback) => () => void;
-  onAvailableUserDataStoragesChanged: (callback: AvailableUserDataStoragesChangedCallback) => () => void;
+  onAvailableUserDataStorageConfigsChanged: (callback: AvailableUserDataStorageConfigsChangedCallback) => () => void;
   onOpenUserDataStorageVisibilityGroupsChanged: (callback: OpenUserDataStorageVisibilityGroupsChangedCallback) => () => void;
 }
 
@@ -71,11 +71,11 @@ export const USER_API_IPC_CHANNELS: UserAPIIPCChannels = {
   openUserDataStorageVisibilityGroups: "UserAPI:openUserDataStorageVisibilityGroups",
   closeUserDataStorageVisibilityGroups: "UserAPI:closeUserDataStorageVisibilityGroups",
   getUserAccountStorageInfo: "UserAPI:getUserAccountStorageInfo",
-  getAllSignedInUserAvailableDataStoragesInfo: "UserAPI:getAllSignedInUserAvailableDataStoragesInfo",
+  getAllSignedInUserAvailableDataStorageConfigsInfo: "UserAPI:getAllSignedInUserAvailableDataStorageConfigsInfo",
   getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo: "UserAPI:getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo",
   onUserAccountStorageChanged: "UserAPI:onUserAccountStorageChanged",
   onUserAccountStorageInfoChanged: "UserAPI:onUserAccountStorageInfoChanged",
   onSignedInUserChanged: "UserAPI:onSignedInUserChanged",
-  onAvailableUserDataStoragesChanged: "UserAPI:onAvailableUserDataStoragesChanged",
+  onAvailableUserDataStorageConfigsChanged: "UserAPI:onAvailableUserDataStorageConfigsChanged",
   onOpenUserDataStorageVisibilityGroupsChanged: "UserAPI:onOpenUserDataStorageVisibilityGroupsChanged"
 } as const;

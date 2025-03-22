@@ -6,7 +6,7 @@ import { Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText
 import DebouncedLink from "./DebouncedLink";
 import { USER_DATA_NAVIGATION_AREAS, UserDataNavigationArea } from "@renderer/navigationAreas/UserDataStoragesNavigationAreas";
 
-interface IUserDataStoragesNavigationBarDrawerItem {
+interface IUserDataNavigationBarDrawerItem {
   name: string;
   icon: SvgIconComponent;
   userDataNavigationArea: UserDataNavigationArea;
@@ -14,7 +14,7 @@ interface IUserDataStoragesNavigationBarDrawerItem {
   divider: boolean;
 }
 
-export interface IUserDataStoragesNavigationBarProps {
+export interface IUserDataNavigationBarProps {
   width: number;
   leftOffset: number;
   heightOffset: number;
@@ -22,14 +22,12 @@ export interface IUserDataStoragesNavigationBarProps {
   userStoragesNavigationArea: UserDataNavigationArea | null;
 }
 
-const UserDataStoragesNavigationBar = forwardRef<HTMLDivElement, IUserDataStoragesNavigationBarProps>(function UserDataStoragesNavigationBar(
-  props: IUserDataStoragesNavigationBarProps,
+const UserDataNavigationBar = forwardRef<HTMLDivElement, IUserDataNavigationBarProps>(function UserDataNavigationBar(
+  props: IUserDataNavigationBarProps,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _: ForwardedRef<HTMLDivElement> // This is needed
 ) {
-  const DRAWER_ITEMS: IUserDataStoragesNavigationBarDrawerItem[] = useMemo<
-    IUserDataStoragesNavigationBarDrawerItem[]
-  >((): IUserDataStoragesNavigationBarDrawerItem[] => {
+  const DRAWER_ITEMS: IUserDataNavigationBarDrawerItem[] = useMemo<IUserDataNavigationBarDrawerItem[]>((): IUserDataNavigationBarDrawerItem[] => {
     return [
       {
         name: "Available Storages",
@@ -65,7 +63,7 @@ const UserDataStoragesNavigationBar = forwardRef<HTMLDivElement, IUserDataStorag
       <Box sx={{ overflow: "auto" }}>
         <List>
           {DRAWER_ITEMS.map(
-            (item: IUserDataStoragesNavigationBarDrawerItem, index: number): React.JSX.Element => (
+            (item: IUserDataNavigationBarDrawerItem, index: number): React.JSX.Element => (
               <ListItem key={index} disablePadding divider={item.divider}>
                 <ListItemButton component={DebouncedLink} to={item.path} selected={props.userStoragesNavigationArea === item.userDataNavigationArea}>
                   <ListItemIcon>
@@ -82,4 +80,4 @@ const UserDataStoragesNavigationBar = forwardRef<HTMLDivElement, IUserDataStorag
   );
 });
 
-export default UserDataStoragesNavigationBar;
+export default UserDataNavigationBar;

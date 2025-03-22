@@ -18,4 +18,4 @@ export const USER_SIGN_UP_DTO_JSON_SCHEMA: JSONSchemaType<IUserSignUpDTO> = {
   additionalProperties: false
 } as const;
 
-export const USER_SIGN_UP_DTO_VALIDATE_FUNCTION: ValidateFunction<IUserSignUpDTO> = AJV.compile(USER_SIGN_UP_DTO_JSON_SCHEMA);
+export const isValidUserSignUpDTO: ValidateFunction<IUserSignUpDTO> = AJV.compile(USER_SIGN_UP_DTO_JSON_SCHEMA);

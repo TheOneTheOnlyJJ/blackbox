@@ -1,7 +1,6 @@
 import { UserDataStorage } from "../UserDataStorage";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const isValidUserDataStorageArray = (data: any): data is UserDataStorage[] => {
+export const isValidUserDataStorageArray = (data: unknown): data is UserDataStorage[] => {
   if (!Array.isArray(data)) {
     return false;
   }

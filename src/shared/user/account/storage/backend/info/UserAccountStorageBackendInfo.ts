@@ -6,7 +6,7 @@ import { JSONSchemaType } from "ajv";
 import {
   ILocalSQLiteUserAccountStorageBackendInfo,
   LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_INFO_JSON_SCHEMA
-} from "./implementations/LocalSQLite/LocalSQLiteUserAccountStorageBackendInfo";
+} from "./implementations/localSQLite/LocalSQLiteUserAccountStorageBackendInfo";
 
 // Map of every user account storage backend type to its corresponding info type
 export interface IUserAccountStorageBackendInfoMap {

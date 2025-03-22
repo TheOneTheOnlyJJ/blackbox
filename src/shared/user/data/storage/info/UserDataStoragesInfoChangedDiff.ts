@@ -26,6 +26,6 @@ export const USER_DATA_STORAGES_INFO_CHANGED_DIFF_JSON_SCHEMA: JSONSchemaType<IU
   additionalProperties: false
 } as const;
 
-export const USER_DATA_STORAGES_INFO_CHANGED_DIFF_VALIDATE_FUNCTION: ValidateFunction<IUserDataStoragesInfoChangedDiff> = AJV.compile(
+export const isValidUserDataStoragesInfoChangedDiff: ValidateFunction<IUserDataStoragesInfoChangedDiff> = AJV.compile(
   USER_DATA_STORAGES_INFO_CHANGED_DIFF_JSON_SCHEMA
 );

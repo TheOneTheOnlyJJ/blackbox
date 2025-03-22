@@ -3,12 +3,12 @@ import { LogFunctions } from "electron-log";
 import { USER_DATA_STORAGE_BACKEND_TYPES, UserDataStorageBackendType } from "@shared/user/data/storage/backend/UserDataStorageBackendType";
 import { IOptionBUserDataStorageBackendConfig } from "../../implementations/optionB/optionB";
 import { IOptionCUserDataStorageBackendConfig } from "../../implementations/optionC/optionC";
-import { ILocalSQLiteUserDataStorageBackendConfig } from "../../implementations/LocalSQLite/LocalSQLiteUserDataStorageBackend";
+import { ILocalSQLiteUserDataStorageBackendConfig } from "../../implementations/localSQLite/LocalSQLiteUserDataStorageBackend";
 import {
   IUserDataStorageBackendConfigCreateDTOMap,
   UserDataStorageBackendConfigCreateDTO
 } from "@shared/user/data/storage/backend/config/create/DTO/UserDataStorageBackendConfigCreateDTO";
-import { ILocalSQLiteUserDataStorageBackendConfigCreateDTO } from "@shared/user/data/storage/backend/config/create/DTO/implementations/LocalSQLite/LocalSQLiteUserDataStorageBackendConfigCreateDTO";
+import { ILocalSQLiteUserDataStorageBackendConfigCreateDTO } from "@shared/user/data/storage/backend/config/create/DTO/implementations/localSQLite/LocalSQLiteUserDataStorageBackendConfigCreateDTO";
 import { IOptionBUserDataStorageBackendConfigCreateDTO } from "@shared/user/data/storage/backend/config/create/DTO/implementations/optionB/optionB";
 import { IOptionCUserDataStorageBackendConfigCreateDTO } from "@shared/user/data/storage/backend/config/create/DTO/implementations/optionC/optionC";
 
@@ -19,17 +19,17 @@ type UserDataStorageBackendConfigCreateDTOToUserDataStorageBackendConfigFunction
 };
 const USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_DTO_TO_USER_DATA_STORAGE_BACKEND_CONFIG_FUNCTION_MAP: UserDataStorageBackendConfigCreateDTOToUserDataStorageBackendConfigFunctionMap =
   {
-    [USER_DATA_STORAGE_BACKEND_TYPES.LocalSQLite]: (
+    [USER_DATA_STORAGE_BACKEND_TYPES.localSQLite]: (
       userDataStorageBackendConfigCreateDTO: ILocalSQLiteUserDataStorageBackendConfigCreateDTO
     ): ILocalSQLiteUserDataStorageBackendConfig => {
       return userDataStorageBackendConfigCreateDTO satisfies ILocalSQLiteUserDataStorageBackendConfig;
     },
-    [USER_DATA_STORAGE_BACKEND_TYPES.OptionB]: (
+    [USER_DATA_STORAGE_BACKEND_TYPES.optionB]: (
       userDataStorageBackendConfigCreateDTO: IOptionBUserDataStorageBackendConfigCreateDTO
     ): IOptionBUserDataStorageBackendConfig => {
       return userDataStorageBackendConfigCreateDTO satisfies IOptionBUserDataStorageBackendConfig;
     },
-    [USER_DATA_STORAGE_BACKEND_TYPES.OptionC]: (
+    [USER_DATA_STORAGE_BACKEND_TYPES.optionC]: (
       userDataStorageBackendConfigCreateDTO: IOptionCUserDataStorageBackendConfigCreateDTO
     ): IOptionCUserDataStorageBackendConfig => {
       return userDataStorageBackendConfigCreateDTO satisfies IOptionCUserDataStorageBackendConfig;
@@ -49,15 +49,15 @@ export const userDataStorageBackendConfigCreateDTOToUserDataStorageBackendConfig
   //   userDataStorageConfigInputData
   // );
   switch (userDataStorageBackendConfigCreateDTO.type) {
-    case USER_DATA_STORAGE_BACKEND_TYPES.LocalSQLite:
+    case USER_DATA_STORAGE_BACKEND_TYPES.localSQLite:
       return USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_DTO_TO_USER_DATA_STORAGE_BACKEND_CONFIG_FUNCTION_MAP[userDataStorageBackendConfigCreateDTO.type](
         userDataStorageBackendConfigCreateDTO
       );
-    case USER_DATA_STORAGE_BACKEND_TYPES.OptionB:
+    case USER_DATA_STORAGE_BACKEND_TYPES.optionB:
       return USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_DTO_TO_USER_DATA_STORAGE_BACKEND_CONFIG_FUNCTION_MAP[userDataStorageBackendConfigCreateDTO.type](
         userDataStorageBackendConfigCreateDTO
       );
-    case USER_DATA_STORAGE_BACKEND_TYPES.OptionC:
+    case USER_DATA_STORAGE_BACKEND_TYPES.optionC:
       return USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_DTO_TO_USER_DATA_STORAGE_BACKEND_CONFIG_FUNCTION_MAP[userDataStorageBackendConfigCreateDTO.type](
         userDataStorageBackendConfigCreateDTO
       );

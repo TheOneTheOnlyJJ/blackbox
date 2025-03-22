@@ -20,4 +20,4 @@ export const USER_SIGN_UP_PAYLOAD_JSON_SCHEMA: JSONSchemaType<IUserSignUpPayload
   additionalProperties: false
 } as const;
 
-export const USER_SIGN_UP_PAYLOAD_VALIDATE_FUNCTION: ValidateFunction<IUserSignUpPayload> = AJV.compile(USER_SIGN_UP_PAYLOAD_JSON_SCHEMA);
+export const isValidUserSignUpPayload: ValidateFunction<IUserSignUpPayload> = AJV.compile(USER_SIGN_UP_PAYLOAD_JSON_SCHEMA);

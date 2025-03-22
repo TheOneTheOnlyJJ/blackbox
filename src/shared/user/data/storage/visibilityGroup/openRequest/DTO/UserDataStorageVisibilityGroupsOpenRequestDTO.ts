@@ -17,5 +17,6 @@ export const USER_DATA_STORAGE_VISIBILITY_GROUPS_OPEN_REQUEST_DTO_JSON_SCHEMA: J
   additionalProperties: false
 } as const;
 
-export const USER_DATA_STORAGE_VISIBILITY_GROUPS_OPEN_REQUEST_DTO_VALIDATE_FUNCTION: ValidateFunction<IUserDataStorageVisibilityGroupsOpenRequestDTO> =
-  AJV.compile(USER_DATA_STORAGE_VISIBILITY_GROUPS_OPEN_REQUEST_DTO_JSON_SCHEMA);
+export const isValidUserDataStorageVisibilityGroupsOpenRequestDTO: ValidateFunction<IUserDataStorageVisibilityGroupsOpenRequestDTO> = AJV.compile(
+  USER_DATA_STORAGE_VISIBILITY_GROUPS_OPEN_REQUEST_DTO_JSON_SCHEMA
+);

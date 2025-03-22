@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { IV_LENGTH } from "@shared/encryption/constants";
 
 // @ts-expect-error TEncryptedPayload is required for inference purposes only
@@ -9,7 +7,7 @@ export interface IEncryptedData<TEncryptedPayload> {
   iv: Uint8Array;
 }
 
-export const isEncryptedDataValid = (data: any): data is IEncryptedData<unknown> => {
+export const isEncryptedDataValid = (data: unknown): data is IEncryptedData<unknown> => {
   return (
     typeof data === "object" &&
     data !== null &&

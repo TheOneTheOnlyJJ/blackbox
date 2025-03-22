@@ -29,13 +29,12 @@ export const USER_DATA_STORAGE_VISIBILITY_GROUP_INFO_JSON_SCHEMA: JSONSchemaType
   additionalProperties: false
 } as const;
 
-export const USER_DATA_STORAGE_VISIBILITY_GROUP_INFO_VALIDATE_FUNCTION: ValidateFunction<IUserDataStorageVisibilityGroupInfo> = AJV.compile(
+export const isValidUserDataStorageVisibilityGroupInfo: ValidateFunction<IUserDataStorageVisibilityGroupInfo> = AJV.compile(
   USER_DATA_STORAGE_VISIBILITY_GROUP_INFO_JSON_SCHEMA
 );
 
-export const LIST_OF_USER_DATA_STORAGES_VISIBILITY_GROUP_INFO_VALIDATE_FUNCTION: ValidateFunction<IUserDataStorageVisibilityGroupInfo[]> =
-  AJV.compile({
-    $schema: "http://json-schema.org/draft-07/schema#",
-    type: "array",
-    items: USER_DATA_STORAGE_VISIBILITY_GROUP_INFO_JSON_SCHEMA
-  } satisfies JSONSchemaType<IUserDataStorageVisibilityGroupInfo[]>);
+export const isValidUserDataStorageVisibilityGroupInfoArray: ValidateFunction<IUserDataStorageVisibilityGroupInfo[]> = AJV.compile({
+  $schema: "http://json-schema.org/draft-07/schema#",
+  type: "array",
+  items: USER_DATA_STORAGE_VISIBILITY_GROUP_INFO_JSON_SCHEMA
+} satisfies JSONSchemaType<IUserDataStorageVisibilityGroupInfo[]>);

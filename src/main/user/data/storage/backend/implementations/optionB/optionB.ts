@@ -1,11 +1,16 @@
 import { USER_DATA_STORAGE_BACKEND_TYPES, UserDataStorageBackendTypes } from "@shared/user/data/storage/backend/UserDataStorageBackendType";
-import { JSONSchemaType } from "ajv";
-import { IBaseUserDataStorageBackendConfig } from "../../config/BaseUserDataStorageBackendConfig";
+import { JSONSchemaType, ValidateFunction } from "ajv";
+import {
+  BASE_USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS,
+  IBaseUserDataStorageBackendConfig
+} from "../../config/BaseUserDataStorageBackendConfig";
 import { BaseUserDataStorageBackend } from "../../BaseUserDataStorageBackend";
 import { OPTION_B_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/backend/constants/implementations/optionB/OptionBUserDataStorageBackendConstants";
+import { IOptionBUserDataStorageBackendInfo } from "@shared/user/data/storage/backend/info/implementations/optionB/OptionBUserDataStorageBackendInfo";
+import { AJV } from "@shared/utils/AJVJSONValidator";
 
 export interface IOptionBUserDataStorageBackendConfig extends IBaseUserDataStorageBackendConfig {
-  type: UserDataStorageBackendTypes["OptionB"];
+  type: UserDataStorageBackendTypes["optionB"];
   optionB: string;
 }
 
@@ -15,9 +20,9 @@ export class OptionBUserDataStorageBackend extends BaseUserDataStorageBackend<IO
     properties: {
       type: {
         type: "string",
-        enum: [USER_DATA_STORAGE_BACKEND_TYPES.OptionB],
-        default: USER_DATA_STORAGE_BACKEND_TYPES.OptionB,
-        ...OPTION_B_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS.type
+        enum: [USER_DATA_STORAGE_BACKEND_TYPES.optionB],
+        default: USER_DATA_STORAGE_BACKEND_TYPES.optionB,
+        ...BASE_USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS.type
       },
       optionB: {
         type: "string",
@@ -27,9 +32,29 @@ export class OptionBUserDataStorageBackend extends BaseUserDataStorageBackend<IO
     required: ["type", "optionB"],
     additionalProperties: false
   } as const;
+  public static readonly isValidOptionBUserDataStorageBackendConfig: ValidateFunction<IOptionBUserDataStorageBackendConfig> =
+    AJV.compile<IOptionBUserDataStorageBackendConfig>(OptionBUserDataStorageBackend.CONFIG_JSON_SCHEMA);
 
-  public constructor(config: IOptionBUserDataStorageBackendConfig, logScope: string) {
-    super(config, OptionBUserDataStorageBackend.CONFIG_JSON_SCHEMA, logScope);
+  public constructor(
+    config: IOptionBUserDataStorageBackendConfig,
+    logScope: string,
+    onInfoChanged: (newInfo: Readonly<IOptionBUserDataStorageBackendInfo>) => void
+  ) {
+    if (
+      !BaseUserDataStorageBackend.isValidConfig<IOptionBUserDataStorageBackendConfig>(
+        config,
+        OptionBUserDataStorageBackend.isValidOptionBUserDataStorageBackendConfig
+      )
+    ) {
+      throw new Error(`Invalid ${USER_DATA_STORAGE_BACKEND_TYPES.optionB} User Data Storage Backend Config`);
+    }
+    const INITIAL_INFO: IOptionBUserDataStorageBackendInfo = {
+      type: config.type,
+      optionB: config.optionB,
+      isOpen: false,
+      isLocal: true
+    };
+    super(config, INITIAL_INFO, logScope, onInfoChanged);
   }
 
   public isOpen(): boolean {

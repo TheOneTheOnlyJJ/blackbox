@@ -2,16 +2,16 @@ import { JSONSchemaType } from "ajv";
 import {
   LocalSQLiteUserDataStorageBackend,
   ILocalSQLiteUserDataStorageBackendConfig
-} from "../implementations/LocalSQLite/LocalSQLiteUserDataStorageBackend";
+} from "../implementations/localSQLite/LocalSQLiteUserDataStorageBackend";
 import { USER_DATA_STORAGE_BACKEND_TYPES, UserDataStorageBackendType } from "@shared/user/data/storage/backend/UserDataStorageBackendType";
 import { IOptionBUserDataStorageBackendConfig, OptionBUserDataStorageBackend } from "../implementations/optionB/optionB";
 import { IOptionCUserDataStorageBackendConfig, OptionCUserDataStorageBackend } from "../implementations/optionC/optionC";
 
 // Map of every user data storage backend type to its corresponding config type
 export interface IUserDataStorageBackendConfigMap {
-  [USER_DATA_STORAGE_BACKEND_TYPES.LocalSQLite]: ILocalSQLiteUserDataStorageBackendConfig;
-  [USER_DATA_STORAGE_BACKEND_TYPES.OptionB]: IOptionBUserDataStorageBackendConfig;
-  [USER_DATA_STORAGE_BACKEND_TYPES.OptionC]: IOptionCUserDataStorageBackendConfig;
+  [USER_DATA_STORAGE_BACKEND_TYPES.localSQLite]: ILocalSQLiteUserDataStorageBackendConfig;
+  [USER_DATA_STORAGE_BACKEND_TYPES.optionB]: IOptionBUserDataStorageBackendConfig;
+  [USER_DATA_STORAGE_BACKEND_TYPES.optionC]: IOptionCUserDataStorageBackendConfig;
 }
 // Union of all user data storage backend config concrete implementation interfaces
 export type UserDataStorageBackendConfig = IUserDataStorageBackendConfigMap[keyof IUserDataStorageBackendConfigMap];
@@ -20,9 +20,9 @@ type UserDataStorageBackendConfigJSONSchemaMap = {
   [K in UserDataStorageBackendType]: JSONSchemaType<IUserDataStorageBackendConfigMap[K]>;
 };
 export const USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_MAP: UserDataStorageBackendConfigJSONSchemaMap = {
-  [USER_DATA_STORAGE_BACKEND_TYPES.LocalSQLite]: LocalSQLiteUserDataStorageBackend.CONFIG_JSON_SCHEMA,
-  [USER_DATA_STORAGE_BACKEND_TYPES.OptionB]: OptionBUserDataStorageBackend.CONFIG_JSON_SCHEMA,
-  [USER_DATA_STORAGE_BACKEND_TYPES.OptionC]: OptionCUserDataStorageBackend.CONFIG_JSON_SCHEMA
+  [USER_DATA_STORAGE_BACKEND_TYPES.localSQLite]: LocalSQLiteUserDataStorageBackend.CONFIG_JSON_SCHEMA,
+  [USER_DATA_STORAGE_BACKEND_TYPES.optionB]: OptionBUserDataStorageBackend.CONFIG_JSON_SCHEMA,
+  [USER_DATA_STORAGE_BACKEND_TYPES.optionC]: OptionCUserDataStorageBackend.CONFIG_JSON_SCHEMA
 } as const;
 
 export const USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA: JSONSchemaType<UserDataStorageBackendConfig> = {

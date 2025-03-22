@@ -1,11 +1,10 @@
 import log, { LogFunctions } from "electron-log";
-import { JSONSchemaType, ValidateFunction } from "ajv";
+import { ValidateFunction } from "ajv";
 import { ISecuredUserSignUpPayload } from "../../SecuredUserSignUpPayload";
 import { UUID } from "node:crypto";
 import { ISecuredPassword } from "@main/utils/encryption/SecuredPassword";
 import { IBaseUserAccountStorageBackendConfig } from "./config/BaseUserAccountStorageBackendConfig";
 import { IStorageSecuredUserDataStorageConfig } from "@main/user/data/storage/config/StorageSecuredUserDataStorageConfig";
-import { AJV } from "@shared/utils/AJVJSONValidator";
 import { IStorageSecuredUserDataStorageVisibilityGroupConfig } from "@main/user/data/storage/visibilityGroup/config/StorageSecuredUserDataStorageVisibilityGroupConfig";
 import { IUserAccountStorageBackendInfoMap } from "@shared/user/account/storage/backend/info/UserAccountStorageBackendInfo";
 import { deepFreeze } from "@main/utils/deepFreeze";
@@ -34,22 +33,24 @@ export abstract class BaseUserAccountStorageBackend<T extends IBaseUserAccountSt
 
   public constructor(
     config: T,
-    configSchema: JSONSchemaType<T>,
     initialInfo: IUserAccountStorageBackendInfoMap[T["type"]],
-    onInfoChanged: (newInfo: Readonly<IUserAccountStorageBackendInfoMap[T["type"]]>) => void,
-    logScope: string
+    logScope: string,
+    onInfoChanged: (newInfo: Readonly<IUserAccountStorageBackendInfoMap[T["type"]]>) => void
   ) {
-    // TODO: Move this higher?
     this.logger = log.scope(logScope);
-    if (!this.isValidConfig(config, AJV.compile<T>(configSchema))) {
-      throw new Error(`Could not initialise User Acount Storage Backend`);
-    }
     this.config = config;
     this.logger.info(`Initialising ${this.config.type} User Acount Storage Backend with info: ${JSON.stringify(initialInfo, null, 2)}.`);
     this.info = deepFreeze<IUserAccountStorageBackendInfoMap[T["type"]]>(initialInfo);
     this.onInfoChanged = (): void => {
       onInfoChanged(this.info);
     };
+  }
+
+  public static isValidConfig<T extends IBaseUserAccountStorageBackendConfig>(data: unknown, isValidConcreteConfig: ValidateFunction<T>): data is T {
+    if (isValidConcreteConfig(data)) {
+      return true;
+    }
+    return false;
   }
 
   public abstract open(): boolean;
@@ -78,19 +79,6 @@ export abstract class BaseUserAccountStorageBackend<T extends IBaseUserAccountSt
     userId: UUID,
     userDataStorageConfigId: UUID
   ): IStorageSecuredUserDataStorageVisibilityGroupConfig | null;
-
-  private isValidConfig(data: unknown, validateFunction: ValidateFunction<T>): data is T {
-    this.logger.debug("Validating User Acount Storage Backend Config.");
-    if (validateFunction(data)) {
-      return true;
-    }
-    this.logger.debug("Invalid User Account Storage Backend Config.");
-    this.logger.error("Validation errors:");
-    validateFunction.errors?.map((error): void => {
-      this.logger.error(`Path: "${error.instancePath.length > 0 ? error.instancePath : "-"}", Message: "${error.message ?? "-"}".`);
-    });
-    return false;
-  }
 
   public getInfo(): Readonly<IUserAccountStorageBackendInfoMap[T["type"]]> {
     return this.info;

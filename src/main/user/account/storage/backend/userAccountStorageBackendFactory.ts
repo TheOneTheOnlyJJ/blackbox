@@ -1,5 +1,5 @@
 import { LogFunctions } from "electron-log";
-import { LocalSQLiteUserAccountStorageBackend } from "./implementations/LocalSQLite/LocalSQLiteUserAccountStorageBackend";
+import { LocalSQLiteUserAccountStorageBackend } from "./implementations/localSQLite/LocalSQLiteUserAccountStorageBackend";
 import {
   USER_ACCOUNT_STORAGE_BACKEND_TYPES,
   UserAccountStorageBackendType
@@ -20,6 +20,7 @@ export function userAccountStorageBackendFactory<T extends UserAccountStorageBac
     case USER_ACCOUNT_STORAGE_BACKEND_TYPES.localSQLite:
       return new LocalSQLiteUserAccountStorageBackend(config, logScope, onInfoChanged);
     default:
-      throw new Error(`Invalid User Acount Storage Backend type received: ${(config as { type: string }).type}`);
+      // eslint-disable-next-line @typescript-eslint/no-base-to-string
+      throw new Error(`Invalid User Acount Storage Backend config received: ${String(config)}`);
   }
 }
