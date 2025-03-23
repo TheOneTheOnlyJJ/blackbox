@@ -9,7 +9,7 @@ import {
 } from "../../config/create/input/BaseUserDataStorageBackendConfigCreateInput";
 import { UiSchema } from "@rjsf/utils";
 import { OPTION_B_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/backend/constants/implementations/optionB/OptionBUserDataStorageBackendConstants";
-import { USER_DATA_STORAGE_BACKEND_TYPE_NAMES } from "@shared/user/data/storage/backend/UserDataStorageBackendTypeName";
+import { getUserDataStorageBackendTypeName } from "@shared/user/data/storage/backend/UserDataStorageBackendTypeName";
 
 export interface IOptionBUserDataStorageBackendConfigCreateInput extends IBaseUserDataStorageBackendConfigCreateInput {
   type: UserDataStorageBackendTypes["optionB"];
@@ -35,7 +35,7 @@ export const OPTION_B_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_JSON_SCHEMA:
 } as const;
 
 export const OPTION_B_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_UI_SCHEMA: UiSchema<IOptionBUserDataStorageBackendConfigCreateInput> = {
-  "ui:title": USER_DATA_STORAGE_BACKEND_TYPE_NAMES[USER_DATA_STORAGE_BACKEND_TYPES.optionB], // TODO: Make a getter function for this
+  "ui:title": getUserDataStorageBackendTypeName(USER_DATA_STORAGE_BACKEND_TYPES.optionB),
   "ui:options": {
     label: false
   },

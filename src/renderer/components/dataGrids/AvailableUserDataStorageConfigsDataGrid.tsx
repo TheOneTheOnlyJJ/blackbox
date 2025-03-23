@@ -7,7 +7,7 @@ import {
   USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA_CONSTANTS
 } from "@shared/user/data/storage/config/info/UserDataStorageConfigInfo";
 import { BASE_USER_DATA_STORAGE_BACKEND_CONFIG_INFO_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/backend/config/info/BaseUserDataStorageBackendConfigInfo";
-import { USER_DATA_STORAGE_BACKEND_TYPE_NAMES } from "@shared/user/data/storage/backend/UserDataStorageBackendTypeName";
+import { getUserDataStorageBackendTypeName } from "@shared/user/data/storage/backend/UserDataStorageBackendTypeName";
 
 const AVAILABLE_USER_DATA_STORAGE_CONFIGS_DATA_GRID_COLUMNS: GridColDef[] = [
   { field: "storageId", type: "string", headerName: USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA_CONSTANTS.storageId.title },
@@ -28,7 +28,7 @@ const AVAILABLE_USER_DATA_STORAGE_CONFIGS_DATA_GRID_COLUMNS: GridColDef[] = [
     type: "string",
     headerName: "Type",
     valueGetter: (_: never, row: IUserDataStorageConfigInfo): string => {
-      return USER_DATA_STORAGE_BACKEND_TYPE_NAMES[row.backend.type];
+      return getUserDataStorageBackendTypeName(row.backend.type);
     }
   },
   {
