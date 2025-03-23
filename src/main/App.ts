@@ -916,12 +916,10 @@ export class App {
     //   if (this.userFacade.isAccountStorageSet()) {
     //     this.userFacade.unsetAccountStorage();
     //   } else {
-    //     this.userFacade.setAccountStorage(
-    //       new UserAccountStorage(
-    //         this.DEFAULT_USER_ACCOUNT_STORAGE_CONFIG,
-    //         this.DEFAULT_USER_ACCOUNT_STORAGE_LOG_SCOPE,
-    //         this.USER_API_HANDLERS.sendUserAccountStorageInfoChanged
-    //       )
+    //     this.userFacade.setAccountStorageFromConfig(
+    //       this.DEFAULT_USER_ACCOUNT_STORAGE_CONFIG,
+    //       this.DEFAULT_USER_ACCOUNT_STORAGE_LOG_SCOPE,
+    //       this.USER_API_HANDLERS.sendUserAccountStorageInfoChanged
     //     );
     //   }
     // }, 7_500);

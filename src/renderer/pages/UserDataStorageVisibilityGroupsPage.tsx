@@ -1,5 +1,5 @@
 import { Button, Box, Stack, Typography } from "@mui/material";
-import UserDataStorageVisibilityGroupsDataGrid from "@renderer/components/dataGrids/UserDataStorageVisibilityGroupsDataGrid";
+import OpenUserDataStorageVisibilityGroupsDataGrid from "@renderer/components/dataGrids/OpenUserDataStorageVisibilityGroupsDataGrid";
 import { DASHBOARD_NAVIGATION_AREAS } from "@renderer/navigationAreas/DashboardNavigationAreas";
 import { USER_DATA_NAVIGATION_AREAS } from "@renderer/navigationAreas/UserDataStoragesNavigationAreas";
 import { IUserDataLayoutRootContext, useUserDataLayoutRootContext } from "@renderer/components/roots/userDataLayoutRoot/UserDataLayoutRootContext";
@@ -81,7 +81,7 @@ const UserDataStorageVisibilityGroupsPage: FC = () => {
           Open Visibility Groups:
         </Typography>
         <Box sx={{ flex: 1, minHeight: 0, marginTop: ".5rem", background: "yellow" }}>
-          <UserDataStorageVisibilityGroupsDataGrid />
+          <OpenUserDataStorageVisibilityGroupsDataGrid />
         </Box>
       </Box>
       <NewUserDataStorageVisibilityGroupConfigFormDialog

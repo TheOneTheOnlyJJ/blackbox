@@ -11,9 +11,9 @@ export const BASE_USER_ACCOUNT_STORAGE_BACKEND_INFO_JSON_SCHEMA_CONSTANTS = {
     title: "Type"
   },
   isOpen: {
-    title: "Is Open"
+    title: "Open"
   },
   isLocal: {
-    title: "Is Local"
+    title: "Local"
   }
 } as const;

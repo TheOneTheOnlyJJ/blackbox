@@ -8,7 +8,7 @@ export interface IUserDataStorageVisibilityGroupInfo {
 }
 
 export const USER_DATA_STORAGE_VISIBILITY_GROUP_INFO_JSON_SCHEMA_CONSTANTS = {
-  visibilityGroupId: { title: "Visibility Group ID", format: "uuid" },
+  visibilityGroupId: { title: "ID", format: "uuid" },
   name: { title: "Name" },
   description: { title: "Description" }
 } as const;

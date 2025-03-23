@@ -10,12 +10,13 @@ export interface IUserAccountStorageBackendInfoTypographyProps {
 const UserAccountStorageBackendInfoTypography: FC<IUserAccountStorageBackendInfoTypographyProps> = (
   props: IUserAccountStorageBackendInfoTypographyProps
 ) => {
-  switch (props.userAccountStorageBackendInfo.type) {
+  const { userAccountStorageBackendInfo } = props;
+  switch (userAccountStorageBackendInfo.type) {
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     case USER_ACCOUNT_STORAGE_BACKEND_TYPES.localSQLite:
-      return <LocalSQLiteUserAccountStorageBackendInfoTypography userAccountStorageBackendInfo={props.userAccountStorageBackendInfo} />;
+      return <LocalSQLiteUserAccountStorageBackendInfoTypography userAccountStorageBackendInfo={userAccountStorageBackendInfo} />;
     default:
-      throw new Error(`Invalid User Account Storage backend type received: ${String(props.userAccountStorageBackendInfo.type)}`);
+      throw new Error(`Invalid User Account Storage backend type received: ${String(userAccountStorageBackendInfo.type)}`);
   }
 };
 

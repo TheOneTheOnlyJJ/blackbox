@@ -14,10 +14,11 @@ export interface IUserDataStorageConfigInfo {
 }
 
 export const USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA_CONSTANTS = {
-  storageId: { title: "Storage ID", format: "uuid" },
+  storageId: { title: "ID", format: "uuid" },
   name: { title: "Name" },
   description: { title: "Description" },
-  visibilityGroupId: { title: "Visibility Group", format: "uuid" }
+  visibilityGroupId: { title: "Visibility Group", format: "uuid" },
+  backend: { title: "Backend" }
 } as const;
 
 export const USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA: JSONSchemaType<IUserDataStorageConfigInfo> = {
@@ -36,7 +37,10 @@ export const USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA: JSONSchemaType<IUserData
       ...USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA_CONSTANTS.visibilityGroupId,
       nullable: true as false // https://github.com/ajv-validator/ajv/issues/2163#issuecomment-2085689455
     },
-    backend: USER_DATA_STORAGE_BACKEND_CONFIG_INFO_JSON_SCHEMA
+    backend: {
+      ...USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA_CONSTANTS.backend,
+      ...USER_DATA_STORAGE_BACKEND_CONFIG_INFO_JSON_SCHEMA
+    }
   },
   required: ["storageId", "name", "description", "visibilityGroupId", "backend"],
   additionalProperties: false

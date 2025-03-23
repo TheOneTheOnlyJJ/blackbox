@@ -32,7 +32,7 @@ export const OPTION_C_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_JSON_SCHEMA:
 } as const;
 
 export const OPTION_C_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_UI_SCHEMA: UiSchema<IOptionCUserDataStorageBackendConfigCreateInput> = {
-  "ui:title": USER_DATA_STORAGE_BACKEND_TYPE_NAMES.optionB,
+  "ui:title": USER_DATA_STORAGE_BACKEND_TYPE_NAMES.optionC,
   "ui:options": {
     label: false
   },

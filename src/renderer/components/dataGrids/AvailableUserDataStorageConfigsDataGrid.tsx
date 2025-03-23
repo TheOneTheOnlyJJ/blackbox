@@ -1,5 +1,15 @@
-import { DataGrid, GridColDef, GridRenderCellParams, GridRowId, GridRowIdGetter } from "@mui/x-data-grid";
-import { FC, useCallback, useMemo } from "react";
+import {
+  DataGrid,
+  GridApi,
+  GridAutosizeOptions,
+  GridColDef,
+  GridRenderCellParams,
+  GridRowId,
+  GridRowIdGetter,
+  GridRowParams,
+  useGridApiRef
+} from "@mui/x-data-grid";
+import { FC, MutableRefObject, useCallback, useMemo, useState } from "react";
 import { ISignedInRootContext, useSignedInRootContext } from "../roots/signedInRoot/SignedInRootContext";
 import { PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS } from "@shared/user/data/storage/visibilityGroup/constants";
 import {
@@ -10,9 +20,31 @@ import { BASE_USER_DATA_STORAGE_BACKEND_CONFIG_INFO_JSON_SCHEMA_CONSTANTS } from
 import { USER_DATA_STORAGE_BACKEND_TYPE_NAMES } from "@shared/user/data/storage/backend/UserDataStorageBackendTypeName";
 import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
 import { appLogger } from "@renderer/utils/loggers";
+import UserDataStorageConfigInfoDialog from "../dialogs/UserDataStorageConfigInfoDialog";
+import { useDialogOpenState } from "@renderer/hooks/useDialogState";
+import OpenUserDataStorageConfigInfoDialogActionItem from "./actionCellItems/OpenUserDataStorageConfigInfoDialogActionItem";
+import OpenUserDataStorageActionItem from "./actionCellItems/OpenUserDataStorageActionItem";
+import { useMUIXDataGridAutosizeColumnsOnWindowResize } from "@renderer/hooks/useMUIXDataGridAutosizeOnWindowResize";
+
+const GRID_AUTOSIZE_OPTIONS: GridAutosizeOptions = { expand: true, includeHeaders: true };
 
 const AvailableUserDataStorageConfigsDataGrid: FC = () => {
   const signedInRootContext: ISignedInRootContext = useSignedInRootContext();
+
+  const gridAPIRef: MutableRefObject<GridApi> = useGridApiRef();
+  useMUIXDataGridAutosizeColumnsOnWindowResize({
+    logger: appLogger,
+    gridAPIRef: gridAPIRef,
+    autosizeOptions: GRID_AUTOSIZE_OPTIONS,
+    gridPurposeToLog: "available User Data Storage Configs"
+  });
+  const [isShowConfigInfoDialogOpen, setIsShowConfigInfoDialogOpen] = useDialogOpenState(appLogger, "available User Data Storage Config Info");
+  const [chosenStorageConfigInfo, setChosenStorageConfigInfo] = useState<IUserDataStorageConfigInfo | null>(null);
+
+  const handleConfigInfoDialogClose = useCallback((): void => {
+    setIsShowConfigInfoDialogOpen(false);
+    setChosenStorageConfigInfo(null);
+  }, [setIsShowConfigInfoDialogOpen]);
 
   const rowIdGetter: GridRowIdGetter<IUserDataStorageConfigInfo> = useCallback((row: IUserDataStorageConfigInfo): GridRowId => {
     return row.storageId;
@@ -66,26 +98,53 @@ const AvailableUserDataStorageConfigsDataGrid: FC = () => {
         valueGetter: (_: never, row: IUserDataStorageConfigInfo): boolean => {
           return row.backend.isLocal;
         }
+      },
+      {
+        // TODO: Put this in master detail row (pro feature)
+        field: "actions",
+        type: "actions",
+        headerName: "Actions",
+        getActions: (params: GridRowParams<IUserDataStorageConfigInfo>) => {
+          return [
+            <OpenUserDataStorageConfigInfoDialogActionItem
+              key="openInfoDialog"
+              userDataStorageConfigInfo={params.row}
+              setChosenUserDataStorageConfigInfo={setChosenStorageConfigInfo}
+              setIsShowUserDataStorageConfigInfoDialogOpen={setIsShowConfigInfoDialogOpen}
+            />,
+            <OpenUserDataStorageActionItem key="openStorage" userDataStorageConfigInfo={params.row} />
+          ];
+        }
       }
-      // TODO: Add master detail row (pro feature)
     ];
-  }, [getOpenUserDataStorageVisibilityGroupName]);
+  }, [getOpenUserDataStorageVisibilityGroupName, setIsShowConfigInfoDialogOpen]);
 
   return (
-    <DataGrid
-      autosizeOnMount
-      autosizeOptions={{ expand: true, includeHeaders: true }}
-      getRowId={rowIdGetter}
-      rows={signedInRootContext.availableUserDataStorageConfigsInfo}
-      columns={COLUMNS}
-      initialState={{
-        columns: {
-          columnVisibilityModel: {
-            storageId: false
+    <>
+      <DataGrid
+        apiRef={gridAPIRef}
+        autosizeOnMount
+        autosizeOptions={GRID_AUTOSIZE_OPTIONS}
+        getRowId={rowIdGetter}
+        rows={signedInRootContext.availableUserDataStorageConfigsInfo}
+        columns={COLUMNS}
+        initialState={{
+          columns: {
+            columnVisibilityModel: {
+              storageId: false
+            }
           }
-        }
-      }}
-    />
+        }}
+      />
+      {chosenStorageConfigInfo !== null ? (
+        <UserDataStorageConfigInfoDialog
+          open={isShowConfigInfoDialogOpen}
+          onClose={handleConfigInfoDialogClose}
+          userDataStorageConfigInfo={chosenStorageConfigInfo}
+          doShowId={true}
+        />
+      ) : null}
+    </>
   );
 };
 

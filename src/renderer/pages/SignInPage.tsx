@@ -65,7 +65,7 @@ const SignInPage: FC = () => {
           </Stack>
         </Paper>
       </Box>
-      <UserAccountStorageInfoDialog open={isUserAccountStorageInfoDialogOpen} onClose={handleUserAccountStorageInfoDialogClose} />
+      <UserAccountStorageInfoDialog open={isUserAccountStorageInfoDialogOpen} onClose={handleUserAccountStorageInfoDialogClose} doShowId={true} />
     </>
   );
 };

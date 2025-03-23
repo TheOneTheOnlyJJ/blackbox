@@ -11,6 +11,7 @@ import { useDialogOpenState } from "@renderer/hooks/useDialogState";
 
 const UserDataStoragesPage: FC = () => {
   const userDataStoragesLayoutRootContext: IUserDataLayoutRootContext = useUserDataLayoutRootContext();
+
   const [isNewUserDataStorageConfigFormDialogOpen, setIsNewUserDataStorageConfigFormDialogOpen] = useDialogOpenState(
     appLogger,
     "new User Data Storage Config form"

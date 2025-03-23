@@ -7,6 +7,7 @@ export interface ILocalSQLiteUserDataStorageBackendInfo extends IBaseUserDataSto
   type: UserDataStorageBackendTypes["localSQLite"];
   dbDirPath: string;
   dbFileName: string;
+  isLocal: true;
 }
 
 export const LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_INFO_JSON_SCHEMA: JSONSchemaType<ILocalSQLiteUserDataStorageBackendInfo> = {
@@ -32,6 +33,7 @@ export const LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_INFO_JSON_SCHEMA: JSONSchema
     },
     isLocal: {
       type: "boolean",
+      enum: [true],
       ...BASE_USER_DATA_STORAGE_BACKEND_INFO_JSON_SCHEMA_CONSTANTS.isLocal
     }
   },

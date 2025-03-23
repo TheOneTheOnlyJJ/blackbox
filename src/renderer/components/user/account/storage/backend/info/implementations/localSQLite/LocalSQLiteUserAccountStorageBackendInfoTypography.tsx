@@ -6,12 +6,12 @@ import { BASE_USER_ACCOUNT_STORAGE_BACKEND_INFO_JSON_SCHEMA_CONSTANTS } from "@s
 import { USER_ACCOUNT_STORAGE_BACKEND_TYPE_NAMES } from "@shared/user/account/storage/backend/UserAccountStorageBackendTypeName";
 import { LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS } from "@shared/user/account/storage/backend/constants/implementations/localSQLite/LocalSQLiteUserAccountStorageBackendConstants";
 
-export interface LocalSQLiteUserAccountStorageBackendInfoTypographyProps extends IBaseUserAccountStorageBackendInfoTypographyProps {
+export interface ILocalSQLiteUserAccountStorageBackendInfoTypographyProps extends IBaseUserAccountStorageBackendInfoTypographyProps {
   userAccountStorageBackendInfo: ILocalSQLiteUserAccountStorageBackendInfo;
 }
 
-const LocalSQLiteUserAccountStorageBackendInfoTypography: FC<LocalSQLiteUserAccountStorageBackendInfoTypographyProps> = (
-  props: LocalSQLiteUserAccountStorageBackendInfoTypographyProps
+const LocalSQLiteUserAccountStorageBackendInfoTypography: FC<ILocalSQLiteUserAccountStorageBackendInfoTypographyProps> = (
+  props: ILocalSQLiteUserAccountStorageBackendInfoTypographyProps
 ) => {
   const { userAccountStorageBackendInfo } = props;
   return (
@@ -26,10 +26,10 @@ const LocalSQLiteUserAccountStorageBackendInfoTypography: FC<LocalSQLiteUserAcco
         <b>{LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS.dbFileName.title}:</b> <em>{userAccountStorageBackendInfo.dbFileName}</em>
       </Typography>
       <Typography>
-        <b>Local:</b> {userAccountStorageBackendInfo.isLocal ? "Yes" : "No"}
+        <b>{BASE_USER_ACCOUNT_STORAGE_BACKEND_INFO_JSON_SCHEMA_CONSTANTS.isLocal.title}:</b> {userAccountStorageBackendInfo.isLocal ? "Yes" : "No"}
       </Typography>
       <Typography>
-        <b>Open:</b>{" "}
+        <b>{BASE_USER_ACCOUNT_STORAGE_BACKEND_INFO_JSON_SCHEMA_CONSTANTS.isOpen.title}:</b>{" "}
         {userAccountStorageBackendInfo.isOpen ? (
           <Typography color="success" component="span">
             Yes
