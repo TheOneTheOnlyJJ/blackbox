@@ -14,13 +14,15 @@ import { securedUserDataStorageConfigToStorageSecuredUserDataStorageConfig } fro
 import { ISecuredUserDataStorageVisibilityGroupConfig } from "@main/user/data/storage/visibilityGroup/config/SecuredUserDataStorageVisibilityGroupConfig";
 import { securedUserDataStorageVisibilityGroupConfigToStorageSecuredUserDataStorageVisibilityGroupConfig } from "@main/user/data/storage/visibilityGroup/config/utils/securedUserDataStorageVisibilityGroupConfigToStorageSecuredUserDataStorageVisibilityGroupConfig";
 
+export type OnUserAccountStorageInfoChangedCallback = (newInfo: Readonly<IUserAccountStorageInfo>) => void;
+
 export class UserAccountStorage {
   private readonly logger: LogFunctions;
   public readonly storageId: UUID;
   public readonly name: string;
   private readonly backend: UserAccountStorageBackend;
 
-  public constructor(config: IUserAccountStorageConfig, logScope: string, onInfoChanged: (newInfo: Readonly<IUserAccountStorageInfo>) => void) {
+  public constructor(config: IUserAccountStorageConfig, logScope: string, onInfoChanged: OnUserAccountStorageInfoChangedCallback) {
     this.logger = log.scope(logScope);
     this.logger.info(`Initialising "${config.backendConfig.type}" User Account Storage "${config.name}".`);
     this.storageId = config.storageId;

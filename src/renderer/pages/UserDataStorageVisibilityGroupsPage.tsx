@@ -2,10 +2,7 @@ import { Button, Box, Stack, Typography } from "@mui/material";
 import UserDataStorageVisibilityGroupsDataGrid from "@renderer/components/dataGrids/UserDataStorageVisibilityGroupsDataGrid";
 import { DASHBOARD_NAVIGATION_AREAS } from "@renderer/navigationAreas/DashboardNavigationAreas";
 import { USER_DATA_NAVIGATION_AREAS } from "@renderer/navigationAreas/UserDataStoragesNavigationAreas";
-import {
-  IUserDataStoragesLayoutRootContext,
-  useUserDataStoragesLayoutRootContext
-} from "@renderer/components/roots/userDataStoragesLayoutRoot/UserDataStoragesLayoutRootContext";
+import { IUserDataLayoutRootContext, useUserDataLayoutRootContext } from "@renderer/components/roots/userDataLayoutRoot/UserDataLayoutRootContext";
 import { FC, useCallback, useEffect } from "react";
 import { appLogger } from "@renderer/utils/loggers";
 import NewUserDataStorageVisibilityGroupConfigFormDialog from "@renderer/components/dialogs/NewUserDataStorageVisibilityGroupConfigFormDialog";
@@ -13,7 +10,7 @@ import OpenUserDataStorageVisibilityGroupFormDialog from "@renderer/components/d
 import { useDialogOpenState } from "@renderer/hooks/useDialogState";
 
 const UserDataStorageVisibilityGroupsPage: FC = () => {
-  const userDataStoragesLayoutRootContext: IUserDataStoragesLayoutRootContext = useUserDataStoragesLayoutRootContext();
+  const userDataStoragesLayoutRootContext: IUserDataLayoutRootContext = useUserDataLayoutRootContext();
   const [isNewUserDataStorageVisibilityGroupConfigFormDialogOpen, setIsNewUserDataStorageVisibilityGroupConfigFormDialogOpen] = useDialogOpenState(
     appLogger,
     "new User Data Storage Visibility Group Config form"
@@ -57,7 +54,7 @@ const UserDataStorageVisibilityGroupsPage: FC = () => {
 
   useEffect((): void => {
     userDataStoragesLayoutRootContext.setDashboardNavigationArea(DASHBOARD_NAVIGATION_AREAS.userDataStorages);
-    userDataStoragesLayoutRootContext.setUserStoragesNavigationArea(USER_DATA_NAVIGATION_AREAS.visibilityGroups);
+    userDataStoragesLayoutRootContext.setUserDataNavigationArea(USER_DATA_NAVIGATION_AREAS.visibilityGroups);
     userDataStoragesLayoutRootContext.setAppBarTitle("Data Storage Visibility Groups");
     userDataStoragesLayoutRootContext.setForbiddenLocationName("Data Storage Visibility Groups");
   }, [userDataStoragesLayoutRootContext]);

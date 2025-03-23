@@ -19,7 +19,7 @@ export interface IUserDataNavigationBarProps {
   leftOffset: number;
   heightOffset: number;
   signedInUserId: string;
-  userStoragesNavigationArea: UserDataNavigationArea | null;
+  userDataNavigationArea: UserDataNavigationArea | null;
 }
 
 const UserDataNavigationBar = forwardRef<HTMLDivElement, IUserDataNavigationBarProps>(function UserDataNavigationBar(
@@ -65,7 +65,7 @@ const UserDataNavigationBar = forwardRef<HTMLDivElement, IUserDataNavigationBarP
           {DRAWER_ITEMS.map(
             (item: IUserDataNavigationBarDrawerItem, index: number): React.JSX.Element => (
               <ListItem key={index} disablePadding divider={item.divider}>
-                <ListItemButton component={DebouncedLink} to={item.path} selected={props.userStoragesNavigationArea === item.userDataNavigationArea}>
+                <ListItemButton component={DebouncedLink} to={item.path} selected={props.userDataNavigationArea === item.userDataNavigationArea}>
                   <ListItemIcon>
                     <item.icon />
                   </ListItemIcon>

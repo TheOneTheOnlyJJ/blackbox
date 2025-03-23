@@ -11,7 +11,10 @@ import { ISecuredUserSignUpPayload } from "@main/user/account/SecuredUserSignUpP
 import { UUID } from "crypto";
 import { ISecuredPassword } from "@main/utils/encryption/SecuredPassword";
 import { LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS } from "@shared/user/account/storage/backend/constants/implementations/localSQLite/LocalSQLiteUserAccountStorageBackendConstants";
-import { IBaseUserAccountStorageBackendConfig } from "../../config/BaseUserAccountStorageBackendConfig";
+import {
+  BASE_USER_ACCOUNT_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS,
+  IBaseUserAccountStorageBackendConfig
+} from "../../config/BaseUserAccountStorageBackendConfig";
 import {
   IStorageSecuredUserDataStorageConfig,
   isStorageSecuredUserDataStorageConfigValid
@@ -48,7 +51,7 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
       type: {
         type: "string",
         enum: [USER_ACCOUNT_STORAGE_BACKEND_TYPES.localSQLite],
-        ...LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS.type
+        ...BASE_USER_ACCOUNT_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS.type
       },
       dbDirPath: {
         type: "string",

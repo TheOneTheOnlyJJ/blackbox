@@ -1,13 +1,11 @@
 import { USER_DATA_STORAGE_BACKEND_TYPES, UserDataStorageBackendTypes } from "@shared/user/data/storage/backend/UserDataStorageBackendType";
 import { JSONSchemaType, ValidateFunction } from "ajv";
-import {
-  BASE_USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS,
-  IBaseUserDataStorageBackendConfig
-} from "../../config/BaseUserDataStorageBackendConfig";
+import { IBaseUserDataStorageBackendConfig } from "../../config/BaseUserDataStorageBackendConfig";
 import { BaseUserDataStorageBackend } from "../../BaseUserDataStorageBackend";
 import { OPTION_B_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/backend/constants/implementations/optionB/OptionBUserDataStorageBackendConstants";
 import { IOptionBUserDataStorageBackendInfo } from "@shared/user/data/storage/backend/info/implementations/optionB/OptionBUserDataStorageBackendInfo";
 import { AJV } from "@shared/utils/AJVJSONValidator";
+import { BASE_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/backend/constants/BaseUserDataStorageBackendConstants";
 
 export interface IOptionBUserDataStorageBackendConfig extends IBaseUserDataStorageBackendConfig {
   type: UserDataStorageBackendTypes["optionB"];
@@ -22,7 +20,7 @@ export class OptionBUserDataStorageBackend extends BaseUserDataStorageBackend<IO
         type: "string",
         enum: [USER_DATA_STORAGE_BACKEND_TYPES.optionB],
         default: USER_DATA_STORAGE_BACKEND_TYPES.optionB,
-        ...BASE_USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS.type
+        ...BASE_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS.type
       },
       optionB: {
         type: "string",

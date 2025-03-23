@@ -3,7 +3,7 @@ import { UUID } from "node:crypto";
 import { IUserDataStorageConfig } from "../data/storage/config/UserDataStorageConfig";
 import { IUserSignInPayload } from "../account/UserSignInPayload";
 import { IUserSignUpPayload } from "../account/UserSignUpPayload";
-import { UserAccountStorage } from "../account/storage/UserAccountStorage";
+import { OnUserAccountStorageInfoChangedCallback, UserAccountStorage } from "../account/storage/UserAccountStorage";
 import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserAccountStorageInfo";
 import { ISignedInUserInfo } from "@shared/user/account/SignedInUserInfo";
 import { IUserDataStorageVisibilityGroupConfig } from "../data/storage/visibilityGroup/config/UserDataStorageVisibilityGroupConfig";
@@ -23,6 +23,7 @@ import { IUserDataStorageConfigCreateDTO } from "@shared/user/data/storage/confi
 import { IUserDataStorageVisibilityGroupConfigCreateDTO } from "@shared/user/data/storage/visibilityGroup/config/create/DTO/UserDataStorageVisibilityGroupConfigCreateDTO";
 import { IUserDataStorageVisibilityGroupsOpenRequestDTO } from "@shared/user/data/storage/visibilityGroup/openRequest/DTO/UserDataStorageVisibilityGroupsOpenRequestDTO";
 import { IUserDataStorageConfigInfo } from "@shared/user/data/storage/config/info/UserDataStorageConfigInfo";
+import { IUserAccountStorageConfig } from "../account/storage/config/UserAccountStorageConfig";
 
 export interface IUserFacadeConstructorProps {
   logger: LogFunctions;
@@ -101,6 +102,14 @@ export class UserFacade {
 
   public setAccountStorage(newAccountStorage: UserAccountStorage): boolean {
     return this.ACCOUNT_STORAGE_SERVICE.setAccountStorage(newAccountStorage);
+  }
+
+  public setAccountStorageFromConfig(
+    newAccountStorageConfig: IUserAccountStorageConfig,
+    logScope: string,
+    onInfoChanged: OnUserAccountStorageInfoChangedCallback
+  ): boolean {
+    return this.ACCOUNT_STORAGE_SERVICE.setAccountStorageFromConfig(newAccountStorageConfig, logScope, onInfoChanged);
   }
 
   public unsetAccountStorage(): boolean {

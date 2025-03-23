@@ -70,7 +70,7 @@ const PasswordWidget: FC<WidgetProps> = (props: WidgetProps) => {
             <InputAdornment position="end">
               <IconButton aria-label="toggle password visibility" onClick={showHidePasswordIconButtonOnClick}>
                 <Tooltip title={tooltipText} arrow={true}>
-                  {/* TODO: Open MUI issue because this flickers */}
+                  {/* TODO: Opened issue to fix flicker: https://github.com/mui/material-ui/issues/45659 */}
                   {doShowPassword ? (
                     <VisibilityIcon style={{ color: showHidePasswordIconColor }} />
                   ) : (

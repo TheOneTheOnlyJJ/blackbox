@@ -5,15 +5,12 @@ import NewUserDataStorageConfigFormDialog from "@renderer/components/dialogs/New
 import AvailableUserDataStorageConfigsDataGrid from "@renderer/components/dataGrids/AvailableUserDataStorageConfigsDataGrid";
 import { Box, Stack, Typography } from "@mui/material";
 import { DASHBOARD_NAVIGATION_AREAS } from "@renderer/navigationAreas/DashboardNavigationAreas";
-import {
-  IUserDataStoragesLayoutRootContext,
-  useUserDataStoragesLayoutRootContext
-} from "@renderer/components/roots/userDataStoragesLayoutRoot/UserDataStoragesLayoutRootContext";
+import { IUserDataLayoutRootContext, useUserDataLayoutRootContext } from "@renderer/components/roots/userDataLayoutRoot/UserDataLayoutRootContext";
 import { USER_DATA_NAVIGATION_AREAS } from "@renderer/navigationAreas/UserDataStoragesNavigationAreas";
 import { useDialogOpenState } from "@renderer/hooks/useDialogState";
 
 const UserDataStoragesPage: FC = () => {
-  const userDataStoragesLayoutRootContext: IUserDataStoragesLayoutRootContext = useUserDataStoragesLayoutRootContext();
+  const userDataStoragesLayoutRootContext: IUserDataLayoutRootContext = useUserDataLayoutRootContext();
   const [isNewUserDataStorageConfigFormDialogOpen, setIsNewUserDataStorageConfigFormDialogOpen] = useDialogOpenState(
     appLogger,
     "new User Data Storage Config form"
@@ -34,7 +31,7 @@ const UserDataStoragesPage: FC = () => {
 
   useEffect((): void => {
     userDataStoragesLayoutRootContext.setDashboardNavigationArea(DASHBOARD_NAVIGATION_AREAS.userDataStorages);
-    userDataStoragesLayoutRootContext.setUserStoragesNavigationArea(USER_DATA_NAVIGATION_AREAS.availableStorages);
+    userDataStoragesLayoutRootContext.setUserDataNavigationArea(USER_DATA_NAVIGATION_AREAS.availableStorages);
     userDataStoragesLayoutRootContext.setAppBarTitle("Available Data Storages");
     userDataStoragesLayoutRootContext.setForbiddenLocationName("Available Data Storages");
   }, [userDataStoragesLayoutRootContext]);

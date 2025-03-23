@@ -4,3 +4,9 @@ import { UserAccountStorageBackendType } from "@shared/user/account/storage/back
 export interface IBaseUserAccountStorageBackendConfig {
   type: UserAccountStorageBackendType;
 }
+
+export const BASE_USER_ACCOUNT_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS = {
+  type: {
+    title: "Type"
+  }
+} as const;

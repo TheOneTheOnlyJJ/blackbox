@@ -29,7 +29,6 @@ import {
 } from "@shared/user/data/storage/config/create/DTO/UserDataStorageConfigCreateDTO";
 import { IIPCTLSAPIMain, IPC_TLS_API_IPC_CHANNELS, IPCTLSAPIIPCChannel } from "@shared/IPC/APIs/IPCTLSAPI";
 import { IUserAccountStorageConfig } from "./user/account/storage/config/UserAccountStorageConfig";
-import { UserAccountStorage } from "./user/account/storage/UserAccountStorage";
 import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserAccountStorageInfo";
 import { SettingsManager } from "./settings/SettingsManager";
 import { BaseSettings } from "./settings/BaseSettings";
@@ -896,12 +895,10 @@ export class App {
 
   private onceAppReady(): void {
     this.appLogger.info("App ready.");
-    this.userFacade.setAccountStorage(
-      new UserAccountStorage(
-        this.DEFAULT_USER_ACCOUNT_STORAGE_CONFIG,
-        this.DEFAULT_USER_ACCOUNT_STORAGE_LOG_SCOPE,
-        this.USER_API_HANDLERS.sendUserAccountStorageInfoChanged
-      )
+    this.userFacade.setAccountStorageFromConfig(
+      this.DEFAULT_USER_ACCOUNT_STORAGE_CONFIG,
+      this.DEFAULT_USER_ACCOUNT_STORAGE_LOG_SCOPE,
+      this.USER_API_HANDLERS.sendUserAccountStorageInfoChanged
     );
     this.userFacade.openAccountStorage();
     // TODO: Delete comment

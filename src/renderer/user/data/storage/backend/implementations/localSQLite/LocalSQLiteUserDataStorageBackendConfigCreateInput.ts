@@ -1,10 +1,12 @@
 import { JSONSchemaType } from "ajv";
-import { IBaseUserDataStorageBackendConfigCreateInput } from "../../config/create/input/BaseUserDataStorageBackendConfigCreateInput";
+import {
+  BASE_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_JSON_SCHEMA_CONSTANTS,
+  IBaseUserDataStorageBackendConfigCreateInput
+} from "../../config/create/input/BaseUserDataStorageBackendConfigCreateInput";
 import { UiSchema } from "@rjsf/utils";
 import { LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/backend/constants/implementations/localSQLite/LocalSQLiteUserDataStorageBackendConstants";
 import { USER_DATA_STORAGE_BACKEND_TYPES, UserDataStorageBackendTypes } from "@shared/user/data/storage/backend/UserDataStorageBackendType";
 import RJSFDirectoryPickerWidget from "@renderer/components/RJSFWidgets/RJSFDirectoryPickerWidget";
-import { BASE_USER_DATA_STORAGE_BACKEND_CONFIG_INFO_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/backend/config/info/BaseUserDataStorageBackendConfigInfo";
 import { USER_DATA_STORAGE_BACKEND_TYPE_NAMES } from "@shared/user/data/storage/backend/UserDataStorageBackendTypeName";
 
 export interface ILocalSQLiteUserDataStorageBackendConfigCreateInput extends IBaseUserDataStorageBackendConfigCreateInput {
@@ -22,7 +24,7 @@ export const LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_JSON_SCH
         type: "string",
         enum: [USER_DATA_STORAGE_BACKEND_TYPES.localSQLite],
         default: USER_DATA_STORAGE_BACKEND_TYPES.localSQLite,
-        ...BASE_USER_DATA_STORAGE_BACKEND_CONFIG_INFO_JSON_SCHEMA_CONSTANTS.type
+        ...BASE_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_JSON_SCHEMA_CONSTANTS.type
       },
       dbDirPath: {
         type: "string",
@@ -38,7 +40,7 @@ export const LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_JSON_SCH
   } as const;
 
 export const LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_UI_SCHEMA: UiSchema<ILocalSQLiteUserDataStorageBackendConfigCreateInput> = {
-  "ui:title": USER_DATA_STORAGE_BACKEND_TYPE_NAMES[USER_DATA_STORAGE_BACKEND_TYPES.localSQLite],
+  "ui:title": USER_DATA_STORAGE_BACKEND_TYPE_NAMES[USER_DATA_STORAGE_BACKEND_TYPES.localSQLite], // TODO: Make a getter function for this
   "ui:options": {
     label: false
   },

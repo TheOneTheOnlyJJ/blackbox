@@ -2,10 +2,7 @@ import { BaseUserDataStorageBackend } from "../../BaseUserDataStorageBackend";
 import { USER_DATA_STORAGE_BACKEND_TYPES, UserDataStorageBackendTypes } from "@shared/user/data/storage/backend/UserDataStorageBackendType";
 import { JSONSchemaType, ValidateFunction } from "ajv";
 import { LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/backend/constants/implementations/localSQLite/LocalSQLiteUserDataStorageBackendConstants";
-import {
-  BASE_USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS,
-  IBaseUserDataStorageBackendConfig
-} from "../../config/BaseUserDataStorageBackendConfig";
+import { IBaseUserDataStorageBackendConfig } from "../../config/BaseUserDataStorageBackendConfig";
 import DatabaseConstructor, { Database } from "better-sqlite3";
 import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
@@ -14,6 +11,7 @@ import { getSQLiteJournalModePragmaResult } from "@main/utils/SQLite/getSQLiteJo
 import { getSQLiteForeignKeysPragmaResult } from "@main/utils/SQLite/getSQLiteForeignKeysPragmaResult";
 import { AJV } from "@shared/utils/AJVJSONValidator";
 import { ILocalSQLiteUserDataStorageBackendInfo } from "@shared/user/data/storage/backend/info/implementations/localSQLite/LocalSQLiteUserDataStorageBackendInfo";
+import { BASE_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/backend/constants/BaseUserDataStorageBackendConstants";
 
 export interface ILocalSQLiteUserDataStorageBackendConfig extends IBaseUserDataStorageBackendConfig {
   type: UserDataStorageBackendTypes["localSQLite"];
@@ -29,7 +27,7 @@ export class LocalSQLiteUserDataStorageBackend extends BaseUserDataStorageBacken
       type: {
         type: "string",
         enum: [USER_DATA_STORAGE_BACKEND_TYPES.localSQLite],
-        ...BASE_USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA_CONSTANTS.type
+        ...BASE_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS.type
       },
       dbDirPath: {
         type: "string",

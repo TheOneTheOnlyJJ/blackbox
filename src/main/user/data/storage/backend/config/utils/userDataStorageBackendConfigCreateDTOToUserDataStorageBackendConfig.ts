@@ -45,8 +45,8 @@ export const userDataStorageBackendConfigCreateDTOToUserDataStorageBackendConfig
   );
   // TODO: Ocasionally check if TypeScript can manage not throwing a type error here (TS 5.9)
   // This is all this function should really be:
-  // return USER_DATA_STORAGE_CONFIG_INPUT_DATA_TO_USER_DATA_STORAGE_CONFIG_FUNCTION_MAP[userDataStorageConfigInputData.type](
-  //   userDataStorageConfigInputData
+  // return USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_DTO_TO_USER_DATA_STORAGE_BACKEND_CONFIG_FUNCTION_MAP[userDataStorageBackendConfigCreateDTO.type](
+  //   userDataStorageBackendConfigCreateDTO
   // );
   switch (userDataStorageBackendConfigCreateDTO.type) {
     case USER_DATA_STORAGE_BACKEND_TYPES.localSQLite:

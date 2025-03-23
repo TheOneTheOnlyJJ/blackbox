@@ -1,6 +1,7 @@
 import { LogFunctions } from "electron-log";
-import { UserAccountStorage } from "../../account/storage/UserAccountStorage";
+import { OnUserAccountStorageInfoChangedCallback, UserAccountStorage } from "../../account/storage/UserAccountStorage";
 import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserAccountStorageInfo";
+import { IUserAccountStorageConfig } from "@main/user/account/storage/config/UserAccountStorageConfig";
 
 export interface IUserAccountStorageServiceContext {
   getAccountStorage: () => UserAccountStorage | null;
@@ -44,9 +45,17 @@ export class UserAccountStorageService {
     return IS_AVAILABLE;
   }
 
-  // TODO: Take only the config as a parameter and initialise the account storage here
+  public setAccountStorageFromConfig(
+    newAccountStorageConfig: IUserAccountStorageConfig,
+    logScope: string,
+    onInfoChanged: OnUserAccountStorageInfoChangedCallback
+  ): boolean {
+    this.logger.debug(`Setting User Account Storage from Config "${newAccountStorageConfig.storageId}" ("${newAccountStorageConfig.name}").`);
+    return this.setAccountStorage(new UserAccountStorage(newAccountStorageConfig, logScope, onInfoChanged));
+  }
+
   public setAccountStorage(newAccountStorage: UserAccountStorage): boolean {
-    this.logger.debug(`Setting "${newAccountStorage.name}" User Account Storage (ID "${newAccountStorage.storageId}").`);
+    this.logger.debug(`Setting User Account Storage "${newAccountStorage.storageId}" ("${newAccountStorage.name}").`);
     const ACCOUNT_STORAGE: UserAccountStorage | null = this.CONTEXT.getAccountStorage();
     if (ACCOUNT_STORAGE !== null) {
       if (ACCOUNT_STORAGE.storageId === newAccountStorage.storageId) {
