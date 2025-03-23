@@ -1,5 +1,5 @@
 import { DataGrid, GridColDef, GridRenderCellParams, GridRowId, GridRowIdGetter } from "@mui/x-data-grid";
-import { FC, useCallback } from "react";
+import { FC, useCallback, useMemo } from "react";
 import { ISignedInRootContext, useSignedInRootContext } from "../roots/signedInRoot/SignedInRootContext";
 import { PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS } from "@shared/user/data/storage/visibilityGroup/constants";
 import {
@@ -8,52 +8,76 @@ import {
 } from "@shared/user/data/storage/config/info/UserDataStorageConfigInfo";
 import { BASE_USER_DATA_STORAGE_BACKEND_CONFIG_INFO_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/backend/config/info/BaseUserDataStorageBackendConfigInfo";
 import { USER_DATA_STORAGE_BACKEND_TYPE_NAMES } from "@shared/user/data/storage/backend/UserDataStorageBackendTypeName";
-
-const AVAILABLE_USER_DATA_STORAGE_CONFIGS_DATA_GRID_COLUMNS: GridColDef[] = [
-  { field: "storageId", type: "string", headerName: USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA_CONSTANTS.storageId.title },
-  { field: "name", type: "string", headerName: USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA_CONSTANTS.name.title },
-  { field: "description", type: "string", headerName: USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA_CONSTANTS.description.title },
-  {
-    field: "visibilityGroupId",
-    type: "string",
-    headerName: USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA_CONSTANTS.visibilityGroupId.title,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    renderCell: (params: GridRenderCellParams<any, string | null>) => {
-      // TODO: Extract name from open visibility groups info, move inside FC to get context
-      return params.value === null ? <em>{PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS.name}</em> : params.value;
-    }
-  },
-  {
-    field: "type",
-    type: "string",
-    headerName: "Type",
-    valueGetter: (_: never, row: IUserDataStorageConfigInfo): string => {
-      return USER_DATA_STORAGE_BACKEND_TYPE_NAMES[row.backend.type];
-    }
-  },
-  {
-    field: "isLocal",
-    type: "boolean",
-    headerName: BASE_USER_DATA_STORAGE_BACKEND_CONFIG_INFO_JSON_SCHEMA_CONSTANTS.isLocal.title,
-    valueGetter: (_: never, row: IUserDataStorageConfigInfo): boolean => {
-      return row.backend.isLocal;
-    }
-  }
-  // TODO: Add master detail row (pro feature)
-];
+import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
+import { appLogger } from "@renderer/utils/loggers";
 
 const AvailableUserDataStorageConfigsDataGrid: FC = () => {
   const signedInRootContext: ISignedInRootContext = useSignedInRootContext();
+
   const rowIdGetter: GridRowIdGetter<IUserDataStorageConfigInfo> = useCallback((row: IUserDataStorageConfigInfo): GridRowId => {
     return row.storageId;
   }, []);
+
+  const getOpenUserDataStorageVisibilityGroupName = useCallback(
+    (visibilityGroupId: string): string => {
+      // TODO: Use a Map here, declare it in signedInRoot
+      const VISIBILITY_GROUP_INFO: IUserDataStorageVisibilityGroupInfo | undefined = signedInRootContext.openUserDataStorageVisibilityGroupsInfo.find(
+        (openVisibilityGroupInfo: IUserDataStorageVisibilityGroupInfo) => {
+          return openVisibilityGroupInfo.visibilityGroupId === visibilityGroupId;
+        }
+      );
+      if (VISIBILITY_GROUP_INFO === undefined) {
+        appLogger.warn(`Could not get name for User Data Storage Visibility Group ${visibilityGroupId}.`);
+        return visibilityGroupId;
+      }
+      return VISIBILITY_GROUP_INFO.name;
+    },
+    [signedInRootContext.openUserDataStorageVisibilityGroupsInfo]
+  );
+
+  const COLUMNS: GridColDef[] = useMemo<GridColDef[]>((): GridColDef[] => {
+    return [
+      { field: "storageId", type: "string", headerName: USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA_CONSTANTS.storageId.title },
+      { field: "name", type: "string", headerName: USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA_CONSTANTS.name.title },
+      { field: "description", type: "string", headerName: USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA_CONSTANTS.description.title },
+      {
+        field: "visibilityGroupId",
+        type: "string",
+        headerName: USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA_CONSTANTS.visibilityGroupId.title,
+        valueGetter: (_: never, row: IUserDataStorageConfigInfo): string | null => {
+          return row.visibilityGroupId === null ? null : getOpenUserDataStorageVisibilityGroupName(row.visibilityGroupId);
+        },
+        renderCell: (params: GridRenderCellParams<IUserDataStorageConfigInfo, string | null>) => {
+          return params.value === null ? <em>{PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS.name}</em> : params.value;
+        }
+      },
+      {
+        field: "type",
+        type: "string",
+        headerName: BASE_USER_DATA_STORAGE_BACKEND_CONFIG_INFO_JSON_SCHEMA_CONSTANTS.type.title,
+        valueGetter: (_: never, row: IUserDataStorageConfigInfo): string => {
+          return USER_DATA_STORAGE_BACKEND_TYPE_NAMES[row.backend.type];
+        }
+      },
+      {
+        field: "isLocal",
+        type: "boolean",
+        headerName: BASE_USER_DATA_STORAGE_BACKEND_CONFIG_INFO_JSON_SCHEMA_CONSTANTS.isLocal.title,
+        valueGetter: (_: never, row: IUserDataStorageConfigInfo): boolean => {
+          return row.backend.isLocal;
+        }
+      }
+      // TODO: Add master detail row (pro feature)
+    ];
+  }, [getOpenUserDataStorageVisibilityGroupName]);
+
   return (
     <DataGrid
       autosizeOnMount
       autosizeOptions={{ expand: true, includeHeaders: true }}
       getRowId={rowIdGetter}
       rows={signedInRootContext.availableUserDataStorageConfigsInfo}
-      columns={AVAILABLE_USER_DATA_STORAGE_CONFIGS_DATA_GRID_COLUMNS}
+      columns={COLUMNS}
       initialState={{
         columns: {
           columnVisibilityModel: {

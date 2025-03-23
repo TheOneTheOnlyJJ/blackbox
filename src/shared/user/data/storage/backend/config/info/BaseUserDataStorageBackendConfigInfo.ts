@@ -10,6 +10,6 @@ export const BASE_USER_DATA_STORAGE_BACKEND_CONFIG_INFO_JSON_SCHEMA_CONSTANTS = 
     title: "Type"
   },
   isLocal: {
-    title: "Is Local"
+    title: "Local"
   }
 } as const;
