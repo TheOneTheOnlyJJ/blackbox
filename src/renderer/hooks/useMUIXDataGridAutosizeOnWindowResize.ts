@@ -2,7 +2,7 @@ import { GridApi, GridAutosizeOptions } from "@mui/x-data-grid";
 import { LogFunctions } from "electron-log";
 import { MutableRefObject, useCallback, useEffect, useRef } from "react";
 
-export const DEFAULT_GRID_AUTOSIZE_DELAY_ON_WINDOW_RESIZE_MS = 150;
+export const DEFAULT_GRID_AUTOSIZE_COLUMNS_DELAY_ON_WINDOW_RESIZE_MS = 150;
 
 export interface IUseMUIXDataGridAutosizeColumnsOnWindowResizeProps {
   logger: LogFunctions;
@@ -37,7 +37,7 @@ export const useMUIXDataGridAutosizeColumnsOnWindowResize = (props: IUseMUIXData
           const ERROR_MESSAGE: string = error instanceof Error ? error.message : String(error);
           logger.error(`Error autosizing ${gridPurposeToLog ?? ""} grid columns on window resize! Error: ${ERROR_MESSAGE}!`);
         });
-    }, autosizeDelayMs ?? DEFAULT_GRID_AUTOSIZE_DELAY_ON_WINDOW_RESIZE_MS);
+    }, autosizeDelayMs ?? DEFAULT_GRID_AUTOSIZE_COLUMNS_DELAY_ON_WINDOW_RESIZE_MS);
   }, [logger, gridAPIRef, autosizeOptions, autosizeDelayMs, gridPurposeToLog]);
 
   useEffect((): (() => void) => {
