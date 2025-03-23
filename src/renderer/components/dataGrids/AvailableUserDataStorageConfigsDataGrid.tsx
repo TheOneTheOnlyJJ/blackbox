@@ -7,7 +7,7 @@ import {
   USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA_CONSTANTS
 } from "@shared/user/data/storage/config/info/UserDataStorageConfigInfo";
 import { BASE_USER_DATA_STORAGE_BACKEND_CONFIG_INFO_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/backend/config/info/BaseUserDataStorageBackendConfigInfo";
-import { getUserDataStorageBackendTypeName } from "@shared/user/data/storage/backend/UserDataStorageBackendTypeName";
+import { USER_DATA_STORAGE_BACKEND_TYPE_NAMES } from "@shared/user/data/storage/backend/UserDataStorageBackendTypeName";
 
 const AVAILABLE_USER_DATA_STORAGE_CONFIGS_DATA_GRID_COLUMNS: GridColDef[] = [
   { field: "storageId", type: "string", headerName: USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA_CONSTANTS.storageId.title },
@@ -19,7 +19,7 @@ const AVAILABLE_USER_DATA_STORAGE_CONFIGS_DATA_GRID_COLUMNS: GridColDef[] = [
     headerName: USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA_CONSTANTS.visibilityGroupId.title,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     renderCell: (params: GridRenderCellParams<any, string | null>) => {
-      // TODO: Make a map type in SignedInRoot that maps visibility group IDs to their names so they can be extracted here
+      // TODO: Extract name from open visibility groups info, move inside FC to get context
       return params.value === null ? <em>{PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS.name}</em> : params.value;
     }
   },
@@ -28,7 +28,7 @@ const AVAILABLE_USER_DATA_STORAGE_CONFIGS_DATA_GRID_COLUMNS: GridColDef[] = [
     type: "string",
     headerName: "Type",
     valueGetter: (_: never, row: IUserDataStorageConfigInfo): string => {
-      return getUserDataStorageBackendTypeName(row.backend.type);
+      return USER_DATA_STORAGE_BACKEND_TYPE_NAMES[row.backend.type];
     }
   },
   {

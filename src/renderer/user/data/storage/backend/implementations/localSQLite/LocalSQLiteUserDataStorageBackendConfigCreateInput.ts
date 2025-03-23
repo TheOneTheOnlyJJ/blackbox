@@ -7,7 +7,7 @@ import { UiSchema } from "@rjsf/utils";
 import { LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/backend/constants/implementations/localSQLite/LocalSQLiteUserDataStorageBackendConstants";
 import { USER_DATA_STORAGE_BACKEND_TYPES, UserDataStorageBackendTypes } from "@shared/user/data/storage/backend/UserDataStorageBackendType";
 import RJSFDirectoryPickerWidget from "@renderer/components/RJSFWidgets/RJSFDirectoryPickerWidget";
-import { getUserDataStorageBackendTypeName } from "@shared/user/data/storage/backend/UserDataStorageBackendTypeName";
+import { USER_DATA_STORAGE_BACKEND_TYPE_NAMES } from "@shared/user/data/storage/backend/UserDataStorageBackendTypeName";
 
 export interface ILocalSQLiteUserDataStorageBackendConfigCreateInput extends IBaseUserDataStorageBackendConfigCreateInput {
   type: UserDataStorageBackendTypes["localSQLite"];
@@ -40,7 +40,7 @@ export const LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_JSON_SCH
   } as const;
 
 export const LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_UI_SCHEMA: UiSchema<ILocalSQLiteUserDataStorageBackendConfigCreateInput> = {
-  "ui:title": getUserDataStorageBackendTypeName(USER_DATA_STORAGE_BACKEND_TYPES.localSQLite),
+  "ui:title": USER_DATA_STORAGE_BACKEND_TYPE_NAMES.localSQLite,
   "ui:options": {
     label: false
   },
