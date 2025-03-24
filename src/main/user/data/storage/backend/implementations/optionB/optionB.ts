@@ -44,7 +44,7 @@ export class OptionBUserDataStorageBackend extends BaseUserDataStorageBackend<IO
         OptionBUserDataStorageBackend.isValidOptionBUserDataStorageBackendConfig
       )
     ) {
-      throw new Error(`Invalid ${USER_DATA_STORAGE_BACKEND_TYPES.optionB} User Data Storage Backend Config`);
+      throw new Error(`Invalid "${USER_DATA_STORAGE_BACKEND_TYPES.optionB}" User Data Storage Backend Config`);
     }
     const INITIAL_INFO: IOptionBUserDataStorageBackendInfo = {
       type: config.type,

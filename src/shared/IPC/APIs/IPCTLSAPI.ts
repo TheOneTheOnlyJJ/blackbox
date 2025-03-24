@@ -1,5 +1,4 @@
 import { IEncryptedData } from "@shared/utils/EncryptedData";
-import { ValidateFunction } from "ajv";
 import { TransformToIPCAPIChannels } from "../IPCAPIChannels";
 
 // Utility types
@@ -24,5 +23,5 @@ export interface IIPCTLSAPI extends IIPCTLSAPIMain {
   getRendererReadiness: () => boolean;
   onRendererReadinessChanged: (callback: IPCTLSReadinessChangedCallback) => () => void;
   encrypt: <T>(data: T, dataPurposeToLog?: string) => Promise<IEncryptedData<T>>;
-  decryptAndValidateJSON: <T>(encryptedData: IEncryptedData<T>, JSONValidator: ValidateFunction<T>, dataPurposeToLog?: string) => Promise<T>;
+  decryptAndValidateJSON: <T>(encryptedData: IEncryptedData<T>, isValidData: (data: unknown) => data is T, dataPurposeToLog?: string) => Promise<T>;
 }

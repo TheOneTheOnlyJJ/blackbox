@@ -81,7 +81,7 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
         LocalSQLiteUserAccountStorageBackend.isValidLocalSQLiteUserAccountStorageBackendConfig
       )
     ) {
-      throw new Error(`Invalid ${USER_ACCOUNT_STORAGE_BACKEND_TYPES.localSQLite} User Account Storage Backend Config`);
+      throw new Error(`Invalid "${USER_ACCOUNT_STORAGE_BACKEND_TYPES.localSQLite}" User Account Storage Backend Config`);
     }
     const INITIAL_INFO: ILocalSQLiteUserAccountStorageBackendInfo = {
       type: config.type,

@@ -19,11 +19,9 @@ import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserA
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { ISignedInUserInfo } from "@shared/user/account/SignedInUserInfo";
 import { IV_LENGTH } from "@shared/encryption/constants";
-import { ValidateFunction } from "ajv";
 import { IUserSignUpDTO } from "@shared/user/account/UserSignUpDTO";
 import { IUserSignInDTO } from "@shared/user/account/UserSignInDTO";
 import { IUserDataStorageConfigCreateDTO } from "@shared/user/data/storage/config/create/DTO/UserDataStorageConfigCreateDTO";
-import { IUserDataStoragesInfoChangedDiff } from "@shared/user/data/storage/info/UserDataStoragesInfoChangedDiff";
 import {
   IGetDirectoryWithPickerOptions as IGetDirectoryPathWithPickerOptions,
   IUtilsAPI,
@@ -32,9 +30,10 @@ import {
 } from "@shared/IPC/APIs/UtilsAPI";
 import { IUserDataStorageVisibilityGroupConfigCreateDTO } from "@shared/user/data/storage/visibilityGroup/config/create/DTO/UserDataStorageVisibilityGroupConfigCreateDTO";
 import { IUserDataStorageVisibilityGroupsOpenRequestDTO } from "@shared/user/data/storage/visibilityGroup/openRequest/DTO/UserDataStorageVisibilityGroupsOpenRequestDTO";
-import { IUserDataStorageVisibilityGroupsInfoChangedDiff } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfoChangedDiff";
 import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
 import { IUserDataStorageConfigInfo } from "@shared/user/data/storage/config/info/UserDataStorageConfigInfo";
+import { IDataChangedDiff } from "@shared/utils/DataChangedDiff";
+import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
 
 // Variables
 const TEXT_ENCODER: TextEncoder = new TextEncoder();
@@ -199,7 +198,11 @@ const IPC_TLS_API: IIPCTLSAPI = {
     sendLogToMainProcess(PRELOAD_IPC_TLS_API_LOG_SCOPE, "debug", `Done encrypting ${dataPurposeToLog ?? "data"}.`);
     return ENCRYPTED_DATA;
   },
-  decryptAndValidateJSON: async <T>(encryptedData: IEncryptedData<T>, JSONValidator: ValidateFunction<T>, dataPurposeToLog?: string): Promise<T> => {
+  decryptAndValidateJSON: async <T>(
+    encryptedData: IEncryptedData<T>,
+    isValidData: (data: unknown) => data is T,
+    dataPurposeToLog?: string
+  ): Promise<T> => {
     sendLogToMainProcess(PRELOAD_IPC_TLS_API_LOG_SCOPE, "debug", `Decrypting ${dataPurposeToLog ?? "data"}.`);
     if (IPC_TLS_AES_KEY.value === null) {
       throw new Error("Missing AES key");
@@ -214,7 +217,7 @@ const IPC_TLS_API: IIPCTLSAPI = {
     );
     const DECRYPTED_DATA_STRING: string = TEXT_DECODER.decode(DECRYPTED_DATA);
     const DECRYPTED_DATA_OBJECT: unknown = JSON.parse(DECRYPTED_DATA_STRING);
-    if (JSONValidator(DECRYPTED_DATA_OBJECT)) {
+    if (isValidData(DECRYPTED_DATA_OBJECT)) {
       return DECRYPTED_DATA_OBJECT satisfies T;
     } else {
       throw new Error("Decrypted object is not valid");
@@ -349,7 +352,10 @@ const USER_API: IUserAPI = {
   onAvailableUserDataStorageConfigsChanged: (callback: AvailableUserDataStorageConfigsChangedCallback): (() => void) => {
     const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.onAvailableUserDataStorageConfigsChanged;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Adding listener from main on channel: "${CHANNEL}".`);
-    const LISTENER = (_: IpcRendererEvent, encryptedUserDataStoragesInfoChangedDiff: IEncryptedData<IUserDataStoragesInfoChangedDiff>): void => {
+    const LISTENER = (
+      _: IpcRendererEvent,
+      encryptedUserDataStoragesInfoChangedDiff: IEncryptedData<IDataChangedDiff<string, IUserDataStorageInfo>>
+    ): void => {
       sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Received message from main on channel: "${CHANNEL}".`);
       callback(encryptedUserDataStoragesInfoChangedDiff);
     };
@@ -364,7 +370,7 @@ const USER_API: IUserAPI = {
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Adding listener from main on channel: "${CHANNEL}".`);
     const LISTENER = (
       _: IpcRendererEvent,
-      encryptedUserDataStorageVisibilityGroupsInfoChangedDiff: IEncryptedData<IUserDataStorageVisibilityGroupsInfoChangedDiff>
+      encryptedUserDataStorageVisibilityGroupsInfoChangedDiff: IEncryptedData<IDataChangedDiff<string, IUserDataStorageVisibilityGroupInfo>>
     ): void => {
       sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Received message from main on channel: "${CHANNEL}".`);
       callback(encryptedUserDataStorageVisibilityGroupsInfoChangedDiff);

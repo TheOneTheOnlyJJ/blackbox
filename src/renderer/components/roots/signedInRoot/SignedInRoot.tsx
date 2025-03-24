@@ -9,17 +9,15 @@ import { enqueueSnackbar } from "notistack";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 import {
   IUserDataStorageVisibilityGroupInfo,
+  isValidUserDataStorageVisibilityGroupInfo,
   isValidUserDataStorageVisibilityGroupInfoArray
 } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
 import {
-  IUserDataStorageVisibilityGroupsInfoChangedDiff,
-  isValidUserDataStorageVisibilityGroupsInfoChangedDiff
-} from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfoChangedDiff";
-import { isValidUserDataStorageConfigInfoArray, IUserDataStorageConfigInfo } from "@shared/user/data/storage/config/info/UserDataStorageConfigInfo";
-import {
-  isValidUserDataStorageConfigsInfoChangedDiff,
-  IUserDataStorageConfigsInfoChangedDiff
-} from "@shared/user/data/storage/config/info/UserDataStorageConfigsInfoChangedDiff";
+  isValidUserDataStorageConfigInfo,
+  isValidUserDataStorageConfigInfoArray,
+  IUserDataStorageConfigInfo
+} from "@shared/user/data/storage/config/info/UserDataStorageConfigInfo";
+import { IDataChangedDiff, isValidDataChangedDiff } from "@shared/utils/DataChangedDiff";
 
 const DEFAULT_FORBIDDEN_LOCATION_NAME = "this";
 
@@ -82,14 +80,24 @@ const SignedInRoot: FC = () => {
     }
     // Monitor changes to User Data Storages Info
     const removeAvailableUserDataStorageConfigsChangedListener: () => void = window.userAPI.onAvailableUserDataStorageConfigsChanged(
-      (encryptedAvailableUserDataStorageConfigsInfoChangedDiff: IEncryptedData<IUserDataStorageConfigsInfoChangedDiff>): void => {
-        window.IPCTLSAPI.decryptAndValidateJSON<IUserDataStorageConfigsInfoChangedDiff>(
+      (encryptedAvailableUserDataStorageConfigsInfoChangedDiff: IEncryptedData<IDataChangedDiff<string, IUserDataStorageConfigInfo>>): void => {
+        window.IPCTLSAPI.decryptAndValidateJSON<IDataChangedDiff<string, IUserDataStorageConfigInfo>>(
           encryptedAvailableUserDataStorageConfigsInfoChangedDiff,
-          isValidUserDataStorageConfigsInfoChangedDiff,
+          (data: unknown): data is IDataChangedDiff<string, IUserDataStorageConfigInfo> => {
+            return isValidDataChangedDiff(
+              data,
+              (removedData: unknown): removedData is string => {
+                return typeof removedData === "string";
+              },
+              (addedData: unknown): addedData is IUserDataStorageConfigInfo => {
+                return isValidUserDataStorageConfigInfo(addedData);
+              }
+            );
+          },
           "available User Data Storage Configs Info Changed Diff"
         )
           .then(
-            (availableUserDataStorageConfigsInfoChangedDiff: IUserDataStorageConfigsInfoChangedDiff): void => {
+            (availableUserDataStorageConfigsInfoChangedDiff: IDataChangedDiff<string, IUserDataStorageConfigInfo>): void => {
               setAvailableUserDataStorageConfigsInfo(
                 (prevAvailableUserDataStorageConfigsInfo: IUserDataStorageConfigInfo[]): IUserDataStorageConfigInfo[] => {
                   return [
@@ -147,14 +155,26 @@ const SignedInRoot: FC = () => {
     }
     // Monitor changes to User Data Storage Visibility Groups Info
     const removeOpenUserDataStorageVisibilityGroupsChangedListener: () => void = window.userAPI.onOpenUserDataStorageVisibilityGroupsChanged(
-      (encryptedOpenUserDataStorageVisibilityGroupsInfoChangedDiff: IEncryptedData<IUserDataStorageVisibilityGroupsInfoChangedDiff>): void => {
-        window.IPCTLSAPI.decryptAndValidateJSON<IUserDataStorageVisibilityGroupsInfoChangedDiff>(
+      (
+        encryptedOpenUserDataStorageVisibilityGroupsInfoChangedDiff: IEncryptedData<IDataChangedDiff<string, IUserDataStorageVisibilityGroupInfo>>
+      ): void => {
+        window.IPCTLSAPI.decryptAndValidateJSON<IDataChangedDiff<string, IUserDataStorageVisibilityGroupInfo>>(
           encryptedOpenUserDataStorageVisibilityGroupsInfoChangedDiff,
-          isValidUserDataStorageVisibilityGroupsInfoChangedDiff,
+          (data: unknown): data is IDataChangedDiff<string, IUserDataStorageVisibilityGroupInfo> => {
+            return isValidDataChangedDiff(
+              data,
+              (removedData: unknown): removedData is string => {
+                return typeof removedData === "string";
+              },
+              (addedData: unknown): addedData is IUserDataStorageVisibilityGroupInfo => {
+                return isValidUserDataStorageVisibilityGroupInfo(addedData);
+              }
+            );
+          },
           "User Data Storage Visibility Groups Info Changed Diff"
         )
           .then(
-            (openUserDataStorageVisibilityGroupsInfoChangedDiff: IUserDataStorageVisibilityGroupsInfoChangedDiff): void => {
+            (openUserDataStorageVisibilityGroupsInfoChangedDiff: IDataChangedDiff<string, IUserDataStorageVisibilityGroupInfo>): void => {
               setOpenUserDataStorageVisibilityGroupsInfo(
                 (prevOpenUserDataStorageVisibilityGroupsInfo: IUserDataStorageVisibilityGroupInfo[]): IUserDataStorageVisibilityGroupInfo[] => {
                   return [

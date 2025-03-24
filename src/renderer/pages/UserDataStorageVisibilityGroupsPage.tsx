@@ -53,7 +53,7 @@ const UserDataStorageVisibilityGroupsPage: FC = () => {
   }, [handleOpenUserDataStorageVisibilityGroupFormDialogClose]);
 
   useEffect((): void => {
-    userDataStoragesLayoutRootContext.setDashboardNavigationArea(DASHBOARD_NAVIGATION_AREAS.userDataStorages);
+    userDataStoragesLayoutRootContext.setDashboardNavigationArea(DASHBOARD_NAVIGATION_AREAS.userData);
     userDataStoragesLayoutRootContext.setUserDataNavigationArea(USER_DATA_NAVIGATION_AREAS.visibilityGroups);
     userDataStoragesLayoutRootContext.setAppBarTitle("Data Storage Visibility Groups");
     userDataStoragesLayoutRootContext.setForbiddenLocationName("Data Storage Visibility Groups");
@@ -69,18 +69,18 @@ const UserDataStorageVisibilityGroupsPage: FC = () => {
           width: "100%"
         }}
       >
-        <Stack direction="row" spacing={2}>
+        <Stack direction="row" spacing={1}>
           <Button variant="contained" size="large" onClick={handleNewUserDataStorageVisibilityGroupConfigButtonClick}>
-            New Visibility Group
+            New visibility group
           </Button>
           <Button variant="contained" size="large" onClick={handleOpenUserDataStorageVisibilityGroupButtonClick}>
-            Open Visibility Group
+            Open visibility group
           </Button>
         </Stack>
         <Typography variant="h6" sx={{ marginTop: ".5rem" }}>
-          Open Visibility Groups:
+          Open visibility groups:
         </Typography>
-        <Box sx={{ flex: 1, minHeight: 0, marginTop: ".5rem", background: "yellow" }}>
+        <Box sx={{ flex: 1, minHeight: 0, marginTop: ".5rem" }}>
           <OpenUserDataStorageVisibilityGroupsDataGrid />
         </Box>
       </Box>

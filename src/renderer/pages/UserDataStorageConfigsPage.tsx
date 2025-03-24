@@ -9,7 +9,7 @@ import { IUserDataLayoutRootContext, useUserDataLayoutRootContext } from "@rende
 import { USER_DATA_NAVIGATION_AREAS } from "@renderer/navigationAreas/UserDataStoragesNavigationAreas";
 import { useDialogOpenState } from "@renderer/hooks/useDialogState";
 
-const UserDataStoragesPage: FC = () => {
+const UserDataStorageConfigsPage: FC = () => {
   const userDataStoragesLayoutRootContext: IUserDataLayoutRootContext = useUserDataLayoutRootContext();
 
   const [isNewUserDataStorageConfigFormDialogOpen, setIsNewUserDataStorageConfigFormDialogOpen] = useDialogOpenState(
@@ -17,8 +17,8 @@ const UserDataStoragesPage: FC = () => {
     "new User Data Storage Config form"
   );
 
-  const handleNewDataStorageButtonClick = useCallback((): void => {
-    appLogger.debug("New User Data Storage button clicked.");
+  const handleNewDataStorageConfigButtonClick = useCallback((): void => {
+    appLogger.debug("New User Data Storage Config button clicked.");
     setIsNewUserDataStorageConfigFormDialogOpen(true);
   }, [setIsNewUserDataStorageConfigFormDialogOpen]);
 
@@ -31,10 +31,10 @@ const UserDataStoragesPage: FC = () => {
   }, [handleNewUserDataStorageConfigFormDialogClose]);
 
   useEffect((): void => {
-    userDataStoragesLayoutRootContext.setDashboardNavigationArea(DASHBOARD_NAVIGATION_AREAS.userDataStorages);
-    userDataStoragesLayoutRootContext.setUserDataNavigationArea(USER_DATA_NAVIGATION_AREAS.availableStorages);
-    userDataStoragesLayoutRootContext.setAppBarTitle("Available Data Storages");
-    userDataStoragesLayoutRootContext.setForbiddenLocationName("Available Data Storages");
+    userDataStoragesLayoutRootContext.setDashboardNavigationArea(DASHBOARD_NAVIGATION_AREAS.userData);
+    userDataStoragesLayoutRootContext.setUserDataNavigationArea(USER_DATA_NAVIGATION_AREAS.storageConfigs);
+    userDataStoragesLayoutRootContext.setAppBarTitle("Data Storage Configurations");
+    userDataStoragesLayoutRootContext.setForbiddenLocationName("Data Storage Configurations");
   }, [userDataStoragesLayoutRootContext]);
 
   return (
@@ -48,12 +48,12 @@ const UserDataStoragesPage: FC = () => {
         }}
       >
         <Stack direction="row" spacing={2}>
-          <Button variant="contained" size="large" onClick={handleNewDataStorageButtonClick}>
-            New Data Storage
+          <Button variant="contained" size="large" onClick={handleNewDataStorageConfigButtonClick}>
+            New data storage configuration
           </Button>
         </Stack>
         <Typography variant="h6" sx={{ marginTop: ".5rem" }}>
-          Available Data Storages:
+          Available data storage configurations:
         </Typography>
         <Box sx={{ flex: 1, minHeight: 0, marginTop: ".5rem" }}>
           <AvailableUserDataStorageConfigsDataGrid />
@@ -72,4 +72,4 @@ const UserDataStoragesPage: FC = () => {
   );
 };
 
-export default UserDataStoragesPage;
+export default UserDataStorageConfigsPage;

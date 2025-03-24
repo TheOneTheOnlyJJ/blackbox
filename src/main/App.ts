@@ -45,11 +45,10 @@ import {
   IUserDataStorageVisibilityGroupsOpenRequestDTO,
   isValidUserDataStorageVisibilityGroupsOpenRequestDTO
 } from "@shared/user/data/storage/visibilityGroup/openRequest/DTO/UserDataStorageVisibilityGroupsOpenRequestDTO";
-import { IUserDataStorageVisibilityGroupsInfoChangedDiff } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfoChangedDiff";
 import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
 import { IUserContextHandlers } from "./user/facade/context/UserContext";
 import { IUserDataStorageConfigInfo } from "@shared/user/data/storage/config/info/UserDataStorageConfigInfo";
-import { IUserDataStorageConfigsInfoChangedDiff } from "@shared/user/data/storage/config/info/UserDataStorageConfigsInfoChangedDiff";
+import { IDataChangedDiff } from "@shared/utils/DataChangedDiff";
 
 type WindowPositionSetting = Rectangle | WindowStates["FullScreen"] | WindowStates["Maximized"];
 
@@ -556,7 +555,9 @@ export class App {
       this.UserAPILogger.debug(`Messaging renderer on channel: "${CHANNEL}".`);
       this.window.webContents.send(CHANNEL, newSignedInUserInfo);
     },
-    sendAvailableUserDataStorageConfigsChanged: (availableUserDataStorageConfigsInfoChangedDiff: IUserDataStorageConfigsInfoChangedDiff): void => {
+    sendAvailableUserDataStorageConfigsChanged: (
+      availableUserDataStorageConfigsInfoChangedDiff: IDataChangedDiff<string, IUserDataStorageConfigInfo>
+    ): void => {
       this.UserAPILogger.debug(
         `Sending window available User Data Storage Configs Info Changed Diff. Removals: ${availableUserDataStorageConfigsInfoChangedDiff.removed.length.toString()}. Additions: ${availableUserDataStorageConfigsInfoChangedDiff.added.length.toString()}.`
       );
@@ -571,7 +572,7 @@ export class App {
       this.UserAPILogger.debug(`Messaging renderer on channel: "${CHANNEL}".`);
       this.window.webContents.send(
         CHANNEL,
-        encryptWithAES<IUserDataStorageConfigsInfoChangedDiff>(
+        encryptWithAES<IDataChangedDiff<string, IUserDataStorageConfigInfo>>(
           availableUserDataStorageConfigsInfoChangedDiff,
           this.IPC_TLS_AES_KEY.value,
           this.UserAPILogger,
@@ -580,7 +581,7 @@ export class App {
       );
     },
     sendOpenUserDataStorageVisibilityGroupsChanged: (
-      userDataStorageVisibilityGroupsInfoChangedDiff: IUserDataStorageVisibilityGroupsInfoChangedDiff
+      userDataStorageVisibilityGroupsInfoChangedDiff: IDataChangedDiff<string, IUserDataStorageVisibilityGroupInfo>
     ): void => {
       this.UserAPILogger.debug(
         `Sending window open User Data Storages Visibility Groups Info Changed Diff. Removals: ${userDataStorageVisibilityGroupsInfoChangedDiff.removed.length.toString()}. Additions: ${userDataStorageVisibilityGroupsInfoChangedDiff.added.length.toString()}.`
@@ -596,7 +597,7 @@ export class App {
       this.UserAPILogger.debug(`Messaging renderer on channel: "${CHANNEL}".`);
       this.window.webContents.send(
         CHANNEL,
-        encryptWithAES<IUserDataStorageVisibilityGroupsInfoChangedDiff>(
+        encryptWithAES<IDataChangedDiff<string, IUserDataStorageVisibilityGroupInfo>>(
           userDataStorageVisibilityGroupsInfoChangedDiff,
           this.IPC_TLS_AES_KEY.value,
           this.UserAPILogger,

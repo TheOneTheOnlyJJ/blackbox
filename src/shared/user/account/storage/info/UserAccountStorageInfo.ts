@@ -28,8 +28,11 @@ export const USER_ACCOUNT_STORAGE_INFO_JSON_SCHEMA: JSONSchemaType<IUserAccountS
 
 export const isValidUserAccountStorageInfo: ValidateFunction<IUserAccountStorageInfo> = AJV.compile(USER_ACCOUNT_STORAGE_INFO_JSON_SCHEMA);
 
-export const isValidUserAccountStorageInfoArray: ValidateFunction<IUserAccountStorageInfo[]> = AJV.compile({
-  $schema: "http://json-schema.org/draft-07/schema#",
-  type: "array",
-  items: USER_ACCOUNT_STORAGE_INFO_JSON_SCHEMA
-} satisfies JSONSchemaType<IUserAccountStorageInfo[]>);
+export const isValidUserAccountStorageInfoArray = (data: unknown): data is IUserAccountStorageInfo[] => {
+  if (!Array.isArray(data)) {
+    return false;
+  }
+  return data.every((value: unknown): value is IUserAccountStorageInfo => {
+    return isValidUserAccountStorageInfo(value);
+  });
+};

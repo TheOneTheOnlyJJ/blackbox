@@ -7,21 +7,20 @@ import { IUserSignInDTO } from "@shared/user/account/UserSignInDTO";
 import { IUserDataStorageConfigCreateDTO } from "@shared/user/data/storage/config/create/DTO/UserDataStorageConfigCreateDTO";
 import { IUserDataStorageVisibilityGroupConfigCreateDTO } from "@shared/user/data/storage/visibilityGroup/config/create/DTO/UserDataStorageVisibilityGroupConfigCreateDTO";
 import { IUserDataStorageVisibilityGroupsOpenRequestDTO } from "@shared/user/data/storage/visibilityGroup/openRequest/DTO/UserDataStorageVisibilityGroupsOpenRequestDTO";
-import { IUserDataStorageVisibilityGroupsInfoChangedDiff } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfoChangedDiff";
 import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
 import { TransformToIPCAPIChannels } from "../IPCAPIChannels";
-import { IUserDataStorageConfigsInfoChangedDiff } from "@shared/user/data/storage/config/info/UserDataStorageConfigsInfoChangedDiff";
 import { IUserDataStorageConfigInfo } from "@shared/user/data/storage/config/info/UserDataStorageConfigInfo";
+import { IDataChangedDiff } from "@shared/utils/DataChangedDiff";
 
 // Utility types
 export type UserAccountStorageChangedCallback = (newUserAccountStorageInfo: IUserAccountStorageInfo | null) => void;
 export type UserAccountStorageInfoChangedCallback = (newUserAccountStorageInfo: IUserAccountStorageInfo) => void;
 export type SignedInUserChangedCallback = (newSignedInUserInfo: ISignedInUserInfo | null) => void;
 export type AvailableUserDataStorageConfigsChangedCallback = (
-  encryptedAvailableUserDataStorageConfigsInfoChangedDiff: IEncryptedData<IUserDataStorageConfigsInfoChangedDiff>
+  encryptedAvailableUserDataStorageConfigsInfoChangedDiff: IEncryptedData<IDataChangedDiff<string, IUserDataStorageConfigInfo>>
 ) => void;
 export type OpenUserDataStorageVisibilityGroupsChangedCallback = (
-  encryptedUserDataStorageVisibilityGroupsInfoChangedDiff: IEncryptedData<IUserDataStorageVisibilityGroupsInfoChangedDiff>
+  encryptedUserDataStorageVisibilityGroupsInfoChangedDiff: IEncryptedData<IDataChangedDiff<string, IUserDataStorageVisibilityGroupInfo>>
 ) => void;
 
 // API

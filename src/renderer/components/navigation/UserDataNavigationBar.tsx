@@ -1,7 +1,7 @@
 import { SvgIconComponent } from "@mui/icons-material";
 import { ForwardedRef, forwardRef, useMemo } from "react";
-import ViewListOutlinedIcon from "@mui/icons-material/ViewListOutlined";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import DataObjectIcon from "@mui/icons-material/DataObject";
 import { Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
 import DebouncedLink from "./DebouncedLink";
 import { USER_DATA_NAVIGATION_AREAS, UserDataNavigationArea } from "@renderer/navigationAreas/UserDataStoragesNavigationAreas";
@@ -30,17 +30,17 @@ const UserDataNavigationBar = forwardRef<HTMLDivElement, IUserDataNavigationBarP
   const DRAWER_ITEMS: IUserDataNavigationBarDrawerItem[] = useMemo<IUserDataNavigationBarDrawerItem[]>((): IUserDataNavigationBarDrawerItem[] => {
     return [
       {
-        name: "Available Storages",
-        icon: ViewListOutlinedIcon,
-        userDataNavigationArea: USER_DATA_NAVIGATION_AREAS.availableStorages,
-        path: `/users/${props.signedInUserId}/dataStorages`,
+        name: "Configurations",
+        icon: DataObjectIcon,
+        userDataNavigationArea: USER_DATA_NAVIGATION_AREAS.storageConfigs,
+        path: `/users/${props.signedInUserId}/data/storageConfigs`,
         divider: false
       },
       {
         name: "Visibility Groups",
         icon: VisibilityIcon,
         userDataNavigationArea: USER_DATA_NAVIGATION_AREAS.visibilityGroups,
-        path: `/users/${props.signedInUserId}/dataStorages/visibilityGroups`,
+        path: `/users/${props.signedInUserId}/data/visibilityGroups`,
         divider: false
       }
     ];

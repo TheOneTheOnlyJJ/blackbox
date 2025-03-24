@@ -29,10 +29,7 @@ export const isValidUserDataStorageVisibilityGroupArray = (data: unknown): data 
   if (!Array.isArray(data)) {
     return false;
   }
-  for (const ARRAY_VALUE of data) {
-    if (!isValidUserDataStorageVisibilityGroup(ARRAY_VALUE)) {
-      return false;
-    }
-  }
-  return true;
+  return data.every((value: unknown): value is IUserDataStorageVisibilityGroup => {
+    return isValidUserDataStorageVisibilityGroup(value);
+  });
 };

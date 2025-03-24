@@ -1,4 +1,3 @@
-import { ValidateFunction } from "ajv";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 import { createDecipheriv, DecipherGCM } from "node:crypto";
 import { LogFunctions } from "electron-log";
@@ -8,7 +7,7 @@ const DECODER: TextDecoder = new TextDecoder();
 
 export const decryptWithAESAndValidateJSON = <T>(
   encryptedData: IEncryptedData<T>,
-  JSONValidator: ValidateFunction<T>,
+  isValidData: (data: unknown) => data is T,
   AESKey: Buffer,
   logger: LogFunctions | null,
   dataTypeToLog?: string
@@ -44,7 +43,7 @@ export const decryptWithAESAndValidateJSON = <T>(
   const DECRYPTED_DATA_OBJECT: unknown = JSON.parse(DECRYPTED_DATA_STRING);
 
   // Validate
-  if (JSONValidator(DECRYPTED_DATA_OBJECT)) {
+  if (isValidData(DECRYPTED_DATA_OBJECT)) {
     return DECRYPTED_DATA_OBJECT satisfies T;
   } else {
     throw new Error("Decrypted object is not valid");

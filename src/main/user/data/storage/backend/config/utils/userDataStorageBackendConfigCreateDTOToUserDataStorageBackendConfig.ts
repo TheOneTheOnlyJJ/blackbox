@@ -22,7 +22,12 @@ const USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_DTO_TO_USER_DATA_STORAGE_BACKEND_C
     [USER_DATA_STORAGE_BACKEND_TYPES.localSQLite]: (
       userDataStorageBackendConfigCreateDTO: ILocalSQLiteUserDataStorageBackendConfigCreateDTO
     ): ILocalSQLiteUserDataStorageBackendConfig => {
-      return userDataStorageBackendConfigCreateDTO satisfies ILocalSQLiteUserDataStorageBackendConfig;
+      return {
+        ...userDataStorageBackendConfigCreateDTO,
+        dbFileName: userDataStorageBackendConfigCreateDTO.dbFileName.endsWith(".sqlite")
+          ? userDataStorageBackendConfigCreateDTO.dbFileName
+          : `${userDataStorageBackendConfigCreateDTO.dbFileName}.sqlite`
+      } satisfies ILocalSQLiteUserDataStorageBackendConfig;
     },
     [USER_DATA_STORAGE_BACKEND_TYPES.optionB]: (
       userDataStorageBackendConfigCreateDTO: IOptionBUserDataStorageBackendConfigCreateDTO

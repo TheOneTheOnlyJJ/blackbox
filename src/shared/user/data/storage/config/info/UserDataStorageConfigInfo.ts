@@ -48,8 +48,11 @@ export const USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA: JSONSchemaType<IUserData
 
 export const isValidUserDataStorageConfigInfo: ValidateFunction<IUserDataStorageConfigInfo> = AJV.compile(USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA);
 
-export const isValidUserDataStorageConfigInfoArray: ValidateFunction<IUserDataStorageConfigInfo[]> = AJV.compile({
-  $schema: "http://json-schema.org/draft-07/schema#",
-  type: "array",
-  items: USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA
-} satisfies JSONSchemaType<IUserDataStorageConfigInfo[]>);
+export const isValidUserDataStorageConfigInfoArray = (data: unknown): data is IUserDataStorageConfigInfo[] => {
+  if (!Array.isArray(data)) {
+    return false;
+  }
+  return data.every((value: unknown): value is IUserDataStorageConfigInfo => {
+    return isValidUserDataStorageConfigInfo(value);
+  });
+};

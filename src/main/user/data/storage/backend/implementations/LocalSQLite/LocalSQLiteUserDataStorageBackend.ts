@@ -57,7 +57,7 @@ export class LocalSQLiteUserDataStorageBackend extends BaseUserDataStorageBacken
         LocalSQLiteUserDataStorageBackend.isValidLocalSQLiteUserDataStorageBackendConfig
       )
     ) {
-      throw new Error(`Invalid ${USER_DATA_STORAGE_BACKEND_TYPES.localSQLite} User Data Storage Backend Config`);
+      throw new Error(`Invalid "${USER_DATA_STORAGE_BACKEND_TYPES.localSQLite}" User Data Storage Backend Config`);
     }
     const INITIAL_INFO: ILocalSQLiteUserDataStorageBackendInfo = {
       type: config.type,

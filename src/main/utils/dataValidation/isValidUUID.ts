@@ -11,10 +11,7 @@ export const isValidUUIDArray = (data: unknown): data is UUID[] => {
   if (!Array.isArray(data)) {
     return false;
   }
-  for (const ARRAY_VALUE of data) {
-    if (!isValidUUID(ARRAY_VALUE)) {
-      return false;
-    }
-  }
-  return true;
+  return data.every((value: unknown): value is UUID => {
+    return isValidUUID(value);
+  });
 };

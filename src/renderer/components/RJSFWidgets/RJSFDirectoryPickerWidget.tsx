@@ -7,15 +7,7 @@ import { appLogger } from "@renderer/utils/loggers";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
-import { JSONSchemaType, ValidateFunction } from "ajv";
-import { AJV } from "@shared/utils/AJVJSONValidator";
 import { enqueueSnackbar } from "notistack";
-
-const isValidStringArray: ValidateFunction<string[]> = AJV.compile({
-  $schema: "http://json-schema.org/draft-07/schema#",
-  type: "array",
-  items: { type: "string" }
-} satisfies JSONSchemaType<string[]>);
 
 const RJSFDirectoryPickerWidget: FC<WidgetProps> = (props: WidgetProps) => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -60,7 +52,14 @@ const RJSFDirectoryPickerWidget: FC<WidgetProps> = (props: WidgetProps) => {
             const CHOSEN_DIRECTORY_PATH: string = (
               await window.IPCTLSAPI.decryptAndValidateJSON<string[]>(
                 getDirectoryPathWithPickerResponse.data,
-                isValidStringArray,
+                (data: unknown): data is string[] => {
+                  if (!Array.isArray(data)) {
+                    return false;
+                  }
+                  return data.every((value: unknown): value is string => {
+                    return typeof value === "string";
+                  });
+                },
                 "picked directory path"
               )
             )[0];
@@ -118,7 +117,7 @@ const RJSFDirectoryPickerWidget: FC<WidgetProps> = (props: WidgetProps) => {
           readOnly: readonly,
           endAdornment: (
             <InputAdornment position="end">
-              <Tooltip title="Open Directory Picker">
+              <Tooltip title="Open directory picker">
                 <IconButton aria-label="open directory picker" onClick={openDirectoryPickerIconButtonOnClick}>
                   <FolderOpenOutlinedIcon style={{ color: openDirectoryPickerIconColor }} />
                 </IconButton>

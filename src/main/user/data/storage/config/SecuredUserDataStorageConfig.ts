@@ -42,10 +42,7 @@ export const isValidSecuredUserDataStorageConfigArray = (data: unknown): data is
   if (!Array.isArray(data)) {
     return false;
   }
-  for (const ARRAY_VALUE of data) {
-    if (!isValidSecuredUserDataStorageConfig(ARRAY_VALUE)) {
-      return false;
-    }
-  }
-  return true;
+  return data.every((value: unknown): value is ISecuredUserDataStorageConfig => {
+    return isValidSecuredUserDataStorageConfig(value);
+  });
 };

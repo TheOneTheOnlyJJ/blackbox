@@ -7,6 +7,7 @@ import {
 import { UiSchema } from "@rjsf/utils";
 import RJSFSelectOpenUserDataStorageVisibilityGroupWidget from "@renderer/components/RJSFWidgets/RJSFSelectOpenUserDataStorageVisibilityGroupWidget";
 import { USER_DATA_STORAGE_CONFIG_CREATE_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/config/create/UserDataStorageConfigCreateConstants";
+import { PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS } from "@shared/user/data/storage/visibilityGroup/constants";
 
 export interface IUserDataStorageConfigCreateInput {
   name: string;
@@ -30,14 +31,13 @@ export const USER_DATA_STORAGE_CONFIG_CREATE_INPUT_JSON_SCHEMA: JSONSchemaType<I
 } as const;
 
 export const USER_DATA_STORAGE_CONFIG_CREATE_INPUT_UI_SCHEMA: UiSchema<IUserDataStorageConfigCreateInput> = {
-  "ui:title": "New data storage",
+  "ui:title": "New data storage configuration",
   description: {
     "ui:widget": "textarea"
   },
   visibilityGroupId: {
     "ui:title": "Visibility Group",
-    "ui:description":
-      "If you select a Visibility Group, your Data Storage Configuration will be encrypted with its key — **losing the password means permanent data loss**. You can also choose to leave it unselected for no extra encryption.",
+    "ui:description": `Data storage configurations are encrypted with a secret key derived from your account password. If you select a visibility group, your data storage configuration will be encrypted with its key, giving you an additional encryption layer — **losing the password means permanent configuration loss**. You can also choose to leave it unselected (*${PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS.name}*) for no extra encryption.`,
     "ui:enableMarkdownInDescription": true,
     "ui:widget": RJSFSelectOpenUserDataStorageVisibilityGroupWidget
   },

@@ -33,8 +33,11 @@ export const isValidUserDataStorageVisibilityGroupInfo: ValidateFunction<IUserDa
   USER_DATA_STORAGE_VISIBILITY_GROUP_INFO_JSON_SCHEMA
 );
 
-export const isValidUserDataStorageVisibilityGroupInfoArray: ValidateFunction<IUserDataStorageVisibilityGroupInfo[]> = AJV.compile({
-  $schema: "http://json-schema.org/draft-07/schema#",
-  type: "array",
-  items: USER_DATA_STORAGE_VISIBILITY_GROUP_INFO_JSON_SCHEMA
-} satisfies JSONSchemaType<IUserDataStorageVisibilityGroupInfo[]>);
+export const isValidUserDataStorageVisibilityGroupInfoArray = (data: unknown): data is IUserDataStorageVisibilityGroupInfo[] => {
+  if (!Array.isArray(data)) {
+    return false;
+  }
+  return data.every((value: unknown): value is IUserDataStorageVisibilityGroupInfo => {
+    return isValidUserDataStorageVisibilityGroupInfo(value);
+  });
+};

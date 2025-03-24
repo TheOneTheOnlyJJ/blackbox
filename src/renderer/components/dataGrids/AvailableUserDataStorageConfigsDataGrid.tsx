@@ -74,7 +74,12 @@ const AvailableUserDataStorageConfigsDataGrid: FC = () => {
       { field: "description", type: "string", headerName: USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA_CONSTANTS.description.title },
       {
         field: "visibilityGroupId",
-        type: "string",
+        type: "singleSelect",
+        valueOptions: signedInRootContext.openUserDataStorageVisibilityGroupsInfo.map(
+          (openVisibilityGroup: IUserDataStorageVisibilityGroupInfo): string => {
+            return openVisibilityGroup.name;
+          }
+        ),
         headerName: USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA_CONSTANTS.visibilityGroupId.title,
         valueGetter: (_: never, row: IUserDataStorageConfigInfo): string | null => {
           return row.visibilityGroupId === null ? null : getOpenUserDataStorageVisibilityGroupName(row.visibilityGroupId);
@@ -85,7 +90,8 @@ const AvailableUserDataStorageConfigsDataGrid: FC = () => {
       },
       {
         field: "type",
-        type: "string",
+        type: "singleSelect",
+        valueOptions: Object.values(USER_DATA_STORAGE_BACKEND_TYPE_NAMES),
         headerName: BASE_USER_DATA_STORAGE_BACKEND_CONFIG_INFO_JSON_SCHEMA_CONSTANTS.type.title,
         valueGetter: (_: never, row: IUserDataStorageConfigInfo): string => {
           return USER_DATA_STORAGE_BACKEND_TYPE_NAMES[row.backend.type];
@@ -117,7 +123,7 @@ const AvailableUserDataStorageConfigsDataGrid: FC = () => {
         }
       }
     ];
-  }, [getOpenUserDataStorageVisibilityGroupName, setIsShowConfigInfoDialogOpen]);
+  }, [getOpenUserDataStorageVisibilityGroupName, setIsShowConfigInfoDialogOpen, signedInRootContext.openUserDataStorageVisibilityGroupsInfo]);
 
   return (
     <>

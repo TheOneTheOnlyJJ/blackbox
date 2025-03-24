@@ -4,10 +4,7 @@ export const isValidUserDataStorageArray = (data: unknown): data is UserDataStor
   if (!Array.isArray(data)) {
     return false;
   }
-  for (const ARRAY_VALUE of data) {
-    if (!(ARRAY_VALUE instanceof UserDataStorage)) {
-      return false;
-    }
-  }
-  return true;
+  return data.every((value: unknown): value is UserDataStorage => {
+    return value instanceof UserDataStorage;
+  });
 };
