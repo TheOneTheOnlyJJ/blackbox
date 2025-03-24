@@ -175,7 +175,7 @@ const IPC_TLS_API: IIPCTLSAPI = {
     }
     RENDERER_IPC_TLS_READINESS_CHANGE_CALLBACKS.set(callbackId, callback);
     return (): void => {
-      sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", "Removing listener for renderer IPC TLS readiness.");
+      sendLogToMainProcess(PRELOAD_IPC_TLS_API_LOG_SCOPE, "debug", "Removing listener for renderer IPC TLS readiness.");
       RENDERER_IPC_TLS_READINESS_CHANGE_CALLBACKS.delete(callbackId);
     };
   },

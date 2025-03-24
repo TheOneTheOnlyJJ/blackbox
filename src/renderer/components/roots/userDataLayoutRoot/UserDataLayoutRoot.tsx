@@ -1,48 +1,24 @@
-import { FC, MutableRefObject, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { FC, MutableRefObject, useEffect, useRef } from "react";
 import { IDashboardLayoutRootContext, useDashboardLayoutRootContext } from "../dashboardLayoutRoot/DashboardLayoutRootContext";
 import { Box } from "@mui/material";
 import { Outlet } from "react-router-dom";
 import { IUserDataLayoutRootContext } from "./UserDataLayoutRootContext";
 import { appLogger } from "@renderer/utils/loggers";
 import UserDataNavigationBar from "@renderer/components/navigation/UserDataNavigationBar";
-import { UserDataNavigationArea } from "@renderer/navigationAreas/UserDataStoragesNavigationAreas";
-
-const DEFAULT_USER_DATA_NAVIGATION_BAR_WIDTH = 240;
+import { useUserDataNavigationAreaState } from "./hooks/useUserDataNavigationAreaState";
+import { useUserDataLayoutDimensionsState } from "./hooks/useUserDataLayoutDimensionsState";
 
 const UserDataLayoutRoot: FC = () => {
   const dashboardLayoutRootContext: IDashboardLayoutRootContext = useDashboardLayoutRootContext();
   const userDataNavigationBarRef: MutableRefObject<HTMLDivElement | null> = useRef(null);
-  const [userDataNavigationBarWidth, setUserDataNavigationBarWidth] = useState<number>(DEFAULT_USER_DATA_NAVIGATION_BAR_WIDTH);
-  const [userDataNavigationArea, setUserDataNavigationArea] = useState<UserDataNavigationArea | null>(null);
+  const { userDataNavigationBarWidth } = useUserDataLayoutDimensionsState(appLogger, userDataNavigationBarRef);
+  const [userDataNavigationArea, setUserDataNavigationArea] = useUserDataNavigationAreaState(appLogger);
 
-  const updateUserDataNavigationBarWidth = useCallback((): void => {
-    if (userDataNavigationBarRef.current) {
-      setUserDataNavigationBarWidth(userDataNavigationBarRef.current.clientWidth);
-    }
-  }, [userDataNavigationBarRef]);
-
-  const updateUserDataLayoutComponentDimensions = useCallback((): void => {
-    updateUserDataNavigationBarWidth();
-  }, [updateUserDataNavigationBarWidth]);
-
-  // Measure the necessary component dimensions
-  useLayoutEffect((): (() => void) => {
-    // Set initial dimensions
-    updateUserDataLayoutComponentDimensions();
-    // Add event listener for window resize
-    window.addEventListener("resize", updateUserDataLayoutComponentDimensions);
-    // Cleanup event listener on component unmount
-    return (): void => {
-      window.removeEventListener("resize", updateUserDataLayoutComponentDimensions);
-    };
-  }, [updateUserDataLayoutComponentDimensions]);
-
-  useEffect((): void => {
-    appLogger.info(`User data navigation area changed: ${userDataNavigationArea === null ? "null" : `"${userDataNavigationArea}"`}.`);
-  }, [userDataNavigationArea]);
-
-  useEffect((): void => {
+  useEffect((): (() => void) => {
     appLogger.debug("Rendering User Data Layout Root component.");
+    return (): void => {
+      appLogger.debug("Removing User Data Layout Root component.");
+    };
   }, []);
 
   return (

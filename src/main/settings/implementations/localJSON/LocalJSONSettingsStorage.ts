@@ -1,24 +1,21 @@
-import { LogFunctions } from "electron-log";
-import { IBaseSettingsManagerConfig, BaseSettingsManager } from "../../BaseSettingsManager";
-import { SETTINGS_MANAGER_TYPE, SettingsManagerTypes } from "../../SettingsManagerType";
-import { JSONSchemaType } from "ajv";
+import { IBaseSettingsStorageConfig, BaseSettingsStorage } from "../../BaseSettingsStorage";
+import { SETTINGS_STORAGE_TYPES, SettingsStorageTypes } from "../../SettingsStorageType";
+import { JSONSchemaType, ValidateFunction } from "ajv";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { AJV } from "@shared/utils/AJVJSONValidator";
 
-export interface ILocalJSONSettingsManagerConfig extends IBaseSettingsManagerConfig {
-  type: SettingsManagerTypes["LocalJSON"];
+export interface ILocalJSONSettingsStorageConfig extends IBaseSettingsStorageConfig {
+  type: SettingsStorageTypes["localJSON"];
   fileDir: string;
   fileName: string;
 }
 
-export class LocalJSONSettingsManager<SettingsType extends Record<string, unknown>> extends BaseSettingsManager<
+export class LocalJSONSettingsStorage<SettingsType extends Record<string, unknown>> extends BaseSettingsStorage<
   SettingsType,
-  ILocalJSONSettingsManagerConfig
+  ILocalJSONSettingsStorageConfig
 > {
   public static readonly CONFIG_JSON_SCHEMA_CONSTANTS = {
-    type: {
-      title: "Local JSON"
-    },
     fileName: {
       title: "File Name",
       minLength: 1
@@ -28,37 +25,43 @@ export class LocalJSONSettingsManager<SettingsType extends Record<string, unknow
       minLength: 1
     }
   } as const;
-  public static readonly CONFIG_JSON_SCHEMA: JSONSchemaType<ILocalJSONSettingsManagerConfig> = {
+  public static readonly CONFIG_JSON_SCHEMA: JSONSchemaType<ILocalJSONSettingsStorageConfig> = {
     $schema: "http://json-schema.org/draft-07/schema#",
     type: "object",
     properties: {
       type: {
         type: "string",
-        enum: [SETTINGS_MANAGER_TYPE.LocalJSON],
-        ...LocalJSONSettingsManager.CONFIG_JSON_SCHEMA_CONSTANTS.type
+        enum: [SETTINGS_STORAGE_TYPES.localJSON],
+        ...BaseSettingsStorage.BASE_CONFIG_JSON_SCHEMA_CONSTANTS.type
       },
-      doSaveOnUpdate: { type: "boolean", ...BaseSettingsManager.BASE_CONFIG_JSON_SCHEMA_CONSTANTS.doSaveOnUpdate },
-      fileName: { type: "string", ...LocalJSONSettingsManager.CONFIG_JSON_SCHEMA_CONSTANTS.fileName },
-      fileDir: { type: "string", ...LocalJSONSettingsManager.CONFIG_JSON_SCHEMA_CONSTANTS.fileDir }
+      doSaveOnUpdate: { type: "boolean", ...BaseSettingsStorage.BASE_CONFIG_JSON_SCHEMA_CONSTANTS.doSaveOnUpdate },
+      fileName: { type: "string", ...LocalJSONSettingsStorage.CONFIG_JSON_SCHEMA_CONSTANTS.fileName },
+      fileDir: { type: "string", ...LocalJSONSettingsStorage.CONFIG_JSON_SCHEMA_CONSTANTS.fileDir }
     },
     required: ["type", "doSaveOnUpdate", "fileName", "fileDir"],
     additionalProperties: false
   } as const;
+  public static readonly isValidLocalJSONSettingsStorageConfig: ValidateFunction<ILocalJSONSettingsStorageConfig> =
+    AJV.compile<ILocalJSONSettingsStorageConfig>(LocalJSONSettingsStorage.CONFIG_JSON_SCHEMA);
+
   private readonly SETTINGS_FILE_PATH: string;
 
-  public constructor(config: ILocalJSONSettingsManagerConfig, settingsSchema: JSONSchemaType<SettingsType>, logger: LogFunctions) {
-    super(config, LocalJSONSettingsManager.CONFIG_JSON_SCHEMA, settingsSchema, logger);
+  public constructor(config: ILocalJSONSettingsStorageConfig, settingsSchema: JSONSchemaType<SettingsType>, logScope: string) {
+    if (!BaseSettingsStorage.isValidConfig<ILocalJSONSettingsStorageConfig>(config, LocalJSONSettingsStorage.isValidLocalJSONSettingsStorageConfig)) {
+      throw new Error(`Invalid "${SETTINGS_STORAGE_TYPES.localJSON}" Settings Storage Config`);
+    }
+    super(config, settingsSchema, logScope);
     this.SETTINGS_FILE_PATH = resolve(join(this.config.fileDir, this.config.fileName));
   }
 
   public fetchSettings(doUpdate: boolean): SettingsType {
-    this.logger.info(`Fetching settings from file: "${this.SETTINGS_FILE_PATH}".`);
+    this.logger.info(`Fetching settings from JSON file: "${this.SETTINGS_FILE_PATH}".`);
     if (!existsSync(this.SETTINGS_FILE_PATH)) {
       throw new Error("Settings file not found");
     }
     try {
       const FETCHED_SETTINGS: SettingsType = JSON.parse(readFileSync(this.SETTINGS_FILE_PATH, "utf-8")) as SettingsType;
-      if (!this.areSettingsValid(FETCHED_SETTINGS)) {
+      if (!this.isValidSettings(FETCHED_SETTINGS)) {
         throw new Error("Fetched invalid settings");
       }
       // This avoids the redundant save if saveOnUpdate is set
@@ -74,7 +77,7 @@ export class LocalJSONSettingsManager<SettingsType extends Record<string, unknow
   }
 
   public saveSettings(): boolean {
-    this.logger.info(`Saving settings to file: "${this.SETTINGS_FILE_PATH}".`);
+    this.logger.info(`Saving settings to JSON file: "${this.SETTINGS_FILE_PATH}".`);
     if (this.settings === null) {
       this.logger.warn("Settings uninitialised. No-op.");
       return false;

@@ -1,67 +1,31 @@
 import Box from "@mui/material/Box/Box";
-import { FC, MutableRefObject, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { FC, MutableRefObject, useEffect, useRef, useState } from "react";
 import { ISignedInRootContext, useSignedInRootContext } from "@renderer/components/roots/signedInRoot/SignedInRootContext";
 import DashboardAppBar from "@renderer/components/appBars/DashboardAppBar";
 import DashboardNavigationBar from "@renderer/components/navigation/DashboardNavigationBar";
 import { Outlet } from "react-router-dom";
 import { appLogger } from "@renderer/utils/loggers";
 import { IDashboardLayoutRootContext } from "./DashboardLayoutRootContext";
-import { DashboardNavigationArea } from "@renderer/navigationAreas/DashboardNavigationAreas";
-
-const DEFAULT_DASHBOARD_NAVIGATION_BAR_WIDTH = 240;
+import { useDashboardNavigationAreaState } from "./hooks/useDashboardNavigationAreaState";
+import { useDahsboardLayoutDimensionsState } from "./hooks/useDahsboardLayoutDimensionsState";
 
 const DashboardLayoutRoot: FC = () => {
   const signedInRootContext: ISignedInRootContext = useSignedInRootContext();
   const dashboardAppBarRef: MutableRefObject<HTMLDivElement | null> = useRef(null);
   const dashboardNavigationBarRef: MutableRefObject<HTMLDivElement | null> = useRef(null);
-  const [dashboardAppBarHeight, setDashboardAppBarHeight] = useState<number>(0);
+  const { dashboardAppBarHeight, dashboardNavigationBarWidth } = useDahsboardLayoutDimensionsState(
+    appLogger,
+    dashboardAppBarRef,
+    dashboardNavigationBarRef
+  );
   const [dashboardAppBarTitle, setDashboardAppBarTitle] = useState<string>("");
-  const [dashboardNavigationBarWidth, setDashboardNavigationBarWidth] = useState<number>(DEFAULT_DASHBOARD_NAVIGATION_BAR_WIDTH);
-  const [dashboardNavigationArea, setDashboardNavigationArea] = useState<DashboardNavigationArea | null>(null);
+  const [dashboardNavigationArea, setDashboardNavigationArea] = useDashboardNavigationAreaState(appLogger);
 
-  const updateDashboardAppBarHeight = useCallback((): void => {
-    if (dashboardAppBarRef.current) {
-      setDashboardAppBarHeight(dashboardAppBarRef.current.clientHeight);
-    }
-  }, [dashboardAppBarRef]);
-
-  const updateDashboardNavigationbarWidth = useCallback((): void => {
-    if (dashboardNavigationBarRef.current) {
-      setDashboardNavigationBarWidth(dashboardNavigationBarRef.current.clientWidth);
-    }
-  }, [dashboardNavigationBarRef]);
-
-  const updateDashboardLayoutComponentDimensions = useCallback((): void => {
-    updateDashboardAppBarHeight();
-    updateDashboardNavigationbarWidth();
-  }, [updateDashboardAppBarHeight, updateDashboardNavigationbarWidth]);
-
-  useEffect((): void => {
-    appLogger.silly(`Updated Dashboard App Bar height: ${dashboardAppBarHeight.toString()}.`);
-  }, [dashboardAppBarHeight]);
-
-  useEffect((): void => {
-    appLogger.silly(`Updated Drawer width: ${dashboardNavigationBarWidth.toString()}.`);
-  }, [dashboardNavigationBarWidth]);
-
-  useEffect((): void => {
-    appLogger.info(`Dashboard navigation area changed: ${dashboardNavigationArea === null ? "null" : `"${dashboardNavigationArea}"`}.`);
-  }, [dashboardNavigationArea]);
-
-  // Measure the necessary component dimensions
-  useLayoutEffect((): (() => void) => {
-    // Set initial dimensions
-    updateDashboardLayoutComponentDimensions();
-    // Add event listener for window resize
-    window.addEventListener("resize", updateDashboardLayoutComponentDimensions);
-    // Cleanup event listener on component unmount
-    return (): void => {
-      window.removeEventListener("resize", updateDashboardLayoutComponentDimensions);
-    };
-  }, [updateDashboardLayoutComponentDimensions]);
-
-  useEffect((): void => {
+  useEffect((): (() => void) => {
     appLogger.debug("Rendering Dashboard Layout Root component.");
+    return (): void => {
+      appLogger.debug("Removing Dashboard Layout Root component.");
+    };
   }, []);
 
   return (

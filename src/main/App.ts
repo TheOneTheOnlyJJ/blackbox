@@ -20,8 +20,8 @@ import { decryptWithAESAndValidateJSON } from "@main/utils/encryption/decryptWit
 import { IUserSignInDTO, isValidUserSignInDTO } from "@shared/user/account/UserSignInDTO";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
-import { settingsManagerFactory } from "@main/settings/settingsManagerFactory";
-import { SETTINGS_MANAGER_TYPE } from "@main/settings/SettingsManagerType";
+import { settingsStorageFactory } from "@main/settings/settingsStorageFactory";
+import { SETTINGS_STORAGE_TYPES } from "@main/settings/SettingsStorageType";
 import { WINDOW_STATES, WindowPosition, WindowPositionWatcher, WindowStates } from "@main/settings/WindowPositionWatcher";
 import {
   IUserDataStorageConfigCreateDTO,
@@ -30,9 +30,9 @@ import {
 import { IIPCTLSAPIMain, IPC_TLS_API_IPC_CHANNELS, IPCTLSAPIIPCChannel } from "@shared/IPC/APIs/IPCTLSAPI";
 import { IUserAccountStorageConfig } from "./user/account/storage/config/UserAccountStorageConfig";
 import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserAccountStorageInfo";
-import { SettingsManager } from "./settings/SettingsManager";
+import { SettingsStorage } from "./settings/SettingsStorage";
 import { BaseSettings } from "./settings/BaseSettings";
-import { SettingsManagerConfig } from "./settings/SettingsManagerConfig";
+import { SettingsStorageConfig } from "./settings/SettingsStorageConfig";
 import { ISignedInUserInfo } from "@shared/user/account/SignedInUserInfo";
 import { encryptWithAES } from "./utils/encryption/encryptWithAES";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
@@ -83,7 +83,6 @@ export class App {
   private readonly appLogger: LogFunctions = log.scope("main-app");
   private readonly windowLogger: LogFunctions = log.scope("main-window");
   private readonly windowPositionWatcherLogger: LogFunctions = log.scope("main-window-position-watcher");
-  private readonly settingsManagerLogger: LogFunctions = log.scope("main-settings-manager");
   private readonly IPCTLSBootstrapAPILogger: LogFunctions = log.scope("main-ipc-tls-bootstrap-api");
   private readonly IPCTLSAPILogger: LogFunctions = log.scope("main-ipc-tls-api");
   private readonly UserAPILogger: LogFunctions = log.scope("main-user-api");
@@ -142,13 +141,14 @@ export class App {
       }
     }
   } as const;
-  private readonly settingsManager: SettingsManager<IAppSettings>;
-  private readonly SETTINGS_MANAGER_CONFIG: SettingsManagerConfig = {
-    type: SETTINGS_MANAGER_TYPE.LocalJSON,
+  private readonly settingsStorage: SettingsStorage<IAppSettings>;
+  private readonly SETTINGS_STORAGE_CONFIG: SettingsStorageConfig = {
+    type: SETTINGS_STORAGE_TYPES.localJSON,
     doSaveOnUpdate: false,
     fileDir: resolve(join(app.getAppPath(), "settings")),
     fileName: "BlackBoxSettings.json"
   } as const;
+  private readonly DEFAULT_SETTINGS_STORAGE_LOG_SCOPE = "main-default-settings-storage";
 
   // Window
   private readonly WINDOW_CONSTRUCTOR_OPTIONS: BrowserWindowConstructorOptions = {
@@ -653,19 +653,24 @@ export class App {
     // Add start log separator (also create file if missing)
     appendFileSync(this.LOG_FILE_PATH, `---------- Start : ${new Date().toISOString()} ----------\n`, "utf-8");
     this.bootstrapLogger.info(`Using log file at path: "${log.transports.file.getFile().path}".`);
-    // Initialise required managers & watchers
-    this.settingsManager = settingsManagerFactory<IAppSettings>(this.SETTINGS_MANAGER_CONFIG, App.SETTINGS_SCHEMA, this.settingsManagerLogger);
+    // Initialise required classes & watchers
+    this.settingsStorage = settingsStorageFactory<IAppSettings>(
+      this.SETTINGS_STORAGE_CONFIG,
+      App.SETTINGS_SCHEMA,
+      this.DEFAULT_SETTINGS_STORAGE_LOG_SCOPE,
+      this.bootstrapLogger
+    );
     this.windowPositionWatcher = new WindowPositionWatcher(this.windowPositionWatcherLogger);
     // Read app settings
     try {
-      this.settingsManager.fetchSettings(true);
+      this.settingsStorage.fetchSettings(true);
     } catch (error: unknown) {
       const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
       this.bootstrapLogger.error(`Fetch app settings error: ${ERROR_MESSAGE}!`);
       this.bootstrapLogger.warn("Using default app settings.");
-      this.settingsManager.updateSettings(this.DEFAULT_SETTINGS);
+      this.settingsStorage.updateSettings(this.DEFAULT_SETTINGS);
     }
-    this.bootstrapLogger.debug(`Using app settings: ${JSON.stringify(this.settingsManager.getSettings(), null, 2)}.`);
+    this.bootstrapLogger.debug(`Using app settings: ${JSON.stringify(this.settingsStorage.getSettings(), null, 2)}.`);
     this.userFacade = new UserFacade({
       logger: this.userFacadeLogger,
       contextLogger: this.userContextLogger,
@@ -715,7 +720,7 @@ export class App {
     // This should allow external settings edits on macOS to take effect when activating app
     let lastWindowSettings: IWindowSettings;
     try {
-      lastWindowSettings = this.settingsManager.fetchSettings(false).window;
+      lastWindowSettings = this.settingsStorage.fetchSettings(false).window;
     } catch {
       this.windowLogger.warn("Using default window settings.");
       lastWindowSettings = this.DEFAULT_SETTINGS.window;
@@ -793,7 +798,7 @@ export class App {
       return;
     }
     this.windowLogger.info("Window closed.");
-    this.settingsManager.saveSettings();
+    this.settingsStorage.saveSettings();
     this.windowLogger.debug("Removing all listeners from window.");
     this.window.removeAllListeners();
     this.window = null;
@@ -836,14 +841,14 @@ export class App {
 
   private updateWindowPositionSettings(newWindowPosition: WindowPosition): void {
     if (newWindowPosition === WINDOW_STATES.Minimized) {
-      this.settingsManagerLogger.debug("Window minimized. No update to settings.");
+      this.windowLogger.debug("Window minimized. No update to settings.");
     } else {
       // Update settings
-      let currentSettings: IAppSettings | null = this.settingsManager.getSettings();
+      let currentSettings: IAppSettings | null = this.settingsStorage.getSettings();
       if (currentSettings === null) {
         currentSettings = this.DEFAULT_SETTINGS;
       }
-      this.settingsManager.updateSettings({ ...currentSettings, window: { ...currentSettings.window, position: newWindowPosition } });
+      this.settingsStorage.updateSettings({ ...currentSettings, window: { ...currentSettings.window, position: newWindowPosition } });
     }
   }
 
