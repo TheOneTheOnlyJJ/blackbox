@@ -2,13 +2,13 @@ import { IEncryptedData } from "@shared/utils/EncryptedData";
 import { IPCAPIResponse } from "../IPCAPIResponse";
 import { TransformToIPCAPIChannels } from "../IPCAPIChannels";
 
-export interface IGetDirectoryWithPickerOptions {
+export interface IGetDirectoryPathWithPickerOptions {
   pickerTitle: string;
   multiple: boolean;
 }
 
 export interface IUtilsAPI {
-  getDirectoryPathWithPicker: (options: IGetDirectoryWithPickerOptions) => Promise<IPCAPIResponse<IEncryptedData<string[]> | null>>;
+  getDirectoryPathWithPicker: (options: IGetDirectoryPathWithPickerOptions) => Promise<IPCAPIResponse<IEncryptedData<string[]> | null>>;
 }
 
 export type UtilsAPIIPCChannels = TransformToIPCAPIChannels<"UtilsAPI", IUtilsAPI>;

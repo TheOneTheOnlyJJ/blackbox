@@ -36,7 +36,7 @@ import { SettingsStorageConfig } from "./settings/SettingsStorageConfig";
 import { ISignedInUserInfo } from "@shared/user/account/SignedInUserInfo";
 import { encryptWithAES } from "./utils/encryption/encryptWithAES";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
-import { IGetDirectoryWithPickerOptions, IUtilsAPI, UTILS_API_IPC_CHANNELS } from "@shared/IPC/APIs/UtilsAPI";
+import { IGetDirectoryPathWithPickerOptions, IUtilsAPI, UTILS_API_IPC_CHANNELS } from "@shared/IPC/APIs/UtilsAPI";
 import {
   IUserDataStorageVisibilityGroupConfigCreateDTO,
   isValidUserDataStorageVisibilityGroupConfigCreateDTO
@@ -645,7 +645,9 @@ export class App {
   } as const;
 
   private readonly UTILS_API_HANDLERS: MainProcessUtilsAPIIPCHandlers = {
-    handleGetDirectoryPathWithPicker: async (options: IGetDirectoryWithPickerOptions): Promise<IPCAPIResponse<IEncryptedData<string[]> | null>> => {
+    handleGetDirectoryPathWithPicker: async (
+      options: IGetDirectoryPathWithPickerOptions
+    ): Promise<IPCAPIResponse<IEncryptedData<string[]> | null>> => {
       try {
         if (this.window === null) {
           throw new Error("Window is null");
@@ -1176,7 +1178,7 @@ export class App {
     this.windowLogger.debug("Registering Utils API IPC handlers.");
     ipcMain.handle(
       UTILS_API_IPC_CHANNELS.getDirectoryPathWithPicker,
-      async (_: IpcMainInvokeEvent, options: IGetDirectoryWithPickerOptions): Promise<IPCAPIResponse<IEncryptedData<string> | null>> => {
+      async (_: IpcMainInvokeEvent, options: IGetDirectoryPathWithPickerOptions): Promise<IPCAPIResponse<IEncryptedData<string> | null>> => {
         this.UserAuthAPILogger.debug(`Received message from renderer on channel: "${UTILS_API_IPC_CHANNELS.getDirectoryPathWithPicker}".`);
         return await this.UTILS_API_HANDLERS.handleGetDirectoryPathWithPicker(options);
       }
