@@ -28,4 +28,5 @@ const ActiveUserDataStoragesPage: FC = () => {
     </Box>
   );
 };
+
 export default ActiveUserDataStoragesPage;
