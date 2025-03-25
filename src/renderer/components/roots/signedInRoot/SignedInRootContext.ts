@@ -8,6 +8,8 @@ export interface ISignedInRootContext extends IAppRootContext {
   signedInUserInfo: ISignedInUserInfo;
   availableUserDataStorageConfigsInfo: IUserDataStorageConfigInfo[];
   openUserDataStorageVisibilityGroupsInfo: IUserDataStorageVisibilityGroupInfo[];
+  getOpenUserDataStorageVisibilityGroupName: (visibilityGroupId: string) => string;
+  getOpenUserDataStorageVisibilityGroupInfo: (visibilityGroupId: string) => IUserDataStorageVisibilityGroupInfo | null;
   setForbiddenLocationName: (newForbiddenLocationName: string) => void;
 }
 

@@ -42,7 +42,7 @@ const DashboardNavigationBar = forwardRef<HTMLDivElement, IDashboardNavigationBa
         divider: false
       },
       {
-        name: "Data Storages",
+        name: "Data Storage",
         icon: Inventory2OutlinedIcon,
         dashboardNavigationArea: DASHBOARD_NAVIGATION_AREAS.userData,
         path: `/users/${props.signedInUserId}/data/storageConfigs`,

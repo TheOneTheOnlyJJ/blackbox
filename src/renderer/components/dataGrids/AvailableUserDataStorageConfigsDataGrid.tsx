@@ -50,23 +50,6 @@ const AvailableUserDataStorageConfigsDataGrid: FC = () => {
     return row.storageId;
   }, []);
 
-  const getOpenUserDataStorageVisibilityGroupName = useCallback(
-    (visibilityGroupId: string): string => {
-      // TODO: Use a Map here, declare it in signedInRoot
-      const VISIBILITY_GROUP_INFO: IUserDataStorageVisibilityGroupInfo | undefined = signedInRootContext.openUserDataStorageVisibilityGroupsInfo.find(
-        (openVisibilityGroupInfo: IUserDataStorageVisibilityGroupInfo) => {
-          return openVisibilityGroupInfo.visibilityGroupId === visibilityGroupId;
-        }
-      );
-      if (VISIBILITY_GROUP_INFO === undefined) {
-        appLogger.warn(`Could not get name for User Data Storage Visibility Group ${visibilityGroupId}.`);
-        return visibilityGroupId;
-      }
-      return VISIBILITY_GROUP_INFO.name;
-    },
-    [signedInRootContext.openUserDataStorageVisibilityGroupsInfo]
-  );
-
   const COLUMNS: GridColDef[] = useMemo<GridColDef[]>((): GridColDef[] => {
     return [
       { field: "storageId", type: "string", headerName: USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA_CONSTANTS.storageId.title },
@@ -82,7 +65,7 @@ const AvailableUserDataStorageConfigsDataGrid: FC = () => {
         ),
         headerName: USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA_CONSTANTS.visibilityGroupId.title,
         valueGetter: (_: never, row: IUserDataStorageConfigInfo): string | null => {
-          return row.visibilityGroupId === null ? null : getOpenUserDataStorageVisibilityGroupName(row.visibilityGroupId);
+          return row.visibilityGroupId === null ? null : signedInRootContext.getOpenUserDataStorageVisibilityGroupName(row.visibilityGroupId);
         },
         renderCell: (params: GridRenderCellParams<IUserDataStorageConfigInfo, string | null>) => {
           return params.value === null ? <em>{PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS.name}</em> : params.value;
@@ -123,7 +106,7 @@ const AvailableUserDataStorageConfigsDataGrid: FC = () => {
         }
       }
     ];
-  }, [getOpenUserDataStorageVisibilityGroupName, setIsShowConfigInfoDialogOpen, signedInRootContext.openUserDataStorageVisibilityGroupsInfo]);
+  }, [setIsShowConfigInfoDialogOpen, signedInRootContext]);
 
   return (
     <>

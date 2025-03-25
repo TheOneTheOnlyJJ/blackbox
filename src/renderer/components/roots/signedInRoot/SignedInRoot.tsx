@@ -3,7 +3,6 @@ import { Navigate, Outlet } from "react-router-dom";
 import { IAppRootContext, useAppRootContext } from "@renderer/components/roots/appRoot/AppRootContext";
 import { ISignedInRootContext } from "./SignedInRootContext";
 import { appLogger } from "@renderer/utils/loggers";
-import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
 import { IUserDataStorageConfigInfo } from "@shared/user/data/storage/config/info/UserDataStorageConfigInfo";
 import { useAvailableUserDataStorageConfigsInfoState } from "./hooks/useAvailableUserDataStorageConfigsInfoState";
 import { useOpenUserDataStorageVisibilityGroupsInfoState } from "./hooks/useOpenUserDataStorageVisibilityGroupsInfoState";
@@ -13,7 +12,8 @@ const SignedInRoot: FC = () => {
   const appRootContext: IAppRootContext = useAppRootContext();
 
   const availableUserDataStorageConfigsInfo: IUserDataStorageConfigInfo[] = useAvailableUserDataStorageConfigsInfoState(appLogger);
-  const openUserDataStorageVisibilityGroupsInfo: IUserDataStorageVisibilityGroupInfo[] = useOpenUserDataStorageVisibilityGroupsInfoState(appLogger);
+  const { openUserDataStorageVisibilityGroupsInfo, getOpenUserDataStorageVisibilityGroupName, getOpenUserDataStorageVisibilityGroupInfo } =
+    useOpenUserDataStorageVisibilityGroupsInfoState(appLogger);
   const [forbiddenLocationName, URIencodeAndSetForbiddenLocationName] = useForbiddenLocationNameState(appLogger);
 
   useEffect((): (() => void) => {
@@ -31,6 +31,8 @@ const SignedInRoot: FC = () => {
           signedInUserInfo: appRootContext.signedInUserInfo,
           availableUserDataStorageConfigsInfo: availableUserDataStorageConfigsInfo,
           openUserDataStorageVisibilityGroupsInfo: openUserDataStorageVisibilityGroupsInfo,
+          getOpenUserDataStorageVisibilityGroupName: getOpenUserDataStorageVisibilityGroupName,
+          getOpenUserDataStorageVisibilityGroupInfo: getOpenUserDataStorageVisibilityGroupInfo,
           setForbiddenLocationName: URIencodeAndSetForbiddenLocationName
         } satisfies ISignedInRootContext
       }

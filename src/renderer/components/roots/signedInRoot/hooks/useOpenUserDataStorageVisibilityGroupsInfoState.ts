@@ -9,10 +9,49 @@ import { IDataChangedDiff, isValidDataChangedDiff } from "@shared/utils/DataChan
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 import { LogFunctions } from "electron-log";
 import { enqueueSnackbar } from "notistack";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
-export const useOpenUserDataStorageVisibilityGroupsInfoState = (logger: LogFunctions): IUserDataStorageVisibilityGroupInfo[] => {
+export const useOpenUserDataStorageVisibilityGroupsInfoState = (
+  logger: LogFunctions
+): {
+  openUserDataStorageVisibilityGroupsInfo: IUserDataStorageVisibilityGroupInfo[];
+  getOpenUserDataStorageVisibilityGroupName: (visibilityGroupId: string) => string;
+  getOpenUserDataStorageVisibilityGroupInfo: (visibilityGroupId: string) => IUserDataStorageVisibilityGroupInfo | null;
+} => {
   const [openUserDataStorageVisibilityGroupsInfo, setOpenUserDataStorageVisibilityGroupsInfo] = useState<IUserDataStorageVisibilityGroupInfo[]>([]);
+
+  const getOpenUserDataStorageVisibilityGroupName = useCallback(
+    (visibilityGroupId: string): string => {
+      // TODO: Use a Map here, declare it in signedInRoot
+      const VISIBILITY_GROUP_INFO: IUserDataStorageVisibilityGroupInfo | undefined = openUserDataStorageVisibilityGroupsInfo.find(
+        (openVisibilityGroupInfo: IUserDataStorageVisibilityGroupInfo) => {
+          return openVisibilityGroupInfo.visibilityGroupId === visibilityGroupId;
+        }
+      );
+      if (VISIBILITY_GROUP_INFO === undefined) {
+        logger.warn(`Could not get name for User Data Storage Visibility Group ${visibilityGroupId}.`);
+        return visibilityGroupId;
+      }
+      return VISIBILITY_GROUP_INFO.name;
+    },
+    [logger, openUserDataStorageVisibilityGroupsInfo]
+  );
+
+  const getOpenUserDataStorageVisibilityGroupInfo = useCallback(
+    (visibilityGroupId: string): IUserDataStorageVisibilityGroupInfo | null => {
+      const VISIBILITY_GROUP_INFO: IUserDataStorageVisibilityGroupInfo | undefined = openUserDataStorageVisibilityGroupsInfo.find(
+        (openVisibilityGroupInfo: IUserDataStorageVisibilityGroupInfo) => {
+          return openVisibilityGroupInfo.visibilityGroupId === visibilityGroupId;
+        }
+      );
+      if (VISIBILITY_GROUP_INFO === undefined) {
+        logger.warn(`Could not get info for User Data Storage Visibility Group ${visibilityGroupId}.`);
+        return null;
+      }
+      return VISIBILITY_GROUP_INFO;
+    },
+    [logger, openUserDataStorageVisibilityGroupsInfo]
+  );
 
   useEffect((): void => {
     logger.info(`Open User Data Storage Visibility Groups Info changed. Count: ${openUserDataStorageVisibilityGroupsInfo.length.toString()}.`);
@@ -102,5 +141,9 @@ export const useOpenUserDataStorageVisibilityGroupsInfoState = (logger: LogFunct
     };
   }, [logger]);
 
-  return openUserDataStorageVisibilityGroupsInfo;
+  return {
+    openUserDataStorageVisibilityGroupsInfo: openUserDataStorageVisibilityGroupsInfo,
+    getOpenUserDataStorageVisibilityGroupName: getOpenUserDataStorageVisibilityGroupName,
+    getOpenUserDataStorageVisibilityGroupInfo: getOpenUserDataStorageVisibilityGroupInfo
+  };
 };
