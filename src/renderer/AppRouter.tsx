@@ -13,6 +13,7 @@ import SettingsPage from "@renderer/pages/SettingsPage";
 import DashboardLayoutRoot from "@renderer/components/roots/dashboardLayoutRoot/DashboardLayoutRoot";
 import UserDataStorageVisibilityGroupsPage from "./pages/UserDataStorageVisibilityGroupsPage";
 import UserDataLayoutRoot from "./components/roots/userDataLayoutRoot/UserDataLayoutRoot";
+import ActiveUserDataStoragesPage from "./pages/ActiveUserDataStoragesPage";
 
 const APP_ROUTER = createHashRouter([
   {
@@ -53,6 +54,10 @@ const APP_ROUTER = createHashRouter([
                   {
                     path: "visibilityGroups",
                     element: <UserDataStorageVisibilityGroupsPage />
+                  },
+                  {
+                    path: "activeStorages",
+                    element: <ActiveUserDataStoragesPage />
                   }
                 ]
               },

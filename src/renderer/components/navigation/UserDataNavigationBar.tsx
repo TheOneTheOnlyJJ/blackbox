@@ -2,6 +2,7 @@ import { SvgIconComponent } from "@mui/icons-material";
 import { ForwardedRef, forwardRef, useMemo } from "react";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import DataObjectIcon from "@mui/icons-material/DataObject";
+import StorageOutlinedIcon from "@mui/icons-material/StorageOutlined";
 import { Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
 import DebouncedLink from "./DebouncedLink";
 import { USER_DATA_NAVIGATION_AREAS, UserDataNavigationArea } from "@renderer/navigationAreas/UserDataStoragesNavigationAreas";
@@ -41,6 +42,13 @@ const UserDataNavigationBar = forwardRef<HTMLDivElement, IUserDataNavigationBarP
         icon: VisibilityIcon,
         userDataNavigationArea: USER_DATA_NAVIGATION_AREAS.visibilityGroups,
         path: `/users/${props.signedInUserId}/data/visibilityGroups`,
+        divider: false
+      },
+      {
+        name: "Active",
+        icon: StorageOutlinedIcon,
+        userDataNavigationArea: USER_DATA_NAVIGATION_AREAS.activeStorages,
+        path: `/users/${props.signedInUserId}/data/activeStorages`,
         divider: false
       }
     ];
