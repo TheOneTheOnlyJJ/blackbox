@@ -257,7 +257,7 @@ export class App {
         throw new Error("Null IPC TLS bootstrap private RSA key!");
       }
       try {
-        const UNWRAPPED_IPO_TLS_AES_KEY: CryptoKey = await webcrypto.subtle.unwrapKey(
+        const UNWRAPPED_IPC_TLS_AES_KEY: CryptoKey = await webcrypto.subtle.unwrapKey(
           "raw",
           wrappedIPCTLSAESKeyIPCAPIResponse.data,
           this.IPCTLSBootstrapPrivateRSAKey,
@@ -266,7 +266,7 @@ export class App {
           true,
           ["encrypt", "decrypt"]
         );
-        const EXPORTED_IPC_TLS_AES_KEY: ArrayBuffer = await webcrypto.subtle.exportKey("raw", UNWRAPPED_IPO_TLS_AES_KEY);
+        const EXPORTED_IPC_TLS_AES_KEY: ArrayBuffer = await webcrypto.subtle.exportKey("raw", UNWRAPPED_IPC_TLS_AES_KEY);
         this.IPC_TLS_AES_KEY.value = Buffer.from(EXPORTED_IPC_TLS_AES_KEY);
       } catch (error: unknown) {
         this.IPCTLSBootstrapPrivateRSAKey = null;
