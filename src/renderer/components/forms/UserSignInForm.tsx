@@ -63,7 +63,7 @@ const UserSignInForm: FC<IUserSignInFormProps> = (props: IUserSignInFormProps) =
       window.IPCTLSAPI.encrypt<IUserSignInDTO>(userSignInInputToUserSignInDTO(data.formData, appLogger), "user sign in DTO")
         .then(
           (encryptedUserSignInDTO: IEncryptedData<IUserSignInDTO>): void => {
-            const SIGN_IN_RESPONSE: IPCAPIResponse<boolean> = window.userAPI.signIn(encryptedUserSignInDTO);
+            const SIGN_IN_RESPONSE: IPCAPIResponse<boolean> = window.userAccountAPI.signIn(encryptedUserSignInDTO);
             if (SIGN_IN_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
               setWasSignInSuccessful(SIGN_IN_RESPONSE.data);
               if (SIGN_IN_RESPONSE.data) {

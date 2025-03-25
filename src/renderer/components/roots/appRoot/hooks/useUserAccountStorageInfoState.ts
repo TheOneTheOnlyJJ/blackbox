@@ -13,7 +13,7 @@ export const useUserAccountStorageInfoState = (logger: LogFunctions): IUserAccou
   }, [logger, userAccountStorageInfo]);
 
   useEffect((): (() => void) => {
-    const GET_USER_ACCOUNT_STORAGE_INFO_RESPONSE: IPCAPIResponse<IUserAccountStorageInfo | null> = window.userAPI.getUserAccountStorageInfo();
+    const GET_USER_ACCOUNT_STORAGE_INFO_RESPONSE: IPCAPIResponse<IUserAccountStorageInfo | null> = window.userAccountAPI.getUserAccountStorageInfo();
     if (GET_USER_ACCOUNT_STORAGE_INFO_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
       enqueueSnackbar({ message: "Error getting User Account Storage Info.", variant: "error" });
       setUserAccountStorageInfo(null);
@@ -21,7 +21,7 @@ export const useUserAccountStorageInfoState = (logger: LogFunctions): IUserAccou
       setUserAccountStorageInfo(GET_USER_ACCOUNT_STORAGE_INFO_RESPONSE.data);
     }
     // Monitor changes to User Account Storage
-    const removeOnUserAccountStorageChangedListener: () => void = window.userAPI.onUserAccountStorageChanged(
+    const removeOnUserAccountStorageChangedListener: () => void = window.userAccountAPI.onUserAccountStorageChanged(
       (newUserAccountStorageInfo: IUserAccountStorageInfo | null): void => {
         setUserAccountStorageInfo((prevUserAccountStorageInfo: IUserAccountStorageInfo | null): IUserAccountStorageInfo | null => {
           if (newUserAccountStorageInfo !== null && prevUserAccountStorageInfo === null) {
@@ -37,7 +37,7 @@ export const useUserAccountStorageInfoState = (logger: LogFunctions): IUserAccou
       }
     );
     // Monitor changes to User Account Storage info
-    const removeOnUserAccountStorageInfoChangedListener: () => void = window.userAPI.onUserAccountStorageInfoChanged(
+    const removeOnUserAccountStorageInfoChangedListener: () => void = window.userAccountAPI.onUserAccountStorageInfoChanged(
       (newUserAccountStorageInfo: IUserAccountStorageInfo): void => {
         setUserAccountStorageInfo((prevUserAccountStorageInfo: IUserAccountStorageInfo | null): IUserAccountStorageInfo | null => {
           if (prevUserAccountStorageInfo === null) {

@@ -45,7 +45,7 @@ export const useSignedInUserInfoState = (
   }, [logger, navigate, signedInUserInfo]);
 
   useEffect((): (() => void) => {
-    const GET_SIGNED_IN_USER_INFO_RESPONSE: IPCAPIResponse<ISignedInUserInfo | null> = window.userAPI.getSignedInUserInfo();
+    const GET_SIGNED_IN_USER_INFO_RESPONSE: IPCAPIResponse<ISignedInUserInfo | null> = window.userAccountAPI.getSignedInUserInfo();
     if (GET_SIGNED_IN_USER_INFO_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
       enqueueSnackbar({ message: "Error getting signed in user info.", variant: "error" });
       setSignedInUserInfo(null);
@@ -53,7 +53,7 @@ export const useSignedInUserInfoState = (
       setSignedInUserInfo(GET_SIGNED_IN_USER_INFO_RESPONSE.data);
     }
     // Monitor changes to signed in user
-    const removeOnSignedInUserChangedListener: () => void = window.userAPI.onSignedInUserChanged(
+    const removeOnSignedInUserChangedListener: () => void = window.userAccountAPI.onSignedInUserChanged(
       (newSignedInUserInfo: ISignedInUserInfo | null): void => {
         setSignedInUserInfo(newSignedInUserInfo);
       }

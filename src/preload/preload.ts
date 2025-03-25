@@ -1,14 +1,13 @@
 import { contextBridge, ipcRenderer, IpcRendererEvent } from "electron";
 import {
   SignedInUserChangedCallback,
-  IUserAPI,
-  USER_API_IPC_CHANNELS,
+  USER_ACCOUNT_API_IPC_CHANNELS,
   UserAccountStorageChangedCallback,
-  // UserAccountStorageOpenChangedCallback,
-  UserAPIIPCChannel,
   AvailableUserDataStorageConfigsChangedCallback,
   OpenUserDataStorageVisibilityGroupsChangedCallback,
-  UserAccountStorageInfoChangedCallback
+  UserAccountStorageInfoChangedCallback,
+  IUserAccountAPI,
+  UserAccountAPIIPCChannel
 } from "@shared/IPC/APIs/UserAPI";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IIPCTLSAPI, IPC_TLS_API_IPC_CHANNELS, IPCTLSAPIIPCChannel, IPCTLSReadinessChangedCallback } from "@shared/IPC/APIs/IPCTLSAPI";
@@ -225,93 +224,93 @@ const IPC_TLS_API: IIPCTLSAPI = {
   }
 };
 
-const USER_API: IUserAPI = {
+const USER_ACCOUNT_API: IUserAccountAPI = {
   signUp: (encryptedUserSignUpDTO: IEncryptedData<IUserSignUpDTO>): IPCAPIResponse<boolean> => {
-    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.signUp;
+    const CHANNEL: UserAccountAPIIPCChannel = USER_ACCOUNT_API_IPC_CHANNELS.signUp;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL, encryptedUserSignUpDTO) as IPCAPIResponse<boolean>;
   },
   signIn: (encryptedUserSignInDTO: IEncryptedData<IUserSignInDTO>): IPCAPIResponse<boolean> => {
-    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.signIn;
+    const CHANNEL: UserAccountAPIIPCChannel = USER_ACCOUNT_API_IPC_CHANNELS.signIn;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL, encryptedUserSignInDTO) as IPCAPIResponse<boolean>;
   },
   signOut: (): IPCAPIResponse<ISignedInUserInfo | null> => {
-    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.signOut;
+    const CHANNEL: UserAccountAPIIPCChannel = USER_ACCOUNT_API_IPC_CHANNELS.signOut;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL) as IPCAPIResponse<ISignedInUserInfo | null>;
   },
   isUserAccountStorageOpen: (): IPCAPIResponse<boolean> => {
-    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.isUserAccountStorageOpen;
+    const CHANNEL: UserAccountAPIIPCChannel = USER_ACCOUNT_API_IPC_CHANNELS.isUserAccountStorageOpen;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL) as IPCAPIResponse<boolean>;
   },
   isUsernameAvailable: (username: string): IPCAPIResponse<boolean> => {
-    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.isUsernameAvailable;
+    const CHANNEL: UserAccountAPIIPCChannel = USER_ACCOUNT_API_IPC_CHANNELS.isUsernameAvailable;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL, username) as IPCAPIResponse<boolean>;
   },
   isUserDataStorageVisibilityGroupNameAvailableForSignedInUser: (name: string): IPCAPIResponse<boolean> => {
-    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.isUserDataStorageVisibilityGroupNameAvailableForSignedInUser;
+    const CHANNEL: UserAccountAPIIPCChannel = USER_ACCOUNT_API_IPC_CHANNELS.isUserDataStorageVisibilityGroupNameAvailableForSignedInUser;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL, name) as IPCAPIResponse<boolean>;
   },
   getUserCount: (): IPCAPIResponse<number> => {
-    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.getUserCount;
+    const CHANNEL: UserAccountAPIIPCChannel = USER_ACCOUNT_API_IPC_CHANNELS.getUserCount;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL) as IPCAPIResponse<number>;
   },
   getUsernameForUserId: (userId: string): IPCAPIResponse<string | null> => {
-    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.getUsernameForUserId;
+    const CHANNEL: UserAccountAPIIPCChannel = USER_ACCOUNT_API_IPC_CHANNELS.getUsernameForUserId;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL, userId) as IPCAPIResponse<string | null>;
   },
   getSignedInUserInfo: (): IPCAPIResponse<ISignedInUserInfo | null> => {
-    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.getSignedInUserInfo;
+    const CHANNEL: UserAccountAPIIPCChannel = USER_ACCOUNT_API_IPC_CHANNELS.getSignedInUserInfo;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL) as IPCAPIResponse<ISignedInUserInfo | null>;
   },
   addUserDataStorageConfig: (encryptedUserDataStorageConfigCreateDTO: IEncryptedData<IUserDataStorageConfigCreateDTO>): IPCAPIResponse<boolean> => {
-    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.addUserDataStorageConfig;
+    const CHANNEL: UserAccountAPIIPCChannel = USER_ACCOUNT_API_IPC_CHANNELS.addUserDataStorageConfig;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL, encryptedUserDataStorageConfigCreateDTO) as IPCAPIResponse<boolean>;
   },
   addUserDataStorageVisibilityGroupConfig: (
     encryptedUserDataStorageVisibilityGroupConfigCreateDTO: IEncryptedData<IUserDataStorageVisibilityGroupConfigCreateDTO>
   ): IPCAPIResponse<boolean> => {
-    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.addUserDataStorageVisibilityGroupConfig;
+    const CHANNEL: UserAccountAPIIPCChannel = USER_ACCOUNT_API_IPC_CHANNELS.addUserDataStorageVisibilityGroupConfig;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL, encryptedUserDataStorageVisibilityGroupConfigCreateDTO) as IPCAPIResponse<boolean>;
   },
   openUserDataStorageVisibilityGroups: (
     encryptedUserDataStorageVisibilityGroupsOpenRequestDTO: IEncryptedData<IUserDataStorageVisibilityGroupsOpenRequestDTO>
   ): IPCAPIResponse<number> => {
-    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.openUserDataStorageVisibilityGroups;
+    const CHANNEL: UserAccountAPIIPCChannel = USER_ACCOUNT_API_IPC_CHANNELS.openUserDataStorageVisibilityGroups;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL, encryptedUserDataStorageVisibilityGroupsOpenRequestDTO) as IPCAPIResponse<number>;
   },
   closeUserDataStorageVisibilityGroups: (userDataStorageVisibilityGroupIds: string[]): IPCAPIResponse<number> => {
-    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.closeUserDataStorageVisibilityGroups;
+    const CHANNEL: UserAccountAPIIPCChannel = USER_ACCOUNT_API_IPC_CHANNELS.closeUserDataStorageVisibilityGroups;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL, userDataStorageVisibilityGroupIds) as IPCAPIResponse<number>;
   },
   getUserAccountStorageInfo: (): IPCAPIResponse<IUserAccountStorageInfo | null> => {
-    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.getUserAccountStorageInfo;
+    const CHANNEL: UserAccountAPIIPCChannel = USER_ACCOUNT_API_IPC_CHANNELS.getUserAccountStorageInfo;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL) as IPCAPIResponse<IUserAccountStorageInfo | null>;
   },
   getAllSignedInUserAvailableDataStorageConfigsInfo: (): IPCAPIResponse<IEncryptedData<IUserDataStorageConfigInfo[]>> => {
-    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.getAllSignedInUserAvailableDataStorageConfigsInfo;
+    const CHANNEL: UserAccountAPIIPCChannel = USER_ACCOUNT_API_IPC_CHANNELS.getAllSignedInUserAvailableDataStorageConfigsInfo;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL) as IPCAPIResponse<IEncryptedData<IUserDataStorageConfigInfo[]>>;
   },
   getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo: (): IPCAPIResponse<IEncryptedData<IUserDataStorageVisibilityGroupInfo[]>> => {
-    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo;
+    const CHANNEL: UserAccountAPIIPCChannel = USER_ACCOUNT_API_IPC_CHANNELS.getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL) as IPCAPIResponse<IEncryptedData<IUserDataStorageVisibilityGroupInfo[]>>;
   },
   onUserAccountStorageChanged: (callback: UserAccountStorageChangedCallback): (() => void) => {
-    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.onUserAccountStorageChanged;
+    const CHANNEL: UserAccountAPIIPCChannel = USER_ACCOUNT_API_IPC_CHANNELS.onUserAccountStorageChanged;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Adding listener from main on channel: "${CHANNEL}".`);
     const LISTENER = (_: IpcRendererEvent, newUserAccountStorageInfo: IUserAccountStorageInfo | null): void => {
       sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Received message from main on channel: "${CHANNEL}".`);
@@ -324,7 +323,7 @@ const USER_API: IUserAPI = {
     };
   },
   onUserAccountStorageInfoChanged: (callback: UserAccountStorageInfoChangedCallback): (() => void) => {
-    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.onUserAccountStorageInfoChanged;
+    const CHANNEL: UserAccountAPIIPCChannel = USER_ACCOUNT_API_IPC_CHANNELS.onUserAccountStorageInfoChanged;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Adding listener from main on channel: "${CHANNEL}".`);
     const LISTENER = (_: IpcRendererEvent, newUserAccountStorageInfo: IUserAccountStorageInfo): void => {
       sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Received message from main on channel: "${CHANNEL}".`);
@@ -337,7 +336,7 @@ const USER_API: IUserAPI = {
     };
   },
   onSignedInUserChanged: (callback: SignedInUserChangedCallback): (() => void) => {
-    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.onSignedInUserChanged;
+    const CHANNEL: UserAccountAPIIPCChannel = USER_ACCOUNT_API_IPC_CHANNELS.onSignedInUserChanged;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Adding listener from main on channel: "${CHANNEL}".`);
     const LISTENER = (_: IpcRendererEvent, newSignedInUserInfo: ISignedInUserInfo | null): void => {
       sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Received message from main on channel: "${CHANNEL}".`);
@@ -350,7 +349,7 @@ const USER_API: IUserAPI = {
     };
   },
   onAvailableUserDataStorageConfigsChanged: (callback: AvailableUserDataStorageConfigsChangedCallback): (() => void) => {
-    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.onAvailableUserDataStorageConfigsChanged;
+    const CHANNEL: UserAccountAPIIPCChannel = USER_ACCOUNT_API_IPC_CHANNELS.onAvailableUserDataStorageConfigsChanged;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Adding listener from main on channel: "${CHANNEL}".`);
     const LISTENER = (
       _: IpcRendererEvent,
@@ -366,7 +365,7 @@ const USER_API: IUserAPI = {
     };
   },
   onOpenUserDataStorageVisibilityGroupsChanged: (callback: OpenUserDataStorageVisibilityGroupsChangedCallback): (() => void) => {
-    const CHANNEL: UserAPIIPCChannel = USER_API_IPC_CHANNELS.onOpenUserDataStorageVisibilityGroupsChanged;
+    const CHANNEL: UserAccountAPIIPCChannel = USER_ACCOUNT_API_IPC_CHANNELS.onOpenUserDataStorageVisibilityGroupsChanged;
     sendLogToMainProcess(PRELOAD_IPC_USER_API_LOG_SCOPE, "debug", `Adding listener from main on channel: "${CHANNEL}".`);
     const LISTENER = (
       _: IpcRendererEvent,
@@ -393,6 +392,6 @@ const UTILS_API: IUtilsAPI = {
 
 // Expose the APIs in the renderer
 contextBridge.exposeInMainWorld("IPCTLSAPI", IPC_TLS_API);
-contextBridge.exposeInMainWorld("userAPI", USER_API);
+contextBridge.exposeInMainWorld("userAccountAPI", USER_ACCOUNT_API);
 contextBridge.exposeInMainWorld("utilsAPI", UTILS_API);
 // Exposing these APIs to the global Window interface is done in the preload.d.ts file

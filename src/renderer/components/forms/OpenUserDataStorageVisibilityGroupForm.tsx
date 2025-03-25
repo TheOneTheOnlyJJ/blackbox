@@ -95,9 +95,8 @@ const OpenUserDataStorageVisibilityGroupForm: FC<IOpenUserDataStorageVisibilityG
       )
         .then(
           (encryptedUserDataStorageVisibilityGroupOpenRequestDTO: IEncryptedData<IUserDataStorageVisibilityGroupsOpenRequestDTO>): void => {
-            const OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS_RESPONSE: IPCAPIResponse<number> = window.userAPI.openUserDataStorageVisibilityGroups(
-              encryptedUserDataStorageVisibilityGroupOpenRequestDTO
-            );
+            const OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS_RESPONSE: IPCAPIResponse<number> =
+              window.userAccountAPI.openUserDataStorageVisibilityGroups(encryptedUserDataStorageVisibilityGroupOpenRequestDTO);
             if (OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
               if (OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS_RESPONSE.data > 0) {
                 enqueueSnackbar({

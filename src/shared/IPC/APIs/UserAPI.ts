@@ -24,7 +24,7 @@ export type OpenUserDataStorageVisibilityGroupsChangedCallback = (
 ) => void;
 
 // API
-export interface IUserAPI {
+export interface IUserAccountAPI {
   signUp: (encryptedUserSignUpDTO: IEncryptedData<IUserSignUpDTO>) => IPCAPIResponse<boolean>;
   signIn: (encryptedUserSignInDTO: IEncryptedData<IUserSignInDTO>) => IPCAPIResponse<boolean>;
   signOut: () => IPCAPIResponse<ISignedInUserInfo | null>;
@@ -52,29 +52,29 @@ export interface IUserAPI {
   onOpenUserDataStorageVisibilityGroupsChanged: (callback: OpenUserDataStorageVisibilityGroupsChangedCallback) => () => void;
 }
 
-export type UserAPIIPCChannels = TransformToIPCAPIChannels<"UserAPI", IUserAPI>;
-export type UserAPIIPCChannel = UserAPIIPCChannels[keyof UserAPIIPCChannels];
+export type UserAccountAPIIPCChannels = TransformToIPCAPIChannels<"UserAccountAPI", IUserAccountAPI>;
+export type UserAccountAPIIPCChannel = UserAccountAPIIPCChannels[keyof UserAccountAPIIPCChannels];
 
-export const USER_API_IPC_CHANNELS: UserAPIIPCChannels = {
-  signUp: "UserAPI:signUp",
-  signIn: "UserAPI:signIn",
-  signOut: "UserAPI:signOut",
-  isUserAccountStorageOpen: "UserAPI:isUserAccountStorageOpen",
-  isUsernameAvailable: "UserAPI:isUsernameAvailable",
-  isUserDataStorageVisibilityGroupNameAvailableForSignedInUser: "UserAPI:isUserDataStorageVisibilityGroupNameAvailableForSignedInUser",
-  getUserCount: "UserAPI:getUserCount",
-  getUsernameForUserId: "UserAPI:getUsernameForUserId",
-  getSignedInUserInfo: "UserAPI:getSignedInUserInfo",
-  addUserDataStorageConfig: "UserAPI:addUserDataStorageConfig",
-  addUserDataStorageVisibilityGroupConfig: "UserAPI:addUserDataStorageVisibilityGroupConfig",
-  openUserDataStorageVisibilityGroups: "UserAPI:openUserDataStorageVisibilityGroups",
-  closeUserDataStorageVisibilityGroups: "UserAPI:closeUserDataStorageVisibilityGroups",
-  getUserAccountStorageInfo: "UserAPI:getUserAccountStorageInfo",
-  getAllSignedInUserAvailableDataStorageConfigsInfo: "UserAPI:getAllSignedInUserAvailableDataStorageConfigsInfo",
-  getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo: "UserAPI:getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo",
-  onUserAccountStorageChanged: "UserAPI:onUserAccountStorageChanged",
-  onUserAccountStorageInfoChanged: "UserAPI:onUserAccountStorageInfoChanged",
-  onSignedInUserChanged: "UserAPI:onSignedInUserChanged",
-  onAvailableUserDataStorageConfigsChanged: "UserAPI:onAvailableUserDataStorageConfigsChanged",
-  onOpenUserDataStorageVisibilityGroupsChanged: "UserAPI:onOpenUserDataStorageVisibilityGroupsChanged"
+export const USER_ACCOUNT_API_IPC_CHANNELS: UserAccountAPIIPCChannels = {
+  signUp: "UserAccountAPI:signUp",
+  signIn: "UserAccountAPI:signIn",
+  signOut: "UserAccountAPI:signOut",
+  isUserAccountStorageOpen: "UserAccountAPI:isUserAccountStorageOpen",
+  isUsernameAvailable: "UserAccountAPI:isUsernameAvailable",
+  isUserDataStorageVisibilityGroupNameAvailableForSignedInUser: "UserAccountAPI:isUserDataStorageVisibilityGroupNameAvailableForSignedInUser",
+  getUserCount: "UserAccountAPI:getUserCount",
+  getUsernameForUserId: "UserAccountAPI:getUsernameForUserId",
+  getSignedInUserInfo: "UserAccountAPI:getSignedInUserInfo",
+  addUserDataStorageConfig: "UserAccountAPI:addUserDataStorageConfig",
+  addUserDataStorageVisibilityGroupConfig: "UserAccountAPI:addUserDataStorageVisibilityGroupConfig",
+  openUserDataStorageVisibilityGroups: "UserAccountAPI:openUserDataStorageVisibilityGroups",
+  closeUserDataStorageVisibilityGroups: "UserAccountAPI:closeUserDataStorageVisibilityGroups",
+  getUserAccountStorageInfo: "UserAccountAPI:getUserAccountStorageInfo",
+  getAllSignedInUserAvailableDataStorageConfigsInfo: "UserAccountAPI:getAllSignedInUserAvailableDataStorageConfigsInfo",
+  getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo: "UserAccountAPI:getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo",
+  onUserAccountStorageChanged: "UserAccountAPI:onUserAccountStorageChanged",
+  onUserAccountStorageInfoChanged: "UserAccountAPI:onUserAccountStorageInfoChanged",
+  onSignedInUserChanged: "UserAccountAPI:onSignedInUserChanged",
+  onAvailableUserDataStorageConfigsChanged: "UserAccountAPI:onAvailableUserDataStorageConfigsChanged",
+  onOpenUserDataStorageVisibilityGroupsChanged: "UserAccountAPI:onOpenUserDataStorageVisibilityGroupsChanged"
 } as const;

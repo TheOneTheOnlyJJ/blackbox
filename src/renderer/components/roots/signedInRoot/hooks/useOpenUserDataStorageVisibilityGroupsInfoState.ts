@@ -44,7 +44,7 @@ export const useOpenUserDataStorageVisibilityGroupsInfoState = (
     // Get all Open User Data Storage Visibility Groups
     const GET_ALL_SIGNED_IN_USER_OPEN_DATA_STORAGE_VISIBILITY_GROUPS_INFO_RESPONSE: IPCAPIResponse<
       IEncryptedData<IUserDataStorageVisibilityGroupInfo[]>
-    > = window.userAPI.getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo();
+    > = window.userAccountAPI.getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo();
     if (GET_ALL_SIGNED_IN_USER_OPEN_DATA_STORAGE_VISIBILITY_GROUPS_INFO_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
       logger.error(
         `Could not get all signed in user's open User Data Storage Visibility Groups Info! Reason: ${GET_ALL_SIGNED_IN_USER_OPEN_DATA_STORAGE_VISIBILITY_GROUPS_INFO_RESPONSE.error}!`
@@ -73,7 +73,7 @@ export const useOpenUserDataStorageVisibilityGroupsInfoState = (
         });
     }
     // Monitor changes to User Data Storage Visibility Groups Info
-    const removeOpenUserDataStorageVisibilityGroupsChangedListener: () => void = window.userAPI.onOpenUserDataStorageVisibilityGroupsChanged(
+    const removeOpenUserDataStorageVisibilityGroupsChangedListener: () => void = window.userAccountAPI.onOpenUserDataStorageVisibilityGroupsChanged(
       (
         encryptedOpenUserDataStorageVisibilityGroupsInfoChangedDiff: IEncryptedData<IDataChangedDiff<string, IUserDataStorageVisibilityGroupInfo>>
       ): void => {

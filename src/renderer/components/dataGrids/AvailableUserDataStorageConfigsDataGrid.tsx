@@ -23,7 +23,7 @@ import { appLogger } from "@renderer/utils/loggers";
 import UserDataStorageConfigInfoDialog from "../dialogs/UserDataStorageConfigInfoDialog";
 import { useDialogOpenState } from "@renderer/hooks/useDialogState";
 import OpenUserDataStorageConfigInfoDialogActionItem from "./actionCellItems/OpenUserDataStorageConfigInfoDialogActionItem";
-import OpenUserDataStorageActionItem from "./actionCellItems/OpenUserDataStorageActionItem";
+import ActivateUserDataStorageActionItem from "./actionCellItems/StartUserDataStorageActionItem";
 import { useMUIXDataGridAutosizeColumnsOnWindowResize } from "@renderer/hooks/useMUIXDataGridAutosizeOnWindowResize";
 
 const GRID_AUTOSIZE_OPTIONS: GridAutosizeOptions = { expand: true, includeHeaders: true };
@@ -103,7 +103,7 @@ const AvailableUserDataStorageConfigsDataGrid: FC = () => {
               setChosenUserDataStorageConfigInfo={setChosenStorageConfigInfo}
               setIsShowUserDataStorageConfigInfoDialogOpen={setIsShowConfigInfoDialogOpen}
             />,
-            <OpenUserDataStorageActionItem key="openStorage" userDataStorageConfigInfo={params.row} />
+            <ActivateUserDataStorageActionItem key="openStorage" userDataStorageConfigInfo={params.row} />
           ];
         }
       }
