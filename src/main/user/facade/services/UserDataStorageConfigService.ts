@@ -14,7 +14,7 @@ import { IUserDataStorageConfigInfo } from "@shared/user/data/storage/config/inf
 export interface IUserDataStorageConfigServiceContext {
   getAccountStorage: () => UserAccountStorage | null;
   getSignedInUser: () => Readonly<ISignedInUser> | null;
-  getAvailableDataStorageConfigs: () => ISecuredUserDataStorageConfig[];
+  getAvailableSecuredDataStorageConfigs: () => ISecuredUserDataStorageConfig[];
   getOpenDataStorageVisibilityGroups: () => IUserDataStorageVisibilityGroup[];
 }
 
@@ -87,10 +87,12 @@ export class UserDataStorageConfigService {
     return ACCOUNT_STORAGE.addSecuredUserDataStorageConfig(SECURED_USER_DATA_STORAGE_CONFIG, encryptionAESKey);
   }
 
-  public getAllSignedInUserAvailableDataStorageConfigsInfo(): IUserDataStorageConfigInfo[] {
+  public getAllSignedInUserAvailableSecuredDataStorageConfigsInfo(): IUserDataStorageConfigInfo[] {
     this.logger.debug("Getting all signed in user's available User Data Storages Info.");
-    return this.CONTEXT.getAvailableDataStorageConfigs().map((dataStorageConfig: IUserDataStorageConfig): IUserDataStorageConfigInfo => {
-      return securedUserDataStorageConfigToUserDataStorageConfigInfo(dataStorageConfig, null);
-    });
+    return this.CONTEXT.getAvailableSecuredDataStorageConfigs().map(
+      (securedDataStorageConfig: ISecuredUserDataStorageConfig): IUserDataStorageConfigInfo => {
+        return securedUserDataStorageConfigToUserDataStorageConfigInfo(securedDataStorageConfig, null);
+      }
+    );
   }
 }

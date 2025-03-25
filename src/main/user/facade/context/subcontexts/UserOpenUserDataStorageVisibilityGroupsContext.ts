@@ -10,6 +10,7 @@ import { UUID } from "node:crypto";
 export class UserOpenUserDataStorageVisibilityGroupsContext {
   private readonly logger: LogFunctions;
 
+  // TODO: Replace with Map
   private openDataStorageVisibilityGroups: IUserDataStorageVisibilityGroup[];
 
   public onOpenUserDataStorageVisibilityGroupsChangedCallback:

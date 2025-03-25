@@ -65,7 +65,9 @@ const AvailableUserDataStorageConfigsDataGrid: FC = () => {
         ),
         headerName: USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA_CONSTANTS.visibilityGroupId.title,
         valueGetter: (_: never, row: IUserDataStorageConfigInfo): string | null => {
-          return row.visibilityGroupId === null ? null : signedInRootContext.getOpenUserDataStorageVisibilityGroupName(row.visibilityGroupId);
+          return row.visibilityGroupId === null
+            ? null
+            : signedInRootContext.getOpenUserDataStorageVisibilityGroupInfo(row.visibilityGroupId)?.name ?? row.visibilityGroupId;
         },
         renderCell: (params: GridRenderCellParams<IUserDataStorageConfigInfo, string | null>) => {
           return params.value === null ? <em>{PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS.name}</em> : params.value;

@@ -685,7 +685,7 @@ export class App {
       contextHandlers: {
         onSignedInUserChangedCallback: this.USER_API_HANDLERS.sendSignedInUserChanged,
         onUserAccountStorageChangedCallback: this.USER_API_HANDLERS.sendUserAccountStorageChanged,
-        onAvailableUserDataStorageConfigsChangedCallback: this.USER_API_HANDLERS.sendAvailableUserDataStorageConfigsChanged,
+        onAvailableSecuredUserDataStorageConfigsChangedCallback: this.USER_API_HANDLERS.sendAvailableUserDataStorageConfigsChanged,
         onOpenUserDataStorageVisibilityGroupsChangedCallback: this.USER_API_HANDLERS.sendOpenUserDataStorageVisibilityGroupsChanged
       } satisfies IUserContextHandlers
     } satisfies IUserFacadeConstructorProps);

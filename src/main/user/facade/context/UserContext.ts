@@ -18,13 +18,12 @@ import { UserAuthenticationContext } from "./subcontexts/UserAuthenticationConte
 import { UserAccountStorageContext } from "./subcontexts/UserAccountStorageContext";
 import { UserAvailableUserDataStorageConfigsContext } from "./subcontexts/UserAvailableUserDataStorageConfigsContext";
 import { UserOpenUserDataStorageVisibilityGroupsContext } from "./subcontexts/UserOpenUserDataStorageVisibilityGroupsContext";
-import { IUserDataStorageConfig } from "@main/user/data/storage/config/UserDataStorageConfig";
 import { IDataChangedDiff } from "@shared/utils/DataChangedDiff";
 
 export interface IUserContextHandlers {
   onSignedInUserChangedCallback: ((newSignedInUserInfo: ISignedInUserInfo | null) => void) | null;
   onUserAccountStorageChangedCallback: ((newUserAccountStorageInfo: IUserAccountStorageInfo | null) => void) | null;
-  onAvailableUserDataStorageConfigsChangedCallback:
+  onAvailableSecuredUserDataStorageConfigsChangedCallback:
     | ((availableUserDataStorageConfigsInfoChangedDiff: IDataChangedDiff<string, IUserDataStorageConfigInfo>) => void)
     | null;
   onOpenUserDataStorageVisibilityGroupsChangedCallback:
@@ -73,7 +72,7 @@ export class UserContext {
       newSecuredUserDataStorageConfigs: ISecuredUserDataStorageConfig[]
     ): void => {
       if (newSecuredUserDataStorageConfigs.length > 0) {
-        this.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT.addAvailableDataStorageConfigs(newSecuredUserDataStorageConfigs);
+        this.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT.addAvailableSecuredDataStorageConfigs(newSecuredUserDataStorageConfigs);
       }
     };
     this.ACCOUNT_STORAGE_CONTEXT.onUserAccountStorageChangedCallback = (newUserAccountStorage: UserAccountStorage | null): void => {
@@ -84,7 +83,7 @@ export class UserContext {
   private wireUserAuthenticationContextHandlers(): void {
     this.logger.info("Wiring User Authentication Context handlers.");
     this.AUTH_CONTEXT.beforeSignOutCallback = (): void => {
-      this.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT.clearAvailableDataStorageConfigs();
+      this.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT.clearAvailableSecuredDataStorageConfigs();
       this.OPEN_DATA_STORAGE_VISIBILITY_GROUPS_CONTEXT.clearOpenDataStorageVisibilityGroups();
     };
     this.AUTH_CONTEXT.onSignedInUserChangedCallback = (newSignedInUser: ISignedInUser | null): void => {
@@ -93,21 +92,23 @@ export class UserContext {
     this.AUTH_CONTEXT.onNewSignedInUserCallback = (): void => {
       const ALL_PUBLIC_DATA_STORAGE_CONFIGS: ISecuredUserDataStorageConfig[] = this.getAllPublicDataStorageConfigsFromAccountStorage();
       if (ALL_PUBLIC_DATA_STORAGE_CONFIGS.length > 0) {
-        this.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT.addAvailableDataStorageConfigs(ALL_PUBLIC_DATA_STORAGE_CONFIGS);
+        this.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT.addAvailableSecuredDataStorageConfigs(ALL_PUBLIC_DATA_STORAGE_CONFIGS);
       }
     };
   }
 
   private wireUserAvailableUserDataStorageConfigsContextHandlers(): void {
     this.logger.info("Wiring User Available User Data Storage Configs Context handlers.");
-    this.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT.onAvailableUserDataStorageConfigsChangedCallback = (
-      availableDataStorageConfigsChangedDiff: IDataChangedDiff<UUID, IUserDataStorageConfig>
+    this.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT.onAvailableSecuredUserDataStorageConfigsChangedCallback = (
+      availableSecuredDataStorageConfigsChangedDiff: IDataChangedDiff<UUID, ISecuredUserDataStorageConfig>
     ): void => {
-      this.HANDLERS.onAvailableUserDataStorageConfigsChangedCallback?.({
-        removed: availableDataStorageConfigsChangedDiff.removed,
-        added: availableDataStorageConfigsChangedDiff.added.map((newDataStorageConfig: ISecuredUserDataStorageConfig): IUserDataStorageConfigInfo => {
-          return securedUserDataStorageConfigToUserDataStorageConfigInfo(newDataStorageConfig, null);
-        })
+      this.HANDLERS.onAvailableSecuredUserDataStorageConfigsChangedCallback?.({
+        removed: availableSecuredDataStorageConfigsChangedDiff.removed,
+        added: availableSecuredDataStorageConfigsChangedDiff.added.map(
+          (newSecuredDataStorageConfig: ISecuredUserDataStorageConfig): IUserDataStorageConfigInfo => {
+            return securedUserDataStorageConfigToUserDataStorageConfigInfo(newSecuredDataStorageConfig, null);
+          }
+        )
       } satisfies IDataChangedDiff<string, IUserDataStorageConfigInfo>);
     };
   }
@@ -122,7 +123,7 @@ export class UserContext {
           openDataStorageVisibilityGroupsChangedDiff.removed
         );
         if (DATA_STORAGE_CONFIG_IDS_TO_BE_REMOVED.length > 0) {
-          this.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT.removeAvailableDataStorageConfigs(DATA_STORAGE_CONFIG_IDS_TO_BE_REMOVED);
+          this.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT.removeAvailableSecuredDataStorageConfigs(DATA_STORAGE_CONFIG_IDS_TO_BE_REMOVED);
         }
       }
       if (openDataStorageVisibilityGroupsChangedDiff.added.length > 0) {
@@ -130,7 +131,7 @@ export class UserContext {
           openDataStorageVisibilityGroupsChangedDiff.added
         );
         if (DATA_STORAGE_CONFIGS_TO_BE_ADDED.length > 0) {
-          this.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT.addAvailableDataStorageConfigs(DATA_STORAGE_CONFIGS_TO_BE_ADDED);
+          this.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT.addAvailableSecuredDataStorageConfigs(DATA_STORAGE_CONFIGS_TO_BE_ADDED);
         }
       }
       this.HANDLERS.onOpenUserDataStorageVisibilityGroupsChangedCallback?.({
@@ -151,7 +152,7 @@ export class UserContext {
       }.`
     );
     const AVAILABLE_DATA_STORAGE_CONFIGS: ISecuredUserDataStorageConfig[] =
-      this.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT.getAvailableDataStorageConfigs();
+      this.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT.getAvailableSecuredDataStorageConfigs();
     const DATA_STORAGE_IDS: UUID[] = [];
     for (const VISIBILITY_GROUP_ID of visibilityGroupIds) {
       for (const AVAILABLE_DATA_STORAGE of AVAILABLE_DATA_STORAGE_CONFIGS) {

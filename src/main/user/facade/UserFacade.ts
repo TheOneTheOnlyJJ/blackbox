@@ -215,7 +215,7 @@ export class UserFacade {
   }
 
   public getAllSignedInUserAvailableDataStorageConfigsInfo(): IUserDataStorageConfigInfo[] {
-    return this.DATA_STORAGE_CONFIG_SERVICE.getAllSignedInUserAvailableDataStorageConfigsInfo();
+    return this.DATA_STORAGE_CONFIG_SERVICE.getAllSignedInUserAvailableSecuredDataStorageConfigsInfo();
   }
 
   public getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo(): IUserDataStorageVisibilityGroupInfo[] {

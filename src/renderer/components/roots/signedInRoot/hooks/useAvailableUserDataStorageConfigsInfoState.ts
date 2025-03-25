@@ -12,6 +12,7 @@ import { enqueueSnackbar } from "notistack";
 import { useEffect, useState } from "react";
 
 export const useAvailableUserDataStorageConfigsInfoState = (logger: LogFunctions): IUserDataStorageConfigInfo[] => {
+  // TODO: Replace with Map
   const [availableUserDataStorageConfigsInfo, setAvailableUserDataStorageConfigsInfo] = useState<IUserDataStorageConfigInfo[]>([]);
 
   useEffect((): void => {

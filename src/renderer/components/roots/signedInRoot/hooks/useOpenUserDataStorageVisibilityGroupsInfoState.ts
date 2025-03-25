@@ -14,28 +14,11 @@ import { useState, useEffect, useCallback } from "react";
 export const useOpenUserDataStorageVisibilityGroupsInfoState = (
   logger: LogFunctions
 ): {
+  // TODO: Replace with Map
   openUserDataStorageVisibilityGroupsInfo: IUserDataStorageVisibilityGroupInfo[];
-  getOpenUserDataStorageVisibilityGroupName: (visibilityGroupId: string) => string;
   getOpenUserDataStorageVisibilityGroupInfo: (visibilityGroupId: string) => IUserDataStorageVisibilityGroupInfo | null;
 } => {
   const [openUserDataStorageVisibilityGroupsInfo, setOpenUserDataStorageVisibilityGroupsInfo] = useState<IUserDataStorageVisibilityGroupInfo[]>([]);
-
-  const getOpenUserDataStorageVisibilityGroupName = useCallback(
-    (visibilityGroupId: string): string => {
-      // TODO: Use a Map here, declare it in signedInRoot
-      const VISIBILITY_GROUP_INFO: IUserDataStorageVisibilityGroupInfo | undefined = openUserDataStorageVisibilityGroupsInfo.find(
-        (openVisibilityGroupInfo: IUserDataStorageVisibilityGroupInfo) => {
-          return openVisibilityGroupInfo.visibilityGroupId === visibilityGroupId;
-        }
-      );
-      if (VISIBILITY_GROUP_INFO === undefined) {
-        logger.warn(`Could not get name for User Data Storage Visibility Group ${visibilityGroupId}.`);
-        return visibilityGroupId;
-      }
-      return VISIBILITY_GROUP_INFO.name;
-    },
-    [logger, openUserDataStorageVisibilityGroupsInfo]
-  );
 
   const getOpenUserDataStorageVisibilityGroupInfo = useCallback(
     (visibilityGroupId: string): IUserDataStorageVisibilityGroupInfo | null => {
@@ -143,7 +126,6 @@ export const useOpenUserDataStorageVisibilityGroupsInfoState = (
 
   return {
     openUserDataStorageVisibilityGroupsInfo: openUserDataStorageVisibilityGroupsInfo,
-    getOpenUserDataStorageVisibilityGroupName: getOpenUserDataStorageVisibilityGroupName,
     getOpenUserDataStorageVisibilityGroupInfo: getOpenUserDataStorageVisibilityGroupInfo
   };
 };

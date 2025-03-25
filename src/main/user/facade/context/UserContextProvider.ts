@@ -45,7 +45,7 @@ export class UserContextProvider {
     return {
       getAccountStorage: this.CONTEXT.ACCOUNT_STORAGE_CONTEXT.getAccountStorage.bind(this.CONTEXT.ACCOUNT_STORAGE_CONTEXT),
       getSignedInUser: this.CONTEXT.AUTH_CONTEXT.getSignedInUser.bind(this.CONTEXT.AUTH_CONTEXT),
-      getAvailableDataStorageConfigs: this.CONTEXT.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT.getAvailableDataStorageConfigs.bind(
+      getAvailableSecuredDataStorageConfigs: this.CONTEXT.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT.getAvailableSecuredDataStorageConfigs.bind(
         this.CONTEXT.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT
       ),
       getOpenDataStorageVisibilityGroups: this.CONTEXT.OPEN_DATA_STORAGE_VISIBILITY_GROUPS_CONTEXT.getOpenDataStorageVisibilityGroups.bind(

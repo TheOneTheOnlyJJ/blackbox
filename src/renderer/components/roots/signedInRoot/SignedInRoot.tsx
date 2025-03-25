@@ -12,7 +12,7 @@ const SignedInRoot: FC = () => {
   const appRootContext: IAppRootContext = useAppRootContext();
 
   const availableUserDataStorageConfigsInfo: IUserDataStorageConfigInfo[] = useAvailableUserDataStorageConfigsInfoState(appLogger);
-  const { openUserDataStorageVisibilityGroupsInfo, getOpenUserDataStorageVisibilityGroupName, getOpenUserDataStorageVisibilityGroupInfo } =
+  const { openUserDataStorageVisibilityGroupsInfo, getOpenUserDataStorageVisibilityGroupInfo } =
     useOpenUserDataStorageVisibilityGroupsInfoState(appLogger);
   const [forbiddenLocationName, URIencodeAndSetForbiddenLocationName] = useForbiddenLocationNameState(appLogger);
 
@@ -31,7 +31,6 @@ const SignedInRoot: FC = () => {
           signedInUserInfo: appRootContext.signedInUserInfo,
           availableUserDataStorageConfigsInfo: availableUserDataStorageConfigsInfo,
           openUserDataStorageVisibilityGroupsInfo: openUserDataStorageVisibilityGroupsInfo,
-          getOpenUserDataStorageVisibilityGroupName: getOpenUserDataStorageVisibilityGroupName,
           getOpenUserDataStorageVisibilityGroupInfo: getOpenUserDataStorageVisibilityGroupInfo,
           setForbiddenLocationName: URIencodeAndSetForbiddenLocationName
         } satisfies ISignedInRootContext
