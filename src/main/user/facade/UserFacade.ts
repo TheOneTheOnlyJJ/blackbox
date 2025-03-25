@@ -15,7 +15,6 @@ import { IUserContextHandlers, UserContext } from "./context/UserContext";
 import { UserAccountStorageService } from "./services/UserAccountStorageService";
 import { UserDataStorageConfigService } from "./services/UserDataStorageConfigService";
 import { UserDataStorageVisibilityGroupService } from "./services/UserDataStorageVisibilityGroupService";
-import { UserAccountService } from "./services/UserAccountService";
 import { UserContextProvider } from "./context/UserContextProvider";
 import { IUserSignUpDTO } from "@shared/user/account/UserSignUpDTO";
 import { IUserSignInDTO } from "@shared/user/account/UserSignInDTO";
@@ -43,7 +42,6 @@ export class UserFacade {
   private readonly logger: LogFunctions;
   // Services
   private readonly AUTH_SERVICE: UserAuthenticationService;
-  private readonly ACCOUNT_SERVICE: UserAccountService;
   private readonly ACCOUNT_STORAGE_SERVICE: UserAccountStorageService;
   private readonly DATA_STORAGE_CONFIG_SERVICE: UserDataStorageConfigService;
   private readonly DATA_STORAGE_VISIBILITY_GROUP_SERVICE: UserDataStorageVisibilityGroupService;
@@ -54,7 +52,6 @@ export class UserFacade {
     const CONTEXT_PROVIDER = new UserContextProvider(props.contextProviderLogger, new UserContext(props.contextLogger, props.contextHandlers));
     // Services
     this.AUTH_SERVICE = new UserAuthenticationService(props.serviceLoggers.auth, CONTEXT_PROVIDER.getUserAuthenticationServiceContext());
-    this.ACCOUNT_SERVICE = new UserAccountService(props.serviceLoggers.account, CONTEXT_PROVIDER.getUserAccountServiceContext());
     this.ACCOUNT_STORAGE_SERVICE = new UserAccountStorageService(
       props.serviceLoggers.accountStorage,
       CONTEXT_PROVIDER.getUserAccountStorageServiceContext()
@@ -145,11 +142,11 @@ export class UserFacade {
   }
 
   public getUserCount(): number {
-    return this.ACCOUNT_SERVICE.getUserCount();
+    return this.ACCOUNT_STORAGE_SERVICE.getUserCount();
   }
 
   public getUsernameForUserId(userId: UUID): string | null {
-    return this.ACCOUNT_SERVICE.getUsernameForUserId(userId);
+    return this.ACCOUNT_STORAGE_SERVICE.getUsernameForUserId(userId);
   }
 
   public signUpUser(userSignUpPayload: IUserSignUpPayload): boolean {

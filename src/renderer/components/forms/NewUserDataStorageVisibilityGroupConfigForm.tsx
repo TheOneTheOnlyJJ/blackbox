@@ -37,7 +37,7 @@ const newUserDataStorageVisibilityGroupConfigFormValidator: CustomValidator<IUse
     errors.name.addError('"Public" is a reserved Visibility Group name. Try something else.');
   } else {
     const IS_DATA_VISIBILITY_GROUP_NAME_AVAILABLE_RESPONSE: IPCAPIResponse<boolean> =
-      window.userAccountAPI.isUserDataStorageVisibilityGroupNameAvailableForSignedInUser(formData.name);
+      window.userDataStorageVisibilityGroupAPI.isUserDataStorageVisibilityGroupNameAvailableForSignedInUser(formData.name);
     if (IS_DATA_VISIBILITY_GROUP_NAME_AVAILABLE_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
       errors.name.addError("Could not get name availability.");
     } else {
@@ -99,7 +99,9 @@ const NewUserDataStorageVisibilityGroupConfigForm: FC<INewUserDataStorageVisibil
             encryptedUserDataStorageVisibilityGroupConfigCreateDTO: IEncryptedData<IUserDataStorageVisibilityGroupConfigCreateDTO>
           ): Promise<void> => {
             const ADD_USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIG_RESPONSE: IPCAPIResponse<boolean> =
-              window.userAccountAPI.addUserDataStorageVisibilityGroupConfig(encryptedUserDataStorageVisibilityGroupConfigCreateDTO);
+              window.userDataStorageVisibilityGroupAPI.addUserDataStorageVisibilityGroupConfig(
+                encryptedUserDataStorageVisibilityGroupConfigCreateDTO
+              );
             if (ADD_USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIG_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
               if (ADD_USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIG_RESPONSE.data) {
                 enqueueSnackbar({ message: "Added data storage visibility group.", variant: "success" });
@@ -115,7 +117,9 @@ const NewUserDataStorageVisibilityGroupConfigForm: FC<INewUserDataStorageVisibil
                         "newly created User Data Storage Visibility Group Open Request DTO"
                       );
                     const OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS_RESPONSE: IPCAPIResponse<number> =
-                      window.userAccountAPI.openUserDataStorageVisibilityGroups(ENCRYPTED_USER_DATA_STORAGE_VISIBILITY_GROUP_OPEN_REQUEST_DTO);
+                      window.userDataStorageVisibilityGroupAPI.openUserDataStorageVisibilityGroups(
+                        ENCRYPTED_USER_DATA_STORAGE_VISIBILITY_GROUP_OPEN_REQUEST_DTO
+                      );
                     if (OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
                       if (OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS_RESPONSE.data > 0) {
                         enqueueSnackbar({

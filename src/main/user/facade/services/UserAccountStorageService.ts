@@ -2,6 +2,7 @@ import { LogFunctions } from "electron-log";
 import { OnUserAccountStorageInfoChangedCallback, UserAccountStorage } from "../../account/storage/UserAccountStorage";
 import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserAccountStorageInfo";
 import { IUserAccountStorageConfig } from "@main/user/account/storage/config/UserAccountStorageConfig";
+import { UUID } from "node:crypto";
 
 export interface IUserAccountStorageServiceContext {
   getAccountStorage: () => UserAccountStorage | null;
@@ -108,5 +109,23 @@ export class UserAccountStorageService {
       return null;
     }
     return ACCOUNT_STORAGE.getInfo();
+  }
+
+  public getUserCount(): number {
+    this.logger.debug("Getting user count.");
+    const ACCOUNT_STORAGE: UserAccountStorage | null = this.CONTEXT.getAccountStorage();
+    if (ACCOUNT_STORAGE === null) {
+      throw new Error("Null User Account Storage");
+    }
+    return ACCOUNT_STORAGE.getUserCount();
+  }
+
+  public getUsernameForUserId(userId: UUID): string | null {
+    this.logger.debug(`Getting username for user ID "${userId}".`);
+    const ACCOUNT_STORAGE: UserAccountStorage | null = this.CONTEXT.getAccountStorage();
+    if (ACCOUNT_STORAGE === null) {
+      throw new Error("Null User Account Storage");
+    }
+    return ACCOUNT_STORAGE.getUsernameForUserId(userId);
   }
 }

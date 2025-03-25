@@ -23,7 +23,7 @@ import { appLogger } from "@renderer/utils/loggers";
 import UserDataStorageConfigInfoDialog from "../dialogs/UserDataStorageConfigInfoDialog";
 import { useDialogOpenState } from "@renderer/hooks/useDialogState";
 import OpenUserDataStorageConfigInfoDialogActionItem from "./actionCellItems/OpenUserDataStorageConfigInfoDialogActionItem";
-import ActivateUserDataStorageActionItem from "./actionCellItems/StartUserDataStorageActionItem";
+import ActivateUserDataStorageActionItem from "./actionCellItems/ActivateUserDataStorageActionItem";
 import { useMUIXDataGridAutosizeColumnsOnWindowResize } from "@renderer/hooks/useMUIXDataGridAutosizeOnWindowResize";
 
 const GRID_AUTOSIZE_OPTIONS: GridAutosizeOptions = { expand: true, includeHeaders: true };

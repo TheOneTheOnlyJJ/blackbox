@@ -83,7 +83,7 @@ const NewUserDataStorageConfigForm: FC<INewUserDataStorageConfigFormProps> = (pr
       window.IPCTLSAPI.encrypt<IUserDataStorageConfigCreateDTO>(USER_DATA_STORAGE_CONFIG_CREATE_DTO, "User Data Storage Config Create DTO")
         .then(
           (encryptedUserDataStorageConfigCreateDTO: IEncryptedData<IUserDataStorageConfigCreateDTO>): void => {
-            const ADD_USER_DATA_STORAGE_CONFIG_RESPONSE: IPCAPIResponse<boolean> = window.userAccountAPI.addUserDataStorageConfig(
+            const ADD_USER_DATA_STORAGE_CONFIG_RESPONSE: IPCAPIResponse<boolean> = window.userDataStorageConfigAPI.addUserDataStorageConfig(
               encryptedUserDataStorageConfigCreateDTO
             );
             if (ADD_USER_DATA_STORAGE_CONFIG_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {

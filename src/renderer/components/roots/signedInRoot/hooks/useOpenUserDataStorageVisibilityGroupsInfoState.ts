@@ -44,7 +44,7 @@ export const useOpenUserDataStorageVisibilityGroupsInfoState = (
     // Get all Open User Data Storage Visibility Groups
     const GET_ALL_SIGNED_IN_USER_OPEN_DATA_STORAGE_VISIBILITY_GROUPS_INFO_RESPONSE: IPCAPIResponse<
       IEncryptedData<IUserDataStorageVisibilityGroupInfo[]>
-    > = window.userAccountAPI.getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo();
+    > = window.userDataStorageVisibilityGroupAPI.getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo();
     if (GET_ALL_SIGNED_IN_USER_OPEN_DATA_STORAGE_VISIBILITY_GROUPS_INFO_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
       logger.error(
         `Could not get all signed in user's open User Data Storage Visibility Groups Info! Reason: ${GET_ALL_SIGNED_IN_USER_OPEN_DATA_STORAGE_VISIBILITY_GROUPS_INFO_RESPONSE.error}!`
@@ -73,51 +73,52 @@ export const useOpenUserDataStorageVisibilityGroupsInfoState = (
         });
     }
     // Monitor changes to User Data Storage Visibility Groups Info
-    const removeOpenUserDataStorageVisibilityGroupsChangedListener: () => void = window.userAccountAPI.onOpenUserDataStorageVisibilityGroupsChanged(
-      (
-        encryptedOpenUserDataStorageVisibilityGroupsInfoChangedDiff: IEncryptedData<IDataChangedDiff<string, IUserDataStorageVisibilityGroupInfo>>
-      ): void => {
-        window.IPCTLSAPI.decryptAndValidateJSON<IDataChangedDiff<string, IUserDataStorageVisibilityGroupInfo>>(
-          encryptedOpenUserDataStorageVisibilityGroupsInfoChangedDiff,
-          (data: unknown): data is IDataChangedDiff<string, IUserDataStorageVisibilityGroupInfo> => {
-            return isValidDataChangedDiff(
-              data,
-              (removedData: unknown): removedData is string => {
-                return typeof removedData === "string";
-              },
-              (addedData: unknown): addedData is IUserDataStorageVisibilityGroupInfo => {
-                return isValidUserDataStorageVisibilityGroupInfo(addedData);
-              }
-            );
-          },
-          "User Data Storage Visibility Groups Info Changed Diff"
-        )
-          .then(
-            (openUserDataStorageVisibilityGroupsInfoChangedDiff: IDataChangedDiff<string, IUserDataStorageVisibilityGroupInfo>): void => {
-              setOpenUserDataStorageVisibilityGroupsInfo(
-                (prevOpenUserDataStorageVisibilityGroupsInfo: IUserDataStorageVisibilityGroupInfo[]): IUserDataStorageVisibilityGroupInfo[] => {
-                  return [
-                    ...prevOpenUserDataStorageVisibilityGroupsInfo.filter((visibilityGroupInfo: IUserDataStorageVisibilityGroupInfo): boolean => {
-                      return !openUserDataStorageVisibilityGroupsInfoChangedDiff.removed.includes(visibilityGroupInfo.visibilityGroupId);
-                    }),
-                    ...openUserDataStorageVisibilityGroupsInfoChangedDiff.added
-                  ];
+    const removeOpenUserDataStorageVisibilityGroupsChangedListener: () => void =
+      window.userDataStorageVisibilityGroupAPI.onOpenUserDataStorageVisibilityGroupsChanged(
+        (
+          encryptedOpenUserDataStorageVisibilityGroupsInfoChangedDiff: IEncryptedData<IDataChangedDiff<string, IUserDataStorageVisibilityGroupInfo>>
+        ): void => {
+          window.IPCTLSAPI.decryptAndValidateJSON<IDataChangedDiff<string, IUserDataStorageVisibilityGroupInfo>>(
+            encryptedOpenUserDataStorageVisibilityGroupsInfoChangedDiff,
+            (data: unknown): data is IDataChangedDiff<string, IUserDataStorageVisibilityGroupInfo> => {
+              return isValidDataChangedDiff(
+                data,
+                (removedData: unknown): removedData is string => {
+                  return typeof removedData === "string";
+                },
+                (addedData: unknown): addedData is IUserDataStorageVisibilityGroupInfo => {
+                  return isValidUserDataStorageVisibilityGroupInfo(addedData);
                 }
               );
             },
-            (reason: unknown): void => {
-              const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
-              logger.error(`Could not decrypt open User Data Storage Visibility Groups Info Changed Diff. Reason: ${REASON_MESSAGE}.`);
-              enqueueSnackbar({ message: "Error decrypting open data storage visibility groups' information changes.", variant: "error" });
-            }
+            "User Data Storage Visibility Groups Info Changed Diff"
           )
-          .catch((reason: unknown): void => {
-            const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
-            logger.error(`Could not decrypt User Data Storage Visibility Groups Info Changed Diff. Reason: ${REASON_MESSAGE}.`);
-            enqueueSnackbar({ message: "Error decrypting open data storage visibility groups' information changes.", variant: "error" });
-          });
-      }
-    );
+            .then(
+              (openUserDataStorageVisibilityGroupsInfoChangedDiff: IDataChangedDiff<string, IUserDataStorageVisibilityGroupInfo>): void => {
+                setOpenUserDataStorageVisibilityGroupsInfo(
+                  (prevOpenUserDataStorageVisibilityGroupsInfo: IUserDataStorageVisibilityGroupInfo[]): IUserDataStorageVisibilityGroupInfo[] => {
+                    return [
+                      ...prevOpenUserDataStorageVisibilityGroupsInfo.filter((visibilityGroupInfo: IUserDataStorageVisibilityGroupInfo): boolean => {
+                        return !openUserDataStorageVisibilityGroupsInfoChangedDiff.removed.includes(visibilityGroupInfo.visibilityGroupId);
+                      }),
+                      ...openUserDataStorageVisibilityGroupsInfoChangedDiff.added
+                    ];
+                  }
+                );
+              },
+              (reason: unknown): void => {
+                const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
+                logger.error(`Could not decrypt open User Data Storage Visibility Groups Info Changed Diff. Reason: ${REASON_MESSAGE}.`);
+                enqueueSnackbar({ message: "Error decrypting open data storage visibility groups' information changes.", variant: "error" });
+              }
+            )
+            .catch((reason: unknown): void => {
+              const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
+              logger.error(`Could not decrypt User Data Storage Visibility Groups Info Changed Diff. Reason: ${REASON_MESSAGE}.`);
+              enqueueSnackbar({ message: "Error decrypting open data storage visibility groups' information changes.", variant: "error" });
+            });
+        }
+      );
     return (): void => {
       logger.debug("Removing open User Data Storage Visibility Groups event listeners.");
       removeOpenUserDataStorageVisibilityGroupsChangedListener();

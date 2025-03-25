@@ -1,5 +1,4 @@
 import { LogFunctions } from "electron-log";
-import { IUserAccountServiceContext } from "../services/UserAccountService";
 import { IUserAccountStorageServiceContext } from "../services/UserAccountStorageService";
 import { IUserAuthenticationServiceContext } from "../services/UserAuthenticationService";
 import { IUserDataStorageConfigServiceContext } from "../services/UserDataStorageConfigService";
@@ -14,13 +13,6 @@ export class UserContextProvider {
     this.logger = logger;
     this.logger.info("Initialising new User Context Provider.");
     this.CONTEXT = context;
-  }
-
-  public getUserAccountServiceContext(): IUserAccountServiceContext {
-    this.logger.debug("Providing User Account Service Context.");
-    return {
-      getAccountStorage: this.CONTEXT.ACCOUNT_STORAGE_CONTEXT.getAccountStorage.bind(this.CONTEXT.ACCOUNT_STORAGE_CONTEXT)
-    } satisfies IUserAccountServiceContext;
   }
 
   public getUserAccountStorageServiceContext(): IUserAccountStorageServiceContext {

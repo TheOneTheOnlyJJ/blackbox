@@ -49,7 +49,7 @@ const userSignUpFormValidator: CustomValidator<IUserSignUpInput> = (
   if (formData === undefined || errors.username === undefined || errors.confirmPassword === undefined) {
     return errors;
   }
-  const IS_USERNAME_AVAILABLE_RESPONSE: IPCAPIResponse<boolean> = window.userAccountAPI.isUsernameAvailable(formData.username);
+  const IS_USERNAME_AVAILABLE_RESPONSE: IPCAPIResponse<boolean> = window.userAuthAPI.isUsernameAvailable(formData.username);
   if (IS_USERNAME_AVAILABLE_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
     errors.username.addError("Could not get username availability.");
   } else {
@@ -100,7 +100,7 @@ const UserSignUpForm: FC<IUserSignUpFormProps> = (props: IUserSignUpFormProps) =
       window.IPCTLSAPI.encrypt<IUserSignUpDTO>(userSignUpInputToUserSignUpDTO(FORM_DATA, appLogger), "user sign up DTO")
         .then(
           async (encryptedUserSignUpDTO: IEncryptedData<IUserSignUpDTO>): Promise<void> => {
-            const SIGN_UP_RESPONSE: IPCAPIResponse<boolean> = window.userAccountAPI.signUp(encryptedUserSignUpDTO);
+            const SIGN_UP_RESPONSE: IPCAPIResponse<boolean> = window.userAuthAPI.signUp(encryptedUserSignUpDTO);
             if (SIGN_UP_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
               if (SIGN_UP_RESPONSE.data) {
                 appLogger.info(`Signed up new user "${USERNAME}".`);
@@ -119,7 +119,7 @@ const UserSignUpForm: FC<IUserSignUpFormProps> = (props: IUserSignUpFormProps) =
                 } finally {
                   appLogger.debug("Opening successful user sign up dialog.");
                   let userCount: number | null = null;
-                  const GET_USER_COUNT_RESPONSE: IPCAPIResponse<number> = window.userAccountAPI.getUserCount();
+                  const GET_USER_COUNT_RESPONSE: IPCAPIResponse<number> = window.userAccountStorageAPI.getUserCount();
                   if (GET_USER_COUNT_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
                     userCount = GET_USER_COUNT_RESPONSE.data;
                   }

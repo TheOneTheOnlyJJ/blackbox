@@ -29,7 +29,7 @@ const AccountDashboardPage: FC = () => {
         return dashboardLayoutRootContext.signedInUserInfo.username;
       }
       appLogger.debug("Getting username for user ID from main process.");
-      const GET_USERNAME_FOR_USER_ID_RESPONSE: IPCAPIResponse<string | null> = window.userAccountAPI.getUsernameForUserId(userId);
+      const GET_USERNAME_FOR_USER_ID_RESPONSE: IPCAPIResponse<string | null> = window.userAccountStorageAPI.getUsernameForUserId(userId);
       if (GET_USERNAME_FOR_USER_ID_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
         if (GET_USERNAME_FOR_USER_ID_RESPONSE.data === null) {
           return "Invalid user ID";

@@ -22,7 +22,7 @@ export const useAvailableUserDataStorageConfigsInfoState = (logger: LogFunctions
   useEffect((): (() => void) => {
     // Get all available User Data Storage Configs
     const GET_ALL_SIGNED_IN_USER_AVAILABLE_DATA_STORAGE_CONFIGS_INFO_RESPONSE: IPCAPIResponse<IEncryptedData<IUserDataStorageConfigInfo[]>> =
-      window.userAccountAPI.getAllSignedInUserAvailableDataStorageConfigsInfo();
+      window.userDataStorageConfigAPI.getAllSignedInUserAvailableDataStorageConfigsInfo();
     if (GET_ALL_SIGNED_IN_USER_AVAILABLE_DATA_STORAGE_CONFIGS_INFO_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
       logger.error(
         `Could not get all signed in user's available User Data Storage Configs Info! Reason: ${GET_ALL_SIGNED_IN_USER_AVAILABLE_DATA_STORAGE_CONFIGS_INFO_RESPONSE.error}!`
@@ -51,7 +51,7 @@ export const useAvailableUserDataStorageConfigsInfoState = (logger: LogFunctions
         });
     }
     // Monitor changes to User Data Storages Info
-    const removeAvailableUserDataStorageConfigsChangedListener: () => void = window.userAccountAPI.onAvailableUserDataStorageConfigsChanged(
+    const removeAvailableUserDataStorageConfigsChangedListener: () => void = window.userDataStorageConfigAPI.onAvailableUserDataStorageConfigsChanged(
       (encryptedAvailableUserDataStorageConfigsInfoChangedDiff: IEncryptedData<IDataChangedDiff<string, IUserDataStorageConfigInfo>>): void => {
         window.IPCTLSAPI.decryptAndValidateJSON<IDataChangedDiff<string, IUserDataStorageConfigInfo>>(
           encryptedAvailableUserDataStorageConfigsInfoChangedDiff,

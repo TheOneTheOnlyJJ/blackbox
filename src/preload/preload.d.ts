@@ -1,11 +1,17 @@
 import { IIPCTLSAPI } from "@shared/IPC/APIs/IPCTLSAPI";
-import { IUserAccountAPI } from "@shared/IPC/APIs/UserAPI";
+import { IUserAuthenticationAPI } from "@shared/IPC/APIs/UserAuthenticationAPI";
+import { IUserAccountStorageAPI } from "@shared/IPC/APIs/UserAccountStorageAPI";
+import { IUserDataStorageConfigAPI } from "@shared/IPC/APIs/UserDataStorageConfigAPI";
 import { IUtilsAPI } from "@shared/IPC/APIs/UtilsAPI";
+import { IUserDataStorageVisibilityGroupAPI } from "@shared/IPC/APIs/UserDataStorageVisibilityGroupAPI";
 
 declare global {
   interface Window {
     IPCTLSAPI: IIPCTLSAPI;
-    userAccountAPI: IUserAccountAPI;
+    userAuthAPI: IUserAuthenticationAPI;
+    userAccountStorageAPI: IUserAccountStorageAPI;
+    userDataStorageConfigAPI: IUserDataStorageConfigAPI;
+    userDataStorageVisibilityGroupAPI: IUserDataStorageVisibilityGroupAPI;
     utilsAPI: IUtilsAPI;
   }
 }

@@ -18,9 +18,8 @@ const CloseUserDataStorageVisibilityGroupActionItem: FC<ICloseUserDataStorageVis
   const { visibilityGroupInfo } = props;
   const closeUserDataStorageVisibilityGroup = useCallback((): void => {
     appLogger.debug(`Clicked close User Data Storage Visibility Group "${visibilityGroupInfo.visibilityGroupId}" action button.`);
-    const CLOSE_USER_DATA_STORAGE_VISIBILITY_GROUP_RESPONSE: IPCAPIResponse<number> = window.userAccountAPI.closeUserDataStorageVisibilityGroups([
-      visibilityGroupInfo.visibilityGroupId
-    ]);
+    const CLOSE_USER_DATA_STORAGE_VISIBILITY_GROUP_RESPONSE: IPCAPIResponse<number> =
+      window.userDataStorageVisibilityGroupAPI.closeUserDataStorageVisibilityGroups([visibilityGroupInfo.visibilityGroupId]);
     if (CLOSE_USER_DATA_STORAGE_VISIBILITY_GROUP_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
       enqueueSnackbar({
         message: `Closed ${visibilityGroupInfo.name} data storage visbility group.`,
