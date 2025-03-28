@@ -114,10 +114,10 @@ export class App {
   private readonly USER_CONTEXT_LOGGERS: IUserContextLoggers = {
     main: log.scope("m-uctx"),
     subcontexts: {
-      userAccountStorage: log.scope("m-uacc-strg-ctx"),
-      userAuth: log.scope("m-uauth-ctx"),
-      availableUserDataStorageConfigs: log.scope("m-avail-data-strg-cfg-ctx"),
-      openUserDataStorageVisibilityGroups: log.scope("m-opn-udata-strg-vgrp-ctx")
+      accountStorage: log.scope("m-uacc-strg-ctx"),
+      auth: log.scope("m-uauth-ctx"),
+      availableDataStorageConfigs: log.scope("m-avail-data-strg-cfg-ctx"),
+      openDataStorageVisibilityGroups: log.scope("m-opn-udata-strg-vgrp-ctx")
     }
   } as const;
   private readonly userContextProviderLogger: LogFunctions = log.scope("m-uctx-prvdr");

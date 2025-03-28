@@ -8,6 +8,7 @@ import { DASHBOARD_NAVIGATION_AREAS } from "@renderer/navigationAreas/DashboardN
 import { IUserDataLayoutRootContext, useUserDataLayoutRootContext } from "@renderer/components/roots/userDataLayoutRoot/UserDataLayoutRootContext";
 import { USER_DATA_NAVIGATION_AREAS } from "@renderer/navigationAreas/UserDataStoragesNavigationAreas";
 import { useDialogOpenState } from "@renderer/hooks/useDialogState";
+import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 
 const UserDataStorageConfigsPage: FC = () => {
   const userDataStoragesLayoutRootContext: IUserDataLayoutRootContext = useUserDataLayoutRootContext();
@@ -48,7 +49,7 @@ const UserDataStorageConfigsPage: FC = () => {
         }}
       >
         <Stack direction="row" spacing={2}>
-          <Button variant="contained" size="large" onClick={handleNewDataStorageConfigButtonClick}>
+          <Button variant="contained" size="large" startIcon={<AddOutlinedIcon />} onClick={handleNewDataStorageConfigButtonClick}>
             New data storage configuration
           </Button>
         </Stack>

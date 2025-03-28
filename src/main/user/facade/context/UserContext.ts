@@ -23,10 +23,10 @@ import { IDataChangedDiff } from "@shared/utils/DataChangedDiff";
 export interface IUserContextLoggers {
   main: LogFunctions;
   subcontexts: {
-    userAccountStorage: LogFunctions;
-    userAuth: LogFunctions;
-    availableUserDataStorageConfigs: LogFunctions;
-    openUserDataStorageVisibilityGroups: LogFunctions;
+    accountStorage: LogFunctions;
+    auth: LogFunctions;
+    availableDataStorageConfigs: LogFunctions;
+    openDataStorageVisibilityGroups: LogFunctions;
   };
 }
 
@@ -55,11 +55,11 @@ export class UserContext {
     this.logger.info("Initialising new User Context.");
     this.HANDLERS = contextHandlers;
     // Initialise contexts
-    this.ACCOUNT_STORAGE_CONTEXT = new UserAccountStorageContext(loggers.subcontexts.userAccountStorage);
-    this.AUTH_CONTEXT = new UserAuthContext(loggers.subcontexts.userAuth);
-    this.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT = new AvailableUserDataStorageConfigsContext(loggers.subcontexts.availableUserDataStorageConfigs);
+    this.ACCOUNT_STORAGE_CONTEXT = new UserAccountStorageContext(loggers.subcontexts.accountStorage);
+    this.AUTH_CONTEXT = new UserAuthContext(loggers.subcontexts.auth);
+    this.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT = new AvailableUserDataStorageConfigsContext(loggers.subcontexts.availableDataStorageConfigs);
     this.OPEN_DATA_STORAGE_VISIBILITY_GROUPS_CONTEXT = new OpenUserDataStorageVisibilityGroupsContext(
-      loggers.subcontexts.openUserDataStorageVisibilityGroups
+      loggers.subcontexts.openDataStorageVisibilityGroups
     );
     // Wire up context interdependencies
     this.wireAllContextHandlers();

@@ -8,6 +8,8 @@ import { appLogger } from "@renderer/utils/loggers";
 import NewUserDataStorageVisibilityGroupConfigFormDialog from "@renderer/components/dialogs/NewUserDataStorageVisibilityGroupConfigFormDialog";
 import OpenUserDataStorageVisibilityGroupFormDialog from "@renderer/components/dialogs/OpenUserDataStorageVisibilityGroupFormDialog";
 import { useDialogOpenState } from "@renderer/hooks/useDialogState";
+import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
+import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
 
 const UserDataStorageVisibilityGroupsPage: FC = () => {
   const userDataStoragesLayoutRootContext: IUserDataLayoutRootContext = useUserDataLayoutRootContext();
@@ -70,10 +72,10 @@ const UserDataStorageVisibilityGroupsPage: FC = () => {
         }}
       >
         <Stack direction="row" spacing={1}>
-          <Button variant="contained" size="large" onClick={handleNewUserDataStorageVisibilityGroupConfigButtonClick}>
+          <Button variant="contained" size="large" startIcon={<AddOutlinedIcon />} onClick={handleNewUserDataStorageVisibilityGroupConfigButtonClick}>
             New visibility group
           </Button>
-          <Button variant="contained" size="large" onClick={handleOpenUserDataStorageVisibilityGroupButtonClick}>
+          <Button variant="contained" size="large" startIcon={<LockOpenOutlinedIcon />} onClick={handleOpenUserDataStorageVisibilityGroupButtonClick}>
             Open visibility group
           </Button>
         </Stack>
