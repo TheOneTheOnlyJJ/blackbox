@@ -7,7 +7,9 @@ import { IDataChangedDiff } from "@shared/utils/DataChangedDiff";
 import { LogFunctions } from "electron-log";
 import { UUID } from "node:crypto";
 
-export class UserOpenUserDataStorageVisibilityGroupsContext {
+const INITIAL_OPEN_DATA_STORAGE_VISIBILITY_GROUPS: IUserDataStorageVisibilityGroup[] = [];
+
+export class OpenUserDataStorageVisibilityGroupsContext {
   private readonly logger: LogFunctions;
 
   // TODO: Replace with Map
@@ -19,8 +21,8 @@ export class UserOpenUserDataStorageVisibilityGroupsContext {
 
   public constructor(logger: LogFunctions) {
     this.logger = logger;
-    this.logger.info("Initialising new User Open User Data Storage Visibility Groups Context.");
-    this.openDataStorageVisibilityGroups = [];
+    this.logger.info("Initialising new Open User Data Storage Visibility Groups Context.");
+    this.openDataStorageVisibilityGroups = INITIAL_OPEN_DATA_STORAGE_VISIBILITY_GROUPS;
     this.onOpenUserDataStorageVisibilityGroupsChangedCallback = null;
   }
 

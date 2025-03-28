@@ -10,8 +10,8 @@ import { IUserDataStorageVisibilityGroupConfig } from "../data/storage/visibilit
 import { IUserDataStorageVisibilityGroupsOpenRequest } from "../data/storage/visibilityGroup/openRequest/UserDataStorageVisibilityGroupsOpenRequest";
 import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
 import { hashPassword } from "@main/utils/encryption/hashPassword";
-import { UserAuthenticationService } from "./services/UserAuthenticationService";
-import { IUserContextHandlers, UserContext } from "./context/UserContext";
+import { UserAuthService } from "./services/UserAuthService";
+import { IUserContextHandlers, IUserContextLoggers, UserContext } from "./context/UserContext";
 import { UserAccountStorageService } from "./services/UserAccountStorageService";
 import { UserDataStorageConfigService } from "./services/UserDataStorageConfigService";
 import { UserDataStorageVisibilityGroupService } from "./services/UserDataStorageVisibilityGroupService";
@@ -24,24 +24,26 @@ import { IUserDataStorageVisibilityGroupsOpenRequestDTO } from "@shared/user/dat
 import { IUserDataStorageConfigInfo } from "@shared/user/data/storage/config/info/UserDataStorageConfigInfo";
 import { IUserAccountStorageConfig } from "../account/storage/config/UserAccountStorageConfig";
 
+export interface IUserServiceLoggers {
+  auth: LogFunctions;
+  account: LogFunctions;
+  accountStorage: LogFunctions;
+  dataStorageConfig: LogFunctions;
+  dataStorageVisibilityGroup: LogFunctions;
+}
+
 export interface IUserFacadeConstructorProps {
   logger: LogFunctions;
-  contextLogger: LogFunctions;
+  contextLoggers: IUserContextLoggers;
   contextProviderLogger: LogFunctions;
-  serviceLoggers: {
-    auth: LogFunctions;
-    account: LogFunctions;
-    accountStorage: LogFunctions;
-    dataStorageConfig: LogFunctions;
-    dataStorageVisibilityGroup: LogFunctions;
-  };
+  serviceLoggers: IUserServiceLoggers;
   contextHandlers: IUserContextHandlers;
 }
 
 export class UserFacade {
   private readonly logger: LogFunctions;
   // Services
-  private readonly AUTH_SERVICE: UserAuthenticationService;
+  private readonly AUTH_SERVICE: UserAuthService;
   private readonly ACCOUNT_STORAGE_SERVICE: UserAccountStorageService;
   private readonly DATA_STORAGE_CONFIG_SERVICE: UserDataStorageConfigService;
   private readonly DATA_STORAGE_VISIBILITY_GROUP_SERVICE: UserDataStorageVisibilityGroupService;
@@ -49,9 +51,9 @@ export class UserFacade {
   public constructor(props: IUserFacadeConstructorProps) {
     this.logger = props.logger;
     this.logger.debug("Initialising new User Facade.");
-    const CONTEXT_PROVIDER = new UserContextProvider(props.contextProviderLogger, new UserContext(props.contextLogger, props.contextHandlers));
+    const CONTEXT_PROVIDER = new UserContextProvider(props.contextProviderLogger, new UserContext(props.contextLoggers, props.contextHandlers));
     // Services
-    this.AUTH_SERVICE = new UserAuthenticationService(props.serviceLoggers.auth, CONTEXT_PROVIDER.getUserAuthenticationServiceContext());
+    this.AUTH_SERVICE = new UserAuthService(props.serviceLoggers.auth, CONTEXT_PROVIDER.getUserAuthServiceContext());
     this.ACCOUNT_STORAGE_SERVICE = new UserAccountStorageService(
       props.serviceLoggers.accountStorage,
       CONTEXT_PROVIDER.getUserAccountStorageServiceContext()

@@ -13,7 +13,7 @@ import { IDataChangedDiff } from "@shared/utils/DataChangedDiff";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 import { ipcRenderer, IpcRendererEvent } from "electron";
 
-const PRELOAD_IPC_USER_DATA_STORAGE_VISIBILITY_GROUP_API_LOG_SCOPE = "preload-ipc-user-data-storage-visibility-group-api";
+const PRELOAD_IPC_USER_DATA_STORAGE_VISIBILITY_GROUP_API_LOG_SCOPE = "p-ipc-udata-strg-vgrp-api";
 
 export const USER_DATA_STORAGE_VISIBILITY_GROUP_API_PRELOAD_HANDLERS: IUserDataStorageVisibilityGroupAPI = {
   isUserDataStorageVisibilityGroupNameAvailableForSignedInUser: (name: string): IPCAPIResponse<boolean> => {

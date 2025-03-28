@@ -5,7 +5,9 @@ import { ISignedInUserInfo } from "@shared/user/account/SignedInUserInfo";
 import { LogFunctions } from "electron-log";
 import { isDeepStrictEqual } from "node:util";
 
-export class UserAuthenticationContext {
+const INITIAL_SIGNED_IN_USER: Readonly<ISignedInUser> | null = null;
+
+export class UserAuthContext {
   private readonly logger: LogFunctions;
 
   private signedInUser: Readonly<ISignedInUser> | null;
@@ -16,8 +18,8 @@ export class UserAuthenticationContext {
 
   public constructor(logger: LogFunctions) {
     this.logger = logger;
-    this.logger.info("Initialising new User Authentication Context.");
-    this.signedInUser = null;
+    this.logger.info("Initialising new User Auth Context.");
+    this.signedInUser = INITIAL_SIGNED_IN_USER;
     this.beforeSignOutCallback = null;
     this.onSignedInUserChangedCallback = null;
     this.onNewSignedInUserCallback = null;

@@ -8,7 +8,7 @@ import { TransformToIPCAPIChannels } from "../IPCAPIChannels";
 // Utility types
 export type SignedInUserChangedCallback = (newSignedInUserInfo: ISignedInUserInfo | null) => void;
 
-export interface IUserAuthenticationAPI {
+export interface IUserAuthAPI {
   signUp: (encryptedUserSignUpDTO: IEncryptedData<IUserSignUpDTO>) => IPCAPIResponse<boolean>;
   signIn: (encryptedUserSignInDTO: IEncryptedData<IUserSignInDTO>) => IPCAPIResponse<boolean>;
   signOut: () => IPCAPIResponse<ISignedInUserInfo | null>;
@@ -17,10 +17,10 @@ export interface IUserAuthenticationAPI {
   onSignedInUserChanged: (callback: SignedInUserChangedCallback) => () => void;
 }
 
-export type UserAuthenticationAPIIPCChannels = TransformToIPCAPIChannels<"UserAuthAPI", IUserAuthenticationAPI>;
-export type UserAuthenticationAPIIPCChannel = UserAuthenticationAPIIPCChannels[keyof UserAuthenticationAPIIPCChannels];
+export type UserAuthAPIIPCChannels = TransformToIPCAPIChannels<"UserAuthAPI", IUserAuthAPI>;
+export type UserAuthAPIIPCChannel = UserAuthAPIIPCChannels[keyof UserAuthAPIIPCChannels];
 
-export const USER_AUTHENTICATION_API_IPC_CHANNELS: UserAuthenticationAPIIPCChannels = {
+export const USER_AUTH_API_IPC_CHANNELS: UserAuthAPIIPCChannels = {
   signUp: "UserAuthAPI:signUp",
   signIn: "UserAuthAPI:signIn",
   signOut: "UserAuthAPI:signOut",

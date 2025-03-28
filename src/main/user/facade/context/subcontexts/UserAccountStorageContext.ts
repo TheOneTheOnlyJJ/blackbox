@@ -1,7 +1,18 @@
+import { ISecuredUserSignUpPayload } from "@main/user/account/SecuredUserSignUpPayload";
+import { IDataStorageConfigFilter, IDataStorageVisibilityGroupFilter } from "@main/user/account/storage/backend/BaseUserAccountStorageBackend";
 import { UserAccountStorage } from "@main/user/account/storage/UserAccountStorage";
 import { ISecuredUserDataStorageConfig } from "@main/user/data/storage/config/SecuredUserDataStorageConfig";
+import { IStorageSecuredUserDataStorageConfig } from "@main/user/data/storage/config/StorageSecuredUserDataStorageConfig";
+import { securedUserDataStorageConfigToStorageSecuredUserDataStorageConfig } from "@main/user/data/storage/config/utils/securedUserDataStorageConfigToStorageSecuredUserDataStorageConfig";
+import { ISecuredUserDataStorageVisibilityGroupConfig } from "@main/user/data/storage/visibilityGroup/config/SecuredUserDataStorageVisibilityGroupConfig";
+import { IStorageSecuredUserDataStorageVisibilityGroupConfig } from "@main/user/data/storage/visibilityGroup/config/StorageSecuredUserDataStorageVisibilityGroupConfig";
+import { securedUserDataStorageVisibilityGroupConfigToStorageSecuredUserDataStorageVisibilityGroupConfig } from "@main/user/data/storage/visibilityGroup/config/utils/securedUserDataStorageVisibilityGroupConfigToStorageSecuredUserDataStorageVisibilityGroupConfig";
+import { ISecuredPassword } from "@main/utils/encryption/SecuredPassword";
 import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserAccountStorageInfo";
 import { LogFunctions } from "electron-log";
+import { UUID } from "node:crypto";
+
+const INITIAL_ACCOUNT_STORAGE: UserAccountStorage | null = null;
 
 export class UserAccountStorageContext {
   private readonly logger: LogFunctions;
@@ -14,17 +25,12 @@ export class UserAccountStorageContext {
   public constructor(logger: LogFunctions) {
     this.logger = logger;
     this.logger.info("Initialising new User Account Storage Context.");
-    this.accountStorage = null;
-    this.onAddedNewUserDataStorageConfigsCallback = null; // TODO: Maybe abstract this in its corresponding context by wrapping all required UserAccountStorage methods (would also be safer)
+    this.accountStorage = INITIAL_ACCOUNT_STORAGE;
+    this.onAddedNewUserDataStorageConfigsCallback = null;
     this.onUserAccountStorageChangedCallback = null;
   }
 
-  public getAccountStorage(): UserAccountStorage | null {
-    this.logger.info("Getting User Account Storage.");
-    return this.accountStorage;
-  }
-
-  public setAccountStorage(newAccountStorage: UserAccountStorage | null): boolean {
+  public set(newAccountStorage: UserAccountStorage | null): boolean {
     this.logger.info("Setting new User Account Storage.");
     if (newAccountStorage !== null && this.accountStorage !== null && newAccountStorage.storageId === this.accountStorage.storageId) {
       this.logger.info(`The same User Account Storage "${this.accountStorage.storageId}" is already set.`);
@@ -35,28 +41,11 @@ export class UserAccountStorageContext {
       newAccountStorageInfo = null;
     } else if (newAccountStorage instanceof UserAccountStorage) {
       newAccountStorageInfo = newAccountStorage.getInfo();
-      // Proxy the add data storage config function to add it to available data storages on success
-      type AddStorageSecuredUserDataStorageConfigType = typeof newAccountStorage.addSecuredUserDataStorageConfig;
-      type AddStorageSecuredUserDataStorageConfigParametersType = Parameters<AddStorageSecuredUserDataStorageConfigType>;
-      type AddStorageSecuredUserDataStorageConfigReturnType = ReturnType<AddStorageSecuredUserDataStorageConfigType>;
-      newAccountStorage.addSecuredUserDataStorageConfig = new Proxy<AddStorageSecuredUserDataStorageConfigType>(
-        newAccountStorage.addSecuredUserDataStorageConfig.bind(newAccountStorage),
-        {
-          apply: (
-            target: AddStorageSecuredUserDataStorageConfigType,
-            thisArg: unknown,
-            argArray: AddStorageSecuredUserDataStorageConfigParametersType
-          ): AddStorageSecuredUserDataStorageConfigReturnType => {
-            const WAS_SECURED_DATA_STORAGE_CONFIG_ADDED: boolean = Reflect.apply(target, thisArg, argArray);
-            if (WAS_SECURED_DATA_STORAGE_CONFIG_ADDED) {
-              this.onAddedNewUserDataStorageConfigsCallback?.([argArray[0]]);
-            }
-            return WAS_SECURED_DATA_STORAGE_CONFIG_ADDED;
-          }
-        } satisfies ProxyHandler<AddStorageSecuredUserDataStorageConfigType>
-      );
     } else {
       throw new Error(`Invalid new User Account Storage`);
+    }
+    if (this.accountStorage !== null) {
+      this.accountStorage.close();
     }
     this.accountStorage = newAccountStorage;
     this.logger.info(
@@ -67,5 +56,166 @@ export class UserAccountStorageContext {
     this.onUserAccountStorageChangedCallback?.(newAccountStorage);
     // TODO: Maybe make all not open storage configs unavailable when this closes? This should be done on the front end
     return true;
+  }
+
+  public isSet(): boolean {
+    return this.accountStorage !== null;
+  }
+
+  public open(): boolean {
+    if (this.accountStorage === null) {
+      throw new Error("Null User Account Storage");
+    }
+    return this.accountStorage.open();
+  }
+
+  public isOpen(): boolean {
+    if (this.accountStorage === null) {
+      throw new Error("Null User Account Storage");
+    }
+    return this.accountStorage.isOpen();
+  }
+
+  public close(): boolean {
+    if (this.accountStorage === null) {
+      throw new Error("Null User Account Storage");
+    }
+    return this.accountStorage.close();
+  }
+
+  public isClosed(): boolean {
+    if (this.accountStorage === null) {
+      throw new Error("Null User Account Storage");
+    }
+    return this.accountStorage.isClosed();
+  }
+
+  public getInfo(): IUserAccountStorageInfo {
+    if (this.accountStorage === null) {
+      throw new Error("Null User Account Storage");
+    }
+    return this.accountStorage.getInfo();
+  }
+
+  public getUserCount(): number {
+    if (this.accountStorage === null) {
+      throw new Error("Null User Account Storage");
+    }
+    return this.accountStorage.getUserCount();
+  }
+
+  public getUsernameForUserId(userId: UUID): string | null {
+    if (this.accountStorage === null) {
+      throw new Error("Null User Account Storage");
+    }
+    return this.accountStorage.getUsernameForUserId(userId);
+  }
+
+  public getUserId(username: string): UUID | null {
+    if (this.accountStorage === null) {
+      throw new Error("Null User Account Storage");
+    }
+    return this.accountStorage.getUserId(username);
+  }
+
+  public getSecuredUserPassword(userId: UUID): ISecuredPassword | null {
+    if (this.accountStorage === null) {
+      throw new Error("Null User Account Storage");
+    }
+    return this.accountStorage.getSecuredUserPassword(userId);
+  }
+
+  public getUserDataAESKeySalt(userId: UUID): string | null {
+    if (this.accountStorage === null) {
+      throw new Error("Null User Account Storage");
+    }
+    return this.accountStorage.getUserDataAESKeySalt(userId);
+  }
+
+  public isUsernameAvailable(username: string): boolean {
+    if (this.accountStorage === null) {
+      throw new Error("Null User Account Storage");
+    }
+    return this.accountStorage.isUsernameAvailable(username);
+  }
+
+  public isUserIdAvailable(userId: UUID): boolean {
+    if (this.accountStorage === null) {
+      throw new Error("Null User Account Storage");
+    }
+    return this.accountStorage.isUserIdAvailable(userId);
+  }
+
+  public generateRandomUserId(): UUID {
+    if (this.accountStorage === null) {
+      throw new Error("Null User Account Storage");
+    }
+    return this.accountStorage.generateRandomUserId();
+  }
+
+  public generateRandomUserDataStorageId(): UUID {
+    if (this.accountStorage === null) {
+      throw new Error("Null User Account Storage");
+    }
+    return this.accountStorage.generateRandomUserDataStorageId();
+  }
+
+  public generateRandomUserDataStorageVisibilityGroupId(): UUID {
+    if (this.accountStorage === null) {
+      throw new Error("Null User Account Storage");
+    }
+    return this.accountStorage.generateRandomUserDataStorageVisibilityGroupId();
+  }
+
+  public addUser(securedUserSignUpPayload: ISecuredUserSignUpPayload): boolean {
+    if (this.accountStorage === null) {
+      throw new Error("Null User Account Storage");
+    }
+    return this.accountStorage.addUser(securedUserSignUpPayload);
+  }
+
+  public addSecuredUserDataStorageConfig(securedUserDataStorageConfig: ISecuredUserDataStorageConfig, encryptionAESKey: Buffer): boolean {
+    if (this.accountStorage === null) {
+      throw new Error("Null User Account Storage");
+    }
+    const WAS_ADDED: boolean = this.accountStorage.addStorageSecuredUserDataStorageConfig(
+      securedUserDataStorageConfigToStorageSecuredUserDataStorageConfig(securedUserDataStorageConfig, encryptionAESKey, this.logger)
+    );
+    if (WAS_ADDED) {
+      this.onAddedNewUserDataStorageConfigsCallback?.([securedUserDataStorageConfig]);
+    }
+    return WAS_ADDED;
+  }
+
+  public addSecuredUserDataStorageVisibilityGroupConfig(
+    securedUserDataStorageVisibilityGroupConfig: ISecuredUserDataStorageVisibilityGroupConfig,
+    encryptionAESKey: Buffer
+  ): boolean {
+    if (this.accountStorage === null) {
+      throw new Error("Null User Account Storage");
+    }
+    return this.accountStorage.addStorageSecuredUserDataStorageVisibilityGroupConfig(
+      securedUserDataStorageVisibilityGroupConfigToStorageSecuredUserDataStorageVisibilityGroupConfig(
+        securedUserDataStorageVisibilityGroupConfig,
+        encryptionAESKey,
+        this.logger
+      )
+    );
+  }
+
+  public getStorageSecuredUserDataStorageConfigs(options: IDataStorageConfigFilter): IStorageSecuredUserDataStorageConfig[] {
+    if (this.accountStorage === null) {
+      throw new Error("Null User Account Storage");
+    }
+    return this.accountStorage.getStorageSecuredUserDataStorageConfigs(options);
+  }
+
+  public getStorageSecuredUserDataStorageVisibilityGroupConfigs(
+    options: IDataStorageVisibilityGroupFilter
+  ): IStorageSecuredUserDataStorageVisibilityGroupConfig[] {
+    if (this.accountStorage === null) {
+      throw new Error("Null User Account Storage");
+    }
+    return this.accountStorage.getStorageSecuredUserDataStorageVisibilityGroupConfigs(options);
   }
 }

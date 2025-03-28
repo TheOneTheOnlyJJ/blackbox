@@ -10,8 +10,8 @@ import { ipcRenderer, IpcRendererEvent } from "electron";
 const TEXT_ENCODER: TextEncoder = new TextEncoder();
 const TEXT_DECODER: TextDecoder = new TextDecoder();
 
-const PRELOAD_IPC_TLS_API_LOG_SCOPE = "preload-ipc-tls-api";
-const PRELOAD_IPC_TLS_API_BOOTSTRAP_LOG_SCOPE = "preload-ipc-tls-bootstrap";
+const PRELOAD_IPC_TLS_API_LOG_SCOPE = "p-ipc-tls-api";
+const PRELOAD_IPC_TLS_API_BOOTSTRAP_LOG_SCOPE = "p-ipc-tls-boot";
 
 const RENDERER_IPC_TLS_READINESS_CHANGE_CALLBACKS: Map<string, IPCTLSReadinessChangedCallback> = new Map<string, IPCTLSReadinessChangedCallback>();
 let isRendererIPCTLSReady = false;

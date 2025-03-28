@@ -13,7 +13,7 @@ import { IDataChangedDiff } from "@shared/utils/DataChangedDiff";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 import { ipcRenderer, IpcRendererEvent } from "electron";
 
-const PRELOAD_IPC_USER_DATA_STORAGE_CONFIG_API_LOG_SCOPE = "preload-ipc-user-data-storage-config-api";
+const PRELOAD_IPC_USER_DATA_STORAGE_CONFIG_API_LOG_SCOPE = "p-ipc-udata-strg-cfg-api";
 
 export const USER_DATA_STORAGE_CONFIG_API_PRELOAD_HANDLERS: IUserDataStorageConfigAPI = {
   addUserDataStorageConfig: (encryptedUserDataStorageConfigCreateDTO: IEncryptedData<IUserDataStorageConfigCreateDTO>): IPCAPIResponse<boolean> => {

@@ -10,7 +10,7 @@ import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserAccountStorageInfo";
 import { ipcRenderer, IpcRendererEvent } from "electron";
 
-const PRELOAD_IPC_USER_ACCOUNT_STORAGE_API_LOG_SCOPE = "preload-ipc-user-account-storage-api";
+const PRELOAD_IPC_USER_ACCOUNT_STORAGE_API_LOG_SCOPE = "p-ipc-uacc-strg-api";
 
 export const USER_ACCOUNT_STORAGE_API_PRELOAD_HANDLERS: IUserAccountStorageAPI = {
   isUserAccountStorageOpen: (): IPCAPIResponse<boolean> => {

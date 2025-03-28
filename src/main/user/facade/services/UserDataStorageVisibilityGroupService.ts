@@ -16,7 +16,6 @@ import { hashPassword } from "@main/utils/encryption/hashPassword";
 import { deriveAESKey } from "@main/utils/encryption/deriveAESKey";
 import { IUserDataStorageVisibilityGroup } from "@main/user/data/storage/visibilityGroup/UserDataStorageVisibilityGroup";
 import { ISignedInUser } from "@main/user/account/SignedInUser";
-import { UserAccountStorage } from "@main/user/account/storage/UserAccountStorage";
 import { userDataStorageVisibilityGroupToUserDataStorageVisibilityGroupInfo } from "@main/user/data/storage/visibilityGroup/utils/userDataStorageVisibilityGroupToUserDataStorageVisibilityGroupInfo";
 import { IUserDataStorageVisibilityGroupConfigCreateDTO } from "@shared/user/data/storage/visibilityGroup/config/create/DTO/UserDataStorageVisibilityGroupConfigCreateDTO";
 import { userDataStorageVisibilityGroupConfigCreateDTOToUserDataStorageVisibilityGroupConfig } from "@main/user/data/storage/visibilityGroup/config/utils/userDataStorageVisibilityGroupConfigCreateDTOToUserDataStorageVisibilityGroupConfig";
@@ -24,7 +23,16 @@ import { IUserDataStorageVisibilityGroupsOpenRequestDTO } from "@shared/user/dat
 import { userDataStorageVisibilityGroupsOpenRequestDTOToUserDataStorageVisibilityGroupsOpenRequest } from "@main/user/data/storage/visibilityGroup/openRequest/utils/userDataStorageVisibilityGroupsOpenRequestDTOToUserDataStorageVisibilityGroupsOpenRequest";
 
 export interface IUserDataStorageVisibilityGroupServiceContext {
-  getAccountStorage: () => UserAccountStorage | null;
+  isAccountStorageSet: () => boolean;
+  generateRandomUserDataStorageVisibilityGroupId: () => UUID;
+  getStorageSecuredUserDataStorageVisibilityGroupConfigs: (
+    options: IDataStorageVisibilityGroupFilter
+  ) => IStorageSecuredUserDataStorageVisibilityGroupConfig[];
+  isUserIdAvailable: (userId: UUID) => boolean;
+  addSecuredUserDataStorageVisibilityGroupConfig: (
+    securedUserDataStorageVisibilityGroupConfig: ISecuredUserDataStorageVisibilityGroupConfig,
+    encryptionKey: Buffer
+  ) => boolean;
   getSignedInUser: () => Readonly<ISignedInUser> | null;
   getOpenDataStorageVisibilityGroups: () => IUserDataStorageVisibilityGroup[];
   addOpenDataStorageVisibilityGroups: (newVisibilityGroups: IUserDataStorageVisibilityGroup[]) => number;
@@ -43,11 +51,7 @@ export class UserDataStorageVisibilityGroupService {
 
   public generateRandomDataStorageVisibilityGroupId(): UUID {
     this.logger.debug("Generating random User Data Storage Visibility Group ID.");
-    const ACCOUNT_STORAGE: UserAccountStorage | null = this.CONTEXT.getAccountStorage();
-    if (ACCOUNT_STORAGE === null) {
-      throw new Error("Null User Account Storage");
-    }
-    return ACCOUNT_STORAGE.generateRandomUserDataStorageVisibilityGroupId();
+    return this.CONTEXT.generateRandomUserDataStorageVisibilityGroupId();
   }
 
   public isDataStorageVisibilityGroupNameAvailableForSignedInUser(name: string): boolean {
@@ -61,8 +65,7 @@ export class UserDataStorageVisibilityGroupService {
 
   public isDataStorageVisibilityGroupNameAvailableForUserId(name: string, userId: UUID, AESKey: Buffer): boolean {
     this.logger.debug(`Getting User Data Storage Visibility Group name "${name}" availability for user "${userId}".`);
-    const ACCOUNT_STORAGE: UserAccountStorage | null = this.CONTEXT.getAccountStorage();
-    if (ACCOUNT_STORAGE === null) {
+    if (!this.CONTEXT.isAccountStorageSet()) {
       throw new Error("Null User Account Storage");
     }
     // There is no method to directly get this from the account storage because it is encrypted
@@ -93,12 +96,11 @@ export class UserDataStorageVisibilityGroupService {
         `Getting ${options.includeIds.length.toString()} Secured User Data Storage Visibility Group Configs for user "${options.userId}".`
       );
     }
-    const ACCOUNT_STORAGE: UserAccountStorage | null = this.CONTEXT.getAccountStorage();
-    if (ACCOUNT_STORAGE === null) {
+    if (!this.CONTEXT.isAccountStorageSet()) {
       throw new Error("Null User Account Storage");
     }
     const STORAGE_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIGS: IStorageSecuredUserDataStorageVisibilityGroupConfig[] =
-      ACCOUNT_STORAGE.getStorageSecuredUserDataStorageVisibilityGroupConfigs(options);
+      this.CONTEXT.getStorageSecuredUserDataStorageVisibilityGroupConfigs(options);
     return STORAGE_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIGS.map(
       (
         storageSecuredUserDataStorageVisibilityGroupConfig: IStorageSecuredUserDataStorageVisibilityGroupConfig
@@ -127,8 +129,7 @@ export class UserDataStorageVisibilityGroupService {
 
   public addUserDataStorageVisibilityGroupConfig(dataStorageVisibilityGroupConfig: IUserDataStorageVisibilityGroupConfig): boolean {
     this.logger.debug(`Adding User Data Storage Visibility Group Config to user: "${dataStorageVisibilityGroupConfig.userId}".`);
-    const ACCOUNT_STORAGE: UserAccountStorage | null = this.CONTEXT.getAccountStorage();
-    if (ACCOUNT_STORAGE === null) {
+    if (!this.CONTEXT.isAccountStorageSet()) {
       throw new Error("Null User Account Storage");
     }
     const SIGNED_IN_USER: Readonly<ISignedInUser> | null = this.CONTEXT.getSignedInUser();
@@ -141,7 +142,7 @@ export class UserDataStorageVisibilityGroupService {
       );
     }
     // TODO: Delete this check?
-    if (ACCOUNT_STORAGE.isUserIdAvailable(dataStorageVisibilityGroupConfig.userId)) {
+    if (this.CONTEXT.isUserIdAvailable(dataStorageVisibilityGroupConfig.userId)) {
       throw new Error(
         `Cannot add User Data Storage Visibility Group Config to user "${dataStorageVisibilityGroupConfig.userId}" because it does not exist`
       );
@@ -157,7 +158,7 @@ export class UserDataStorageVisibilityGroupService {
         },
         this.logger
       );
-    return ACCOUNT_STORAGE.addSecuredUserDataStorageVisibilityGroupConfig(
+    return this.CONTEXT.addSecuredUserDataStorageVisibilityGroupConfig(
       SECURED_USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIG,
       SIGNED_IN_USER.userDataAESKey
     );
@@ -176,8 +177,7 @@ export class UserDataStorageVisibilityGroupService {
 
   public openUserDataStorageVisibilityGroups(openRequest: IUserDataStorageVisibilityGroupsOpenRequest): number {
     this.logger.debug(`Opening User Data Storage Visibility Groups for user: "${openRequest.userIdToOpenFor}".`);
-    const ACCOUNT_STORAGE: UserAccountStorage | null = this.CONTEXT.getAccountStorage();
-    if (ACCOUNT_STORAGE === null) {
+    if (!this.CONTEXT.isAccountStorageSet()) {
       throw new Error("Null User Account Storage");
     }
     const SIGNED_IN_USER: Readonly<ISignedInUser> | null = this.CONTEXT.getSignedInUser();
@@ -190,7 +190,7 @@ export class UserDataStorageVisibilityGroupService {
       );
     }
     // TODO: Delete this?
-    if (ACCOUNT_STORAGE.isUserIdAvailable(openRequest.userIdToOpenFor)) {
+    if (this.CONTEXT.isUserIdAvailable(openRequest.userIdToOpenFor)) {
       throw new Error(`Cannot open User Data Storage Visibility Groups for user "${openRequest.userIdToOpenFor}" because it does not exist`);
     }
     const EXCLUDE_VISIBILITY_GROUP_IDS: UUID[] = this.CONTEXT.getOpenDataStorageVisibilityGroups().map(

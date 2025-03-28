@@ -1,4 +1,4 @@
-import log, { LogFunctions } from "electron-log";
+import { LogFunctions } from "electron-log";
 import { ISignedInUserInfo } from "@shared/user/account/SignedInUserInfo";
 import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserAccountStorageInfo";
 import { UUID } from "node:crypto";
@@ -14,11 +14,21 @@ import { storageSecuredUserDataStorageConfigToSecuredUserDataStorageConfig } fro
 import { ISecuredUserDataStorageConfig } from "../../data/storage/config/SecuredUserDataStorageConfig";
 import { securedUserDataStorageConfigToUserDataStorageConfigInfo } from "@main/user/data/storage/config/utils/securedUserDataStorageConfigToUserDataStorageConfigInfo";
 import { IUserDataStorageConfigInfo } from "@shared/user/data/storage/config/info/UserDataStorageConfigInfo";
-import { UserAuthenticationContext } from "./subcontexts/UserAuthenticationContext";
+import { UserAuthContext } from "./subcontexts/UserAuthContext";
 import { UserAccountStorageContext } from "./subcontexts/UserAccountStorageContext";
-import { UserAvailableUserDataStorageConfigsContext } from "./subcontexts/UserAvailableUserDataStorageConfigsContext";
-import { UserOpenUserDataStorageVisibilityGroupsContext } from "./subcontexts/UserOpenUserDataStorageVisibilityGroupsContext";
+import { AvailableUserDataStorageConfigsContext } from "./subcontexts/AvailableUserDataStorageConfigsContext";
+import { OpenUserDataStorageVisibilityGroupsContext } from "./subcontexts/OpenUserDataStorageVisibilityGroupsContext";
 import { IDataChangedDiff } from "@shared/utils/DataChangedDiff";
+
+export interface IUserContextLoggers {
+  main: LogFunctions;
+  subcontexts: {
+    userAccountStorage: LogFunctions;
+    userAuth: LogFunctions;
+    availableUserDataStorageConfigs: LogFunctions;
+    openUserDataStorageVisibilityGroups: LogFunctions;
+  };
+}
 
 export interface IUserContextHandlers {
   onSignedInUserChangedCallback: ((newSignedInUserInfo: ISignedInUserInfo | null) => void) | null;
@@ -36,23 +46,20 @@ export class UserContext {
   private readonly HANDLERS: IUserContextHandlers;
 
   public readonly ACCOUNT_STORAGE_CONTEXT: UserAccountStorageContext;
-  public readonly AUTH_CONTEXT: UserAuthenticationContext;
-  public readonly AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT: UserAvailableUserDataStorageConfigsContext;
-  public readonly OPEN_DATA_STORAGE_VISIBILITY_GROUPS_CONTEXT: UserOpenUserDataStorageVisibilityGroupsContext;
+  public readonly AUTH_CONTEXT: UserAuthContext;
+  public readonly AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT: AvailableUserDataStorageConfigsContext;
+  public readonly OPEN_DATA_STORAGE_VISIBILITY_GROUPS_CONTEXT: OpenUserDataStorageVisibilityGroupsContext;
 
-  public constructor(logger: LogFunctions, contextHandlers: IUserContextHandlers) {
-    this.logger = logger;
+  public constructor(loggers: IUserContextLoggers, contextHandlers: IUserContextHandlers) {
+    this.logger = loggers.main;
     this.logger.info("Initialising new User Context.");
     this.HANDLERS = contextHandlers;
     // Initialise contexts
-    // TODO: Make loggers come from above?
-    this.ACCOUNT_STORAGE_CONTEXT = new UserAccountStorageContext(log.scope("main-user-account-storage-context"));
-    this.AUTH_CONTEXT = new UserAuthenticationContext(log.scope("main-user-auth-context"));
-    this.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT = new UserAvailableUserDataStorageConfigsContext(
-      log.scope("main-user-available-data-storage-configs-context")
-    );
-    this.OPEN_DATA_STORAGE_VISIBILITY_GROUPS_CONTEXT = new UserOpenUserDataStorageVisibilityGroupsContext(
-      log.scope("main-user-open-data-storage-visibility-groups-context")
+    this.ACCOUNT_STORAGE_CONTEXT = new UserAccountStorageContext(loggers.subcontexts.userAccountStorage);
+    this.AUTH_CONTEXT = new UserAuthContext(loggers.subcontexts.userAuth);
+    this.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT = new AvailableUserDataStorageConfigsContext(loggers.subcontexts.availableUserDataStorageConfigs);
+    this.OPEN_DATA_STORAGE_VISIBILITY_GROUPS_CONTEXT = new OpenUserDataStorageVisibilityGroupsContext(
+      loggers.subcontexts.openUserDataStorageVisibilityGroups
     );
     // Wire up context interdependencies
     this.wireAllContextHandlers();
@@ -61,7 +68,7 @@ export class UserContext {
   private wireAllContextHandlers(): void {
     this.logger.info("Wiring all User Context subcontext handlers.");
     this.wireUserAccountStorageContextHandlers();
-    this.wireUserAuthenticationContextHandlers();
+    this.wireUserAuthContextHandlers();
     this.wireUserAvailableUserDataStorageConfigsContextHandlers();
     this.wireUserOpenUserDataStorageVisibilityGroupsContextHandlers();
   }
@@ -80,8 +87,8 @@ export class UserContext {
     };
   }
 
-  private wireUserAuthenticationContextHandlers(): void {
-    this.logger.info("Wiring User Authentication Context handlers.");
+  private wireUserAuthContextHandlers(): void {
+    this.logger.info("Wiring User Auth Context handlers.");
     this.AUTH_CONTEXT.beforeSignOutCallback = (): void => {
       this.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT.clearAvailableSecuredDataStorageConfigs();
       this.OPEN_DATA_STORAGE_VISIBILITY_GROUPS_CONTEXT.clearOpenDataStorageVisibilityGroups();
@@ -166,15 +173,14 @@ export class UserContext {
 
   private getAllPublicDataStorageConfigsFromAccountStorage(): ISecuredUserDataStorageConfig[] {
     this.logger.info("Getting all public User Data Storage Configs from User Account Storage.");
-    const ACCOUNT_STORAGE: UserAccountStorage | null = this.ACCOUNT_STORAGE_CONTEXT.getAccountStorage();
-    if (ACCOUNT_STORAGE === null) {
+    if (!this.ACCOUNT_STORAGE_CONTEXT.isSet()) {
       throw new Error("Null User Account Storage");
     }
     const SIGNED_IN_USER: ISignedInUser | null = this.AUTH_CONTEXT.getSignedInUser();
     if (SIGNED_IN_USER === null) {
       throw new Error("Null signed in user");
     }
-    return ACCOUNT_STORAGE.getStorageSecuredUserDataStorageConfigs({
+    return this.ACCOUNT_STORAGE_CONTEXT.getStorageSecuredUserDataStorageConfigs({
       userId: SIGNED_IN_USER.userId,
       includeIds: "all",
       excludeIds: null,
@@ -195,8 +201,7 @@ export class UserContext {
         visibilityGroups.length === 1 ? "" : "s"
       } from User Account Storage.`
     );
-    const ACCOUNT_STORAGE: UserAccountStorage | null = this.ACCOUNT_STORAGE_CONTEXT.getAccountStorage();
-    if (ACCOUNT_STORAGE === null) {
+    if (!this.ACCOUNT_STORAGE_CONTEXT.isSet()) {
       throw new Error("Null User Account Storage");
     }
     const SIGNED_IN_USER: ISignedInUser | null = this.AUTH_CONTEXT.getSignedInUser();
@@ -204,17 +209,18 @@ export class UserContext {
       throw new Error("Null signed in user");
     }
     // Get all of them with a single call to minimize storage access
-    const STORAGE_SECURED_DATA_STORAGE_CONFIGS: IStorageSecuredUserDataStorageConfig[] = ACCOUNT_STORAGE.getStorageSecuredUserDataStorageConfigs({
-      userId: SIGNED_IN_USER.userId,
-      includeIds: "all",
-      excludeIds: null,
-      visibilityGroups: {
-        includeIds: visibilityGroups.map((visibilityGroup: IUserDataStorageVisibilityGroup): UUID => {
-          return visibilityGroup.visibilityGroupId;
-        }),
-        excludeIds: null
-      }
-    });
+    const STORAGE_SECURED_DATA_STORAGE_CONFIGS: IStorageSecuredUserDataStorageConfig[] =
+      this.ACCOUNT_STORAGE_CONTEXT.getStorageSecuredUserDataStorageConfigs({
+        userId: SIGNED_IN_USER.userId,
+        includeIds: "all",
+        excludeIds: null,
+        visibilityGroups: {
+          includeIds: visibilityGroups.map((visibilityGroup: IUserDataStorageVisibilityGroup): UUID => {
+            return visibilityGroup.visibilityGroupId;
+          }),
+          excludeIds: null
+        }
+      });
     const SECURED_DATA_STORAGE_CONFIGS: ISecuredUserDataStorageConfig[] = [];
     for (let i = visibilityGroups.length - 1; i >= 0; i--) {
       const VISIBILITY_GROUP: IUserDataStorageVisibilityGroup = visibilityGroups[i];

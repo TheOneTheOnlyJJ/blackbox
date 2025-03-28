@@ -4,7 +4,9 @@ import { IDataChangedDiff } from "@shared/utils/DataChangedDiff";
 import { LogFunctions } from "electron-log";
 import { UUID } from "node:crypto";
 
-export class UserAvailableUserDataStorageConfigsContext {
+const INITIAL_AVAILABLE_SECURED_DATA_STORAGE_CONFIGS: ISecuredUserDataStorageConfig[] = [];
+
+export class AvailableUserDataStorageConfigsContext {
   private readonly logger: LogFunctions;
 
   // TODO: Replace with Map
@@ -16,8 +18,8 @@ export class UserAvailableUserDataStorageConfigsContext {
 
   public constructor(logger: LogFunctions) {
     this.logger = logger;
-    this.logger.info("Initialising new User Available User Data Storages Context.");
-    this.availableSecuredDataStorageConfigs = [];
+    this.logger.info("Initialising new Available User Data Storages Context.");
+    this.availableSecuredDataStorageConfigs = INITIAL_AVAILABLE_SECURED_DATA_STORAGE_CONFIGS;
     this.onAvailableSecuredUserDataStorageConfigsChangedCallback = null;
   }
 
@@ -59,7 +61,6 @@ export class UserAvailableUserDataStorageConfigsContext {
       }.`
     );
     if (NEW_SECURED_DATA_STORAGE_CONFIGS.length > 0) {
-      // TODO: Make proper diff type
       this.onAvailableSecuredUserDataStorageConfigsChangedCallback?.({
         removed: [],
         added: NEW_SECURED_DATA_STORAGE_CONFIGS

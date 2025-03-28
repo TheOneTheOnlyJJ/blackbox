@@ -4,7 +4,6 @@ import { IUserDataStorageConfig } from "@main/user/data/storage/config/UserDataS
 import { ISecuredUserDataStorageConfig } from "@main/user/data/storage/config/SecuredUserDataStorageConfig";
 import { userDataStorageConfigToSecuredUserDataStorageConfig } from "@main/user/data/storage/config/utils/userDataStorageConfigToSecuredUserDataStorageConfig";
 import { ISignedInUser } from "@main/user/account/SignedInUser";
-import { UserAccountStorage } from "@main/user/account/storage/UserAccountStorage";
 import { IUserDataStorageVisibilityGroup } from "@main/user/data/storage/visibilityGroup/UserDataStorageVisibilityGroup";
 import { securedUserDataStorageConfigToUserDataStorageConfigInfo } from "@main/user/data/storage/config/utils/securedUserDataStorageConfigToUserDataStorageConfigInfo";
 import { IUserDataStorageConfigCreateDTO } from "@shared/user/data/storage/config/create/DTO/UserDataStorageConfigCreateDTO";
@@ -12,7 +11,10 @@ import { userDataStorageConfigCreateDTOToUserDataStorageConfig } from "@main/use
 import { IUserDataStorageConfigInfo } from "@shared/user/data/storage/config/info/UserDataStorageConfigInfo";
 
 export interface IUserDataStorageConfigServiceContext {
-  getAccountStorage: () => UserAccountStorage | null;
+  isAccountStorageSet: () => boolean;
+  generateRandomUserDataStorageId: () => UUID;
+  isUserIdAvailable: (userId: UUID) => boolean;
+  addSecuredUserDataStorageConfig: (secureduserDataStorageConfig: ISecuredUserDataStorageConfig, encryptionKey: Buffer) => boolean;
   getSignedInUser: () => Readonly<ISignedInUser> | null;
   getAvailableSecuredDataStorageConfigs: () => ISecuredUserDataStorageConfig[];
   getOpenDataStorageVisibilityGroups: () => IUserDataStorageVisibilityGroup[];
@@ -30,11 +32,7 @@ export class UserDataStorageConfigService {
 
   public generateRandomDataStorageId(): UUID {
     this.logger.debug("Generating random User Data Storage ID.");
-    const ACCOUNT_STORAGE: UserAccountStorage | null = this.CONTEXT.getAccountStorage();
-    if (ACCOUNT_STORAGE === null) {
-      throw new Error("Null User Account Storage");
-    }
-    return ACCOUNT_STORAGE.generateRandomUserDataStorageId();
+    return this.CONTEXT.generateRandomUserDataStorageId();
   }
 
   public addUserDataStorageConfigFromCreateDTO(userDataStorageConfigCreateDTO: IUserDataStorageConfigCreateDTO): boolean {
@@ -45,8 +43,7 @@ export class UserDataStorageConfigService {
 
   public addUserDataStorageConfig(userDataStorageConfig: IUserDataStorageConfig): boolean {
     this.logger.debug(`Adding User Data Storage Config to user "${userDataStorageConfig.userId}".`);
-    const ACCOUNT_STORAGE: UserAccountStorage | null = this.CONTEXT.getAccountStorage();
-    if (ACCOUNT_STORAGE === null) {
+    if (!this.CONTEXT.isAccountStorageSet()) {
       throw new Error("Null User Account Storage");
     }
     const SIGNED_IN_USER: Readonly<ISignedInUser> | null = this.CONTEXT.getSignedInUser();
@@ -56,7 +53,7 @@ export class UserDataStorageConfigService {
     if (SIGNED_IN_USER.userId !== userDataStorageConfig.userId) {
       throw new Error(`Config user ID "${userDataStorageConfig.userId}" does not match signed in user ID "${SIGNED_IN_USER.userId}"`);
     }
-    if (ACCOUNT_STORAGE.isUserIdAvailable(userDataStorageConfig.userId)) {
+    if (this.CONTEXT.isUserIdAvailable(userDataStorageConfig.userId)) {
       throw new Error(`Cannot add User Data Storage Config to user "${userDataStorageConfig.userId}" because it does not exist`);
     }
     const SECURED_USER_DATA_STORAGE_CONFIG: ISecuredUserDataStorageConfig = userDataStorageConfigToSecuredUserDataStorageConfig(
@@ -84,7 +81,7 @@ export class UserDataStorageConfigService {
       }
       encryptionAESKey = visibilityGroupAESKey;
     }
-    return ACCOUNT_STORAGE.addSecuredUserDataStorageConfig(SECURED_USER_DATA_STORAGE_CONFIG, encryptionAESKey);
+    return this.CONTEXT.addSecuredUserDataStorageConfig(SECURED_USER_DATA_STORAGE_CONFIG, encryptionAESKey);
   }
 
   public getAllSignedInUserAvailableSecuredDataStorageConfigsInfo(): IUserDataStorageConfigInfo[] {

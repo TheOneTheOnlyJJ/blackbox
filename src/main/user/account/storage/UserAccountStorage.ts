@@ -9,10 +9,6 @@ import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserA
 import { IStorageSecuredUserDataStorageConfig } from "@main/user/data/storage/config/StorageSecuredUserDataStorageConfig";
 import { IStorageSecuredUserDataStorageVisibilityGroupConfig } from "@main/user/data/storage/visibilityGroup/config/StorageSecuredUserDataStorageVisibilityGroupConfig";
 import { IDataStorageConfigFilter, IDataStorageVisibilityGroupFilter } from "./backend/BaseUserAccountStorageBackend";
-import { ISecuredUserDataStorageConfig } from "@main/user/data/storage/config/SecuredUserDataStorageConfig";
-import { securedUserDataStorageConfigToStorageSecuredUserDataStorageConfig } from "@main/user/data/storage/config/utils/securedUserDataStorageConfigToStorageSecuredUserDataStorageConfig";
-import { ISecuredUserDataStorageVisibilityGroupConfig } from "@main/user/data/storage/visibilityGroup/config/SecuredUserDataStorageVisibilityGroupConfig";
-import { securedUserDataStorageVisibilityGroupConfigToStorageSecuredUserDataStorageVisibilityGroupConfig } from "@main/user/data/storage/visibilityGroup/config/utils/securedUserDataStorageVisibilityGroupConfigToStorageSecuredUserDataStorageVisibilityGroupConfig";
 
 export type OnUserAccountStorageInfoChangedCallback = (newInfo: Readonly<IUserAccountStorageInfo>) => void;
 
@@ -31,7 +27,7 @@ export class UserAccountStorage {
       this.logger.info("Info changed.");
       onInfoChanged(this.getInfo());
     };
-    this.backend = userAccountStorageBackendFactory(config.backendConfig, `${logScope}-backend`, onBackendInfoChanged, this.logger);
+    this.backend = userAccountStorageBackendFactory(config.backendConfig, `${logScope}-bcknd`, onBackendInfoChanged, this.logger);
   }
 
   public isOpen(): boolean {
@@ -129,23 +125,14 @@ export class UserAccountStorage {
     return this.backend.getUserDataAESKeySalt(userId);
   }
 
-  public addSecuredUserDataStorageConfig(securedUserDataStorageConfig: ISecuredUserDataStorageConfig, encryptionAESKey: Buffer): boolean {
-    return this.backend.addStorageSecuredUserDataStorageConfig(
-      securedUserDataStorageConfigToStorageSecuredUserDataStorageConfig(securedUserDataStorageConfig, encryptionAESKey, this.logger)
-    );
+  public addStorageSecuredUserDataStorageConfig(storageSecuredUserDataStorageConfig: IStorageSecuredUserDataStorageConfig): boolean {
+    return this.backend.addStorageSecuredUserDataStorageConfig(storageSecuredUserDataStorageConfig);
   }
 
-  public addSecuredUserDataStorageVisibilityGroupConfig(
-    securedUserDataStorageVisibilityGroupConfig: ISecuredUserDataStorageVisibilityGroupConfig,
-    encryptionAESKey: Buffer
+  public addStorageSecuredUserDataStorageVisibilityGroupConfig(
+    storageSecuredUserDataStorageVisibilityGroupConfig: IStorageSecuredUserDataStorageVisibilityGroupConfig
   ): boolean {
-    return this.backend.addStorageSecuredUserDataStorageVisibilityGroupConfig(
-      securedUserDataStorageVisibilityGroupConfigToStorageSecuredUserDataStorageVisibilityGroupConfig(
-        securedUserDataStorageVisibilityGroupConfig,
-        encryptionAESKey,
-        this.logger
-      )
-    );
+    return this.backend.addStorageSecuredUserDataStorageVisibilityGroupConfig(storageSecuredUserDataStorageVisibilityGroupConfig);
   }
 
   public getStorageSecuredUserDataStorageVisibilityGroupConfigs(

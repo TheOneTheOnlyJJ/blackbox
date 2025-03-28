@@ -8,7 +8,7 @@ import { enqueueSnackbar } from "notistack";
 import log, { LogFunctions } from "electron-log";
 import { ISignedInUserInfo } from "@shared/user/account/SignedInUserInfo";
 
-const signOutPageLogger: LogFunctions = log.scope("renderer-sign-out-page");
+const signOutPageLogger: LogFunctions = log.scope("r-sign-out-page");
 
 const SignOutPage: FC = () => {
   useEffect((): void => {

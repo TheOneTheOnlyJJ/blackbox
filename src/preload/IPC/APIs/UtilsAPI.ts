@@ -4,7 +4,7 @@ import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 import { ipcRenderer } from "electron";
 
-const PRELOAD_IPC_UTILS_API_LOG_SCOPE = "preload-ipc-utils-api";
+const PRELOAD_IPC_UTILS_API_LOG_SCOPE = "p-ipc-utls-api";
 
 export const UTILS_API_PRELOAD_HANDLERS: IUtilsAPI = {
   getDirectoryPathWithPicker: async (options: IGetDirectoryPathWithPickerOptions): Promise<IPCAPIResponse<IEncryptedData<string[]> | null>> => {

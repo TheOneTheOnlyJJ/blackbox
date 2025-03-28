@@ -5,8 +5,15 @@ import { IUserAccountStorageConfig } from "@main/user/account/storage/config/Use
 import { UUID } from "node:crypto";
 
 export interface IUserAccountStorageServiceContext {
-  getAccountStorage: () => UserAccountStorage | null;
+  isAccountStorageSet: () => boolean;
+  isAccountStorageOpen: () => boolean;
+  isAccountStorageClosed: () => boolean;
+  getAccountStorageInfo: () => IUserAccountStorageInfo;
   setAccountStorage: (newAccountStorage: UserAccountStorage | null) => boolean;
+  closeAccountStorage: () => boolean;
+  openAccountStorage: () => boolean;
+  getUserCount: () => number;
+  getUsernameForUserId: (userId: UUID) => string | null;
 }
 
 export class UserAccountStorageService {
@@ -20,30 +27,21 @@ export class UserAccountStorageService {
   }
 
   public isAccountStorageOpen(): boolean {
-    const ACCOUNT_STORAGE: UserAccountStorage | null = this.CONTEXT.getAccountStorage();
-    if (ACCOUNT_STORAGE === null) {
-      throw new Error("Null User Account Storage");
-    }
-    const IS_OPEN: boolean = ACCOUNT_STORAGE.isOpen();
+    const IS_OPEN: boolean = this.CONTEXT.isAccountStorageOpen();
     this.logger.debug(`Getting User Account Storage open status: ${IS_OPEN.toString()}.`);
     return IS_OPEN;
   }
 
   public isAccountStorageClosed(): boolean {
-    const ACCOUNT_STORAGE: UserAccountStorage | null = this.CONTEXT.getAccountStorage();
-    if (ACCOUNT_STORAGE === null) {
-      throw new Error("Null User Account Storage");
-    }
-    const IS_CLOSED: boolean = ACCOUNT_STORAGE.isClosed();
+    const IS_CLOSED: boolean = this.CONTEXT.isAccountStorageClosed();
     this.logger.debug(`Getting User Account Storage closed status: ${IS_CLOSED.toString()}.`);
     return IS_CLOSED;
   }
 
   public isAccountStorageSet(): boolean {
-    const ACCOUNT_STORAGE: UserAccountStorage | null = this.CONTEXT.getAccountStorage();
-    const IS_AVAILABLE: boolean = ACCOUNT_STORAGE !== null;
-    this.logger.debug(`Getting User Account Storage set status: ${IS_AVAILABLE.toString()}.`);
-    return IS_AVAILABLE;
+    const IS_SET: boolean = this.CONTEXT.isAccountStorageSet();
+    this.logger.debug(`Getting User Account Storage set status: ${IS_SET.toString()}.`);
+    return IS_SET;
   }
 
   public setAccountStorageFromConfig(
@@ -57,16 +55,16 @@ export class UserAccountStorageService {
 
   public setAccountStorage(newAccountStorage: UserAccountStorage): boolean {
     this.logger.debug(`Setting User Account Storage "${newAccountStorage.storageId}" ("${newAccountStorage.name}").`);
-    const ACCOUNT_STORAGE: UserAccountStorage | null = this.CONTEXT.getAccountStorage();
-    if (ACCOUNT_STORAGE !== null) {
-      if (ACCOUNT_STORAGE.storageId === newAccountStorage.storageId) {
+    if (this.CONTEXT.isAccountStorageSet()) {
+      const CURRENT_ACCOUNT_STORAGE_INFO: IUserAccountStorageInfo = this.CONTEXT.getAccountStorageInfo();
+      if (CURRENT_ACCOUNT_STORAGE_INFO.storageId === newAccountStorage.storageId) {
         this.logger.warn("User Account Storage with same ID is already set. No-op.");
         return true;
       }
-      this.logger.warn(`Already set "${ACCOUNT_STORAGE.name}" User Account Storage. Unsetting.`);
+      this.logger.warn(`Already set "${CURRENT_ACCOUNT_STORAGE_INFO.name}" User Account Storage. Unsetting.`);
       this.unsetAccountStorage();
       if (this.isAccountStorageSet()) {
-        this.logger.warn(`Could not unset previous "${ACCOUNT_STORAGE.name}" User Account Storage. No-op set.`);
+        this.logger.warn(`Could not unset previous "${CURRENT_ACCOUNT_STORAGE_INFO.name}" User Account Storage. No-op set.`);
         return false;
       }
     }
@@ -75,57 +73,34 @@ export class UserAccountStorageService {
 
   public unsetAccountStorage(): boolean {
     this.logger.debug("Unsetting User Account Storage.");
-    const ACCOUNT_STORAGE: UserAccountStorage | null = this.CONTEXT.getAccountStorage();
-    if (ACCOUNT_STORAGE === null) {
-      throw new Error("Null User Account Storage");
-    }
     if (this.isAccountStorageOpen()) {
-      ACCOUNT_STORAGE.close();
+      this.CONTEXT.closeAccountStorage();
     }
     return this.CONTEXT.setAccountStorage(null);
   }
 
   public openAccountStorage(): boolean {
     this.logger.debug("Opening User Account Storage.");
-    const ACCOUNT_STORAGE: UserAccountStorage | null = this.CONTEXT.getAccountStorage();
-    if (ACCOUNT_STORAGE === null) {
-      throw new Error("Null User Account Storage");
-    }
-    return ACCOUNT_STORAGE.open();
+    return this.CONTEXT.openAccountStorage();
   }
 
   public closeAccountStorage(): boolean {
     this.logger.debug("Closing User Account Storage.");
-    const ACCOUNT_STORAGE: UserAccountStorage | null = this.CONTEXT.getAccountStorage();
-    if (ACCOUNT_STORAGE === null) {
-      throw new Error("Null User Account Storage");
-    }
-    return ACCOUNT_STORAGE.close();
+    return this.CONTEXT.closeAccountStorage();
   }
 
-  public getAccountStorageInfo(): IUserAccountStorageInfo | null {
-    const ACCOUNT_STORAGE: UserAccountStorage | null = this.CONTEXT.getAccountStorage();
-    if (ACCOUNT_STORAGE === null) {
-      return null;
-    }
-    return ACCOUNT_STORAGE.getInfo();
+  public getAccountStorageInfo(): IUserAccountStorageInfo {
+    this.logger.debug("Getting User Account Storage info.");
+    return this.CONTEXT.getAccountStorageInfo();
   }
 
   public getUserCount(): number {
     this.logger.debug("Getting user count.");
-    const ACCOUNT_STORAGE: UserAccountStorage | null = this.CONTEXT.getAccountStorage();
-    if (ACCOUNT_STORAGE === null) {
-      throw new Error("Null User Account Storage");
-    }
-    return ACCOUNT_STORAGE.getUserCount();
+    return this.CONTEXT.getUserCount();
   }
 
   public getUsernameForUserId(userId: UUID): string | null {
     this.logger.debug(`Getting username for user ID "${userId}".`);
-    const ACCOUNT_STORAGE: UserAccountStorage | null = this.CONTEXT.getAccountStorage();
-    if (ACCOUNT_STORAGE === null) {
-      throw new Error("Null User Account Storage");
-    }
-    return ACCOUNT_STORAGE.getUsernameForUserId(userId);
+    return this.CONTEXT.getUsernameForUserId(userId);
   }
 }

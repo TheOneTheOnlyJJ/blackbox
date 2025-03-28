@@ -5,12 +5,12 @@ import log, { LogFunctions } from "electron-log";
 import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 import { JSONSchemaType } from "ajv/dist/types/json-schema";
 import { IIPCTLSBootstrapAPI, IPC_TLS_BOOTSTRAP_API_IPC_CHANNELS } from "@shared/IPC/APIs/IPCTLSBootstrapAPI";
-import { USER_AUTHENTICATION_API_IPC_CHANNELS, UserAuthenticationAPIIPCChannel } from "@shared/IPC/APIs/UserAuthenticationAPI";
-import { IUserFacadeConstructorProps, UserFacade } from "@main/user/facade/UserFacade";
+import { USER_AUTH_API_IPC_CHANNELS, UserAuthAPIIPCChannel } from "@shared/IPC/APIs/UserAuthAPI";
+import { IUserFacadeConstructorProps, IUserServiceLoggers, UserFacade } from "@main/user/facade/UserFacade";
 import { USER_ACCOUNT_STORAGE_BACKEND_TYPES } from "@shared/user/account/storage/backend/UserAccountStorageBackendType";
 import { adjustWindowBounds } from "@main/utils/window/adjustWindowBounds";
 import { IpcMainEvent, IpcMainInvokeEvent, OpenDialogReturnValue } from "electron";
-import { IUserAuthenticationAPI } from "@shared/IPC/APIs/UserAuthenticationAPI";
+import { IUserAuthAPI } from "@shared/IPC/APIs/UserAuthAPI";
 import { MainProcessIPCAPIHandlers } from "@main/utils/IPC/MainProcessIPCAPIHandlers";
 import { IUserSignUpDTO, isValidUserSignUpDTO } from "@shared/user/account/UserSignUpDTO";
 import { generateKeyPairSync, UUID, webcrypto } from "node:crypto";
@@ -46,7 +46,7 @@ import {
   isValidUserDataStorageVisibilityGroupsOpenRequestDTO
 } from "@shared/user/data/storage/visibilityGroup/openRequest/DTO/UserDataStorageVisibilityGroupsOpenRequestDTO";
 import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
-import { IUserContextHandlers } from "./user/facade/context/UserContext";
+import { IUserContextHandlers, IUserContextLoggers } from "./user/facade/context/UserContext";
 import { IUserDataStorageConfigInfo } from "@shared/user/data/storage/config/info/UserDataStorageConfigInfo";
 import { IDataChangedDiff } from "@shared/utils/DataChangedDiff";
 import {
@@ -77,7 +77,7 @@ export interface IAppSettings extends BaseSettings {
 
 type MainProcessIPCTLSBootstrapAPIIPCHandlers = MainProcessIPCAPIHandlers<IIPCTLSBootstrapAPI>;
 type MainProcessIPCTLSAPIIPCHandlers = MainProcessIPCAPIHandlers<IIPCTLSAPIMain>;
-type MainProcessUserAuthenticationAPIIPCHandlers = MainProcessIPCAPIHandlers<IUserAuthenticationAPI>;
+type MainProcessUserAuthAPIIPCHandlers = MainProcessIPCAPIHandlers<IUserAuthAPI>;
 type MainProcessUserAccountStorageAPIIPCHandlers = MainProcessIPCAPIHandlers<IUserAccountStorageAPI>;
 type MainProcessUserDataStorageConfigAPIIPCHandlers = MainProcessIPCAPIHandlers<IUserDataStorageConfigAPI>;
 type MainProcessUserDataStorageVisibilityGroupAPIIPCHandlers = MainProcessIPCAPIHandlers<IUserDataStorageVisibilityGroupAPI>;
@@ -97,27 +97,37 @@ export class App {
   private readonly LOG_FILE_NAME = "BlackBoxLogs.log";
   private readonly LOG_FILE_PATH: string = resolve(join(this.LOGS_DIR_PATH, this.LOG_FILE_NAME));
 
-  private readonly bootstrapLogger: LogFunctions = log.scope("main-bootstrap");
-  private readonly appLogger: LogFunctions = log.scope("main-app");
-  private readonly windowLogger: LogFunctions = log.scope("main-window");
-  private readonly windowPositionWatcherLogger: LogFunctions = log.scope("main-window-position-watcher");
+  private readonly bootstrapLogger: LogFunctions = log.scope("m-boot");
+  private readonly appLogger: LogFunctions = log.scope("m-app");
+  private readonly windowLogger: LogFunctions = log.scope("m-win");
+  private readonly windowPositionWatcherLogger: LogFunctions = log.scope("m-win-pos-watch");
 
-  private readonly IPCTLSBootstrapAPILogger: LogFunctions = log.scope("main-ipc-tls-bootstrap-api");
-  private readonly IPCTLSAPILogger: LogFunctions = log.scope("main-ipc-tls-api");
-  private readonly UserAuthAPILogger: LogFunctions = log.scope("main-user-auth-api");
-  private readonly UserAccountStorageAPILogger: LogFunctions = log.scope("main-user-account-storage-api");
-  private readonly UserDataStorageConfigAPILogger: LogFunctions = log.scope("main-user-data-storage-config-api");
-  private readonly UserDataStorageVisibilityGroupAPILogger: LogFunctions = log.scope("main-user-data-storage-visibility-group-api");
-  private readonly UtilsAPILogger: LogFunctions = log.scope("main-utils-api");
+  private readonly IPCTLSBootstrapAPILogger: LogFunctions = log.scope("m-ipc-tls-boot-api");
+  private readonly IPCTLSAPILogger: LogFunctions = log.scope("m-ipc-tls-api");
+  private readonly UserAuthAPILogger: LogFunctions = log.scope("m-uauth-api");
+  private readonly UserAccountStorageAPILogger: LogFunctions = log.scope("m-uacc-strg-api");
+  private readonly UserDataStorageConfigAPILogger: LogFunctions = log.scope("m-udata-strg-cfg-api");
+  private readonly UserDataStorageVisibilityGroupAPILogger: LogFunctions = log.scope("m-udata-strg-vgrp-api");
+  private readonly UtilsAPILogger: LogFunctions = log.scope("m-utls-api");
 
-  private readonly userFacadeLogger: LogFunctions = log.scope("main-user-facade");
-  private readonly userContextLogger: LogFunctions = log.scope("main-user-context");
-  private readonly userContextProviderLogger: LogFunctions = log.scope("main-user-context-provider");
-  private readonly userAuthServiceLogger: LogFunctions = log.scope("main-user-auth-service");
-  private readonly userAccountServiceLogger: LogFunctions = log.scope("main-user-account-service");
-  private readonly userAccountStorageServiceLogger: LogFunctions = log.scope("main-user-account-storage-service");
-  private readonly userDataStorageConfigServiceLogger: LogFunctions = log.scope("main-user-data-storage-config-service");
-  private readonly userDataStorageVisibilityGroupServiceLogger: LogFunctions = log.scope("main-user-data-storage-visibility-group-service");
+  private readonly userFacadeLogger: LogFunctions = log.scope("m-usr-fac");
+  private readonly USER_CONTEXT_LOGGERS: IUserContextLoggers = {
+    main: log.scope("m-uctx"),
+    subcontexts: {
+      userAccountStorage: log.scope("m-uacc-strg-ctx"),
+      userAuth: log.scope("m-uauth-ctx"),
+      availableUserDataStorageConfigs: log.scope("m-avail-data-strg-cfg-ctx"),
+      openUserDataStorageVisibilityGroups: log.scope("m-opn-udata-strg-vgrp-ctx")
+    }
+  } as const;
+  private readonly userContextProviderLogger: LogFunctions = log.scope("m-uctx-prvdr");
+  private readonly USER_SERVICE_LOGGERS: IUserServiceLoggers = {
+    auth: log.scope("m-uauth-svc"),
+    account: log.scope("m-uacc-svc"),
+    accountStorage: log.scope("m-uacc-strg-svc"),
+    dataStorageConfig: log.scope("m-udata-strg-cfg-svc"),
+    dataStorageVisibilityGroup: log.scope("m-udata-strg-vgrp-svc")
+  } as const;
 
   // Settings
   public static readonly SETTINGS_SCHEMA: JSONSchemaType<IAppSettings> = {
@@ -171,7 +181,7 @@ export class App {
     fileDir: resolve(join(app.getAppPath(), "settings")),
     fileName: "BlackBoxSettings.json"
   } as const;
-  private readonly DEFAULT_SETTINGS_STORAGE_LOG_SCOPE = "main-default-settings-storage";
+  private readonly DEFAULT_SETTINGS_STORAGE_LOG_SCOPE = "m-dflt-sets-strg";
 
   // Window
   private readonly WINDOW_CONSTRUCTOR_OPTIONS: BrowserWindowConstructorOptions = {
@@ -199,7 +209,7 @@ export class App {
       dbFileName: "users.sqlite"
     }
   } as const;
-  private readonly DEFAULT_USER_ACCOUNT_STORAGE_LOG_SCOPE = "uas-default";
+  private readonly DEFAULT_USER_ACCOUNT_STORAGE_LOG_SCOPE = "m-uacc-strg-dflt";
 
   // Security
   private IPCTLSBootstrapPrivateRSAKey: CryptoKey | null;
@@ -292,7 +302,7 @@ export class App {
     }
   } as const;
 
-  private readonly USER_AUTH_API_HANDLERS: MainProcessUserAuthenticationAPIIPCHandlers = {
+  private readonly USER_AUTH_API_HANDLERS: MainProcessUserAuthAPIIPCHandlers = {
     handleSignUp: (encryptedUserSignUpDTO: IEncryptedData<IUserSignUpDTO>): IPCAPIResponse<boolean> => {
       try {
         if (this.IPC_TLS_AES_KEY.value === null) {
@@ -372,7 +382,7 @@ export class App {
         this.UserAuthAPILogger.debug("Window is null. No-op.");
         return;
       }
-      const CHANNEL: UserAuthenticationAPIIPCChannel = USER_AUTHENTICATION_API_IPC_CHANNELS.onSignedInUserChanged;
+      const CHANNEL: UserAuthAPIIPCChannel = USER_AUTH_API_IPC_CHANNELS.onSignedInUserChanged;
       this.UserAuthAPILogger.debug(`Messaging renderer on channel: "${CHANNEL}".`);
       this.window.webContents.send(CHANNEL, newSignedInUserInfo);
     }
@@ -712,15 +722,9 @@ export class App {
     this.bootstrapLogger.debug(`Using app settings: ${JSON.stringify(this.settingsStorage.getSettings(), null, 2)}.`);
     this.userFacade = new UserFacade({
       logger: this.userFacadeLogger,
-      contextLogger: this.userContextLogger,
+      contextLoggers: this.USER_CONTEXT_LOGGERS,
       contextProviderLogger: this.userContextProviderLogger,
-      serviceLoggers: {
-        auth: this.userAuthServiceLogger,
-        account: this.userAccountServiceLogger,
-        accountStorage: this.userAccountStorageServiceLogger,
-        dataStorageConfig: this.userDataStorageConfigServiceLogger,
-        dataStorageVisibilityGroup: this.userDataStorageVisibilityGroupServiceLogger
-      },
+      serviceLoggers: this.USER_SERVICE_LOGGERS,
       contextHandlers: {
         onSignedInUserChangedCallback: this.USER_AUTH_API_HANDLERS.sendSignedInUserChanged,
         onUserAccountStorageChangedCallback: this.USER_ACCOUNT_STORAGE_API_HANDLERS.sendUserAccountStorageChanged,
@@ -860,12 +864,12 @@ export class App {
     // TODO: Delete comment
     // setInterval(() => {
     //   this.appLogger.warn("SIGNING OUT");
-    //   this.userManager.signOutUser();
+    //   this.userFacade.signOutUser();
     // }, 10_000);
     // setTimeout(() => {
     //   setInterval(() => {
     //     this.appLogger.warn("SIGNING IN");
-    //     this.userManager.signInUser({ username: "testing", password: "testing" });
+    //     this.userFacade.signInUser({ username: "testing", password: "testing" });
     //   }, 10_000);
     // }, 5_000);
     // let latestVal: Buffer | null = null;
@@ -966,7 +970,7 @@ export class App {
     //     this.userFacade.setAccountStorageFromConfig(
     //       this.DEFAULT_USER_ACCOUNT_STORAGE_CONFIG,
     //       this.DEFAULT_USER_ACCOUNT_STORAGE_LOG_SCOPE,
-    //       this.USER_API_HANDLERS.sendUserAccountStorageInfoChanged
+    //       this.USER_ACCOUNT_STORAGE_API_HANDLERS.sendUserAccountStorageInfoChanged
     //     );
     //   }
     // }, 7_500);
@@ -1007,7 +1011,7 @@ export class App {
     this.windowLogger.debug("Registering IPC API handlers.");
     this.registerIPCTLSBootstrapIPCHandlers();
     this.registerIPCTLSAPIIPCHandlers();
-    this.registerUserAuthenticationAPIIPCHandlers();
+    this.registerUserAuthAPIIPCHandlers();
     this.registerUserAccountStorageAPIIPCHandlers();
     this.registerUserDataStorageConfigAPIIPCHandlers();
     this.registerUserDataStorageVisibilityGroupAPIIPCHandlers();
@@ -1044,26 +1048,26 @@ export class App {
     });
   }
 
-  private registerUserAuthenticationAPIIPCHandlers(): void {
-    this.windowLogger.debug("Registering User Authentication API IPC handlers.");
-    ipcMain.on(USER_AUTHENTICATION_API_IPC_CHANNELS.isUsernameAvailable, (event: IpcMainEvent, username: string): void => {
-      this.UserAuthAPILogger.debug(`Received message from renderer on channel: "${USER_AUTHENTICATION_API_IPC_CHANNELS.isUsernameAvailable}".`);
+  private registerUserAuthAPIIPCHandlers(): void {
+    this.windowLogger.debug("Registering User Auth API IPC handlers.");
+    ipcMain.on(USER_AUTH_API_IPC_CHANNELS.isUsernameAvailable, (event: IpcMainEvent, username: string): void => {
+      this.UserAuthAPILogger.debug(`Received message from renderer on channel: "${USER_AUTH_API_IPC_CHANNELS.isUsernameAvailable}".`);
       event.returnValue = this.USER_AUTH_API_HANDLERS.handleIsUsernameAvailable(username);
     });
-    ipcMain.on(USER_AUTHENTICATION_API_IPC_CHANNELS.signUp, (event: IpcMainEvent, encryptedUserSignUpData: IEncryptedData<IUserSignUpDTO>): void => {
-      this.UserAuthAPILogger.debug(`Received message from renderer on channel: "${USER_AUTHENTICATION_API_IPC_CHANNELS.signUp}".`);
+    ipcMain.on(USER_AUTH_API_IPC_CHANNELS.signUp, (event: IpcMainEvent, encryptedUserSignUpData: IEncryptedData<IUserSignUpDTO>): void => {
+      this.UserAuthAPILogger.debug(`Received message from renderer on channel: "${USER_AUTH_API_IPC_CHANNELS.signUp}".`);
       event.returnValue = this.USER_AUTH_API_HANDLERS.handleSignUp(encryptedUserSignUpData);
     });
-    ipcMain.on(USER_AUTHENTICATION_API_IPC_CHANNELS.signIn, (event: IpcMainEvent, encryptedUserSignInData: IEncryptedData<IUserSignInDTO>): void => {
-      this.UserAuthAPILogger.debug(`Received message from renderer on channel: "${USER_AUTHENTICATION_API_IPC_CHANNELS.signIn}".`);
+    ipcMain.on(USER_AUTH_API_IPC_CHANNELS.signIn, (event: IpcMainEvent, encryptedUserSignInData: IEncryptedData<IUserSignInDTO>): void => {
+      this.UserAuthAPILogger.debug(`Received message from renderer on channel: "${USER_AUTH_API_IPC_CHANNELS.signIn}".`);
       event.returnValue = this.USER_AUTH_API_HANDLERS.handleSignIn(encryptedUserSignInData);
     });
-    ipcMain.on(USER_AUTHENTICATION_API_IPC_CHANNELS.signOut, (event: IpcMainEvent): void => {
-      this.UserAuthAPILogger.debug(`Received message from renderer on channel: "${USER_AUTHENTICATION_API_IPC_CHANNELS.signOut}".`);
+    ipcMain.on(USER_AUTH_API_IPC_CHANNELS.signOut, (event: IpcMainEvent): void => {
+      this.UserAuthAPILogger.debug(`Received message from renderer on channel: "${USER_AUTH_API_IPC_CHANNELS.signOut}".`);
       event.returnValue = this.USER_AUTH_API_HANDLERS.handleSignOut();
     });
-    ipcMain.on(USER_AUTHENTICATION_API_IPC_CHANNELS.getSignedInUserInfo, (event: IpcMainEvent): void => {
-      this.UserAuthAPILogger.debug(`Received message from renderer on channel: "${USER_AUTHENTICATION_API_IPC_CHANNELS.getSignedInUserInfo}".`);
+    ipcMain.on(USER_AUTH_API_IPC_CHANNELS.getSignedInUserInfo, (event: IpcMainEvent): void => {
+      this.UserAuthAPILogger.debug(`Received message from renderer on channel: "${USER_AUTH_API_IPC_CHANNELS.getSignedInUserInfo}".`);
       event.returnValue = this.USER_AUTH_API_HANDLERS.handleGetSignedInUserInfo();
     });
   }
