@@ -12,10 +12,11 @@ export interface ITerminateUserDataStorageActionItemProps {
   logger: LogFunctions;
   key: string | number;
   userDataStorageInfo: IUserDataStorageInfo;
+  showInMenu: boolean;
 }
 
 const TerminateUserDataStorageActionItem: FC<ITerminateUserDataStorageActionItemProps> = (props: ITerminateUserDataStorageActionItemProps) => {
-  const { logger, key, userDataStorageInfo } = props;
+  const { logger, key, userDataStorageInfo, showInMenu } = props;
 
   const handleTerminateClick = useCallback((): void => {
     logger.info(`Clicked terminate User Data Storage "${userDataStorageInfo.name}" action button.`);
@@ -55,14 +56,7 @@ const TerminateUserDataStorageActionItem: FC<ITerminateUserDataStorageActionItem
     }
   }, [logger, userDataStorageInfo]);
 
-  return (
-    <GridActionsCellItem
-      key={key}
-      icon={<PowerOffOutlinedIcon />}
-      onClick={handleTerminateClick}
-      label={`Deactivate ${userDataStorageInfo.name} data storage`}
-    />
-  );
+  return <GridActionsCellItem key={key} icon={<PowerOffOutlinedIcon />} onClick={handleTerminateClick} label="Deactivate" showInMenu={showInMenu} />;
 };
 
 export default TerminateUserDataStorageActionItem;

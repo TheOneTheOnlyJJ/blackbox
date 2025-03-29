@@ -12,10 +12,11 @@ export interface IStartUserDataStorageActionItemProps {
   logger: LogFunctions;
   key: string | number;
   userDataStorageConfigInfo: IUserDataStorageConfigInfo;
+  showInMenu: boolean;
 }
 
 const InitialiseUserDataStorageActionItem: FC<IStartUserDataStorageActionItemProps> = (props: IStartUserDataStorageActionItemProps) => {
-  const { logger, key, userDataStorageConfigInfo } = props;
+  const { logger, key, userDataStorageConfigInfo, showInMenu } = props;
 
   const handleOpenClick = useCallback((): void => {
     logger.info(`Clicked activate User Data Storage "${userDataStorageConfigInfo.storageId}" action button.`);
@@ -55,7 +56,7 @@ const InitialiseUserDataStorageActionItem: FC<IStartUserDataStorageActionItemPro
     }
   }, [logger, userDataStorageConfigInfo]);
 
-  return <GridActionsCellItem key={key} icon={<PowerOutlinedIcon />} onClick={handleOpenClick} label="Activate" />;
+  return <GridActionsCellItem key={key} icon={<PowerOutlinedIcon />} onClick={handleOpenClick} label="Activate" showInMenu={showInMenu} />;
 };
 
 export default InitialiseUserDataStorageActionItem;

@@ -103,8 +103,9 @@ const AvailableUserDataStorageConfigsDataGrid: FC = () => {
               userDataStorageConfigInfo={params.row}
               setChosenUserDataStorageConfigInfo={setChosenStorageConfigInfo}
               setIsShowUserDataStorageConfigInfoDialogOpen={setIsShowConfigInfoDialogOpen}
+              showInMenu={false}
             />,
-            <InitialiseUserDataStorageActionItem logger={appLogger} key="openStorage" userDataStorageConfigInfo={params.row} />
+            <InitialiseUserDataStorageActionItem logger={appLogger} key="openStorage" userDataStorageConfigInfo={params.row} showInMenu={true} />
           ];
         }
       }

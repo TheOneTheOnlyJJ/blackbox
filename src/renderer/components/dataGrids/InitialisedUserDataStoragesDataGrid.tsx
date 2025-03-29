@@ -1,5 +1,6 @@
 import {
   DataGrid,
+  GridActionsCellItemProps,
   GridApi,
   GridAutosizeOptions,
   GridColDef,
@@ -11,7 +12,7 @@ import {
 } from "@mui/x-data-grid";
 import { useMUIXDataGridAutosizeColumnsOnWindowResize } from "@renderer/hooks/useMUIXDataGridAutosizeOnWindowResize";
 import { appLogger } from "@renderer/utils/loggers";
-import { FC, MutableRefObject, useCallback, useMemo, useState } from "react";
+import { FC, MutableRefObject, ReactElement, useCallback, useMemo, useState } from "react";
 import { ISignedInRootContext, useSignedInRootContext } from "../roots/signedInRoot/SignedInRootContext";
 import { IUserDataStorageInfo, USER_DATA_STORAGE_INFO_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/info/UserDataStorageInfo";
 import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
@@ -21,8 +22,10 @@ import { BASE_USER_DATA_STORAGE_BACKEND_INFO_JSON_SCHEMA_CONSTANTS } from "@shar
 import { useDialogOpenState } from "@renderer/hooks/useDialogState";
 import UserDataStorageInfoDialog from "../dialogs/UserDataStorageInfoDialog";
 import OpenUserDataStorageInfoDialogActionItem from "./actionCellItems/OpenUserDataStorageInfoDialogActionItem";
-import OpenAndCloseUserDataStorageActionItem from "./actionCellItems/OpenAndCloseUserDataStorageActionItem";
 import TerminateUserDataStorageActionItem from "./actionCellItems/TerminateUserDataStorageActionItem";
+import CloseUserDataStorageActionItem from "./actionCellItems/CloseUserDataStorageActionItem";
+import OpenUserDataStorageActionItem from "./actionCellItems/OpenUserDataStorageActionItem";
+import NewUserDataBoxActionItem from "./actionCellItems/NewUserDataBoxActionItem";
 
 const GRID_AUTOSIZE_OPTIONS: GridAutosizeOptions = { expand: true, includeHeaders: true };
 
@@ -102,22 +105,30 @@ const InitialisedUserDataStoragesDataGrid: FC = () => {
         type: "actions",
         headerName: "Actions",
         getActions: (params: GridRowParams<IUserDataStorageInfo>) => {
-          return [
+          const ACTION_ITEMS: ReactElement<GridActionsCellItemProps>[] = [
             <OpenUserDataStorageInfoDialogActionItem
               logger={appLogger}
               key="openInfoDialog"
               userDataStorageInfo={params.row}
               setChosenUserDataStorageInfo={setChosenStorageInfo}
               setIsShowUserDataStorageInfoDialogOpen={setIsShowInfoDialogOpen}
-            />,
-            <OpenAndCloseUserDataStorageActionItem
-              logger={appLogger}
-              key="openAndCloseStorage"
-              keys={{ open: "openStorage", close: "openStorage" }}
-              userDataStorageInfo={params.row}
-            />,
-            <TerminateUserDataStorageActionItem logger={appLogger} key="terminateStorage" userDataStorageInfo={params.row} />
+              showInMenu={false}
+            />
           ];
+          if (params.row.backend.isOpen) {
+            ACTION_ITEMS.push(
+              <NewUserDataBoxActionItem logger={appLogger} key="newBox" userDataStorageInfo={params.row} showInMenu={true} />,
+              <CloseUserDataStorageActionItem logger={appLogger} key="closeStorage" userDataStorageInfo={params.row} showInMenu={true} />
+            );
+          } else {
+            ACTION_ITEMS.push(
+              <OpenUserDataStorageActionItem logger={appLogger} key="openStorage" userDataStorageInfo={params.row} showInMenu={true} />
+            );
+          }
+          ACTION_ITEMS.push(
+            <TerminateUserDataStorageActionItem logger={appLogger} key="terminateStorage" userDataStorageInfo={params.row} showInMenu={true} />
+          );
+          return ACTION_ITEMS;
         }
       }
     ];

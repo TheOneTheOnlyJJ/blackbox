@@ -11,12 +11,13 @@ export interface ICloseUserDataStorageVisibilityGroupActionItemProps {
   logger: LogFunctions;
   key: string | number;
   visibilityGroupInfo: IUserDataStorageVisibilityGroupInfo;
+  showInMenu: boolean;
 }
 
 const CloseUserDataStorageVisibilityGroupActionItem: FC<ICloseUserDataStorageVisibilityGroupActionItemProps> = (
   props: ICloseUserDataStorageVisibilityGroupActionItemProps
 ) => {
-  const { logger, key, visibilityGroupInfo } = props;
+  const { logger, key, visibilityGroupInfo, showInMenu } = props;
   const closeUserDataStorageVisibilityGroup = useCallback((): void => {
     logger.debug(`Clicked close User Data Storage Visibility Group "${visibilityGroupInfo.visibilityGroupId}" action button.`);
     const CLOSE_USER_DATA_STORAGE_VISIBILITY_GROUP_RESPONSE: IPCAPIResponse<number> =
@@ -31,7 +32,9 @@ const CloseUserDataStorageVisibilityGroupActionItem: FC<ICloseUserDataStorageVis
     }
   }, [logger, visibilityGroupInfo]);
 
-  return <GridActionsCellItem key={key} icon={<CloseOutlinedIcon />} onClick={closeUserDataStorageVisibilityGroup} label="Close" />;
+  return (
+    <GridActionsCellItem key={key} icon={<CloseOutlinedIcon />} onClick={closeUserDataStorageVisibilityGroup} label="Close" showInMenu={showInMenu} />
+  );
 };
 
 export default CloseUserDataStorageVisibilityGroupActionItem;
