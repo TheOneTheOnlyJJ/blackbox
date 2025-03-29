@@ -53,6 +53,7 @@ export class UserAccountStorageService {
     return this.setAccountStorage(new UserAccountStorage(newAccountStorageConfig, logScope, onInfoChanged));
   }
 
+  // TODO: Decide if this should be removed
   public setAccountStorage(newAccountStorage: UserAccountStorage): boolean {
     this.logger.debug(`Setting User Account Storage "${newAccountStorage.storageId}" ("${newAccountStorage.name}").`);
     if (this.CONTEXT.isAccountStorageSet()) {

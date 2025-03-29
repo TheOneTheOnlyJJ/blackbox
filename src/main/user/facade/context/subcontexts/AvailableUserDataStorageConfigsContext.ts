@@ -100,7 +100,6 @@ export class AvailableUserDataStorageConfigsContext {
     for (let idx = this.availableSecuredDataStorageConfigs.length - 1; idx >= 0; idx--) {
       const AVAILABLE_SECURED_DATA_STORAGE_CONFIG: ISecuredUserDataStorageConfig = this.availableSecuredDataStorageConfigs[idx];
       if (SECURED_DATA_STORAGE_CONFIG_IDS_TO_REMOVE.includes(AVAILABLE_SECURED_DATA_STORAGE_CONFIG.storageId)) {
-        // AVAILABLE_DATA_STORAGE_CONFIG.close(); // TODO: CLEANUP?
         this.availableSecuredDataStorageConfigs.splice(idx, 1); // Remove from array in-place
       }
     }
@@ -126,7 +125,6 @@ export class AvailableUserDataStorageConfigsContext {
     }
     const SECURED_DATA_STORAGE_CONFIG_IDS_TO_REMOVE: UUID[] = this.availableSecuredDataStorageConfigs.map(
       (availableSecuredDataStorageConfig: ISecuredUserDataStorageConfig): UUID => {
-        // availableDataStorage.close(); // TODO: Cleanup?
         return availableSecuredDataStorageConfig.storageId;
       }
     );
@@ -137,5 +135,25 @@ export class AvailableUserDataStorageConfigsContext {
       added: []
     } satisfies IDataChangedDiff<UUID, ISecuredUserDataStorageConfig>);
     return SECURED_DATA_STORAGE_CONFIG_IDS_TO_REMOVE.length;
+  }
+
+  public getAllAvailableDataStorageConfigIdsForVisibilityGroupIds(visibilityGroupIds: UUID[]): UUID[] {
+    this.logger.info(
+      `Getting all available Secured User Data Storage Config IDs for ${visibilityGroupIds.length.toString()} User Data Storage Visibility Group ID${
+        visibilityGroupIds.length === 1 ? "" : "s"
+      }.`
+    );
+    if (this.availableSecuredDataStorageConfigs.length === 0) {
+      return [];
+    }
+    const DATA_STORAGE_IDS: UUID[] = [];
+    for (const VISIBILITY_GROUP_ID of visibilityGroupIds) {
+      for (const AVAILABLE_SECURED_DATA_STORAGE_CONFIG of this.availableSecuredDataStorageConfigs) {
+        if (VISIBILITY_GROUP_ID === AVAILABLE_SECURED_DATA_STORAGE_CONFIG.visibilityGroupId) {
+          DATA_STORAGE_IDS.push(AVAILABLE_SECURED_DATA_STORAGE_CONFIG.storageId);
+        }
+      }
+    }
+    return DATA_STORAGE_IDS;
   }
 }

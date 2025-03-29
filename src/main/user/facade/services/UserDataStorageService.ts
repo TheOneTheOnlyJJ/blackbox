@@ -1,14 +1,15 @@
 import { ISecuredUserDataStorageConfig } from "@main/user/data/storage/config/SecuredUserDataStorageConfig";
 import { IUserDataStorageConfig } from "@main/user/data/storage/config/UserDataStorageConfig";
-import { UserDataStorage } from "@main/user/data/storage/UserDataStorage";
 import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
 import { LogFunctions } from "electron-log";
 import { UUID } from "node:crypto";
 
 export interface IUserDataStorageServiceContext {
-  getInitialisedDataStorages: () => UserDataStorage[];
   initialiseDataStoragesFromConfigs: (newSecuredDataStorageConfigs: IUserDataStorageConfig[]) => number;
   terminateDataStoragesFromIds: (dataStorageIds: UUID[]) => number;
+  openInitialisedDataStorages: (dataStorageIds: UUID[]) => number;
+  closeInitialisedDataStorages: (dataStorageIds: UUID[]) => number;
+  getAllSignedInUserInitialisedDataStoragesInfo: () => IUserDataStorageInfo[];
   getAvailableSecuredDataStorageConfigs: () => ISecuredUserDataStorageConfig[];
 }
 
@@ -39,32 +40,16 @@ export class UserDataStorageService {
 
   public openUserDataStorage(storageId: UUID): boolean {
     this.logger.debug(`Opening User Data Storage "${storageId}".`);
-    // TODO: THESE CHECKS SHOULD BE DONE INSIDE CONTEXT
-    const AVAILABLE_DATA_STORAGES: UserDataStorage[] = this.CONTEXT.getInitialisedDataStorages();
-    for (const AVAILABLE_DATA_STORAGE of AVAILABLE_DATA_STORAGES) {
-      if (AVAILABLE_DATA_STORAGE.storageId === storageId) {
-        return AVAILABLE_DATA_STORAGE.open();
-      }
-    }
-    throw new Error(`Unavailable User Data Storage "${storageId}"`);
+    return this.CONTEXT.openInitialisedDataStorages([storageId]) === 1;
   }
 
   public closeUserDataStorage(storageId: UUID): boolean {
     this.logger.debug(`Closing User Data Storage "${storageId}".`);
-    // TODO: THESE CHECKS SHOULD BE DONE INSIDE CONTEXT
-    const AVAILABLE_DATA_STORAGES: UserDataStorage[] = this.CONTEXT.getInitialisedDataStorages();
-    for (const AVAILABLE_DATA_STORAGE of AVAILABLE_DATA_STORAGES) {
-      if (AVAILABLE_DATA_STORAGE.storageId === storageId) {
-        return AVAILABLE_DATA_STORAGE.close();
-      }
-    }
-    throw new Error(`Unavailable User Data Storage "${storageId}"`);
+    return this.CONTEXT.closeInitialisedDataStorages([storageId]) === 1;
   }
 
   public getAllSignedInUserInitialisedDataStoragesInfo(): IUserDataStorageInfo[] {
     this.logger.debug("Getting all signed in user's initialised User Data Storages Info.");
-    return this.CONTEXT.getInitialisedDataStorages().map((dataStorage: UserDataStorage): IUserDataStorageInfo => {
-      return dataStorage.getInfo();
-    });
+    return this.CONTEXT.getAllSignedInUserInitialisedDataStoragesInfo();
   }
 }

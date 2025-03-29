@@ -9,6 +9,7 @@ import { ForwardedRef, forwardRef, useMemo } from "react";
 import { SvgIconComponent } from "@mui/icons-material";
 import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
+import WarehouseOutlinedIcon from "@mui/icons-material/WarehouseOutlined";
 import DebouncedLink from "./DebouncedLink";
 import { DASHBOARD_NAVIGATION_AREAS, DashboardNavigationArea } from "../../navigationAreas/DashboardNavigationAreas";
 
@@ -43,9 +44,16 @@ const DashboardNavigationBar = forwardRef<HTMLDivElement, IDashboardNavigationBa
       },
       {
         name: "Data Storage",
-        icon: Inventory2OutlinedIcon,
+        icon: WarehouseOutlinedIcon,
         dashboardNavigationArea: DASHBOARD_NAVIGATION_AREAS.userData,
         path: `/users/${props.signedInUserId}/data/storageConfigs`,
+        divider: false
+      },
+      {
+        name: "Boxes",
+        icon: Inventory2OutlinedIcon,
+        dashboardNavigationArea: DASHBOARD_NAVIGATION_AREAS.boxes,
+        path: `/users/${props.signedInUserId}/boxes`,
         divider: false
       }
     ];

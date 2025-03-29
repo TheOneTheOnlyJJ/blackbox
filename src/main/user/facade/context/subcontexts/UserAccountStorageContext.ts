@@ -55,7 +55,6 @@ export class UserAccountStorageContext {
       }`
     );
     this.onUserAccountStorageChangedCallback?.(newAccountStorage);
-    // TODO: Maybe make all not open storage configs unavailable when this closes? This should be done on the front end
     return true;
   }
 

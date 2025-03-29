@@ -29,10 +29,10 @@ export class InitialisedUserDataStoragesContext {
   }
 
   // TODO: REMOVE THIS, DO NOT EXPOSE CLASSES TO SERVIES DIRECTLY
-  public getInitialisedDataStorages(): UserDataStorage[] {
-    this.logger.info("Getting initialised User Data Storages.");
-    return this.initialisedDataStorages;
-  }
+  // public getInitialisedDataStorages(): UserDataStorage[] {
+  //   this.logger.info("Getting initialised User Data Storages.");
+  //   return this.initialisedDataStorages;
+  // }
 
   public initialiseDataStoragesFromConfigs(securedDataStorageConfigs: IUserDataStorageConfig[]): number {
     this.logger.info(
@@ -101,8 +101,8 @@ export class InitialisedUserDataStoragesContext {
       return 0;
     }
     const DATA_STORAGE_IDS_TO_TERMINATE: UUID[] = dataStorageIds.filter((dataStorageId: UUID): boolean => {
-      const IS_INITIALISED: boolean = this.initialisedDataStorages.some((availableDataStorage: UserDataStorage): boolean => {
-        return dataStorageId === availableDataStorage.storageId;
+      const IS_INITIALISED: boolean = this.initialisedDataStorages.some((initialisedDataStorage: UserDataStorage): boolean => {
+        return dataStorageId === initialisedDataStorage.storageId;
       });
       if (!IS_INITIALISED) {
         this.logger.warn(`Skip terminating uninitialised given User Data Storage "${dataStorageId}".`);
@@ -113,7 +113,6 @@ export class InitialisedUserDataStoragesContext {
     for (let idx = this.initialisedDataStorages.length - 1; idx >= 0; idx--) {
       const AVAILABLE_DATA_STORAGE: UserDataStorage = this.initialisedDataStorages[idx];
       if (DATA_STORAGE_IDS_TO_TERMINATE.includes(AVAILABLE_DATA_STORAGE.storageId)) {
-        // TODO: Other cleanup?
         if (AVAILABLE_DATA_STORAGE.isOpen()) {
           AVAILABLE_DATA_STORAGE.close();
         }
@@ -140,12 +139,11 @@ export class InitialisedUserDataStoragesContext {
       return 0;
     }
     const SECURED_DATA_STORAGES_CONFIGS_TO_TERMINATE: IUserDataStorageConfig[] = this.initialisedDataStorages.map(
-      (availableDataStorage: UserDataStorage): IUserDataStorageConfig => {
-        // TODO: Other cleanup?
-        if (availableDataStorage.isOpen()) {
-          availableDataStorage.close();
+      (initialisedDataStorage: UserDataStorage): IUserDataStorageConfig => {
+        if (initialisedDataStorage.isOpen()) {
+          initialisedDataStorage.close();
         }
-        return availableDataStorage.getConfig();
+        return initialisedDataStorage.getConfig();
       }
     );
     this.initialisedDataStorages = [];
@@ -155,5 +153,102 @@ export class InitialisedUserDataStoragesContext {
       added: []
     } satisfies IDataChangedDiff<IUserDataStorageConfig, UserDataStorage>);
     return SECURED_DATA_STORAGES_CONFIGS_TO_TERMINATE.length;
+  }
+
+  public getAllInitialisedDataStorageIdsForVisibilityGroupIds(visibilityGroupIds: UUID[]): UUID[] {
+    this.logger.info(
+      `Getting all initialised User Data Storage IDs for ${visibilityGroupIds.length.toString()} User Data Storage Visibility Group ID${
+        visibilityGroupIds.length === 1 ? "" : "s"
+      }.`
+    );
+    if (this.initialisedDataStorages.length === 0) {
+      return [];
+    }
+    const DATA_STORAGE_IDS: UUID[] = [];
+    for (const VISIBILITY_GROUP_ID of visibilityGroupIds) {
+      for (const INITIALISED_DATA_STORAGE of this.initialisedDataStorages) {
+        if (VISIBILITY_GROUP_ID === INITIALISED_DATA_STORAGE.visibilityGroupId) {
+          DATA_STORAGE_IDS.push(INITIALISED_DATA_STORAGE.storageId);
+        }
+      }
+    }
+    return DATA_STORAGE_IDS;
+  }
+
+  public openInitialisedDataStorages(dataStorageIds: UUID[]): number {
+    this.logger.info(`Opening ${dataStorageIds.length.toString()} User Data Storage${dataStorageIds.length === 1 ? "" : "s"}.`);
+    if (this.initialisedDataStorages.length === 0) {
+      this.logger.info("No initialised User Data Storages to open from.");
+      return 0;
+    }
+    if (!isValidUUIDArray(dataStorageIds)) {
+      throw new Error("Invalid User Data Storage ID array");
+    }
+    if (dataStorageIds.length === 0) {
+      this.logger.warn("Given no User Data Storage IDs to open.");
+      return 0;
+    }
+    let openedDataStoragesCount = 0;
+    dataStorageIds.map((dataStorageId: UUID): void => {
+      let wasFound = false;
+      for (const INITIALISED_DATA_STORAGE of this.initialisedDataStorages) {
+        if (INITIALISED_DATA_STORAGE.storageId === dataStorageId) {
+          if (INITIALISED_DATA_STORAGE.isOpen()) {
+            this.logger.warn(`Skip opening already open given initialised User Data Storage "${dataStorageId}".`);
+          } else {
+            if (INITIALISED_DATA_STORAGE.open()) {
+              openedDataStoragesCount++;
+            }
+          }
+          wasFound = true;
+        }
+      }
+      if (!wasFound) {
+        this.logger.warn(`Skip opening given missing initialised User Data Storage "${dataStorageId}".`);
+      }
+    });
+    return openedDataStoragesCount;
+  }
+
+  public closeInitialisedDataStorages(dataStorageIds: UUID[]): number {
+    this.logger.info(`Closing ${dataStorageIds.length.toString()} User Data Storage${dataStorageIds.length === 1 ? "" : "s"}.`);
+    if (this.initialisedDataStorages.length === 0) {
+      this.logger.info("No initialised User Data Storages to close from.");
+      return 0;
+    }
+    if (!isValidUUIDArray(dataStorageIds)) {
+      throw new Error("Invalid User Data Storage ID array");
+    }
+    if (dataStorageIds.length === 0) {
+      this.logger.warn("Given no User Data Storage IDs to close.");
+      return 0;
+    }
+    let closedDataStoragesCount = 0;
+    dataStorageIds.map((dataStorageId: UUID): void => {
+      let wasFound = false;
+      for (const INITIALISED_DATA_STORAGE of this.initialisedDataStorages) {
+        if (INITIALISED_DATA_STORAGE.storageId === dataStorageId) {
+          if (INITIALISED_DATA_STORAGE.isClosed()) {
+            this.logger.warn(`Skip closing already closed given initialised User Data Storage "${dataStorageId}".`);
+          } else {
+            if (INITIALISED_DATA_STORAGE.close()) {
+              closedDataStoragesCount++;
+            }
+          }
+          wasFound = true;
+        }
+      }
+      if (!wasFound) {
+        this.logger.warn(`Skip closing given missing initialised User Data Storage "${dataStorageId}".`);
+      }
+    });
+    return closedDataStoragesCount;
+  }
+
+  public getAllSignedInUserInitialisedDataStoragesInfo(): IUserDataStorageInfo[] {
+    this.logger.debug("Getting all signed in user's initialised User Data Storages Info.");
+    return this.initialisedDataStorages.map((initialisedDataStorage: UserDataStorage): IUserDataStorageInfo => {
+      return initialisedDataStorage.getInfo();
+    });
   }
 }

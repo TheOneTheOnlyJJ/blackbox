@@ -14,6 +14,7 @@ import DashboardLayoutRoot from "@renderer/components/roots/dashboardLayoutRoot/
 import UserDataStorageVisibilityGroupsPage from "./pages/UserDataStorageVisibilityGroupsPage";
 import UserDataLayoutRoot from "./components/roots/userDataLayoutRoot/UserDataLayoutRoot";
 import InitialisedUserDataStoragesPage from "./pages/InitialisedUserDataStoragesPage";
+import BoxesPage from "./pages/BoxesPage";
 
 const APP_ROUTER = createHashRouter([
   {
@@ -60,6 +61,10 @@ const APP_ROUTER = createHashRouter([
                     element: <UserDataStorageVisibilityGroupsPage />
                   }
                 ]
+              },
+              {
+                path: "boxes",
+                element: <BoxesPage />
               },
               {
                 path: "profile",

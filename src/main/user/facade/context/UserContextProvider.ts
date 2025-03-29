@@ -70,15 +70,22 @@ export class UserContextProvider {
   public getUserDataStorageServiceContext(): IUserDataStorageServiceContext {
     this.logger.debug("Providing User Data Storage Service Context.");
     return {
-      getInitialisedDataStorages: this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT.getInitialisedDataStorages.bind(
-        this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT
-      ),
       initialiseDataStoragesFromConfigs: this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT.initialiseDataStoragesFromConfigs.bind(
         this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT
       ),
       terminateDataStoragesFromIds: this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT.terminateDataStoragesFromIds.bind(
         this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT
       ),
+      openInitialisedDataStorages: this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT.openInitialisedDataStorages.bind(
+        this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT
+      ),
+      closeInitialisedDataStorages: this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT.closeInitialisedDataStorages.bind(
+        this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT
+      ),
+      getAllSignedInUserInitialisedDataStoragesInfo:
+        this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT.getAllSignedInUserInitialisedDataStoragesInfo.bind(
+          this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT
+        ),
       getAvailableSecuredDataStorageConfigs: this.CONTEXT.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT.getAvailableSecuredDataStorageConfigs.bind(
         this.CONTEXT.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT
       )

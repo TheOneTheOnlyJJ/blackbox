@@ -123,7 +123,6 @@ const InitialisedUserDataStoragesDataGrid: FC = () => {
     ];
   }, [signedInRootContext, setIsShowInfoDialogOpen]);
 
-  // TODO: Add info dialog
   return (
     <>
       <DataGrid

@@ -6,7 +6,6 @@ import { ISignedInUser } from "../../account/SignedInUser";
 import { signedInUserToSignedInUserInfo } from "../../account/utils/signedInUserToSignedInUserInfo";
 import { UserAccountStorage } from "../../account/storage/UserAccountStorage";
 import { IUserDataStorageVisibilityGroup } from "../../data/storage/visibilityGroup/UserDataStorageVisibilityGroup";
-
 import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
 import { userDataStorageVisibilityGroupToUserDataStorageVisibilityGroupInfo } from "../../data/storage/visibilityGroup/utils/userDataStorageVisibilityGroupToUserDataStorageVisibilityGroupInfo";
 import { IStorageSecuredUserDataStorageConfig } from "../../data/storage/config/StorageSecuredUserDataStorageConfig";
@@ -49,7 +48,7 @@ export interface IUserContextHandlers {
     | null;
   onInitialisedUserDataStorageInfoChangedCallback: ((userDataStorageInfo: Readonly<IUserDataStorageInfo>) => void) | null;
 }
-// TODO: When getting configs, take into account currently available data storages to exclude them
+
 export class UserContext {
   private readonly logger: LogFunctions;
   private readonly HANDLERS: IUserContextHandlers;
@@ -177,16 +176,18 @@ export class UserContext {
     ): void => {
       if (openDataStorageVisibilityGroupsChangedDiff.removed.length > 0) {
         // Initialised data storages
-        const INITIALISED_DATA_STORAGE_IDS_TO_BE_TERMINATED: UUID[] = this.getAllInitialisedDaraStorageIdsForVisibilityGroupIds(
-          openDataStorageVisibilityGroupsChangedDiff.removed
-        );
+        const INITIALISED_DATA_STORAGE_IDS_TO_BE_TERMINATED: UUID[] =
+          this.INITIALISED_DATA_STORAGES_CONTEXT.getAllInitialisedDataStorageIdsForVisibilityGroupIds(
+            openDataStorageVisibilityGroupsChangedDiff.removed
+          );
         if (INITIALISED_DATA_STORAGE_IDS_TO_BE_TERMINATED.length > 0) {
           this.INITIALISED_DATA_STORAGES_CONTEXT.terminateDataStoragesFromIds(INITIALISED_DATA_STORAGE_IDS_TO_BE_TERMINATED);
         }
         // Available data storage configs
-        const SECURED_DATA_STORAGE_CONFIG_IDS_TO_BE_REMOVED: UUID[] = this.getAllAvailableDataStorageConfigIdsForVisibilityGroupIds(
-          openDataStorageVisibilityGroupsChangedDiff.removed
-        );
+        const SECURED_DATA_STORAGE_CONFIG_IDS_TO_BE_REMOVED: UUID[] =
+          this.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT.getAllAvailableDataStorageConfigIdsForVisibilityGroupIds(
+            openDataStorageVisibilityGroupsChangedDiff.removed
+          );
         if (SECURED_DATA_STORAGE_CONFIG_IDS_TO_BE_REMOVED.length > 0) {
           this.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT.removeAvailableSecuredDataStorageConfigs(SECURED_DATA_STORAGE_CONFIG_IDS_TO_BE_REMOVED);
         }
@@ -212,50 +213,8 @@ export class UserContext {
     };
   }
 
-  private getAllInitialisedDaraStorageIdsForVisibilityGroupIds(visibilityGroupIds: UUID[]): UUID[] {
-    this.logger.info(
-      `Getting all initialised User Data Storage IDs for ${visibilityGroupIds.length.toString()} User Data Storage Visibility Group ID${
-        visibilityGroupIds.length === 1 ? "" : "s"
-      }.`
-    );
-    const INITIALISED_DATA_STORAGES: UserDataStorage[] = this.INITIALISED_DATA_STORAGES_CONTEXT.getInitialisedDataStorages();
-    if (INITIALISED_DATA_STORAGES.length === 0) {
-      return [];
-    }
-    const DATA_STORAGE_IDS: UUID[] = [];
-    for (const VISIBILITY_GROUP_ID of visibilityGroupIds) {
-      for (const INITIALISED_DATA_STORAGE of INITIALISED_DATA_STORAGES) {
-        if (VISIBILITY_GROUP_ID === INITIALISED_DATA_STORAGE.visibilityGroupId) {
-          DATA_STORAGE_IDS.push(INITIALISED_DATA_STORAGE.storageId);
-        }
-      }
-    }
-    return DATA_STORAGE_IDS;
-  }
-
-  private getAllAvailableDataStorageConfigIdsForVisibilityGroupIds(visibilityGroupIds: UUID[]): UUID[] {
-    this.logger.info(
-      `Getting all available Secured User Data Storage Config IDs for ${visibilityGroupIds.length.toString()} User Data Storage Visibility Group ID${
-        visibilityGroupIds.length === 1 ? "" : "s"
-      }.`
-    );
-    const AVAILABLE_SECURED_DATA_STORAGE_CONFIGS: ISecuredUserDataStorageConfig[] =
-      this.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT.getAvailableSecuredDataStorageConfigs();
-    if (AVAILABLE_SECURED_DATA_STORAGE_CONFIGS.length === 0) {
-      return [];
-    }
-    const DATA_STORAGE_IDS: UUID[] = [];
-    for (const VISIBILITY_GROUP_ID of visibilityGroupIds) {
-      for (const AVAILABLE_SECURED_DATA_STORAGE_CONFIG of AVAILABLE_SECURED_DATA_STORAGE_CONFIGS) {
-        if (VISIBILITY_GROUP_ID === AVAILABLE_SECURED_DATA_STORAGE_CONFIG.visibilityGroupId) {
-          DATA_STORAGE_IDS.push(AVAILABLE_SECURED_DATA_STORAGE_CONFIG.storageId);
-        }
-      }
-    }
-    return DATA_STORAGE_IDS;
-  }
-
   private getAllPublicDataStorageConfigsFromAccountStorage(): ISecuredUserDataStorageConfig[] {
+    // TODO: When getting configs, take into account currently available data storages to exclude them
     this.logger.info("Getting all public User Data Storage Configs from User Account Storage.");
     if (!this.ACCOUNT_STORAGE_CONTEXT.isSet()) {
       throw new Error("Null User Account Storage");
@@ -315,14 +274,8 @@ export class UserContext {
             storageSecuredUserDataStorageConfigToSecuredUserDataStorageConfig(STORAGE_SECURED_USER_DATA_STORAGE_CONFIG, VISIBILITY_GROUP.AESKey, null)
           );
         }
-        // STORAGE_SECURED_DATA_STORAGE_CONFIGS.splice(j, 1); <-- BUG
       }
     }
-    // if (STORAGE_SECURED_DATA_STORAGE_CONFIGS.length > 0) {
-    //   throw new Error(
-    //     `${STORAGE_SECURED_DATA_STORAGE_CONFIGS.length.toString()} Secured User Data Storage Configs had no User Data Storage Visibility Group`
-    //   );
-    // }
     return SECURED_DATA_STORAGE_CONFIGS;
   }
 }
