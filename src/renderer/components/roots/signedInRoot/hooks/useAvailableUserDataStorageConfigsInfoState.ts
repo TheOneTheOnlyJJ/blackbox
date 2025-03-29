@@ -50,7 +50,7 @@ export const useAvailableUserDataStorageConfigsInfoState = (logger: LogFunctions
           enqueueSnackbar({ message: "Error decrypting data storage configs' information.", variant: "error" });
         });
     }
-    // Monitor changes to User Data Storages Info
+    // Monitor changes to User Data Storage Configs Info
     const removeAvailableUserDataStorageConfigsChangedListener: () => void = window.userDataStorageConfigAPI.onAvailableUserDataStorageConfigsChanged(
       (encryptedAvailableUserDataStorageConfigsInfoChangedDiff: IEncryptedData<IDataChangedDiff<string, IUserDataStorageConfigInfo>>): void => {
         window.IPCTLSAPI.decryptAndValidateJSON<IDataChangedDiff<string, IUserDataStorageConfigInfo>>(

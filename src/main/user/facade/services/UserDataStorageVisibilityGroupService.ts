@@ -40,7 +40,7 @@ export interface IUserDataStorageVisibilityGroupServiceContext {
 }
 
 export class UserDataStorageVisibilityGroupService {
-  private logger: LogFunctions;
+  private readonly logger: LogFunctions;
   private readonly CONTEXT: IUserDataStorageVisibilityGroupServiceContext;
 
   public constructor(logger: LogFunctions, context: IUserDataStorageVisibilityGroupServiceContext) {

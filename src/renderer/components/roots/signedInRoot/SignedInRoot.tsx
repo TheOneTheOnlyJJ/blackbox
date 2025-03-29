@@ -7,11 +7,14 @@ import { IUserDataStorageConfigInfo } from "@shared/user/data/storage/config/inf
 import { useAvailableUserDataStorageConfigsInfoState } from "./hooks/useAvailableUserDataStorageConfigsInfoState";
 import { useOpenUserDataStorageVisibilityGroupsInfoState } from "./hooks/useOpenUserDataStorageVisibilityGroupsInfoState";
 import { useForbiddenLocationNameState } from "./hooks/useForbiddenLocationNameState";
+import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
+import { useInitialisedUserDataStoragesInfoState } from "./hooks/useInitialisedUserDataStoragesInfoState";
 
 const SignedInRoot: FC = () => {
   const appRootContext: IAppRootContext = useAppRootContext();
 
   const availableUserDataStorageConfigsInfo: IUserDataStorageConfigInfo[] = useAvailableUserDataStorageConfigsInfoState(appLogger);
+  const initialisedUserDataStoragesInfo: IUserDataStorageInfo[] = useInitialisedUserDataStoragesInfoState(appLogger);
   const { openUserDataStorageVisibilityGroupsInfo, getOpenUserDataStorageVisibilityGroupInfo } =
     useOpenUserDataStorageVisibilityGroupsInfoState(appLogger);
   const [forbiddenLocationName, URIencodeAndSetForbiddenLocationName] = useForbiddenLocationNameState(appLogger);
@@ -30,6 +33,7 @@ const SignedInRoot: FC = () => {
           ...appRootContext,
           signedInUserInfo: appRootContext.signedInUserInfo,
           availableUserDataStorageConfigsInfo: availableUserDataStorageConfigsInfo,
+          initialisedUserDataStoragesInfo: initialisedUserDataStoragesInfo,
           openUserDataStorageVisibilityGroupsInfo: openUserDataStorageVisibilityGroupsInfo,
           getOpenUserDataStorageVisibilityGroupInfo: getOpenUserDataStorageVisibilityGroupInfo,
           setForbiddenLocationName: URIencodeAndSetForbiddenLocationName

@@ -85,6 +85,15 @@ export class UserAccountStorage {
     } satisfies IUserAccountStorageInfo;
   }
 
+  public getConfig(): IUserAccountStorageConfig {
+    this.logger.info("Getting User Account Storage Config.");
+    return {
+      storageId: this.storageId,
+      name: this.name,
+      backendConfig: this.backend.config
+    } satisfies IUserAccountStorageConfig;
+  }
+
   public isUsernameAvailable(username: string): boolean {
     return this.backend.isUsernameAvailable(username);
   }

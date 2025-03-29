@@ -1,7 +1,7 @@
 export const USER_DATA_NAVIGATION_AREAS = {
   storageConfigs: "storageConfigs",
   visibilityGroups: "visibilityGroups",
-  activeStorages: "activeStorages"
+  initialisedStorages: "initialisedStorages"
 } as const;
 
 export type UserDataNavigationAreas = typeof USER_DATA_NAVIGATION_AREAS;

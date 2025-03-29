@@ -23,7 +23,7 @@ import { appLogger } from "@renderer/utils/loggers";
 import UserDataStorageConfigInfoDialog from "../dialogs/UserDataStorageConfigInfoDialog";
 import { useDialogOpenState } from "@renderer/hooks/useDialogState";
 import OpenUserDataStorageConfigInfoDialogActionItem from "./actionCellItems/OpenUserDataStorageConfigInfoDialogActionItem";
-import ActivateUserDataStorageActionItem from "./actionCellItems/ActivateUserDataStorageActionItem";
+import InitialiseUserDataStorageActionItem from "./actionCellItems/InitialiseUserDataStorageActionItem";
 import { useMUIXDataGridAutosizeColumnsOnWindowResize } from "@renderer/hooks/useMUIXDataGridAutosizeOnWindowResize";
 
 const GRID_AUTOSIZE_OPTIONS: GridAutosizeOptions = { expand: true, includeHeaders: true };
@@ -91,19 +91,20 @@ const AvailableUserDataStorageConfigsDataGrid: FC = () => {
         }
       },
       {
-        // TODO: Put this in master detail row (pro feature)
+        // TODO: Put info in master detail row (pro feature)
         field: "actions",
         type: "actions",
         headerName: "Actions",
         getActions: (params: GridRowParams<IUserDataStorageConfigInfo>) => {
           return [
             <OpenUserDataStorageConfigInfoDialogActionItem
+              logger={appLogger}
               key="openInfoDialog"
               userDataStorageConfigInfo={params.row}
               setChosenUserDataStorageConfigInfo={setChosenStorageConfigInfo}
               setIsShowUserDataStorageConfigInfoDialogOpen={setIsShowConfigInfoDialogOpen}
             />,
-            <ActivateUserDataStorageActionItem key="openStorage" userDataStorageConfigInfo={params.row} />
+            <InitialiseUserDataStorageActionItem logger={appLogger} key="openStorage" userDataStorageConfigInfo={params.row} />
           ];
         }
       }

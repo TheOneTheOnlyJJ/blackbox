@@ -29,7 +29,7 @@ export interface IUserAuthServiceContext {
 }
 
 export class UserAuthService {
-  private logger: LogFunctions;
+  private readonly logger: LogFunctions;
   private readonly CONTEXT: IUserAuthServiceContext;
 
   public constructor(logger: LogFunctions, context: IUserAuthServiceContext) {

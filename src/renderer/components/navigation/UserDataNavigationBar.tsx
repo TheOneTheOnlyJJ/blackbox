@@ -38,17 +38,17 @@ const UserDataNavigationBar = forwardRef<HTMLDivElement, IUserDataNavigationBarP
         divider: false
       },
       {
+        name: "Active",
+        icon: StorageOutlinedIcon,
+        userDataNavigationArea: USER_DATA_NAVIGATION_AREAS.initialisedStorages,
+        path: `/users/${props.signedInUserId}/data/initialisedStorages`,
+        divider: false
+      },
+      {
         name: "Visibility Groups",
         icon: VisibilityIcon,
         userDataNavigationArea: USER_DATA_NAVIGATION_AREAS.visibilityGroups,
         path: `/users/${props.signedInUserId}/data/visibilityGroups`,
-        divider: false
-      },
-      {
-        name: "Active",
-        icon: StorageOutlinedIcon,
-        userDataNavigationArea: USER_DATA_NAVIGATION_AREAS.activeStorages,
-        path: `/users/${props.signedInUserId}/data/activeStorages`,
         divider: false
       }
     ];

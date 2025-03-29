@@ -4,6 +4,7 @@ import { IUserAuthServiceContext } from "../services/UserAuthService";
 import { IUserDataStorageConfigServiceContext } from "../services/UserDataStorageConfigService";
 import { IUserDataStorageVisibilityGroupServiceContext } from "../services/UserDataStorageVisibilityGroupService";
 import { UserContext } from "./UserContext";
+import { IUserDataStorageServiceContext } from "../services/UserDataStorageService";
 
 export class UserContextProvider {
   private readonly logger: LogFunctions;
@@ -64,6 +65,24 @@ export class UserContextProvider {
         this.CONTEXT.OPEN_DATA_STORAGE_VISIBILITY_GROUPS_CONTEXT
       )
     } satisfies IUserDataStorageConfigServiceContext;
+  }
+
+  public getUserDataStorageServiceContext(): IUserDataStorageServiceContext {
+    this.logger.debug("Providing User Data Storage Service Context.");
+    return {
+      getInitialisedDataStorages: this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT.getInitialisedDataStorages.bind(
+        this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT
+      ),
+      initialiseDataStoragesFromConfigs: this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT.initialiseDataStoragesFromConfigs.bind(
+        this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT
+      ),
+      terminateDataStoragesFromIds: this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT.terminateDataStoragesFromIds.bind(
+        this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT
+      ),
+      getAvailableSecuredDataStorageConfigs: this.CONTEXT.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT.getAvailableSecuredDataStorageConfigs.bind(
+        this.CONTEXT.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT
+      )
+    } satisfies IUserDataStorageServiceContext;
   }
 
   public getUserDataStorageVisibilityGroupServiceContext(): IUserDataStorageVisibilityGroupServiceContext {

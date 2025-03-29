@@ -18,7 +18,7 @@ export class AvailableUserDataStorageConfigsContext {
 
   public constructor(logger: LogFunctions) {
     this.logger = logger;
-    this.logger.info("Initialising new Available User Data Storages Context.");
+    this.logger.info("Initialising new Available User Data Storage Configs Context.");
     this.availableSecuredDataStorageConfigs = INITIAL_AVAILABLE_SECURED_DATA_STORAGE_CONFIGS;
     this.onAvailableSecuredUserDataStorageConfigsChangedCallback = null;
   }
@@ -41,11 +41,11 @@ export class AvailableUserDataStorageConfigsContext {
       this.logger.warn("Given no new Secured User Data Storage Configs to add.");
       return 0;
     }
-    const NEW_SECURED_DATA_STORAGE_CONFIGS: ISecuredUserDataStorageConfig[] = newSecuredDataStorageConfigs.filter(
+    const SECURED_DATA_STORAGE_CONFIGS_TO_ADD: ISecuredUserDataStorageConfig[] = newSecuredDataStorageConfigs.filter(
       (newSecuredDataStorageConfig: ISecuredUserDataStorageConfig): boolean => {
         const IS_ALREADY_AVAILABLE: boolean = this.availableSecuredDataStorageConfigs.some(
-          (availableDataStorage: ISecuredUserDataStorageConfig): boolean => {
-            return newSecuredDataStorageConfig.storageId === availableDataStorage.storageId;
+          (availableSecuredDataStorageConfig: ISecuredUserDataStorageConfig): boolean => {
+            return newSecuredDataStorageConfig.storageId === availableSecuredDataStorageConfig.storageId;
           }
         );
         if (IS_ALREADY_AVAILABLE) {
@@ -54,19 +54,19 @@ export class AvailableUserDataStorageConfigsContext {
         return !IS_ALREADY_AVAILABLE; // Only keep new secured data storage configs that are NOT already available
       }
     );
-    this.availableSecuredDataStorageConfigs.push(...NEW_SECURED_DATA_STORAGE_CONFIGS);
+    this.availableSecuredDataStorageConfigs.push(...SECURED_DATA_STORAGE_CONFIGS_TO_ADD);
     this.logger.info(
-      `Added ${NEW_SECURED_DATA_STORAGE_CONFIGS.length.toString()} new available Secured User Data Storage Config${
-        NEW_SECURED_DATA_STORAGE_CONFIGS.length === 1 ? "" : "s"
+      `Added ${SECURED_DATA_STORAGE_CONFIGS_TO_ADD.length.toString()} new available Secured User Data Storage Config${
+        SECURED_DATA_STORAGE_CONFIGS_TO_ADD.length === 1 ? "" : "s"
       }.`
     );
-    if (NEW_SECURED_DATA_STORAGE_CONFIGS.length > 0) {
+    if (SECURED_DATA_STORAGE_CONFIGS_TO_ADD.length > 0) {
       this.onAvailableSecuredUserDataStorageConfigsChangedCallback?.({
         removed: [],
-        added: NEW_SECURED_DATA_STORAGE_CONFIGS
+        added: SECURED_DATA_STORAGE_CONFIGS_TO_ADD
       } satisfies IDataChangedDiff<UUID, ISecuredUserDataStorageConfig>);
     }
-    return NEW_SECURED_DATA_STORAGE_CONFIGS.length;
+    return SECURED_DATA_STORAGE_CONFIGS_TO_ADD.length;
   }
 
   public removeAvailableSecuredDataStorageConfigs(securedDataStorageConfigIds: UUID[]): number {
@@ -86,7 +86,7 @@ export class AvailableUserDataStorageConfigsContext {
       this.logger.warn("Given no Secured User Data Storage Config IDs to remove.");
       return 0;
     }
-    const SECURED_DATA_STORAGE_CONFIG_IDS: UUID[] = securedDataStorageConfigIds.filter((securedDataStorageId: UUID): boolean => {
+    const SECURED_DATA_STORAGE_CONFIG_IDS_TO_REMOVE: UUID[] = securedDataStorageConfigIds.filter((securedDataStorageId: UUID): boolean => {
       const IS_AVAILABLE: boolean = this.availableSecuredDataStorageConfigs.some(
         (availableSecuredDataStorageConfig: ISecuredUserDataStorageConfig): boolean => {
           return securedDataStorageId === availableSecuredDataStorageConfig.storageId;
@@ -99,43 +99,43 @@ export class AvailableUserDataStorageConfigsContext {
     });
     for (let idx = this.availableSecuredDataStorageConfigs.length - 1; idx >= 0; idx--) {
       const AVAILABLE_SECURED_DATA_STORAGE_CONFIG: ISecuredUserDataStorageConfig = this.availableSecuredDataStorageConfigs[idx];
-      if (SECURED_DATA_STORAGE_CONFIG_IDS.includes(AVAILABLE_SECURED_DATA_STORAGE_CONFIG.storageId)) {
+      if (SECURED_DATA_STORAGE_CONFIG_IDS_TO_REMOVE.includes(AVAILABLE_SECURED_DATA_STORAGE_CONFIG.storageId)) {
         // AVAILABLE_DATA_STORAGE_CONFIG.close(); // TODO: CLEANUP?
         this.availableSecuredDataStorageConfigs.splice(idx, 1); // Remove from array in-place
       }
     }
     this.logger.info(
-      `Removed ${SECURED_DATA_STORAGE_CONFIG_IDS.length.toString()} available User Data Storage Config${
-        SECURED_DATA_STORAGE_CONFIG_IDS.length === 1 ? "" : "s"
+      `Removed ${SECURED_DATA_STORAGE_CONFIG_IDS_TO_REMOVE.length.toString()} available User Data Storage Config${
+        SECURED_DATA_STORAGE_CONFIG_IDS_TO_REMOVE.length === 1 ? "" : "s"
       }.`
     );
-    if (SECURED_DATA_STORAGE_CONFIG_IDS.length > 0) {
+    if (SECURED_DATA_STORAGE_CONFIG_IDS_TO_REMOVE.length > 0) {
       this.onAvailableSecuredUserDataStorageConfigsChangedCallback?.({
-        removed: SECURED_DATA_STORAGE_CONFIG_IDS,
+        removed: SECURED_DATA_STORAGE_CONFIG_IDS_TO_REMOVE,
         added: []
       } satisfies IDataChangedDiff<UUID, ISecuredUserDataStorageConfig>);
     }
-    return SECURED_DATA_STORAGE_CONFIG_IDS.length;
+    return SECURED_DATA_STORAGE_CONFIG_IDS_TO_REMOVE.length;
   }
 
-  public clearAvailableSecuredDataStorageConfigs(): number {
-    this.logger.info("Clearing available Secured User Data Storage Configs.");
+  public clearAllAvailableSecuredDataStorageConfigs(): number {
+    this.logger.info("Clearing all available Secured User Data Storage Configs.");
     if (this.availableSecuredDataStorageConfigs.length === 0) {
       this.logger.info("No available Secured User Data Storage Configs to clear.");
       return 0;
     }
-    const AVAILABLE_SECURED_DATA_STORAGE_CONFIG_IDS: UUID[] = this.availableSecuredDataStorageConfigs.map(
-      (availableSecuredDataStorage: ISecuredUserDataStorageConfig): UUID => {
+    const SECURED_DATA_STORAGE_CONFIG_IDS_TO_REMOVE: UUID[] = this.availableSecuredDataStorageConfigs.map(
+      (availableSecuredDataStorageConfig: ISecuredUserDataStorageConfig): UUID => {
         // availableDataStorage.close(); // TODO: Cleanup?
-        return availableSecuredDataStorage.storageId;
+        return availableSecuredDataStorageConfig.storageId;
       }
     );
     this.availableSecuredDataStorageConfigs = [];
-    this.logger.info(`Cleared available Secured User Data Storage Configs (${AVAILABLE_SECURED_DATA_STORAGE_CONFIG_IDS.length.toString()}).`);
+    this.logger.info(`Cleared all available Secured User Data Storage Configs (${SECURED_DATA_STORAGE_CONFIG_IDS_TO_REMOVE.length.toString()}).`);
     this.onAvailableSecuredUserDataStorageConfigsChangedCallback?.({
-      removed: AVAILABLE_SECURED_DATA_STORAGE_CONFIG_IDS,
+      removed: SECURED_DATA_STORAGE_CONFIG_IDS_TO_REMOVE,
       added: []
     } satisfies IDataChangedDiff<UUID, ISecuredUserDataStorageConfig>);
-    return AVAILABLE_SECURED_DATA_STORAGE_CONFIG_IDS.length;
+    return SECURED_DATA_STORAGE_CONFIG_IDS_TO_REMOVE.length;
   }
 }

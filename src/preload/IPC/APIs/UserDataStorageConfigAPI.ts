@@ -8,7 +8,6 @@ import {
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IUserDataStorageConfigCreateDTO } from "@shared/user/data/storage/config/create/DTO/UserDataStorageConfigCreateDTO";
 import { IUserDataStorageConfigInfo } from "@shared/user/data/storage/config/info/UserDataStorageConfigInfo";
-import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
 import { IDataChangedDiff } from "@shared/utils/DataChangedDiff";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 import { ipcRenderer, IpcRendererEvent } from "electron";
@@ -31,10 +30,10 @@ export const USER_DATA_STORAGE_CONFIG_API_PRELOAD_HANDLERS: IUserDataStorageConf
     sendLogToMainProcess(PRELOAD_IPC_USER_DATA_STORAGE_CONFIG_API_LOG_SCOPE, "debug", `Adding listener from main on channel: "${CHANNEL}".`);
     const LISTENER = (
       _: IpcRendererEvent,
-      encryptedUserDataStoragesInfoChangedDiff: IEncryptedData<IDataChangedDiff<string, IUserDataStorageInfo>>
+      encryptedUserDataStorageConfigsInfoChangedDiff: IEncryptedData<IDataChangedDiff<string, IUserDataStorageConfigInfo>>
     ): void => {
       sendLogToMainProcess(PRELOAD_IPC_USER_DATA_STORAGE_CONFIG_API_LOG_SCOPE, "debug", `Received message from main on channel: "${CHANNEL}".`);
-      callback(encryptedUserDataStoragesInfoChangedDiff);
+      callback(encryptedUserDataStorageConfigsInfoChangedDiff);
     };
     ipcRenderer.on(CHANNEL, LISTENER);
     return (): void => {

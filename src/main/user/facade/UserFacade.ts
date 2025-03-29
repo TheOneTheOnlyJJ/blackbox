@@ -23,19 +23,22 @@ import { IUserDataStorageVisibilityGroupConfigCreateDTO } from "@shared/user/dat
 import { IUserDataStorageVisibilityGroupsOpenRequestDTO } from "@shared/user/data/storage/visibilityGroup/openRequest/DTO/UserDataStorageVisibilityGroupsOpenRequestDTO";
 import { IUserDataStorageConfigInfo } from "@shared/user/data/storage/config/info/UserDataStorageConfigInfo";
 import { IUserAccountStorageConfig } from "../account/storage/config/UserAccountStorageConfig";
+import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
+import { UserDataStorageService } from "./services/UserDataStorageService";
 
 export interface IUserServiceLoggers {
   auth: LogFunctions;
   account: LogFunctions;
   accountStorage: LogFunctions;
   dataStorageConfig: LogFunctions;
+  dataStorage: LogFunctions;
   dataStorageVisibilityGroup: LogFunctions;
 }
 
 export interface IUserFacadeConstructorProps {
   logger: LogFunctions;
-  contextLoggers: IUserContextLoggers;
   contextProviderLogger: LogFunctions;
+  contextLoggers: IUserContextLoggers;
   serviceLoggers: IUserServiceLoggers;
   contextHandlers: IUserContextHandlers;
 }
@@ -46,6 +49,7 @@ export class UserFacade {
   private readonly AUTH_SERVICE: UserAuthService;
   private readonly ACCOUNT_STORAGE_SERVICE: UserAccountStorageService;
   private readonly DATA_STORAGE_CONFIG_SERVICE: UserDataStorageConfigService;
+  private readonly DATA_STORAGE_SERVICE: UserDataStorageService;
   private readonly DATA_STORAGE_VISIBILITY_GROUP_SERVICE: UserDataStorageVisibilityGroupService;
 
   public constructor(props: IUserFacadeConstructorProps) {
@@ -62,6 +66,7 @@ export class UserFacade {
       props.serviceLoggers.dataStorageConfig,
       CONTEXT_PROVIDER.getUserDataStorageConfigServiceContext()
     );
+    this.DATA_STORAGE_SERVICE = new UserDataStorageService(props.serviceLoggers.dataStorage, CONTEXT_PROVIDER.getUserDataStorageServiceContext());
     this.DATA_STORAGE_VISIBILITY_GROUP_SERVICE = new UserDataStorageVisibilityGroupService(
       props.serviceLoggers.dataStorageVisibilityGroup,
       CONTEXT_PROVIDER.getUserDataStorageVisibilityGroupServiceContext()
@@ -215,6 +220,26 @@ export class UserFacade {
 
   public getAllSignedInUserAvailableDataStorageConfigsInfo(): IUserDataStorageConfigInfo[] {
     return this.DATA_STORAGE_CONFIG_SERVICE.getAllSignedInUserAvailableSecuredDataStorageConfigsInfo();
+  }
+
+  public initialiseUserDataStorage(storageId: UUID): boolean {
+    return this.DATA_STORAGE_SERVICE.initialiseUserDataStorage(storageId);
+  }
+
+  public terminateUserDataStorage(storageId: UUID): boolean {
+    return this.DATA_STORAGE_SERVICE.terminateUserDataStorage(storageId);
+  }
+
+  public openUserDataStorage(storageId: UUID): boolean {
+    return this.DATA_STORAGE_SERVICE.openUserDataStorage(storageId);
+  }
+
+  public closeUserDataStorage(storageId: UUID): boolean {
+    return this.DATA_STORAGE_SERVICE.closeUserDataStorage(storageId);
+  }
+
+  public getAllSignedInUserInitialisedDataStoragesInfo(): IUserDataStorageInfo[] {
+    return this.DATA_STORAGE_SERVICE.getAllSignedInUserInitialisedDataStoragesInfo();
   }
 
   public getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo(): IUserDataStorageVisibilityGroupInfo[] {

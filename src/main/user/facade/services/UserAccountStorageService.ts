@@ -17,7 +17,7 @@ export interface IUserAccountStorageServiceContext {
 }
 
 export class UserAccountStorageService {
-  private logger: LogFunctions;
+  private readonly logger: LogFunctions;
   private readonly CONTEXT: IUserAccountStorageServiceContext;
 
   public constructor(logger: LogFunctions, context: IUserAccountStorageServiceContext) {

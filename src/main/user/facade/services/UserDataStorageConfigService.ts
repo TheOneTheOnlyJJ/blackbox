@@ -21,7 +21,7 @@ export interface IUserDataStorageConfigServiceContext {
 }
 
 export class UserDataStorageConfigService {
-  private logger: LogFunctions;
+  private readonly logger: LogFunctions;
   private readonly CONTEXT: IUserDataStorageConfigServiceContext;
 
   public constructor(logger: LogFunctions, context: IUserDataStorageConfigServiceContext) {
@@ -85,7 +85,7 @@ export class UserDataStorageConfigService {
   }
 
   public getAllSignedInUserAvailableSecuredDataStorageConfigsInfo(): IUserDataStorageConfigInfo[] {
-    this.logger.debug("Getting all signed in user's available User Data Storages Info.");
+    this.logger.debug("Getting all signed in user's available User Data Storage Configs Info.");
     return this.CONTEXT.getAvailableSecuredDataStorageConfigs().map(
       (securedDataStorageConfig: ISecuredUserDataStorageConfig): IUserDataStorageConfigInfo => {
         return securedUserDataStorageConfigToUserDataStorageConfigInfo(securedDataStorageConfig, null);

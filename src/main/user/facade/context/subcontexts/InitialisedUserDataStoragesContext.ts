@@ -1,0 +1,159 @@
+import { isValidSecuredUserDataStorageConfigArray } from "@main/user/data/storage/config/SecuredUserDataStorageConfig";
+import { IUserDataStorageConfig } from "@main/user/data/storage/config/UserDataStorageConfig";
+import { UserDataStorage } from "@main/user/data/storage/UserDataStorage";
+import { isValidUUIDArray } from "@main/utils/dataValidation/isValidUUID";
+import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
+import { IDataChangedDiff } from "@shared/utils/DataChangedDiff";
+import { LogFunctions } from "electron-log";
+import { UUID } from "node:crypto";
+
+const INITIAL_AVAILABLE_DATA_STORAGES: UserDataStorage[] = [];
+
+export class InitialisedUserDataStoragesContext {
+  private readonly logger: LogFunctions;
+
+  // TODO: Replace with Map
+  private initialisedDataStorages: UserDataStorage[];
+
+  public onInitialisedUserDataStoragesChangedCallback:
+    | ((initialisedDataStoragesChangedDiff: IDataChangedDiff<IUserDataStorageConfig, UserDataStorage>) => void)
+    | null;
+  public onInitialisedUserDataStorageInfoChangedCallback: ((userDataStorageInfo: Readonly<IUserDataStorageInfo>) => void) | null;
+
+  public constructor(logger: LogFunctions) {
+    this.logger = logger;
+    this.logger.info("Initialising new Initialised User Data Storages Context.");
+    this.initialisedDataStorages = INITIAL_AVAILABLE_DATA_STORAGES;
+    this.onInitialisedUserDataStoragesChangedCallback = null;
+    this.onInitialisedUserDataStorageInfoChangedCallback = null;
+  }
+
+  // TODO: REMOVE THIS, DO NOT EXPOSE CLASSES TO SERVIES DIRECTLY
+  public getInitialisedDataStorages(): UserDataStorage[] {
+    this.logger.info("Getting initialised User Data Storages.");
+    return this.initialisedDataStorages;
+  }
+
+  public initialiseDataStoragesFromConfigs(securedDataStorageConfigs: IUserDataStorageConfig[]): number {
+    this.logger.info(
+      `Initialising ${securedDataStorageConfigs.length.toString()} new User Data Storage${
+        securedDataStorageConfigs.length === 1 ? "" : "s"
+      } from Secured User Data Storage Configs.`
+    );
+    if (!isValidSecuredUserDataStorageConfigArray(securedDataStorageConfigs)) {
+      throw new Error("Invalid Secured User Data Storage Config array");
+    }
+    if (securedDataStorageConfigs.length === 0) {
+      this.logger.warn("Given no Secured User Data Storage Configs to initialise.");
+      return 0;
+    }
+    const SECURED_DATA_STORAGE_CONFIGS_TO_INITIALISE: IUserDataStorageConfig[] = securedDataStorageConfigs.filter(
+      (securedUserDataStorageConfig: IUserDataStorageConfig): boolean => {
+        const IS_ALREADY_AVAILABLE: boolean = this.initialisedDataStorages.some((availableDataStorage: UserDataStorage): boolean => {
+          return securedUserDataStorageConfig.storageId === availableDataStorage.storageId;
+        });
+        if (IS_ALREADY_AVAILABLE) {
+          this.logger.warn(`Skip initialising already available given User Data Storage "${securedUserDataStorageConfig.storageId}".`);
+        }
+        return !IS_ALREADY_AVAILABLE; // Only keep new data storage configs of storages that are NOT already initialised
+      }
+    );
+    const NEW_INITIALISED_DATA_STORAGES: UserDataStorage[] = [];
+    SECURED_DATA_STORAGE_CONFIGS_TO_INITIALISE.map((securedUserDataStorageConfig: IUserDataStorageConfig): void => {
+      try {
+        const NEW_DATA_STORAGE: UserDataStorage = new UserDataStorage(
+          securedUserDataStorageConfig,
+          `m-udata-strg-${securedUserDataStorageConfig.storageId}`,
+          (newInfo: Readonly<IUserDataStorageInfo>): void => {
+            this.onInitialisedUserDataStorageInfoChangedCallback?.(newInfo);
+          }
+        );
+        NEW_INITIALISED_DATA_STORAGES.push(NEW_DATA_STORAGE);
+      } catch (error: unknown) {
+        const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
+        this.logger.error(`User Data Storage initialisation error: ${ERROR_MESSAGE}!`);
+      }
+    });
+    this.initialisedDataStorages.push(...NEW_INITIALISED_DATA_STORAGES);
+    this.logger.info(
+      `Initialised ${NEW_INITIALISED_DATA_STORAGES.length.toString()} new User Data Storage${NEW_INITIALISED_DATA_STORAGES.length === 1 ? "" : "s"}.`
+    );
+    if (NEW_INITIALISED_DATA_STORAGES.length > 0) {
+      this.onInitialisedUserDataStoragesChangedCallback?.({
+        removed: [],
+        added: NEW_INITIALISED_DATA_STORAGES
+      } satisfies IDataChangedDiff<UUID, UserDataStorage>);
+    }
+    return NEW_INITIALISED_DATA_STORAGES.length;
+  }
+
+  public terminateDataStoragesFromIds(dataStorageIds: UUID[]): number {
+    this.logger.info(`Terminating ${dataStorageIds.length.toString()} User Data Storage${dataStorageIds.length === 1 ? "" : "s"}.`);
+    if (this.initialisedDataStorages.length === 0) {
+      this.logger.info("No initialised User Data Storages to terminate from.");
+      return 0;
+    }
+    if (!isValidUUIDArray(dataStorageIds)) {
+      throw new Error("Invalid User Data Storage ID array");
+    }
+    if (dataStorageIds.length === 0) {
+      this.logger.warn("Given no User Data Storage IDs to terminate.");
+      return 0;
+    }
+    const DATA_STORAGE_IDS_TO_TERMINATE: UUID[] = dataStorageIds.filter((dataStorageId: UUID): boolean => {
+      const IS_INITIALISED: boolean = this.initialisedDataStorages.some((availableDataStorage: UserDataStorage): boolean => {
+        return dataStorageId === availableDataStorage.storageId;
+      });
+      if (!IS_INITIALISED) {
+        this.logger.warn(`Skip terminating uninitialised given User Data Storage "${dataStorageId}".`);
+      }
+      return IS_INITIALISED;
+    });
+    const TERMINATED_DATA_STORAGES_CONFIGS: IUserDataStorageConfig[] = [];
+    for (let idx = this.initialisedDataStorages.length - 1; idx >= 0; idx--) {
+      const AVAILABLE_DATA_STORAGE: UserDataStorage = this.initialisedDataStorages[idx];
+      if (DATA_STORAGE_IDS_TO_TERMINATE.includes(AVAILABLE_DATA_STORAGE.storageId)) {
+        // TODO: Other cleanup?
+        if (AVAILABLE_DATA_STORAGE.isOpen()) {
+          AVAILABLE_DATA_STORAGE.close();
+        }
+        TERMINATED_DATA_STORAGES_CONFIGS.push(AVAILABLE_DATA_STORAGE.getConfig());
+        this.initialisedDataStorages.splice(idx, 1); // Remove from array in-place
+      }
+    }
+    this.logger.info(
+      `Terminated ${DATA_STORAGE_IDS_TO_TERMINATE.length.toString()} User Data Storage${DATA_STORAGE_IDS_TO_TERMINATE.length === 1 ? "" : "s"}.`
+    );
+    if (TERMINATED_DATA_STORAGES_CONFIGS.length > 0) {
+      this.onInitialisedUserDataStoragesChangedCallback?.({
+        removed: TERMINATED_DATA_STORAGES_CONFIGS,
+        added: []
+      } satisfies IDataChangedDiff<IUserDataStorageConfig, UserDataStorage>);
+    }
+    return DATA_STORAGE_IDS_TO_TERMINATE.length;
+  }
+
+  public terminateAllInitialisedDataStorages(): number {
+    this.logger.info("Terminating all initialised User Data Storages.");
+    if (this.initialisedDataStorages.length === 0) {
+      this.logger.info("No initialised User Data Storages to terminate.");
+      return 0;
+    }
+    const SECURED_DATA_STORAGES_CONFIGS_TO_TERMINATE: IUserDataStorageConfig[] = this.initialisedDataStorages.map(
+      (availableDataStorage: UserDataStorage): IUserDataStorageConfig => {
+        // TODO: Other cleanup?
+        if (availableDataStorage.isOpen()) {
+          availableDataStorage.close();
+        }
+        return availableDataStorage.getConfig();
+      }
+    );
+    this.initialisedDataStorages = [];
+    this.logger.info(`Terminated all User Data Storages (${SECURED_DATA_STORAGES_CONFIGS_TO_TERMINATE.length.toString()}).`);
+    this.onInitialisedUserDataStoragesChangedCallback?.({
+      removed: SECURED_DATA_STORAGES_CONFIGS_TO_TERMINATE,
+      added: []
+    } satisfies IDataChangedDiff<IUserDataStorageConfig, UserDataStorage>);
+    return SECURED_DATA_STORAGES_CONFIGS_TO_TERMINATE.length;
+  }
+}

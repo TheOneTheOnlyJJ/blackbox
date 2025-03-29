@@ -34,7 +34,7 @@ export const USER_DATA_STORAGE_INFO_JSON_SCHEMA: JSONSchemaType<IUserDataStorage
       ...USER_DATA_STORAGE_INFO_JSON_SCHEMA_CONSTANTS.visibilityGroupId,
       nullable: true as false // https://github.com/ajv-validator/ajv/issues/2163#issuecomment-2085689455
     },
-    backend: { ...USER_DATA_STORAGE_INFO_JSON_SCHEMA_CONSTANTS, ...USER_DATA_STORAGE_BACKEND_INFO_JSON_SCHEMA }
+    backend: { ...USER_DATA_STORAGE_INFO_JSON_SCHEMA_CONSTANTS.backend, ...USER_DATA_STORAGE_BACKEND_INFO_JSON_SCHEMA }
   },
   required: ["storageId", "name", "description", "visibilityGroupId", "backend"],
   additionalProperties: false

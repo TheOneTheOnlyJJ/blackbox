@@ -33,7 +33,7 @@ export class UserDataStorage {
       this.logger.info("Info changed.");
       onInfoChanged(this.getInfo());
     };
-    this.backend = userDataStorageBackendFactory(config.backendConfig, `${logScope}-backend`, onBackendInfoChanged, this.logger);
+    this.backend = userDataStorageBackendFactory(config.backendConfig, `${logScope}-bcknd`, onBackendInfoChanged, this.logger);
   }
 
   public isOpen(): boolean {
@@ -61,5 +61,17 @@ export class UserDataStorage {
       visibilityGroupId: this.visibilityGroupId,
       backend: this.backend.getInfo()
     } satisfies IUserDataStorageInfo;
+  }
+
+  public getConfig(): ISecuredUserDataStorageConfig {
+    this.logger.info("Getting User Data Storage Config.");
+    return {
+      storageId: this.storageId,
+      userId: this.userId,
+      visibilityGroupId: this.visibilityGroupId,
+      name: this.name,
+      description: this.description,
+      backendConfig: this.backend.config
+    } satisfies ISecuredUserDataStorageConfig;
   }
 }

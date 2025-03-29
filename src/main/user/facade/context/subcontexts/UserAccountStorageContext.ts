@@ -30,6 +30,7 @@ export class UserAccountStorageContext {
     this.onUserAccountStorageChangedCallback = null;
   }
 
+  // TODO: ONLY ACCEPT SETTING FROM CONFIG, ADD onInfoChanged function here
   public set(newAccountStorage: UserAccountStorage | null): boolean {
     this.logger.info("Setting new User Account Storage.");
     if (newAccountStorage !== null && this.accountStorage !== null && newAccountStorage.storageId === this.accountStorage.storageId) {

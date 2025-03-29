@@ -3,10 +3,12 @@ import { IAppRootContext } from "@renderer/components/roots/appRoot/AppRootConte
 import { ISignedInUserInfo } from "@shared/user/account/SignedInUserInfo";
 import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
 import { IUserDataStorageConfigInfo } from "@shared/user/data/storage/config/info/UserDataStorageConfigInfo";
+import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
 
 export interface ISignedInRootContext extends IAppRootContext {
   signedInUserInfo: ISignedInUserInfo;
   availableUserDataStorageConfigsInfo: IUserDataStorageConfigInfo[];
+  initialisedUserDataStoragesInfo: IUserDataStorageInfo[];
   openUserDataStorageVisibilityGroupsInfo: IUserDataStorageVisibilityGroupInfo[];
   getOpenUserDataStorageVisibilityGroupInfo: (visibilityGroupId: string) => IUserDataStorageVisibilityGroupInfo | null;
   setForbiddenLocationName: (newForbiddenLocationName: string) => void;

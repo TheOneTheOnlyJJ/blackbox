@@ -111,8 +111,8 @@ export class OpenUserDataStorageVisibilityGroupsContext {
     return VISIBILITY_GROUP_IDS.length;
   }
 
-  public clearOpenDataStorageVisibilityGroups(): number {
-    this.logger.info("Clearing open User Data Storage Visibility Groups.");
+  public clearAllOpenDataStorageVisibilityGroups(): number {
+    this.logger.info("Clearing all open User Data Storage Visibility Groups.");
     if (this.openDataStorageVisibilityGroups.length === 0) {
       this.logger.info("No open User Data Storage Visibility Groups to clear.");
       return 0;
@@ -124,7 +124,7 @@ export class OpenUserDataStorageVisibilityGroupsContext {
       }
     );
     this.openDataStorageVisibilityGroups = [];
-    this.logger.info(`Cleared open User Data Storage Visibility Groups (${OPEN_VISIBILITY_GROUP_IDS.length.toString()}).`);
+    this.logger.info(`Cleared all open User Data Storage Visibility Groups (${OPEN_VISIBILITY_GROUP_IDS.length.toString()}).`);
     this.onOpenUserDataStorageVisibilityGroupsChangedCallback?.({
       removed: OPEN_VISIBILITY_GROUP_IDS,
       added: []
