@@ -117,16 +117,48 @@ const InitialisedUserDataStoragesDataGrid: FC = () => {
           ];
           if (params.row.backend.isOpen) {
             ACTION_ITEMS.push(
-              <NewUserDataBoxActionItem logger={appLogger} key="newBox" userDataStorageInfo={params.row} showInMenu={true} />,
-              <CloseUserDataStorageActionItem logger={appLogger} key="closeStorage" userDataStorageInfo={params.row} showInMenu={true} />
+              <NewUserDataBoxActionItem
+                logger={appLogger}
+                key="newBox"
+                dataStorage={{
+                  name: params.row.name,
+                  id: params.row.storageId
+                }}
+                showInMenu={true}
+              />,
+              <CloseUserDataStorageActionItem
+                logger={appLogger}
+                key="closeStorage"
+                dataStorage={{
+                  name: params.row.name,
+                  id: params.row.storageId
+                }}
+                showInMenu={true}
+              />
             );
           } else {
             ACTION_ITEMS.push(
-              <OpenUserDataStorageActionItem logger={appLogger} key="openStorage" userDataStorageInfo={params.row} showInMenu={true} />
+              <OpenUserDataStorageActionItem
+                logger={appLogger}
+                key="openStorage"
+                dataStorage={{
+                  name: params.row.name,
+                  id: params.row.storageId
+                }}
+                showInMenu={true}
+              />
             );
           }
           ACTION_ITEMS.push(
-            <TerminateUserDataStorageActionItem logger={appLogger} key="terminateStorage" userDataStorageInfo={params.row} showInMenu={true} />
+            <TerminateUserDataStorageActionItem
+              logger={appLogger}
+              key="terminateStorage"
+              dataStorage={{
+                name: params.row.name,
+                id: params.row.storageId
+              }}
+              showInMenu={true}
+            />
           );
           return ACTION_ITEMS;
         }

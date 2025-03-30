@@ -4,10 +4,10 @@ import { IDataChangedDiff } from "@shared/utils/DataChangedDiff";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 import { IPCAPIResponse } from "../IPCAPIResponse";
 
-export type AvailableUserDataStoragesChangedCallback = (
+export type InitialisedUserDataStoragesChangedCallback = (
   encryptedInitialisedUserDataStoragesInfoChangedDiff: IEncryptedData<IDataChangedDiff<string, IUserDataStorageInfo>>
 ) => void;
-export type AvailableUserDataStorageInfoChangedCallback = (encryptedNewUserDataStorageInfo: IEncryptedData<IUserDataStorageInfo>) => void;
+export type InitialisedUserDataStorageInfoChangedCallback = (encryptedNewUserDataStorageInfo: IEncryptedData<IUserDataStorageInfo>) => void;
 
 export interface IUserDataStorageAPI {
   initialiseUserDataStorage: (storageId: string) => IPCAPIResponse<IEncryptedData<boolean>>;
@@ -15,8 +15,8 @@ export interface IUserDataStorageAPI {
   openUserDataStorage: (storageId: string) => IPCAPIResponse<IEncryptedData<boolean>>;
   closeUserDataStorage: (storageId: string) => IPCAPIResponse<IEncryptedData<boolean>>;
   getAllSignedInUserInitialisedDataStoragesInfo: () => IPCAPIResponse<IEncryptedData<IUserDataStorageInfo[]>>;
-  onInitialisedUserDataStoragesChanged: (callback: AvailableUserDataStoragesChangedCallback) => () => void;
-  onInitialisedUserDataStorageInfoChanged: (callback: AvailableUserDataStorageInfoChangedCallback) => () => void;
+  onInitialisedUserDataStoragesChanged: (callback: InitialisedUserDataStoragesChangedCallback) => () => void;
+  onInitialisedUserDataStorageInfoChanged: (callback: InitialisedUserDataStorageInfoChangedCallback) => () => void;
 }
 
 export type UserDataStorageAPIIPCChannels = TransformToIPCAPIChannels<"UserDataStorageAPI", IUserDataStorageAPI>;

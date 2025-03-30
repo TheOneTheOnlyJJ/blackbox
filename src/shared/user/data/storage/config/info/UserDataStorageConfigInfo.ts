@@ -11,6 +11,7 @@ export interface IUserDataStorageConfigInfo {
   description: string | null;
   visibilityGroupId: string | null;
   backend: UserDataStorageBackendConfigInfo;
+  isInitialised: boolean;
 }
 
 export const USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA_CONSTANTS = {
@@ -18,7 +19,8 @@ export const USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA_CONSTANTS = {
   name: { title: "Name" },
   description: { title: "Description" },
   visibilityGroupId: { title: "Visibility Group", format: "uuid" },
-  backend: { title: "Backend" }
+  backend: { title: "Backend" },
+  isInitialised: { title: "Initialised" }
 } as const;
 
 export const USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA: JSONSchemaType<IUserDataStorageConfigInfo> = {
@@ -40,9 +42,13 @@ export const USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA: JSONSchemaType<IUserData
     backend: {
       ...USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA_CONSTANTS.backend,
       ...USER_DATA_STORAGE_BACKEND_CONFIG_INFO_JSON_SCHEMA
+    },
+    isInitialised: {
+      type: "boolean",
+      ...USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA_CONSTANTS.isInitialised
     }
   },
-  required: ["storageId", "name", "description", "visibilityGroupId", "backend"],
+  required: ["storageId", "name", "description", "visibilityGroupId", "backend", "isInitialised"],
   additionalProperties: false
 } as const;
 

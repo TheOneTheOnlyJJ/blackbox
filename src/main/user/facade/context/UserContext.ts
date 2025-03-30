@@ -22,6 +22,7 @@ import { InitialisedUserDataStoragesContext } from "./subcontexts/InitialisedUse
 import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
 import { UserDataStorage } from "@main/user/data/storage/UserDataStorage";
 import { IUserDataStorageConfig } from "@main/user/data/storage/config/UserDataStorageConfig";
+import { userDataStorageConfigToUserDataStorageConfigInfo } from "@main/user/data/storage/config/utils/userDataStorageConfigToUserDataStorageConfigInfo";
 
 export interface IUserContextLoggers {
   main: LogFunctions;
@@ -40,6 +41,7 @@ export interface IUserContextHandlers {
   onAvailableSecuredUserDataStorageConfigsChangedCallback:
     | ((availableUserDataStorageConfigsInfoChangedDiff: IDataChangedDiff<string, IUserDataStorageConfigInfo>) => void)
     | null;
+  onAvailableSecuredUserDataStorageConfigInfoChangedCallback: ((newUserDataStorageCnfigInfo: Readonly<IUserDataStorageConfigInfo>) => void) | null;
   onOpenUserDataStorageVisibilityGroupsChangedCallback:
     | ((dataStorageVisibilityGroupsInfoChangedDiff: IDataChangedDiff<string, IUserDataStorageVisibilityGroupInfo>) => void)
     | null;
@@ -127,7 +129,11 @@ export class UserContext {
           removed: availableSecuredDataStorageConfigsChangedDiff.removed,
           added: availableSecuredDataStorageConfigsChangedDiff.added.map(
             (newSecuredDataStorageConfig: ISecuredUserDataStorageConfig): IUserDataStorageConfigInfo => {
-              return securedUserDataStorageConfigToUserDataStorageConfigInfo(newSecuredDataStorageConfig, null);
+              return securedUserDataStorageConfigToUserDataStorageConfigInfo(
+                newSecuredDataStorageConfig,
+                this.INITIALISED_DATA_STORAGES_CONTEXT.isDataStorageInitialised(newSecuredDataStorageConfig.storageId),
+                null
+              );
             }
           )
         } satisfies IDataChangedDiff<string, IUserDataStorageConfigInfo>);
@@ -140,16 +146,31 @@ export class UserContext {
     this.INITIALISED_DATA_STORAGES_CONTEXT.onInitialisedUserDataStoragesChangedCallback = (
       initialisedDataStoragesChangedDiff: IDataChangedDiff<IUserDataStorageConfig, UserDataStorage>
     ): void => {
+      // TODO: Remove this?
+      // if (initialisedDataStoragesChangedDiff.removed.length > 0) {
+      //   // When visibility groups close, the configs are removed their context's onChange callback, even though here they get added back regardless
+      //   this.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT.addAvailableSecuredDataStorageConfigs(initialisedDataStoragesChangedDiff.removed);
+      // }
+      // if (initialisedDataStoragesChangedDiff.added.length > 0) {
+      //   this.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT.removeAvailableSecuredDataStorageConfigs(
+      //     initialisedDataStoragesChangedDiff.added.map((userDataStorage: UserDataStorage): UUID => {
+      //       return userDataStorage.storageId;
+      //     })
+      //   );
+      // }
       if (initialisedDataStoragesChangedDiff.removed.length > 0) {
-        // When visibility groups close, the configs are removed their context's onChange callback, even though here they get added back regardless
-        this.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT.addAvailableSecuredDataStorageConfigs(initialisedDataStoragesChangedDiff.removed);
+        initialisedDataStoragesChangedDiff.removed.map((removedUserDataStorageConfig: IUserDataStorageConfig): void => {
+          this.HANDLERS.onAvailableSecuredUserDataStorageConfigInfoChangedCallback?.(
+            userDataStorageConfigToUserDataStorageConfigInfo(removedUserDataStorageConfig, false, null)
+          );
+        });
       }
       if (initialisedDataStoragesChangedDiff.added.length > 0) {
-        this.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT.removeAvailableSecuredDataStorageConfigs(
-          initialisedDataStoragesChangedDiff.added.map((userDataStorage: UserDataStorage): UUID => {
-            return userDataStorage.storageId;
-          })
-        );
+        initialisedDataStoragesChangedDiff.added.map((userDataStorage: UserDataStorage): void => {
+          this.HANDLERS.onAvailableSecuredUserDataStorageConfigInfoChangedCallback?.(
+            userDataStorageConfigToUserDataStorageConfigInfo(userDataStorage.getConfig(), true, null)
+          );
+        });
       }
       if (initialisedDataStoragesChangedDiff.removed.length > 0 || initialisedDataStoragesChangedDiff.added.length > 0) {
         this.HANDLERS.onInitialisedUserDataStoragesChangedCallback?.({
@@ -159,7 +180,7 @@ export class UserContext {
           added: initialisedDataStoragesChangedDiff.added.map((userDataStorage: UserDataStorage): IUserDataStorageInfo => {
             return userDataStorage.getInfo();
           })
-        } satisfies IDataChangedDiff<string, IUserDataStorageConfigInfo>);
+        } satisfies IDataChangedDiff<string, IUserDataStorageInfo>);
       }
     };
     this.INITIALISED_DATA_STORAGES_CONTEXT.onInitialisedUserDataStorageInfoChangedCallback = (

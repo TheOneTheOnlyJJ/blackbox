@@ -1,7 +1,7 @@
 import { sendLogToMainProcess } from "@preload/utils/sendLogToMainProcess";
 import {
-  AvailableUserDataStorageInfoChangedCallback,
-  AvailableUserDataStoragesChangedCallback,
+  InitialisedUserDataStorageInfoChangedCallback,
+  InitialisedUserDataStoragesChangedCallback,
   IUserDataStorageAPI,
   USER_DATA_STORAGE_API_IPC_CHANNELS,
   UserDataStorageAPIIPCChannel
@@ -40,7 +40,7 @@ export const USER_DATA_STORAGE_API_PRELOAD_HANDLERS: IUserDataStorageAPI = {
     sendLogToMainProcess(PRELOAD_IPC_USER_DATA_STORAGE_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL) as IPCAPIResponse<IEncryptedData<IUserDataStorageInfo[]>>;
   },
-  onInitialisedUserDataStoragesChanged: (callback: AvailableUserDataStoragesChangedCallback): (() => void) => {
+  onInitialisedUserDataStoragesChanged: (callback: InitialisedUserDataStoragesChangedCallback): (() => void) => {
     const CHANNEL: UserDataStorageAPIIPCChannel = USER_DATA_STORAGE_API_IPC_CHANNELS.onInitialisedUserDataStoragesChanged;
     sendLogToMainProcess(PRELOAD_IPC_USER_DATA_STORAGE_API_LOG_SCOPE, "debug", `Adding listener from main on channel: "${CHANNEL}".`);
     const LISTENER = (
@@ -56,7 +56,7 @@ export const USER_DATA_STORAGE_API_PRELOAD_HANDLERS: IUserDataStorageAPI = {
       ipcRenderer.removeListener(CHANNEL, LISTENER);
     };
   },
-  onInitialisedUserDataStorageInfoChanged: (callback: AvailableUserDataStorageInfoChangedCallback): (() => void) => {
+  onInitialisedUserDataStorageInfoChanged: (callback: InitialisedUserDataStorageInfoChangedCallback): (() => void) => {
     const CHANNEL: UserDataStorageAPIIPCChannel = USER_DATA_STORAGE_API_IPC_CHANNELS.onInitialisedUserDataStorageInfoChanged;
     sendLogToMainProcess(PRELOAD_IPC_USER_DATA_STORAGE_API_LOG_SCOPE, "debug", `Adding listener from main on channel: "${CHANNEL}".`);
     const LISTENER = (_: IpcRendererEvent, encryptedNewUserDataStorageInfo: IEncryptedData<IUserDataStorageInfo>): void => {

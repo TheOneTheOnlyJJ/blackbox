@@ -5,6 +5,7 @@ import { IUserDataStorageConfigInfo } from "@shared/user/data/storage/config/inf
 
 export const securedUserDataStorageConfigToUserDataStorageConfigInfo = (
   securedUserDataStorageConfig: ISecuredUserDataStorageConfig,
+  isInitialised: boolean,
   logger: LogFunctions | null
 ): IUserDataStorageConfigInfo => {
   logger?.debug("Converting Secured User Data Storage Config to User Data Storage Config Info.");
@@ -13,6 +14,7 @@ export const securedUserDataStorageConfigToUserDataStorageConfigInfo = (
     name: securedUserDataStorageConfig.name,
     description: securedUserDataStorageConfig.description,
     visibilityGroupId: securedUserDataStorageConfig.visibilityGroupId,
-    backend: userDataStorageBackendConfigToUserDataStorageBackendConfigInfo(securedUserDataStorageConfig.backendConfig, logger)
+    backend: userDataStorageBackendConfigToUserDataStorageBackendConfigInfo(securedUserDataStorageConfig.backendConfig, logger),
+    isInitialised: isInitialised
   };
 };

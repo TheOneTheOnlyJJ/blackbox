@@ -251,4 +251,11 @@ export class InitialisedUserDataStoragesContext {
       return initialisedDataStorage.getInfo();
     });
   }
+
+  public isDataStorageInitialised(storageId: UUID): boolean {
+    this.logger.debug(`Checking if User Data Storage "${storageId}" is initialised.`);
+    return this.initialisedDataStorages.some((initialisedStorage: UserDataStorage): boolean => {
+      return initialisedStorage.storageId === storageId;
+    });
+  }
 }

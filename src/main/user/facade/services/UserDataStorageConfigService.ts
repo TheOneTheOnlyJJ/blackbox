@@ -15,6 +15,7 @@ export interface IUserDataStorageConfigServiceContext {
   generateRandomUserDataStorageId: () => UUID;
   isUserIdAvailable: (userId: UUID) => boolean;
   addSecuredUserDataStorageConfig: (secureduserDataStorageConfig: ISecuredUserDataStorageConfig, encryptionKey: Buffer) => boolean;
+  isDataStorageInitialised: (storageId: UUID) => boolean;
   getSignedInUser: () => Readonly<ISignedInUser> | null;
   getAvailableSecuredDataStorageConfigs: () => ISecuredUserDataStorageConfig[];
   getOpenDataStorageVisibilityGroups: () => IUserDataStorageVisibilityGroup[];
@@ -88,7 +89,11 @@ export class UserDataStorageConfigService {
     this.logger.debug("Getting all signed in user's available User Data Storage Configs Info.");
     return this.CONTEXT.getAvailableSecuredDataStorageConfigs().map(
       (securedDataStorageConfig: ISecuredUserDataStorageConfig): IUserDataStorageConfigInfo => {
-        return securedUserDataStorageConfigToUserDataStorageConfigInfo(securedDataStorageConfig, null);
+        return securedUserDataStorageConfigToUserDataStorageConfigInfo(
+          securedDataStorageConfig,
+          this.CONTEXT.isDataStorageInitialised(securedDataStorageConfig.storageId),
+          null
+        );
       }
     );
   }

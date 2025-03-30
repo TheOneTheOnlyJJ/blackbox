@@ -527,6 +527,29 @@ export class App {
           "available User Data Storage Configs Info Changed Diff"
         )
       );
+    },
+    sendAvailableUserDataStorageConfigInfoChanged: (userDataStorageConfigInfo: IUserDataStorageConfigInfo): void => {
+      this.userDataStorageConfigAPILogger.debug(
+        `Sending window new Info of available User Data Storage Config "${userDataStorageConfigInfo.storageId}".`
+      );
+      if (this.window === null) {
+        this.userDataStorageConfigAPILogger.debug("Window is null. No-op.");
+        return;
+      }
+      if (this.IPC_TLS_AES_KEY.value === null) {
+        throw new Error("Null IPC TLS AES key");
+      }
+      const CHANNEL: UserDataStorageConfigAPIIPCChannel = USER_DATA_STORAGE_CONFIG_API_IPC_CHANNELS.onAvailableUserDataStorageConfigInfoChanged;
+      this.userDataStorageConfigAPILogger.debug(`Messaging renderer on channel: "${CHANNEL}".`);
+      this.window.webContents.send(
+        CHANNEL,
+        encryptWithAES<IUserDataStorageConfigInfo>(
+          userDataStorageConfigInfo,
+          this.IPC_TLS_AES_KEY.value,
+          this.userDataStorageConfigAPILogger,
+          `new Info of available User Data Storage Config "${userDataStorageConfigInfo.storageId}"`
+        )
+      );
     }
   };
 
@@ -883,6 +906,8 @@ export class App {
         onUserAccountStorageChangedCallback: this.USER_ACCOUNT_STORAGE_API_HANDLERS.sendUserAccountStorageChanged,
         onAvailableSecuredUserDataStorageConfigsChangedCallback:
           this.USER_DATA_STORAGE_CONFIG_API_HANDLERS.sendAvailableUserDataStorageConfigsChanged,
+        onAvailableSecuredUserDataStorageConfigInfoChangedCallback:
+          this.USER_DATA_STORAGE_CONFIG_API_HANDLERS.sendAvailableUserDataStorageConfigInfoChanged,
         onOpenUserDataStorageVisibilityGroupsChangedCallback:
           this.USER_DATA_STORAGE_VISIBILITY_GROUP_API_HANDLERS.sendOpenUserDataStorageVisibilityGroupsChanged,
         onInitialisedUserDataStoragesChangedCallback: this.USER_DATA_STORAGE_API_HANDLERS.sendInitialisedUserDataStoragesChanged,

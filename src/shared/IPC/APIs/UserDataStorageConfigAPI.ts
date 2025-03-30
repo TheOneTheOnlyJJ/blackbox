@@ -8,11 +8,15 @@ import { IDataChangedDiff } from "@shared/utils/DataChangedDiff";
 export type AvailableUserDataStorageConfigsChangedCallback = (
   encryptedAvailableUserDataStorageConfigsInfoChangedDiff: IEncryptedData<IDataChangedDiff<string, IUserDataStorageConfigInfo>>
 ) => void;
+export type AvailableUserDataStorageConfigInfoChangedCallback = (
+  encryptedNewUserDataStorageConfigInfo: IEncryptedData<IUserDataStorageConfigInfo>
+) => void;
 
 export interface IUserDataStorageConfigAPI {
   addUserDataStorageConfig: (encryptedUserDataStorageConfigCreateDTO: IEncryptedData<IUserDataStorageConfigCreateDTO>) => IPCAPIResponse<boolean>;
   getAllSignedInUserAvailableDataStorageConfigsInfo: () => IPCAPIResponse<IEncryptedData<IUserDataStorageConfigInfo[]>>;
   onAvailableUserDataStorageConfigsChanged: (callback: AvailableUserDataStorageConfigsChangedCallback) => () => void;
+  onAvailableUserDataStorageConfigInfoChanged: (callback: AvailableUserDataStorageConfigInfoChangedCallback) => () => void;
 }
 
 export type UserDataStorageConfigAPIIPCChannels = TransformToIPCAPIChannels<"UserDataStorageConfigAPI", IUserDataStorageConfigAPI>;
@@ -21,5 +25,6 @@ export type UserDataStorageConfigAPIIPCChannel = UserDataStorageConfigAPIIPCChan
 export const USER_DATA_STORAGE_CONFIG_API_IPC_CHANNELS: UserDataStorageConfigAPIIPCChannels = {
   addUserDataStorageConfig: "UserDataStorageConfigAPI:addUserDataStorageConfig",
   getAllSignedInUserAvailableDataStorageConfigsInfo: "UserDataStorageConfigAPI:getAllSignedInUserAvailableDataStorageConfigsInfo",
-  onAvailableUserDataStorageConfigsChanged: "UserDataStorageConfigAPI:onAvailableUserDataStorageConfigsChanged"
+  onAvailableUserDataStorageConfigsChanged: "UserDataStorageConfigAPI:onAvailableUserDataStorageConfigsChanged",
+  onAvailableUserDataStorageConfigInfoChanged: "UserDataStorageConfigAPI:onAvailableUserDataStorageConfigInfoChanged"
 };

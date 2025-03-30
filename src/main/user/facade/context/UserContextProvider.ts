@@ -54,6 +54,9 @@ export class UserContextProvider {
         this.CONTEXT.ACCOUNT_STORAGE_CONTEXT
       ),
       isUserIdAvailable: this.CONTEXT.ACCOUNT_STORAGE_CONTEXT.isUserIdAvailable.bind(this.CONTEXT.ACCOUNT_STORAGE_CONTEXT),
+      isDataStorageInitialised: this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT.isDataStorageInitialised.bind(
+        this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT
+      ),
       addSecuredUserDataStorageConfig: this.CONTEXT.ACCOUNT_STORAGE_CONTEXT.addSecuredUserDataStorageConfig.bind(
         this.CONTEXT.ACCOUNT_STORAGE_CONTEXT
       ),

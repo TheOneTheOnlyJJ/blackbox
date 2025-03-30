@@ -22,7 +22,10 @@ const OPEN_USER_DATA_STORAGE_VISIBILIY_GROUPS_DATA_GRID_COLUMNS: GridColDef[] = 
         <CloseUserDataStorageVisibilityGroupActionItem
           logger={appLogger}
           key="closeVisibilityGroup"
-          visibilityGroupInfo={params.row}
+          visibilityGroup={{
+            name: params.row.name,
+            id: params.row.visibilityGroupId
+          }}
           showInMenu={false}
         />
       ];

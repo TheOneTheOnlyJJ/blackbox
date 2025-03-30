@@ -1,5 +1,6 @@
 import {
   DataGrid,
+  GridActionsCellItemProps,
   GridApi,
   GridAutosizeOptions,
   GridColDef,
@@ -9,7 +10,7 @@ import {
   GridRowParams,
   useGridApiRef
 } from "@mui/x-data-grid";
-import { FC, MutableRefObject, useCallback, useMemo, useState } from "react";
+import { FC, MutableRefObject, ReactElement, useCallback, useMemo, useState } from "react";
 import { ISignedInRootContext, useSignedInRootContext } from "../roots/signedInRoot/SignedInRootContext";
 import { PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS } from "@shared/user/data/storage/visibilityGroup/constants";
 import {
@@ -25,6 +26,7 @@ import { useDialogOpenState } from "@renderer/hooks/useDialogState";
 import OpenUserDataStorageConfigInfoDialogActionItem from "./actionCellItems/OpenUserDataStorageConfigInfoDialogActionItem";
 import InitialiseUserDataStorageActionItem from "./actionCellItems/InitialiseUserDataStorageActionItem";
 import { useMUIXDataGridAutosizeColumnsOnWindowResize } from "@renderer/hooks/useMUIXDataGridAutosizeOnWindowResize";
+import TerminateUserDataStorageActionItem from "./actionCellItems/TerminateUserDataStorageActionItem";
 
 const GRID_AUTOSIZE_OPTIONS: GridAutosizeOptions = { expand: true, includeHeaders: true };
 
@@ -91,12 +93,20 @@ const AvailableUserDataStorageConfigsDataGrid: FC = () => {
         }
       },
       {
+        field: "isInitialised",
+        type: "boolean",
+        headerName: "Active",
+        valueGetter: (_: never, row: IUserDataStorageConfigInfo): boolean => {
+          return row.isInitialised;
+        }
+      },
+      {
         // TODO: Put info in master detail row (pro feature)
         field: "actions",
         type: "actions",
         headerName: "Actions",
         getActions: (params: GridRowParams<IUserDataStorageConfigInfo>) => {
-          return [
+          const ACTION_ITEMS: ReactElement<GridActionsCellItemProps>[] = [
             <OpenUserDataStorageConfigInfoDialogActionItem
               logger={appLogger}
               key="openInfoDialog"
@@ -104,9 +114,34 @@ const AvailableUserDataStorageConfigsDataGrid: FC = () => {
               setChosenUserDataStorageConfigInfo={setChosenStorageConfigInfo}
               setIsShowUserDataStorageConfigInfoDialogOpen={setIsShowConfigInfoDialogOpen}
               showInMenu={false}
-            />,
-            <InitialiseUserDataStorageActionItem logger={appLogger} key="openStorage" userDataStorageConfigInfo={params.row} showInMenu={true} />
+            />
           ];
+          if (params.row.isInitialised) {
+            ACTION_ITEMS.push(
+              <TerminateUserDataStorageActionItem
+                logger={appLogger}
+                key="terminateStorage"
+                dataStorage={{
+                  name: params.row.name,
+                  id: params.row.storageId
+                }}
+                showInMenu={false}
+              />
+            );
+          } else {
+            ACTION_ITEMS.push(
+              <InitialiseUserDataStorageActionItem
+                logger={appLogger}
+                key="initialiseStorage"
+                dataStorage={{
+                  name: params.row.name,
+                  id: params.row.storageId
+                }}
+                showInMenu={false}
+              />
+            );
+          }
+          return ACTION_ITEMS;
         }
       }
     ];

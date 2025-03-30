@@ -3,7 +3,8 @@ import {
   IUserDataStorageConfigAPI,
   UserDataStorageConfigAPIIPCChannel,
   USER_DATA_STORAGE_CONFIG_API_IPC_CHANNELS,
-  AvailableUserDataStorageConfigsChangedCallback
+  AvailableUserDataStorageConfigsChangedCallback,
+  AvailableUserDataStorageConfigInfoChangedCallback
 } from "@shared/IPC/APIs/UserDataStorageConfigAPI";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IUserDataStorageConfigCreateDTO } from "@shared/user/data/storage/config/create/DTO/UserDataStorageConfigCreateDTO";
@@ -34,6 +35,22 @@ export const USER_DATA_STORAGE_CONFIG_API_PRELOAD_HANDLERS: IUserDataStorageConf
     ): void => {
       sendLogToMainProcess(PRELOAD_IPC_USER_DATA_STORAGE_CONFIG_API_LOG_SCOPE, "debug", `Received message from main on channel: "${CHANNEL}".`);
       callback(encryptedUserDataStorageConfigsInfoChangedDiff);
+    };
+    ipcRenderer.on(CHANNEL, LISTENER);
+    return (): void => {
+      sendLogToMainProcess(PRELOAD_IPC_USER_DATA_STORAGE_CONFIG_API_LOG_SCOPE, "debug", `Removing listener from main on channel: "${CHANNEL}".`);
+      ipcRenderer.removeListener(CHANNEL, LISTENER);
+    };
+  },
+  onAvailableUserDataStorageConfigInfoChanged: (callback: AvailableUserDataStorageConfigInfoChangedCallback): (() => void) => {
+    const CHANNEL: UserDataStorageConfigAPIIPCChannel = USER_DATA_STORAGE_CONFIG_API_IPC_CHANNELS.onAvailableUserDataStorageConfigInfoChanged;
+    sendLogToMainProcess(PRELOAD_IPC_USER_DATA_STORAGE_CONFIG_API_LOG_SCOPE, "debug", `Adding listener from main on channel: "${CHANNEL}".`);
+    const LISTENER = (
+      _: IpcRendererEvent,
+      encryptedNewUserDataStorageConfigInfo: IEncryptedData<IDataChangedDiff<string, IUserDataStorageConfigInfo>>
+    ): void => {
+      sendLogToMainProcess(PRELOAD_IPC_USER_DATA_STORAGE_CONFIG_API_LOG_SCOPE, "debug", `Received message from main on channel: "${CHANNEL}".`);
+      callback(encryptedNewUserDataStorageConfigInfo);
     };
     ipcRenderer.on(CHANNEL, LISTENER);
     return (): void => {

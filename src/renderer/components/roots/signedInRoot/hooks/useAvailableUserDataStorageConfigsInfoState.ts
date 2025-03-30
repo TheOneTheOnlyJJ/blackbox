@@ -94,10 +94,47 @@ export const useAvailableUserDataStorageConfigsInfoState = (logger: LogFunctions
           });
       }
     );
+    // Monitor changes to User Data Storages Info
+    const removeAvailableUserDataStorageConfigInfoChangedListener: () => void =
+      window.userDataStorageConfigAPI.onAvailableUserDataStorageConfigInfoChanged(
+        (encryptedNewUserDataStorageConfigInfo: IEncryptedData<IUserDataStorageConfigInfo>): void => {
+          window.IPCTLSAPI.decryptAndValidateJSON<IUserDataStorageConfigInfo>(
+            encryptedNewUserDataStorageConfigInfo,
+            isValidUserDataStorageConfigInfo,
+            "new available User Data Storage Config Info"
+          )
+            .then(
+              (newUserDataStorageConfigInfo: IUserDataStorageConfigInfo): void => {
+                setAvailableUserDataStorageConfigsInfo(
+                  (prevAvailableUserDataStorageConfigsInfo: IUserDataStorageConfigInfo[]): IUserDataStorageConfigInfo[] => {
+                    return prevAvailableUserDataStorageConfigsInfo.map(
+                      (prevUserDataStorageInfo: IUserDataStorageConfigInfo): IUserDataStorageConfigInfo => {
+                        return newUserDataStorageConfigInfo.storageId === prevUserDataStorageInfo.storageId
+                          ? newUserDataStorageConfigInfo
+                          : prevUserDataStorageInfo;
+                      }
+                    );
+                  }
+                );
+              },
+              (reason: unknown): void => {
+                const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
+                logger.error(`Could not decrypt new available User Data Storage Config Info. Reason: ${REASON_MESSAGE}.`);
+                enqueueSnackbar({ message: "Error decrypting available data storage configuration's new information.", variant: "error" });
+              }
+            )
+            .catch((reason: unknown): void => {
+              const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
+              logger.error(`Could not decrypt new available User Data Storage Config Info. Reason: ${REASON_MESSAGE}.`);
+              enqueueSnackbar({ message: "Error decrypting available data storage configuration's new information.", variant: "error" });
+            });
+        }
+      );
 
     return (): void => {
       logger.debug("Removing available User Data Storage Configs event listeners.");
       removeAvailableUserDataStorageConfigsChangedListener();
+      removeAvailableUserDataStorageConfigInfoChangedListener();
     };
   }, [logger]);
 
