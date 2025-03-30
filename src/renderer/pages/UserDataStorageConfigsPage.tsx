@@ -32,9 +32,9 @@ const UserDataStorageConfigsPage: FC = () => {
   }, [handleNewUserDataStorageConfigFormDialogClose]);
 
   useEffect((): void => {
-    userDataStoragesLayoutRootContext.setDashboardNavigationArea(DASHBOARD_NAVIGATION_AREAS.userData);
+    userDataStoragesLayoutRootContext.setDashboardNavigationArea(DASHBOARD_NAVIGATION_AREAS.dataStorages);
     userDataStoragesLayoutRootContext.setUserDataNavigationArea(USER_DATA_NAVIGATION_AREAS.storageConfigs);
-    userDataStoragesLayoutRootContext.setAppBarTitle("Data Storage Configurations");
+    // userDataStoragesLayoutRootContext.setAppBarTitle("Data Storage Configurations");
     userDataStoragesLayoutRootContext.setForbiddenLocationName("Data Storage Configurations");
   }, [userDataStoragesLayoutRootContext]);
 

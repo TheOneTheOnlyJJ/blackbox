@@ -11,7 +11,7 @@ const BoxesPage: FC = () => {
 
   useEffect((): void => {
     dashboardLayoutRootContext.setDashboardNavigationArea(DASHBOARD_NAVIGATION_AREAS.boxes);
-    dashboardLayoutRootContext.setAppBarTitle("Boxes");
+    // dashboardLayoutRootContext.setAppBarTitle("Boxes");
     dashboardLayoutRootContext.setForbiddenLocationName("Boxes");
   }, [dashboardLayoutRootContext]);
 

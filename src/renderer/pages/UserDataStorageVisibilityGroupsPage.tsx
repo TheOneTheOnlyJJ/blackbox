@@ -55,9 +55,9 @@ const UserDataStorageVisibilityGroupsPage: FC = () => {
   }, [handleOpenUserDataStorageVisibilityGroupFormDialogClose]);
 
   useEffect((): void => {
-    userDataStoragesLayoutRootContext.setDashboardNavigationArea(DASHBOARD_NAVIGATION_AREAS.userData);
+    userDataStoragesLayoutRootContext.setDashboardNavigationArea(DASHBOARD_NAVIGATION_AREAS.dataStorages);
     userDataStoragesLayoutRootContext.setUserDataNavigationArea(USER_DATA_NAVIGATION_AREAS.visibilityGroups);
-    userDataStoragesLayoutRootContext.setAppBarTitle("Data Storage Visibility Groups");
+    // userDataStoragesLayoutRootContext.setAppBarTitle("Data Storage Visibility Groups");
     userDataStoragesLayoutRootContext.setForbiddenLocationName("Data Storage Visibility Groups");
   }, [userDataStoragesLayoutRootContext]);
 

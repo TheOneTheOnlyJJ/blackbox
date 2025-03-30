@@ -4,10 +4,10 @@ import { Dispatch, SetStateAction } from "react";
 import { DashboardNavigationArea } from "@renderer/navigationAreas/DashboardNavigationAreas";
 
 export interface IDashboardLayoutRootContext extends ISignedInRootContext {
-  appBarTitle: string;
-  setAppBarTitle: Dispatch<SetStateAction<string>>;
+  // appBarTitle: string;
+  // setAppBarTitle: Dispatch<SetStateAction<string>>;
   layout: {
-    dashboardNavigationBarWidth: number;
+    // dashboardNavigationBarWidth: number;
     dashboardAppBarHeight: number;
   };
   dashboardNavigationArea: DashboardNavigationArea | null;

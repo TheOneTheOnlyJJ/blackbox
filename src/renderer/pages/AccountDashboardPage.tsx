@@ -43,7 +43,7 @@ const AccountDashboardPage: FC = () => {
 
   useEffect((): void => {
     dashboardLayoutRootContext.setDashboardNavigationArea(DASHBOARD_NAVIGATION_AREAS.dashboard);
-    dashboardLayoutRootContext.setAppBarTitle("Dashboard");
+    // dashboardLayoutRootContext.setAppBarTitle("Dashboard");
     dashboardLayoutRootContext.setForbiddenLocationName("Dashboard");
   }, [dashboardLayoutRootContext]);
 

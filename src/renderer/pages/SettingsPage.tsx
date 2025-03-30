@@ -12,7 +12,7 @@ const SettingsPage: FC = () => {
 
   useEffect((): void => {
     dashboardLayoutRootContext.setDashboardNavigationArea(DASHBOARD_NAVIGATION_AREAS.settings);
-    dashboardLayoutRootContext.setAppBarTitle("Settings");
+    // dashboardLayoutRootContext.setAppBarTitle("Settings");
     dashboardLayoutRootContext.setForbiddenLocationName("Settings");
   }, [dashboardLayoutRootContext]);
 

@@ -9,9 +9,9 @@ const InitialisedUserDataStoragesPage: FC = () => {
   const userDataStoragesLayoutRootContext: IUserDataLayoutRootContext = useUserDataLayoutRootContext();
 
   useEffect((): void => {
-    userDataStoragesLayoutRootContext.setDashboardNavigationArea(DASHBOARD_NAVIGATION_AREAS.userData);
+    userDataStoragesLayoutRootContext.setDashboardNavigationArea(DASHBOARD_NAVIGATION_AREAS.dataStorages);
     userDataStoragesLayoutRootContext.setUserDataNavigationArea(USER_DATA_NAVIGATION_AREAS.initialisedStorages);
-    userDataStoragesLayoutRootContext.setAppBarTitle("Active Data Storages");
+    // userDataStoragesLayoutRootContext.setAppBarTitle("Active Data Storages");
     userDataStoragesLayoutRootContext.setForbiddenLocationName("Active Data Storages");
   }, [userDataStoragesLayoutRootContext]);
 

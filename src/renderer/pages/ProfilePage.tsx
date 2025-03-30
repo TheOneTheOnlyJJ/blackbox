@@ -12,7 +12,7 @@ const ProfilePage: FC = () => {
 
   useEffect((): void => {
     dashboardLayoutRootContext.setDashboardNavigationArea(DASHBOARD_NAVIGATION_AREAS.profile);
-    dashboardLayoutRootContext.setAppBarTitle("Profile");
+    // dashboardLayoutRootContext.setAppBarTitle("Profile");
     dashboardLayoutRootContext.setForbiddenLocationName("Profile");
   }, [dashboardLayoutRootContext]);
 

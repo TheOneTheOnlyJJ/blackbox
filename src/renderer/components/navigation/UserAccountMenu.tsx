@@ -8,6 +8,7 @@ import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import DebouncedLink from "./DebouncedLink";
 import { SvgIconComponent } from "@mui/icons-material";
 import { DASHBOARD_NAVIGATION_AREAS, DashboardNavigationArea } from "@renderer/navigationAreas/DashboardNavigationAreas";
+import { ISignedInRootContext, useSignedInRootContext } from "../roots/signedInRoot/SignedInRootContext";
 
 interface IUserAccountMenuItem {
   name: string;
@@ -22,26 +23,26 @@ export interface IUserAccountMenuProps {
   open: MenuProps["open"];
   onClose: MenuProps["onClose"];
   onClick: MenuProps["onClick"];
-  signedInUserId: string;
   dashboardNavigationArea: DashboardNavigationArea | null;
 }
 
 const UserAccountMenu: FC<IUserAccountMenuProps> = (props: IUserAccountMenuProps) => {
-  const { signedInUserId, dashboardNavigationArea, ...menuProps } = props;
+  const signedInRootContext: ISignedInRootContext = useSignedInRootContext();
+  const { dashboardNavigationArea, ...menuProps } = props;
   const USER_ACCOUNT_MENU_ITEMS: IUserAccountMenuItem[] = useMemo<IUserAccountMenuItem[]>((): IUserAccountMenuItem[] => {
     return [
       {
         name: "Profile",
         icon: PersonOutlineOutlinedIcon,
         dashboardNavigationArea: DASHBOARD_NAVIGATION_AREAS.profile,
-        path: `/users/${signedInUserId}/profile`,
+        path: `/users/${signedInRootContext.signedInUserInfo.userId}/profile`,
         divider: false
       },
       {
         name: "Settings",
         icon: SettingsOutlinedIcon,
         dashboardNavigationArea: DASHBOARD_NAVIGATION_AREAS.settings,
-        path: `/users/${signedInUserId}/settings`,
+        path: `/users/${signedInRootContext.signedInUserInfo.userId}/settings`,
         divider: true
       },
       {
@@ -51,7 +52,7 @@ const UserAccountMenu: FC<IUserAccountMenuProps> = (props: IUserAccountMenuProps
         divider: false
       }
     ];
-  }, [signedInUserId]);
+  }, [signedInRootContext.signedInUserInfo]);
 
   return (
     <Menu id="account-menu" {...menuProps}>

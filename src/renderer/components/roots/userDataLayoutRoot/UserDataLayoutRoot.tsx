@@ -26,7 +26,7 @@ const UserDataLayoutRoot: FC = () => {
       <UserDataNavigationBar
         ref={userDataNavigationBarRef}
         width={userDataNavigationBarWidth}
-        leftOffset={dashboardLayoutRootContext.layout.dashboardNavigationBarWidth}
+        leftOffset={0} //dashboardLayoutRootContext.layout.dashboardNavigationBarWidth}
         heightOffset={dashboardLayoutRootContext.layout.dashboardAppBarHeight}
         signedInUserId={dashboardLayoutRootContext.signedInUserInfo.userId}
         userDataNavigationArea={userDataNavigationArea}
@@ -36,7 +36,7 @@ const UserDataLayoutRoot: FC = () => {
         position="fixed"
         sx={{
           top: dashboardLayoutRootContext.layout.dashboardAppBarHeight, // Start right below the app bar
-          left: dashboardLayoutRootContext.layout.dashboardNavigationBarWidth + userDataNavigationBarWidth, // Adjust for both navigation bars
+          left: 0 + userDataNavigationBarWidth, // dashboardLayoutRootContext.layout.dashboardNavigationBarWidth
           right: 0, // Stretch to the right edge of the viewport
           bottom: 0, // Stretch to the bottom of the viewport
           overflow: "auto",
