@@ -108,10 +108,10 @@ export const useAvailableUserDataStorageConfigsInfoState = (logger: LogFunctions
                 setAvailableUserDataStorageConfigsInfo(
                   (prevAvailableUserDataStorageConfigsInfo: IUserDataStorageConfigInfo[]): IUserDataStorageConfigInfo[] => {
                     return prevAvailableUserDataStorageConfigsInfo.map(
-                      (prevUserDataStorageInfo: IUserDataStorageConfigInfo): IUserDataStorageConfigInfo => {
-                        return newUserDataStorageConfigInfo.storageId === prevUserDataStorageInfo.storageId
+                      (prevUserDataStorageConfigInfo: IUserDataStorageConfigInfo): IUserDataStorageConfigInfo => {
+                        return newUserDataStorageConfigInfo.storageId === prevUserDataStorageConfigInfo.storageId
                           ? newUserDataStorageConfigInfo
-                          : prevUserDataStorageInfo;
+                          : prevUserDataStorageConfigInfo;
                       }
                     );
                   }
