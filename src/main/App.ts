@@ -66,6 +66,8 @@ import {
 } from "@shared/IPC/APIs/UserDataStorageVisibilityGroupAPI";
 import { IUserDataStorageAPI, USER_DATA_STORAGE_API_IPC_CHANNELS, UserDataStorageAPIIPCChannel } from "@shared/IPC/APIs/UserDataStorageAPI";
 import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
+import { IUserDataBoxAPI, IUserDataBoxNameAvailabilityRequest, USER_DATA_BOX_API_IPC_CHANNELS } from "@shared/IPC/APIs/IUserDataBoxAPI";
+import { IUserDataBoxConfigCreateDTO } from "@shared/user/data/box/create/DTO/UserDataBoxConfigCreateDTO";
 
 type WindowPositionSetting = Rectangle | WindowStates["FullScreen"] | WindowStates["Maximized"];
 
@@ -84,6 +86,7 @@ type MainProcessUserAccountStorageAPIIPCHandlers = MainProcessIPCAPIHandlers<IUs
 type MainProcessUserDataStorageConfigAPIIPCHandlers = MainProcessIPCAPIHandlers<IUserDataStorageConfigAPI>;
 type MainProcessUserDataStorageAPIIPCHandlers = MainProcessIPCAPIHandlers<IUserDataStorageAPI>;
 type MainProcessUserDataStorageVisibilityGroupAPIIPCHandlers = MainProcessIPCAPIHandlers<IUserDataStorageVisibilityGroupAPI>;
+type MainProcessUserDataBoxAPIIPCHandlers = MainProcessIPCAPIHandlers<IUserDataBoxAPI>;
 type MainProcessUtilsAPIIPCHandlers = MainProcessIPCAPIHandlers<IUtilsAPI>;
 
 export class App {
@@ -112,6 +115,7 @@ export class App {
   private readonly userDataStorageConfigAPILogger: LogFunctions = log.scope("m-udata-strg-cfg-api");
   private readonly userDataStorageAPILogger: LogFunctions = log.scope("m-udata-strg-api");
   private readonly userDataStorageVisibilityGroupAPILogger: LogFunctions = log.scope("m-udata-strg-vgrp-api");
+  private readonly userDataBoxAPILogger: LogFunctions = log.scope("m-udata-box-api");
   private readonly utilsAPILogger: LogFunctions = log.scope("m-utls-api");
 
   private readonly userFacadeLogger: LogFunctions = log.scope("m-usr-fac");
@@ -830,6 +834,18 @@ export class App {
     }
   } as const;
 
+  private readonly USER_DATA_BOX_API_HANDLERS: MainProcessUserDataBoxAPIIPCHandlers = {
+    // TODO: Implement these
+    handleIsUserDataBoxNameAvailableForUserDataStorage: (
+      encryptedUserDataBoxNameAvailabilityRequest: IEncryptedData<IUserDataBoxNameAvailabilityRequest>
+    ): IPCAPIResponse<boolean> => {
+      throw new Error("OOPSIE");
+    },
+    handleAddNewUserDataBox: (encryptedUserDataBoxConfigCreateDTO: IEncryptedData<IUserDataBoxConfigCreateDTO>): IPCAPIResponse<boolean> => {
+      throw new Error("OOPSIE 2");
+    }
+  };
+
   private readonly UTILS_API_HANDLERS: MainProcessUtilsAPIIPCHandlers = {
     handleGetDirectoryPathWithPicker: async (
       options: IGetDirectoryPathWithPickerOptions
@@ -1197,6 +1213,7 @@ export class App {
     this.registerUserDataStorageConfigAPIIPCHandlers();
     this.registerUserDataStorageAPIIPCHandlers();
     this.registerUserDataStorageVisibilityGroupAPIIPCHandlers();
+    this.registerUserDataBoxAPIIPCHandlers();
     this.registerUtilsAPIIPCHandlers();
   }
 
@@ -1386,6 +1403,28 @@ export class App {
           `Received message from renderer on channel: "${USER_DATA_STORAGE_VISIBILITY_GROUP_API_IPC_CHANNELS.getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo}".`
         );
         event.returnValue = this.USER_DATA_STORAGE_VISIBILITY_GROUP_API_HANDLERS.handleGetAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo();
+      }
+    );
+  }
+
+  private registerUserDataBoxAPIIPCHandlers(): void {
+    this.windowLogger.debug("Registering User Data Box API IPC handlers.");
+    ipcMain.on(
+      USER_DATA_BOX_API_IPC_CHANNELS.isUserDataBoxNameAvailableForUserDataStorage,
+      (event: IpcMainEvent, encryptedUserDataBoxNameAvailabilityRequest: IEncryptedData<IUserDataBoxNameAvailabilityRequest>): void => {
+        this.userDataBoxAPILogger.debug(
+          `Received message from renderer on channel: "${USER_DATA_BOX_API_IPC_CHANNELS.isUserDataBoxNameAvailableForUserDataStorage}".`
+        );
+        event.returnValue = this.USER_DATA_BOX_API_HANDLERS.handleIsUserDataBoxNameAvailableForUserDataStorage(
+          encryptedUserDataBoxNameAvailabilityRequest
+        );
+      }
+    );
+    ipcMain.on(
+      USER_DATA_BOX_API_IPC_CHANNELS.addNewUserDataBox,
+      (event: IpcMainEvent, encryptedUserDataBoxConfigCreateDTO: IEncryptedData<IUserDataBoxConfigCreateDTO>): void => {
+        this.userDataBoxAPILogger.debug(`Received message from renderer on channel: "${USER_DATA_BOX_API_IPC_CHANNELS.addNewUserDataBox}".`);
+        event.returnValue = this.USER_DATA_BOX_API_HANDLERS.handleAddNewUserDataBox(encryptedUserDataBoxConfigCreateDTO);
       }
     );
   }

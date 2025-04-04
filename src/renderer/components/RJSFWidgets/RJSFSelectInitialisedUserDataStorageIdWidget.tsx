@@ -2,13 +2,15 @@ import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from "@m
 import { getUiOptions, WidgetProps } from "@rjsf/utils";
 import { FC, FocusEvent, useCallback, useMemo } from "react";
 import { ISignedInRootContext, useSignedInRootContext } from "../roots/signedInRoot/SignedInRootContext";
-import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
-import { PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS } from "@shared/user/data/storage/visibilityGroup/constants";
+import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
 
-const RJSFSelectOpenUserDataStorageVisibilityGroupWidget: FC<WidgetProps> = (props: WidgetProps) => {
+const RJSFSelectInitialisedUserDataStorageIdWidget: FC<WidgetProps> = (props: WidgetProps) => {
   const signedInRootContext: ISignedInRootContext = useSignedInRootContext();
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const { id, value, uiSchema, required, disabled, readonly, rawErrors, onChange, onBlur, onFocus } = props;
+  const { id, value, uiSchema, required, disabled, readonly, rawErrors, options, onChange, onBlur, onFocus } = props;
+  if (typeof options.showNoSelectionOption !== "boolean") {
+    throw new Error(`RJSF Select Initialised User Data Storage ID Widget must be provided a boolean "showNoSelectionOption" option`);
+  }
 
   const label: string = useMemo<string>((): string => {
     return getUiOptions(uiSchema).title ?? id;
@@ -59,13 +61,15 @@ const RJSFSelectOpenUserDataStorageVisibilityGroupWidget: FC<WidgetProps> = (pro
         inputProps={{ readOnly: readonly }}
         defaultValue={undefined}
       >
-        <MenuItem value={undefined} divider={true}>
-          <em>{PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS.name}</em>
-        </MenuItem>
-        {signedInRootContext.openUserDataStorageVisibilityGroupsInfo.map((visibilityGroupInfo: IUserDataStorageVisibilityGroupInfo) => {
+        {options.showNoSelectionOption ? (
+          <MenuItem value={undefined} divider={true}>
+            <em>None</em>
+          </MenuItem>
+        ) : null}
+        {signedInRootContext.initialisedUserDataStoragesInfo.map((initialisedUserDataStorageInfo: IUserDataStorageInfo): React.JSX.Element => {
           return (
-            <MenuItem key={visibilityGroupInfo.visibilityGroupId} value={visibilityGroupInfo.visibilityGroupId}>
-              {visibilityGroupInfo.name}
+            <MenuItem key={initialisedUserDataStorageInfo.storageId} value={initialisedUserDataStorageInfo.storageId}>
+              {initialisedUserDataStorageInfo.name}
             </MenuItem>
           );
         })}
@@ -74,4 +78,4 @@ const RJSFSelectOpenUserDataStorageVisibilityGroupWidget: FC<WidgetProps> = (pro
   );
 };
 
-export default RJSFSelectOpenUserDataStorageVisibilityGroupWidget;
+export default RJSFSelectInitialisedUserDataStorageIdWidget;

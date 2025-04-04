@@ -26,6 +26,8 @@ import TerminateUserDataStorageActionItem from "./actionCellItems/TerminateUserD
 import CloseUserDataStorageActionItem from "./actionCellItems/CloseUserDataStorageActionItem";
 import OpenUserDataStorageActionItem from "./actionCellItems/OpenUserDataStorageActionItem";
 import NewUserDataBoxActionItem from "./actionCellItems/NewUserDataBoxActionItem";
+import NewUserDataBoxConfigFormDialog from "../dialogs/NewUserDataBoxConfigFormDialog";
+import { IUserDataBoxConfigCreateInput } from "@renderer/user/data/box/config/create/input/UserDataBoxConfigCreateInput";
 
 const GRID_AUTOSIZE_OPTIONS: GridAutosizeOptions = { expand: true, includeHeaders: true };
 
@@ -41,11 +43,36 @@ const InitialisedUserDataStoragesDataGrid: FC = () => {
   });
   const [isShowInfoDialogOpen, setIsShowInfoDialogOpen] = useDialogOpenState(appLogger, "initialised User Data Storage Info");
   const [chosenStorageInfo, setChosenStorageInfo] = useState<IUserDataStorageInfo | null>(null);
+  const [newUserDataBoxConfigDefaultValues, setNewUserDataBoxConfigDefaultValues] = useState<Partial<IUserDataBoxConfigCreateInput> | null>(null);
 
   const handleInfoDialogClose = useCallback((): void => {
     setIsShowInfoDialogOpen(false);
     setChosenStorageInfo(null);
   }, [setIsShowInfoDialogOpen]);
+
+  // TODO: Move all of these to Boxes page
+  const [isNewUserDataBoxConfigFormDialogOpen, setIsNewUserDataBoxConfigFormDialogOpen] = useDialogOpenState(
+    appLogger,
+    "new User Data Box Config form"
+  );
+
+  const handleNewDataBoxConfigButtonClick = useCallback(
+    (dataStorage: { name: string; id: string }): void => {
+      appLogger.debug("New User Data Box Config button clicked.");
+      setNewUserDataBoxConfigDefaultValues({ storageId: dataStorage.id });
+      setIsNewUserDataBoxConfigFormDialogOpen(true);
+    },
+    [setIsNewUserDataBoxConfigFormDialogOpen]
+  );
+
+  const handleNewUserDataBoxConfigFormDialogClose = useCallback((): void => {
+    setIsNewUserDataBoxConfigFormDialogOpen(false);
+  }, [setIsNewUserDataBoxConfigFormDialogOpen]);
+
+  const handleSuccessfullyAddedNewUserDataBoxConfig = useCallback((): void => {
+    handleNewUserDataBoxConfigFormDialogClose();
+  }, [handleNewUserDataBoxConfigFormDialogClose]);
+  // Move until here
 
   const rowIdGetter: GridRowIdGetter<IUserDataStorageInfo> = useCallback((row: IUserDataStorageInfo): GridRowId => {
     return row.storageId;
@@ -124,6 +151,7 @@ const InitialisedUserDataStoragesDataGrid: FC = () => {
                   name: params.row.name,
                   id: params.row.storageId
                 }}
+                onButtonClick={handleNewDataBoxConfigButtonClick}
                 showInMenu={true}
               />,
               <CloseUserDataStorageActionItem
@@ -164,7 +192,7 @@ const InitialisedUserDataStoragesDataGrid: FC = () => {
         }
       }
     ];
-  }, [signedInRootContext, setIsShowInfoDialogOpen]);
+  }, [signedInRootContext, setIsShowInfoDialogOpen, handleNewDataBoxConfigButtonClick]);
 
   return (
     <>
@@ -191,6 +219,12 @@ const InitialisedUserDataStoragesDataGrid: FC = () => {
           doShowId={true}
         />
       ) : null}
+      <NewUserDataBoxConfigFormDialog
+        defaultValues={newUserDataBoxConfigDefaultValues}
+        onAddedSuccessfully={handleSuccessfullyAddedNewUserDataBoxConfig}
+        open={isNewUserDataBoxConfigFormDialogOpen}
+        onClose={handleNewUserDataBoxConfigFormDialogClose}
+      />
     </>
   );
 };

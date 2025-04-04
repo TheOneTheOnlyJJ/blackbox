@@ -3,8 +3,8 @@ import {
   IUserDataStorageVisibilityGroupConfigCreateInput,
   USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIG_CREATE_INPUT_JSON_SCHEMA,
   USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIG_CREATE_INPUT_UI_SCHEMA
-} from "@renderer/user/data/visibilityGroup/config/create/input/UserDataStorageVisibilityGroupConfigCreateInput";
-import { userDataStorageVisibilityGroupConfigCreateInputToUserDataStorageVisibilityGroupConfigCreateDTO } from "@renderer/user/data/visibilityGroup/config/create/input/utils/userDataStorageVisibilityGroupConfigCreateInputToUserDataStorageVisibilityGroupCreateDTO";
+} from "@renderer/user/data/storage/visibilityGroup/config/create/input/UserDataStorageVisibilityGroupConfigCreateInput";
+import { userDataStorageVisibilityGroupConfigCreateInputToUserDataStorageVisibilityGroupConfigCreateDTO } from "@renderer/user/data/storage/visibilityGroup/config/create/input/utils/userDataStorageVisibilityGroupConfigCreateInputToUserDataStorageVisibilityGroupCreateDTO";
 import { appLogger } from "@renderer/utils/loggers";
 import { errorCapitalizerErrorTransformer } from "@renderer/utils/RJSF/errorTransformers/errorCapitalizerErrorTransformer";
 import { FormProps, IChangeEvent, withTheme } from "@rjsf/core";

@@ -5,6 +5,7 @@ import { IUserDataStorageConfigAPI } from "@shared/IPC/APIs/UserDataStorageConfi
 import { IUtilsAPI } from "@shared/IPC/APIs/UtilsAPI";
 import { IUserDataStorageVisibilityGroupAPI } from "@shared/IPC/APIs/UserDataStorageVisibilityGroupAPI";
 import { IUserDataStorageAPI } from "@shared/IPC/APIs/UserDataStorageAPI";
+import { IUserDataBoxAPI } from "@shared/IPC/APIs/IUserDataBoxAPI";
 
 declare global {
   interface Window {
@@ -14,6 +15,7 @@ declare global {
     userDataStorageConfigAPI: IUserDataStorageConfigAPI;
     userDataStorageAPI: IUserDataStorageAPI;
     userDataStorageVisibilityGroupAPI: IUserDataStorageVisibilityGroupAPI;
+    userDataBoxAPI: IUserDataBoxAPI;
     utilsAPI: IUtilsAPI;
   }
 }
