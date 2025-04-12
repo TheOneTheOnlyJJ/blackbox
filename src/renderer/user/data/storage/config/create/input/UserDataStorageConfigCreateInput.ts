@@ -7,7 +7,7 @@ import {
 import { UiSchema } from "@rjsf/utils";
 import RJSFSelectOpenUserDataStorageVisibilityGroupIdWidget from "@renderer/components/RJSFWidgets/RJSFSelectOpenUserDataStorageVisibilityGroupIdWidget";
 import { USER_DATA_STORAGE_CONFIG_CREATE_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/config/create/UserDataStorageConfigCreateConstants";
-import { PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS } from "@shared/user/data/storage/visibilityGroup/constants";
+import { PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS } from "@shared/user/data/storage/visibilityGroup/public/constants";
 
 export interface IUserDataStorageConfigCreateInput {
   name: string;

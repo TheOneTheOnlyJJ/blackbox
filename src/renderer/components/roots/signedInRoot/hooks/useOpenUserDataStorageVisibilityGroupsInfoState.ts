@@ -41,7 +41,7 @@ export const useOpenUserDataStorageVisibilityGroupsInfoState = (
   }, [logger, openUserDataStorageVisibilityGroupsInfo]);
 
   useEffect((): (() => void) => {
-    // Get all Open User Data Storage Visibility Groups
+    // Get all Open User Data Storage Visibility Groups Info
     const GET_ALL_SIGNED_IN_USER_OPEN_DATA_STORAGE_VISIBILITY_GROUPS_INFO_RESPONSE: IPCAPIResponse<
       IEncryptedData<IUserDataStorageVisibilityGroupInfo[]>
     > = window.userDataStorageVisibilityGroupAPI.getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo();
@@ -114,7 +114,7 @@ export const useOpenUserDataStorageVisibilityGroupsInfoState = (
             )
             .catch((reason: unknown): void => {
               const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
-              logger.error(`Could not decrypt User Data Storage Visibility Groups Info Changed Diff. Reason: ${REASON_MESSAGE}.`);
+              logger.error(`Could not decrypt open User Data Storage Visibility Groups Info Changed Diff. Reason: ${REASON_MESSAGE}.`);
               enqueueSnackbar({ message: "Error decrypting open data storage visibility groups' information changes.", variant: "error" });
             });
         }

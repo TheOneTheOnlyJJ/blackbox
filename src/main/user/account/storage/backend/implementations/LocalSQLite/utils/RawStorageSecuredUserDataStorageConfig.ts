@@ -14,7 +14,7 @@ export const rawStorageSecuredUserDataStorageConfigToStorageSecuredUserDataStora
   userId: UUID,
   logger: LogFunctions | null
 ): IStorageSecuredUserDataStorageConfig => {
-  logger?.debug("Converting Raw Storage Secured User Data Config to Storage Secured User Data Storage Config.");
+  logger?.debug("Converting Raw Storage Secured User Data Storage Config to Storage Secured User Data Storage Config.");
   return {
     storageId: rawStorageSecuredUserDataStorageConfig.storageId,
     userId: userId,

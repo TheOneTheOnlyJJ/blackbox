@@ -38,7 +38,7 @@ const NewUserDataStorageConfigFormDialog: FC<INewUserDataStorageConfigFormDialog
       appLogger.warn("Invalid New User Data Storage Config form data.");
       return;
     }
-    appLogger.info("Valid New User Data Storage Config form data. Submitting.");
+    appLogger.info("Schema valid New User Data Storage Config form data. Submitting.");
     formRef.current.submit();
   }, [isAddUserDataStorageConfigPending]);
 

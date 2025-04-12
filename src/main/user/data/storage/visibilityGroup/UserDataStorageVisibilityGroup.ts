@@ -1,3 +1,4 @@
+import { isValidUUID } from "@main/utils/dataValidation/isValidUUID";
 import { UUID } from "node:crypto";
 
 export interface IUserDataStorageVisibilityGroup {
@@ -17,8 +18,8 @@ export const isValidUserDataStorageVisibilityGroup = (data: unknown): data is IU
     "name" in data &&
     "description" in data &&
     "AESKey" in data &&
-    typeof data.visibilityGroupId === "string" &&
-    typeof data.userId === "string" &&
+    isValidUUID(data.visibilityGroupId) &&
+    isValidUUID(data.userId) &&
     typeof data.name === "string" &&
     (data.description === null || typeof data.description === "string") &&
     Buffer.isBuffer(data.AESKey)

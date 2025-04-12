@@ -66,8 +66,13 @@ import {
 } from "@shared/IPC/APIs/UserDataStorageVisibilityGroupAPI";
 import { IUserDataStorageAPI, USER_DATA_STORAGE_API_IPC_CHANNELS, UserDataStorageAPIIPCChannel } from "@shared/IPC/APIs/UserDataStorageAPI";
 import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
-import { IUserDataBoxAPI, IUserDataBoxNameAvailabilityRequest, USER_DATA_BOX_API_IPC_CHANNELS } from "@shared/IPC/APIs/IUserDataBoxAPI";
-import { IUserDataBoxConfigCreateDTO } from "@shared/user/data/box/create/DTO/UserDataBoxConfigCreateDTO";
+import { IUserDataBoxAPI, USER_DATA_BOX_API_IPC_CHANNELS, UserDataBoxAPIIPCChannel } from "@shared/IPC/APIs/IUserDataBoxAPI";
+import {
+  isValidUserDataBoxNameAvailabilityRequest,
+  IUserDataBoxNameAvailabilityRequest
+} from "@shared/user/data/box/create/UserDataBoxNameAvailabilityRequest";
+import { isValidUserDataBoxConfigCreateDTO, IUserDataBoxConfigCreateDTO } from "@shared/user/data/box/create/DTO/UserDataBoxConfigCreateDTO";
+import { IUserDataBoxInfo } from "@shared/user/data/box/info/UserDataBoxInfo";
 
 type WindowPositionSetting = Rectangle | WindowStates["FullScreen"] | WindowStates["Maximized"];
 
@@ -127,7 +132,8 @@ export class App {
       auth: log.scope("m-uauth-ctx"),
       availableDataStorageConfigs: log.scope("m-avail-udata-strg-cfg-ctx"),
       openDataStorageVisibilityGroups: log.scope("m-opn-udata-strg-vgrp-ctx"),
-      initialisedDataStorages: log.scope("m-init-udata-strg-ctx")
+      initialisedDataStorages: log.scope("m-init-udata-strg-ctx"),
+      availableDataBoxes: log.scope("m-avail-udata-box-ctx")
     }
   } as const;
   private readonly USER_SERVICE_LOGGERS: IUserServiceLoggers = {
@@ -136,7 +142,8 @@ export class App {
     accountStorage: log.scope("m-uacc-strg-svc"),
     dataStorageConfig: log.scope("m-udata-strg-cfg-svc"),
     dataStorage: log.scope("m-udata-strg-svc"),
-    dataStorageVisibilityGroup: log.scope("m-udata-strg-vgrp-svc")
+    dataStorageVisibilityGroup: log.scope("m-udata-strg-vgrp-svc"),
+    dataBox: log.scope("m-udata-box-svc")
   } as const;
 
   // Settings
@@ -734,7 +741,7 @@ export class App {
               isValidUserDataStorageVisibilityGroupConfigCreateDTO,
               this.IPC_TLS_AES_KEY.value,
               this.userDataStorageVisibilityGroupAPILogger,
-              "User Data Storage Visibility Group Create DTO"
+              "User Data Storage Visibility Group Config Create DTO"
             )
           )
         };
@@ -835,14 +842,96 @@ export class App {
   } as const;
 
   private readonly USER_DATA_BOX_API_HANDLERS: MainProcessUserDataBoxAPIIPCHandlers = {
-    // TODO: Implement these
     handleIsUserDataBoxNameAvailableForUserDataStorage: (
       encryptedUserDataBoxNameAvailabilityRequest: IEncryptedData<IUserDataBoxNameAvailabilityRequest>
     ): IPCAPIResponse<boolean> => {
-      throw new Error("OOPSIE");
+      try {
+        if (this.IPC_TLS_AES_KEY.value === null) {
+          throw new Error("Null IPC TLS AES key");
+        }
+        return {
+          status: IPC_API_RESPONSE_STATUSES.SUCCESS,
+          data: this.userFacade.isUserDataBoxNameAvailableForUserDataStorage(
+            decryptWithAESAndValidateJSON<IUserDataBoxNameAvailabilityRequest>(
+              encryptedUserDataBoxNameAvailabilityRequest,
+              isValidUserDataBoxNameAvailabilityRequest,
+              this.IPC_TLS_AES_KEY.value,
+              this.userDataBoxAPILogger,
+              "User Data Box name availability request"
+            )
+          )
+        };
+      } catch (error: unknown) {
+        const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
+        this.userDataBoxAPILogger.error(`Get User Data Box name availability for User Data Storage error: ${ERROR_MESSAGE}!`);
+        return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
+      }
     },
-    handleAddNewUserDataBox: (encryptedUserDataBoxConfigCreateDTO: IEncryptedData<IUserDataBoxConfigCreateDTO>): IPCAPIResponse<boolean> => {
-      throw new Error("OOPSIE 2");
+    handleAddUserDataBoxConfig: (encryptedUserDataBoxConfigCreateDTO: IEncryptedData<IUserDataBoxConfigCreateDTO>): IPCAPIResponse<boolean> => {
+      try {
+        if (this.IPC_TLS_AES_KEY.value === null) {
+          throw new Error("Null IPC TLS AES key");
+        }
+        return {
+          status: IPC_API_RESPONSE_STATUSES.SUCCESS,
+          data: this.userFacade.addSecuredUserDataBoxConfigFromCreateDTO(
+            decryptWithAESAndValidateJSON<IUserDataBoxConfigCreateDTO>(
+              encryptedUserDataBoxConfigCreateDTO,
+              isValidUserDataBoxConfigCreateDTO,
+              this.IPC_TLS_AES_KEY.value,
+              this.userDataBoxAPILogger,
+              "User Data Box Config Create DTO"
+            )
+          )
+        };
+      } catch (error: unknown) {
+        const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
+        this.userDataBoxAPILogger.error(`Add User Data Box Config error: ${ERROR_MESSAGE}!`);
+        return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
+      }
+    },
+    handleGetAllSignedInUserAvailableUserDataBoxesInfo: (): IPCAPIResponse<IEncryptedData<IUserDataBoxInfo[]>> => {
+      try {
+        if (this.IPC_TLS_AES_KEY.value === null) {
+          throw new Error("Null IPC TLS AES key");
+        }
+        return {
+          status: IPC_API_RESPONSE_STATUSES.SUCCESS,
+          data: encryptWithAES<IUserDataBoxInfo[]>(
+            this.userFacade.getAllSignedInUserAvailableUserDataBoxesInfo(),
+            this.IPC_TLS_AES_KEY.value,
+            this.userDataBoxAPILogger,
+            "all signed in user's available User Data Boxes Info"
+          )
+        };
+      } catch (error: unknown) {
+        const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
+        this.userDataBoxAPILogger.error(`Get all signed in user's User Data Boxes Info error: ${ERROR_MESSAGE}!`);
+        return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
+      }
+    },
+    sendAvailableUserDataBoxesChanged: (userDataBoxesInfoChangedDiff: IDataChangedDiff<string, IUserDataBoxInfo>): void => {
+      this.userDataBoxAPILogger.debug(
+        `Sending window available User Data Boxes Info Changed Diff. Removals: ${userDataBoxesInfoChangedDiff.removed.length.toString()}. Additions: ${userDataBoxesInfoChangedDiff.added.length.toString()}.`
+      );
+      if (this.window === null) {
+        this.userDataBoxAPILogger.debug("Window is null. No-op.");
+        return;
+      }
+      if (this.IPC_TLS_AES_KEY.value === null) {
+        throw new Error("Null IPC TLS AES key");
+      }
+      const CHANNEL: UserDataBoxAPIIPCChannel = USER_DATA_BOX_API_IPC_CHANNELS.onAvailableUserDataBoxesChanged;
+      this.userDataBoxAPILogger.debug(`Messaging renderer on channel: "${CHANNEL}".`);
+      this.window.webContents.send(
+        CHANNEL,
+        encryptWithAES<IDataChangedDiff<string, IUserDataBoxInfo>>(
+          userDataBoxesInfoChangedDiff,
+          this.IPC_TLS_AES_KEY.value,
+          this.userDataBoxAPILogger,
+          "available User Data Boxes Info Changed Diff"
+        )
+      );
     }
   };
 
@@ -927,7 +1016,8 @@ export class App {
         onOpenUserDataStorageVisibilityGroupsChangedCallback:
           this.USER_DATA_STORAGE_VISIBILITY_GROUP_API_HANDLERS.sendOpenUserDataStorageVisibilityGroupsChanged,
         onInitialisedUserDataStoragesChangedCallback: this.USER_DATA_STORAGE_API_HANDLERS.sendInitialisedUserDataStoragesChanged,
-        onInitialisedUserDataStorageInfoChangedCallback: this.USER_DATA_STORAGE_API_HANDLERS.sendInitialisedUserDataStorageInfoChanged
+        onInitialisedUserDataStorageInfoChangedCallback: this.USER_DATA_STORAGE_API_HANDLERS.sendInitialisedUserDataStorageInfoChanged,
+        onAvailableUserDataBoxesChanged: this.USER_DATA_BOX_API_HANDLERS.sendAvailableUserDataBoxesChanged
       } satisfies IUserContextHandlers
     } satisfies IUserFacadeConstructorProps);
     this.IPCTLSBootstrapPrivateRSAKey = null;
@@ -1421,12 +1511,18 @@ export class App {
       }
     );
     ipcMain.on(
-      USER_DATA_BOX_API_IPC_CHANNELS.addNewUserDataBox,
+      USER_DATA_BOX_API_IPC_CHANNELS.addUserDataBoxConfig,
       (event: IpcMainEvent, encryptedUserDataBoxConfigCreateDTO: IEncryptedData<IUserDataBoxConfigCreateDTO>): void => {
-        this.userDataBoxAPILogger.debug(`Received message from renderer on channel: "${USER_DATA_BOX_API_IPC_CHANNELS.addNewUserDataBox}".`);
-        event.returnValue = this.USER_DATA_BOX_API_HANDLERS.handleAddNewUserDataBox(encryptedUserDataBoxConfigCreateDTO);
+        this.userDataBoxAPILogger.debug(`Received message from renderer on channel: "${USER_DATA_BOX_API_IPC_CHANNELS.addUserDataBoxConfig}".`);
+        event.returnValue = this.USER_DATA_BOX_API_HANDLERS.handleAddUserDataBoxConfig(encryptedUserDataBoxConfigCreateDTO);
       }
     );
+    ipcMain.on(USER_DATA_BOX_API_IPC_CHANNELS.getAllSignedInUserAvailableUserDataBoxesInfo, (event: IpcMainEvent): void => {
+      this.userDataBoxAPILogger.debug(
+        `Received message from renderer on channel: "${USER_DATA_BOX_API_IPC_CHANNELS.getAllSignedInUserAvailableUserDataBoxesInfo}".`
+      );
+      event.returnValue = this.USER_DATA_BOX_API_HANDLERS.handleGetAllSignedInUserAvailableUserDataBoxesInfo();
+    });
   }
 
   private registerUtilsAPIIPCHandlers(): void {

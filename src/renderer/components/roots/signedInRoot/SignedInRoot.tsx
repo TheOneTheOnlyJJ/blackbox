@@ -9,6 +9,8 @@ import { useOpenUserDataStorageVisibilityGroupsInfoState } from "./hooks/useOpen
 import { useForbiddenLocationNameState } from "./hooks/useForbiddenLocationNameState";
 import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
 import { useInitialisedUserDataStoragesInfoState } from "./hooks/useInitialisedUserDataStoragesInfoState";
+import { useAvailableUserDataBoxesInfoState } from "./hooks/useAvailableUserDataBoxesInfoState";
+import { IUserDataBoxInfo } from "@shared/user/data/box/info/UserDataBoxInfo";
 
 const SignedInRoot: FC = () => {
   const appRootContext: IAppRootContext = useAppRootContext();
@@ -17,7 +19,8 @@ const SignedInRoot: FC = () => {
   const initialisedUserDataStoragesInfo: IUserDataStorageInfo[] = useInitialisedUserDataStoragesInfoState(appLogger);
   const { openUserDataStorageVisibilityGroupsInfo, getOpenUserDataStorageVisibilityGroupInfo } =
     useOpenUserDataStorageVisibilityGroupsInfoState(appLogger);
-  const [forbiddenLocationName, URIencodeAndSetForbiddenLocationName] = useForbiddenLocationNameState(appLogger);
+  const availableUserDataDataBoxesInfo: IUserDataBoxInfo[] = useAvailableUserDataBoxesInfoState(appLogger);
+  const [forbiddenLocationName, URIEncodeAndSetForbiddenLocationName] = useForbiddenLocationNameState(appLogger);
 
   useEffect((): (() => void) => {
     appLogger.debug("Rendering Signed In Root component.");
@@ -35,8 +38,9 @@ const SignedInRoot: FC = () => {
           availableUserDataStorageConfigsInfo: availableUserDataStorageConfigsInfo,
           initialisedUserDataStoragesInfo: initialisedUserDataStoragesInfo,
           openUserDataStorageVisibilityGroupsInfo: openUserDataStorageVisibilityGroupsInfo,
-          getOpenUserDataStorageVisibilityGroupInfo: getOpenUserDataStorageVisibilityGroupInfo,
-          setForbiddenLocationName: URIencodeAndSetForbiddenLocationName
+          availableUserDataDataBoxesInfo: availableUserDataDataBoxesInfo,
+          getOpenUserDataStorageVisibilityGroupInfoById: getOpenUserDataStorageVisibilityGroupInfo,
+          setForbiddenLocationName: URIEncodeAndSetForbiddenLocationName
         } satisfies ISignedInRootContext
       }
     />

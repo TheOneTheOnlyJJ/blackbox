@@ -1,6 +1,7 @@
 import { IEncryptedData, isEncryptedDataValid } from "@shared/utils/EncryptedData";
 import { UUID } from "crypto";
 import { IPrivateStorageSecuredUserDataStorageVisibilityGroupConfig } from "./PrivateStorageSecuredUserDataStorageVisibilityGroupConfig";
+import { isValidUUID } from "@main/utils/dataValidation/isValidUUID";
 
 export interface IStorageSecuredUserDataStorageVisibilityGroupConfig {
   visibilityGroupId: UUID;
@@ -8,7 +9,7 @@ export interface IStorageSecuredUserDataStorageVisibilityGroupConfig {
   encryptedPrivateStorageSecuredUserDataStorageVisibilityGroupConfig: IEncryptedData<IPrivateStorageSecuredUserDataStorageVisibilityGroupConfig>;
 }
 
-export const isStorageSecuredUserDataStorageVisibilityGroupConfigValid = (
+export const isValidStorageSecuredUserDataStorageVisibilityGroupConfig = (
   data: unknown
 ): data is IStorageSecuredUserDataStorageVisibilityGroupConfig => {
   return (
@@ -17,8 +18,8 @@ export const isStorageSecuredUserDataStorageVisibilityGroupConfigValid = (
     "visibilityGroupId" in data &&
     "userId" in data &&
     "encryptedPrivateStorageSecuredUserDataStorageVisibilityGroupConfig" in data &&
-    typeof data.visibilityGroupId === "string" &&
-    typeof data.userId === "string" &&
+    isValidUUID(data.visibilityGroupId) &&
+    isValidUUID(data.userId) &&
     isEncryptedDataValid(data.encryptedPrivateStorageSecuredUserDataStorageVisibilityGroupConfig)
   );
 };

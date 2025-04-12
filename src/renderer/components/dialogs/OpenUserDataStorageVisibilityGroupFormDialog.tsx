@@ -37,7 +37,7 @@ const OpenUserDataStorageVisibilityGroupFormDialog: FC<IOpenUserDataStorageVisib
       appLogger.warn("Invalid Open User Data Storage Visibility Group form data.");
       return;
     }
-    appLogger.info("Valid Open User Data Storage Visibility Group form data. Submitting.");
+    appLogger.info("Schema valid Open User Data Storage Visibility Group form data. Submitting.");
     formRef.current.submit();
   }, [isOpenUserDataStorageVisibilityGroupPending]);
 

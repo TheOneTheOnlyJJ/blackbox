@@ -1,6 +1,7 @@
 import { IEncryptedData, isEncryptedDataValid } from "@shared/utils/EncryptedData";
 import { UUID } from "node:crypto";
 import { IPrivateStorageSecuredUserDataStorageConfig } from "./PrivateStorageSecuredUserDataStorageConfig";
+import { isValidUUID } from "@main/utils/dataValidation/isValidUUID";
 
 export interface IStorageSecuredUserDataStorageConfig {
   storageId: UUID;
@@ -17,9 +18,9 @@ export const isStorageSecuredUserDataStorageConfigValid = (data: unknown): data 
     "visibilityGroupId" in data &&
     "userId" in data &&
     "encryptedPrivateStorageSecuredUserDataStorageConfig" in data &&
-    typeof data.storageId === "string" &&
-    typeof data.userId === "string" &&
-    (typeof data.visibilityGroupId === "string" || data.visibilityGroupId === null) &&
+    isValidUUID(data.storageId) &&
+    isValidUUID(data.userId) &&
+    (isValidUUID(data.visibilityGroupId) || data.visibilityGroupId === null) &&
     isEncryptedDataValid(data.encryptedPrivateStorageSecuredUserDataStorageConfig)
   );
 };

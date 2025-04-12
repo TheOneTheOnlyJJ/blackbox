@@ -5,7 +5,7 @@ export const DEFAULT_FORBIDDEN_LOCATION_NAME = "this";
 
 export const useForbiddenLocationNameState = (logger: LogFunctions): [string, (newForbiddenLocationName: string) => void] => {
   const [forbiddenLocationName, setForbiddenLocationName] = useState<string>(DEFAULT_FORBIDDEN_LOCATION_NAME);
-  const URIencodeAndSetForbiddenLocationName = useCallback(
+  const URIEncodeAndSetForbiddenLocationName = useCallback(
     (newForbiddenLocationname: string): void => {
       try {
         newForbiddenLocationname = encodeURIComponent(newForbiddenLocationname);
@@ -20,5 +20,5 @@ export const useForbiddenLocationNameState = (logger: LogFunctions): [string, (n
     [logger]
   );
 
-  return [forbiddenLocationName, URIencodeAndSetForbiddenLocationName];
+  return [forbiddenLocationName, URIEncodeAndSetForbiddenLocationName];
 };

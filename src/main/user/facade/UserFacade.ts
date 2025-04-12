@@ -25,6 +25,11 @@ import { IUserDataStorageConfigInfo } from "@shared/user/data/storage/config/inf
 import { IUserAccountStorageConfig } from "../account/storage/config/UserAccountStorageConfig";
 import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
 import { UserDataStorageService } from "./services/UserDataStorageService";
+import { IUserDataBoxNameAvailabilityRequest } from "@shared/user/data/box/create/UserDataBoxNameAvailabilityRequest";
+import { UserDataBoxService } from "./services/UserDataBoxService";
+import { IUserDataBoxConfigCreateDTO } from "@shared/user/data/box/create/DTO/UserDataBoxConfigCreateDTO";
+import { ISecuredUserDataBoxConfig } from "../data/box/config/SecuredUserDataBoxConfig";
+import { IUserDataBoxInfo } from "@shared/user/data/box/info/UserDataBoxInfo";
 
 export interface IUserServiceLoggers {
   auth: LogFunctions;
@@ -33,6 +38,7 @@ export interface IUserServiceLoggers {
   dataStorageConfig: LogFunctions;
   dataStorage: LogFunctions;
   dataStorageVisibilityGroup: LogFunctions;
+  dataBox: LogFunctions;
 }
 
 export interface IUserFacadeConstructorProps {
@@ -51,6 +57,7 @@ export class UserFacade {
   private readonly DATA_STORAGE_CONFIG_SERVICE: UserDataStorageConfigService;
   private readonly DATA_STORAGE_SERVICE: UserDataStorageService;
   private readonly DATA_STORAGE_VISIBILITY_GROUP_SERVICE: UserDataStorageVisibilityGroupService;
+  private readonly DATA_BOX_SERVICE: UserDataBoxService;
 
   public constructor(props: IUserFacadeConstructorProps) {
     this.logger = props.logger;
@@ -71,6 +78,7 @@ export class UserFacade {
       props.serviceLoggers.dataStorageVisibilityGroup,
       CONTEXT_PROVIDER.getUserDataStorageVisibilityGroupServiceContext()
     );
+    this.DATA_BOX_SERVICE = new UserDataBoxService(props.serviceLoggers.dataBox, CONTEXT_PROVIDER.getUserDataBoxServiceContext());
   }
 
   public destroy(): void {
@@ -136,6 +144,10 @@ export class UserFacade {
     return this.DATA_STORAGE_VISIBILITY_GROUP_SERVICE.isDataStorageVisibilityGroupNameAvailableForSignedInUser(name);
   }
 
+  public isUserDataBoxNameAvailableForUserDataStorage(userDataBoxNameAvailabilityRequest: IUserDataBoxNameAvailabilityRequest): boolean {
+    return this.DATA_BOX_SERVICE.isUserDataBoxNameAvailableForUserDataStorage(userDataBoxNameAvailabilityRequest);
+  }
+
   public generateRandomUserId(): UUID {
     return this.AUTH_SERVICE.generateRandomUserId();
   }
@@ -146,6 +158,10 @@ export class UserFacade {
 
   public generateRandomDataStorageVisibilityGroupId(): UUID {
     return this.DATA_STORAGE_VISIBILITY_GROUP_SERVICE.generateRandomDataStorageVisibilityGroupId();
+  }
+
+  public generateRandomDataBoxId(userDataStorageId: UUID): UUID {
+    return this.DATA_BOX_SERVICE.generateRandomDataBoxId(userDataStorageId);
   }
 
   public getUserCount(): number {
@@ -184,6 +200,7 @@ export class UserFacade {
     return this.ACCOUNT_STORAGE_SERVICE.getAccountStorageInfo();
   }
 
+  // TODO: This should be secured (along other add operations)?
   public addUserDataStorageConfig(userDataStorageConfig: IUserDataStorageConfig): boolean {
     return this.DATA_STORAGE_CONFIG_SERVICE.addUserDataStorageConfig(userDataStorageConfig);
   }
@@ -200,6 +217,14 @@ export class UserFacade {
     dataStorageVisibilityGroupConfigCreateDTO: IUserDataStorageVisibilityGroupConfigCreateDTO
   ): boolean {
     return this.DATA_STORAGE_VISIBILITY_GROUP_SERVICE.addUserDataStorageVisibilityGroupConfigFromCreateDTO(dataStorageVisibilityGroupConfigCreateDTO);
+  }
+
+  public addSecuredUserDataBoxConfig(securedUserDataBoxConfig: ISecuredUserDataBoxConfig): boolean {
+    return this.DATA_BOX_SERVICE.addSecuredUserDataBoxConfig(securedUserDataBoxConfig);
+  }
+
+  public addSecuredUserDataBoxConfigFromCreateDTO(userDataBoxConfigCreateDTO: IUserDataBoxConfigCreateDTO): boolean {
+    return this.DATA_BOX_SERVICE.addSecuredUserDataBoxConfigFromCreateDTO(userDataBoxConfigCreateDTO);
   }
 
   public openUserDataStorageVisibilityGroups(userDataStorageVisibilityGroupOpenRequest: IUserDataStorageVisibilityGroupsOpenRequest): number {
@@ -244,5 +269,9 @@ export class UserFacade {
 
   public getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo(): IUserDataStorageVisibilityGroupInfo[] {
     return this.DATA_STORAGE_VISIBILITY_GROUP_SERVICE.getAllSignedInUserOpenUserDataStorageVisibilityGroupsInfo();
+  }
+
+  public getAllSignedInUserAvailableUserDataBoxesInfo(): IUserDataBoxInfo[] {
+    return this.DATA_BOX_SERVICE.getAllSignedInUserAvailableUserDataBoxesInfo();
   }
 }

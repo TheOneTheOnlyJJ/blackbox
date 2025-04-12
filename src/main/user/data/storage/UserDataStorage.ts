@@ -1,10 +1,11 @@
-import { UUID } from "node:crypto";
+import { randomUUID, UUID } from "node:crypto";
 import log, { LogFunctions } from "electron-log";
 import { UserDataStorageBackend } from "./backend/UserDataStorageBackend";
 import { IUserDataStorageConfig } from "./config/UserDataStorageConfig";
 import { userDataStorageBackendFactory } from "./backend/userDataStorageBackendFactory";
 import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
 import { ISecuredUserDataStorageConfig } from "./config/SecuredUserDataStorageConfig";
+import { IStorageSecuredUserDataBoxConfig } from "../box/config/StorageSecuredUserDataBoxConfig";
 
 export class UserDataStorage {
   private readonly logger: LogFunctions;
@@ -52,6 +53,16 @@ export class UserDataStorage {
     return this.backend.close();
   }
 
+  public generateRandomDataBoxId(): UUID {
+    this.logger.debug("Generating random User Data Box ID.");
+    let boxId: UUID = randomUUID({ disableEntropyCache: true });
+    while (!this.isUserDataBoxIdAvailable(boxId)) {
+      this.logger.debug("Generating a new random ID.");
+      boxId = randomUUID({ disableEntropyCache: true });
+    }
+    return boxId;
+  }
+
   public getInfo(): IUserDataStorageInfo {
     this.logger.info("Getting User Data Storage Info.");
     return {
@@ -73,5 +84,17 @@ export class UserDataStorage {
       description: this.description,
       backendConfig: this.backend.config
     } satisfies ISecuredUserDataStorageConfig;
+  }
+
+  public isUserDataBoxIdAvailable(boxId: UUID): boolean {
+    return this.backend.isUserDataBoxIdAvailable(boxId);
+  }
+
+  public addStorageSecuredUserDataBoxConfig(storageSecuredUserDataBoxConfig: IStorageSecuredUserDataBoxConfig): boolean {
+    return this.backend.addStorageSecuredUserDataBoxConfig(storageSecuredUserDataBoxConfig);
+  }
+
+  public getStorageSecuredUserDataBoxConfigs(): IStorageSecuredUserDataBoxConfig[] {
+    return this.backend.getStorageSecuredUserDataBoxConfigs(this.storageId);
   }
 }

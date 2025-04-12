@@ -8,7 +8,7 @@ import UserDataStorageBackendConfigInfoTypography from "../../backend/config/inf
 import { ISignedInRootContext, useSignedInRootContext } from "@renderer/components/roots/signedInRoot/SignedInRootContext";
 import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
 import UserDataStorageVisibilityGroupInfoTypography from "../../visibilityGroup/UserDataStorageVisibilityGroupInfoTypography";
-import { PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS } from "@shared/user/data/storage/visibilityGroup/constants";
+import { PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS } from "@shared/user/data/storage/visibilityGroup/public/constants";
 
 export interface IUserDataStorageConfigInfoTypographyProps {
   userDataStorageConfigInfo: IUserDataStorageConfigInfo;
@@ -22,7 +22,7 @@ const UserDataStorageConfigInfoTypography: FC<IUserDataStorageConfigInfoTypograp
     if (userDataStorageConfigInfo.visibilityGroupId === null) {
       return null;
     }
-    return signedInRootContext.getOpenUserDataStorageVisibilityGroupInfo(userDataStorageConfigInfo.visibilityGroupId); // TODO: Replace with Map.get
+    return signedInRootContext.getOpenUserDataStorageVisibilityGroupInfoById(userDataStorageConfigInfo.visibilityGroupId); // TODO: Replace with Map.get
   }, [signedInRootContext, userDataStorageConfigInfo]);
 
   return (

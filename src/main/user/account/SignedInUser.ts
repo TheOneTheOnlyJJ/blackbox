@@ -1,3 +1,4 @@
+import { isValidUUID } from "@main/utils/dataValidation/isValidUUID";
 import { UUID } from "node:crypto";
 
 export interface ISignedInUser {
@@ -13,7 +14,7 @@ export const isValidSignedInUser = (data: unknown): data is ISignedInUser => {
     "userId" in data &&
     "username" in data &&
     "userDataAESKey" in data &&
-    typeof data.userId === "string" &&
+    isValidUUID(data.userId) &&
     typeof data.username === "string" &&
     Buffer.isBuffer(data.userDataAESKey)
   );

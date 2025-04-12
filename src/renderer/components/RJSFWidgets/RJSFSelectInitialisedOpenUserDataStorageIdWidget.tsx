@@ -4,7 +4,7 @@ import { FC, FocusEvent, useCallback, useMemo } from "react";
 import { ISignedInRootContext, useSignedInRootContext } from "../roots/signedInRoot/SignedInRootContext";
 import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
 
-const RJSFSelectInitialisedUserDataStorageIdWidget: FC<WidgetProps> = (props: WidgetProps) => {
+const RJSFSelectInitialisedOpenUserDataStorageIdWidget: FC<WidgetProps> = (props: WidgetProps) => {
   const signedInRootContext: ISignedInRootContext = useSignedInRootContext();
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const { id, value, uiSchema, required, disabled, readonly, rawErrors, options, onChange, onBlur, onFocus } = props;
@@ -66,16 +66,20 @@ const RJSFSelectInitialisedUserDataStorageIdWidget: FC<WidgetProps> = (props: Wi
             <em>None</em>
           </MenuItem>
         ) : null}
-        {signedInRootContext.initialisedUserDataStoragesInfo.map((initialisedUserDataStorageInfo: IUserDataStorageInfo): React.JSX.Element => {
-          return (
-            <MenuItem key={initialisedUserDataStorageInfo.storageId} value={initialisedUserDataStorageInfo.storageId}>
-              {initialisedUserDataStorageInfo.name}
-            </MenuItem>
-          );
-        })}
+        {signedInRootContext.initialisedUserDataStoragesInfo
+          .filter((initialisedUserDataStorageInfo: IUserDataStorageInfo): boolean => {
+            return initialisedUserDataStorageInfo.backend.isOpen;
+          })
+          .map((initialisedOpenUserDataStorageInfo: IUserDataStorageInfo): React.JSX.Element => {
+            return (
+              <MenuItem key={initialisedOpenUserDataStorageInfo.storageId} value={initialisedOpenUserDataStorageInfo.storageId}>
+                {initialisedOpenUserDataStorageInfo.name}
+              </MenuItem>
+            );
+          })}
       </Select>
     </FormControl>
   );
 };
 
-export default RJSFSelectInitialisedUserDataStorageIdWidget;
+export default RJSFSelectInitialisedOpenUserDataStorageIdWidget;

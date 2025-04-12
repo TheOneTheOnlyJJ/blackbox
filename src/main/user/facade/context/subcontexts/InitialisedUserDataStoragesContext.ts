@@ -1,3 +1,6 @@
+import { ISecuredUserDataBoxConfig } from "@main/user/data/box/config/SecuredUserDataBoxConfig";
+import { IStorageSecuredUserDataBoxConfig } from "@main/user/data/box/config/StorageSecuredUserDataBoxConfig";
+import { securedUserDataBoxConfigToStorageSecuredUserDataBoxConfig } from "@main/user/data/box/config/utils/securedUserDataBoxConfigToStorageSecuredUserDataBoxConfig";
 import { isValidSecuredUserDataStorageConfigArray } from "@main/user/data/storage/config/SecuredUserDataStorageConfig";
 import { IUserDataStorageConfig } from "@main/user/data/storage/config/UserDataStorageConfig";
 import { UserDataStorage } from "@main/user/data/storage/UserDataStorage";
@@ -19,6 +22,9 @@ export class InitialisedUserDataStoragesContext {
     | ((initialisedDataStoragesChangedDiff: IDataChangedDiff<IUserDataStorageConfig, UserDataStorage>) => void)
     | null;
   public onInitialisedUserDataStorageInfoChangedCallback: ((userDataStorageInfo: Readonly<IUserDataStorageInfo>) => void) | null;
+  public onAddedNewSecuredUserDataBoxConfigsCallback: ((newSecuredUserDataBoxConfigs: ISecuredUserDataBoxConfig[]) => void) | null;
+  public onOpenedInitialisedDataStorages: ((openedDataStoragesInfo: IUserDataStorageInfo[]) => void) | null;
+  public onClosedInitialisedDataStorages: ((closedDataStoragesInfo: IUserDataStorageInfo[]) => void) | null;
 
   public constructor(logger: LogFunctions) {
     this.logger = logger;
@@ -26,13 +32,10 @@ export class InitialisedUserDataStoragesContext {
     this.initialisedDataStorages = INITIAL_AVAILABLE_DATA_STORAGES;
     this.onInitialisedUserDataStoragesChangedCallback = null;
     this.onInitialisedUserDataStorageInfoChangedCallback = null;
+    this.onAddedNewSecuredUserDataBoxConfigsCallback = null;
+    this.onOpenedInitialisedDataStorages = null;
+    this.onClosedInitialisedDataStorages = null;
   }
-
-  // TODO: REMOVE THIS, DO NOT EXPOSE CLASSES TO SERVIES DIRECTLY
-  // public getInitialisedDataStorages(): UserDataStorage[] {
-  //   this.logger.info("Getting initialised User Data Storages.");
-  //   return this.initialisedDataStorages;
-  // }
 
   public initialiseDataStoragesFromConfigs(securedDataStorageConfigs: IUserDataStorageConfig[]): number {
     this.logger.info(
@@ -188,7 +191,7 @@ export class InitialisedUserDataStoragesContext {
       this.logger.warn("Given no User Data Storage IDs to open.");
       return 0;
     }
-    let openedDataStoragesCount = 0;
+    const OPENED_DATA_STORAGES_INFO: IUserDataStorageInfo[] = [];
     dataStorageIds.map((dataStorageId: UUID): void => {
       let wasFound = false;
       for (const INITIALISED_DATA_STORAGE of this.initialisedDataStorages) {
@@ -197,7 +200,7 @@ export class InitialisedUserDataStoragesContext {
             this.logger.warn(`Skip opening already open given initialised User Data Storage "${dataStorageId}".`);
           } else {
             if (INITIALISED_DATA_STORAGE.open()) {
-              openedDataStoragesCount++;
+              OPENED_DATA_STORAGES_INFO.push(INITIALISED_DATA_STORAGE.getInfo());
             }
           }
           wasFound = true;
@@ -207,7 +210,10 @@ export class InitialisedUserDataStoragesContext {
         this.logger.warn(`Skip opening given missing initialised User Data Storage "${dataStorageId}".`);
       }
     });
-    return openedDataStoragesCount;
+    if (OPENED_DATA_STORAGES_INFO.length > 0) {
+      this.onOpenedInitialisedDataStorages?.(OPENED_DATA_STORAGES_INFO);
+    }
+    return OPENED_DATA_STORAGES_INFO.length;
   }
 
   public closeInitialisedDataStorages(dataStorageIds: UUID[]): number {
@@ -223,7 +229,7 @@ export class InitialisedUserDataStoragesContext {
       this.logger.warn("Given no User Data Storage IDs to close.");
       return 0;
     }
-    let closedDataStoragesCount = 0;
+    const CLOSED_DATA_STORAGES_INFO: IUserDataStorageInfo[] = [];
     dataStorageIds.map((dataStorageId: UUID): void => {
       let wasFound = false;
       for (const INITIALISED_DATA_STORAGE of this.initialisedDataStorages) {
@@ -232,7 +238,7 @@ export class InitialisedUserDataStoragesContext {
             this.logger.warn(`Skip closing already closed given initialised User Data Storage "${dataStorageId}".`);
           } else {
             if (INITIALISED_DATA_STORAGE.close()) {
-              closedDataStoragesCount++;
+              CLOSED_DATA_STORAGES_INFO.push(INITIALISED_DATA_STORAGE.getInfo());
             }
           }
           wasFound = true;
@@ -242,7 +248,10 @@ export class InitialisedUserDataStoragesContext {
         this.logger.warn(`Skip closing given missing initialised User Data Storage "${dataStorageId}".`);
       }
     });
-    return closedDataStoragesCount;
+    if (CLOSED_DATA_STORAGES_INFO.length > 0) {
+      this.onClosedInitialisedDataStorages?.(CLOSED_DATA_STORAGES_INFO);
+    }
+    return CLOSED_DATA_STORAGES_INFO.length;
   }
 
   public getAllSignedInUserInitialisedDataStoragesInfo(): IUserDataStorageInfo[] {
@@ -252,10 +261,59 @@ export class InitialisedUserDataStoragesContext {
     });
   }
 
-  public isDataStorageInitialised(storageId: UUID): boolean {
-    this.logger.debug(`Checking if User Data Storage "${storageId}" is initialised.`);
+  public getAllSignedInUserInitialisedOpenDataStoragesInfo(): IUserDataStorageInfo[] {
+    this.logger.debug("Getting all signed in user's initialised open User Data Storages Info.");
+    return this.initialisedDataStorages
+      .filter((initialisedDataStorage: UserDataStorage): boolean => {
+        return initialisedDataStorage.isOpen();
+      })
+      .map((initialisedDataStorage: UserDataStorage): IUserDataStorageInfo => {
+        return initialisedDataStorage.getInfo();
+      });
+  }
+
+  public isDataStorageInitialised(storageId: UUID, doLog: boolean): boolean {
+    if (doLog) {
+      this.logger.debug(`Checking if User Data Storage "${storageId}" is initialised.`);
+    }
     return this.initialisedDataStorages.some((initialisedStorage: UserDataStorage): boolean => {
       return initialisedStorage.storageId === storageId;
     });
+  }
+
+  public generateRandomDataBoxId(userDataStorageId: UUID): UUID {
+    this.logger.debug(`Generating random User Data Box ID for User Data Storage "${userDataStorageId}".`);
+    for (const INITIALISED_DATA_STORAGE of this.initialisedDataStorages) {
+      if (INITIALISED_DATA_STORAGE.storageId === userDataStorageId) {
+        return INITIALISED_DATA_STORAGE.generateRandomDataBoxId();
+      }
+    }
+    throw new Error(`Cannot generate random User Data Box ID for missing initialised User Data Storage "${userDataStorageId}"`);
+  }
+
+  public addSecuredUserDataBoxConfig(securedUserDataBoxConfig: ISecuredUserDataBoxConfig, encryptionAESKey: Buffer): boolean {
+    this.logger.debug(`Adding Secured User Data Box Config to User Data Storage "${securedUserDataBoxConfig.storageId}".`);
+    for (const INITIALISED_DATA_STORAGE of this.initialisedDataStorages) {
+      if (INITIALISED_DATA_STORAGE.storageId === securedUserDataBoxConfig.storageId) {
+        const WAS_ADDED: boolean = INITIALISED_DATA_STORAGE.addStorageSecuredUserDataBoxConfig(
+          securedUserDataBoxConfigToStorageSecuredUserDataBoxConfig(securedUserDataBoxConfig, encryptionAESKey, this.logger)
+        );
+        if (WAS_ADDED) {
+          this.onAddedNewSecuredUserDataBoxConfigsCallback?.([securedUserDataBoxConfig]);
+        }
+        return WAS_ADDED;
+      }
+    }
+    throw new Error(`Cannot add Secured User Data Box Config for missing initialised User Data Storage "${securedUserDataBoxConfig.storageId}"`);
+  }
+
+  public getStorageSecuredUserDataBoxConfigsForUserDataStorage(userDataStorageId: UUID): IStorageSecuredUserDataBoxConfig[] {
+    this.logger.debug(`Getting Storage Secured User Data Box Configs for User Data Storage "${userDataStorageId}".`);
+    for (const INITIALISED_DATA_STORAGE of this.initialisedDataStorages) {
+      if (INITIALISED_DATA_STORAGE.storageId === userDataStorageId) {
+        return INITIALISED_DATA_STORAGE.getStorageSecuredUserDataBoxConfigs();
+      }
+    }
+    throw new Error(`Cannot get Storage Secured User Data Box Configs for missing initialised User Data Storage "${userDataStorageId}"`);
   }
 }

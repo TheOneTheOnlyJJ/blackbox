@@ -23,6 +23,13 @@ import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataSto
 import { UserDataStorage } from "@main/user/data/storage/UserDataStorage";
 import { IUserDataStorageConfig } from "@main/user/data/storage/config/UserDataStorageConfig";
 import { userDataStorageConfigToUserDataStorageConfigInfo } from "@main/user/data/storage/config/utils/userDataStorageConfigToUserDataStorageConfigInfo";
+import { AvailableUserDataBoxesContext } from "./subcontexts/AvailableUserDataBoxesContext";
+import { IUserDataBoxInfo } from "@shared/user/data/box/info/UserDataBoxInfo";
+import { ISecuredUserDataBoxConfig } from "@main/user/data/box/config/SecuredUserDataBoxConfig";
+import { IUserDataBox } from "@main/user/data/box/UserDataBox";
+import { securedUserDataBoxConfigToUserDataBox } from "@main/user/data/box/config/utils/securedUserDataBoxConfigToUserDataBox";
+import { IStorageSecuredUserDataBoxConfig } from "@main/user/data/box/config/StorageSecuredUserDataBoxConfig";
+import { storageSecuredUserDataBoxConfigToSecuredUserDataBoxConfig } from "@main/user/data/box/config/utils/storageSecuredUserDataBoxConfigToSecuredUserDataBoxConfig";
 
 export interface IUserContextLoggers {
   main: LogFunctions;
@@ -32,6 +39,7 @@ export interface IUserContextLoggers {
     availableDataStorageConfigs: LogFunctions;
     openDataStorageVisibilityGroups: LogFunctions;
     initialisedDataStorages: LogFunctions;
+    availableDataBoxes: LogFunctions;
   };
 }
 
@@ -49,6 +57,7 @@ export interface IUserContextHandlers {
     | ((availableUserDataStoragesInfoChangedDiff: IDataChangedDiff<string, IUserDataStorageInfo>) => void)
     | null;
   onInitialisedUserDataStorageInfoChangedCallback: ((userDataStorageInfo: Readonly<IUserDataStorageInfo>) => void) | null;
+  onAvailableUserDataBoxesChanged: ((availableDataBoxesChangedDiff: IDataChangedDiff<UUID, IUserDataBoxInfo>) => void) | null;
 }
 
 export class UserContext {
@@ -60,6 +69,7 @@ export class UserContext {
   public readonly AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT: AvailableUserDataStorageConfigsContext;
   public readonly INITIALISED_DATA_STORAGES_CONTEXT: InitialisedUserDataStoragesContext;
   public readonly OPEN_DATA_STORAGE_VISIBILITY_GROUPS_CONTEXT: OpenUserDataStorageVisibilityGroupsContext;
+  public readonly AVAILABLE_DATA_BOXES_CONTEXT: AvailableUserDataBoxesContext;
 
   public constructor(loggers: IUserContextLoggers, contextHandlers: IUserContextHandlers) {
     this.logger = loggers.main;
@@ -73,6 +83,7 @@ export class UserContext {
     this.OPEN_DATA_STORAGE_VISIBILITY_GROUPS_CONTEXT = new OpenUserDataStorageVisibilityGroupsContext(
       loggers.subcontexts.openDataStorageVisibilityGroups
     );
+    this.AVAILABLE_DATA_BOXES_CONTEXT = new AvailableUserDataBoxesContext(loggers.subcontexts.availableDataBoxes);
     // Wire up context interdependencies
     this.wireAllContextHandlers();
   }
@@ -84,6 +95,7 @@ export class UserContext {
     this.wireAvailableUserDataStorageConfigsContextHandlers();
     this.wireInitialisedUserDataStoragesContextHandlers();
     this.wireOpenUserDataStorageVisibilityGroupsContextHandlers();
+    this.wireAvailableUserDataBoxesContextHandlers();
   }
 
   private wireUserAccountStorageContextHandlers(): void {
@@ -131,7 +143,7 @@ export class UserContext {
             (newSecuredDataStorageConfig: ISecuredUserDataStorageConfig): IUserDataStorageConfigInfo => {
               return securedUserDataStorageConfigToUserDataStorageConfigInfo(
                 newSecuredDataStorageConfig,
-                this.INITIALISED_DATA_STORAGES_CONTEXT.isDataStorageInitialised(newSecuredDataStorageConfig.storageId),
+                this.INITIALISED_DATA_STORAGES_CONTEXT.isDataStorageInitialised(newSecuredDataStorageConfig.storageId, false),
                 null
               );
             }
@@ -188,6 +200,35 @@ export class UserContext {
     ): void => {
       this.HANDLERS.onInitialisedUserDataStorageInfoChangedCallback?.(userDataStorageInfo);
     };
+    this.INITIALISED_DATA_STORAGES_CONTEXT.onAddedNewSecuredUserDataBoxConfigsCallback = (
+      newSecuredUserDataBoxConfigs: ISecuredUserDataBoxConfig[]
+    ): void => {
+      if (newSecuredUserDataBoxConfigs.length > 0) {
+        this.AVAILABLE_DATA_BOXES_CONTEXT.addAvailableDataBoxes(
+          newSecuredUserDataBoxConfigs.map((newSecuredUserDataBoxConfig: ISecuredUserDataBoxConfig): IUserDataBox => {
+            return securedUserDataBoxConfigToUserDataBox(newSecuredUserDataBoxConfig, null);
+          })
+        );
+      }
+    };
+    this.INITIALISED_DATA_STORAGES_CONTEXT.onOpenedInitialisedDataStorages = (openedDataStoragesInfo: IUserDataStorageInfo[]): void => {
+      openedDataStoragesInfo.map((openedDataStorageInfo: IUserDataStorageInfo): void => {
+        this.AVAILABLE_DATA_BOXES_CONTEXT.addAvailableDataBoxes(this.getAllDataBoxConfigsFromDataStorage(openedDataStorageInfo.storageId as UUID));
+      });
+    };
+    this.INITIALISED_DATA_STORAGES_CONTEXT.onClosedInitialisedDataStorages = (closedDataStoragesInfo: IUserDataStorageInfo[]): void => {
+      closedDataStoragesInfo.map((closedDataStorageInfo: IUserDataStorageInfo): void => {
+        this.AVAILABLE_DATA_BOXES_CONTEXT.removeAvailableDataBoxes(
+          this.AVAILABLE_DATA_BOXES_CONTEXT.getAvailableDataBoxes()
+            .filter((availableDataBox: IUserDataBox): boolean => {
+              return availableDataBox.storageId === closedDataStorageInfo.storageId;
+            })
+            .map((availableDataBoxToBeRemoved: IUserDataBox): UUID => {
+              return availableDataBoxToBeRemoved.boxId;
+            })
+        );
+      });
+    };
   }
 
   private wireOpenUserDataStorageVisibilityGroupsContextHandlers(): void {
@@ -230,6 +271,20 @@ export class UserContext {
             }
           )
         } satisfies IDataChangedDiff<string, IUserDataStorageVisibilityGroupInfo>);
+      }
+    };
+  }
+
+  private wireAvailableUserDataBoxesContextHandlers(): void {
+    this.logger.info("Wiring Open User Data Boxes Context handlers.");
+    this.AVAILABLE_DATA_BOXES_CONTEXT.onAvailableDataBoxesChangedCallback = (
+      availableDataBoxesChangedDiff: IDataChangedDiff<UUID, IUserDataBoxInfo>
+    ): void => {
+      if (availableDataBoxesChangedDiff.removed.length > 0 || availableDataBoxesChangedDiff.added.length > 0) {
+        this.HANDLERS.onAvailableUserDataBoxesChanged?.({
+          removed: availableDataBoxesChangedDiff.removed,
+          added: availableDataBoxesChangedDiff.added
+        } satisfies IDataChangedDiff<UUID, IUserDataBoxInfo>);
       }
     };
   }
@@ -298,5 +353,21 @@ export class UserContext {
       }
     }
     return SECURED_DATA_STORAGE_CONFIGS;
+  }
+
+  private getAllDataBoxConfigsFromDataStorage(dataStorageId: UUID): IUserDataBox[] {
+    this.logger.info(`Getting all User Data Box Configs from User Data Storage "${dataStorageId}".`);
+    const SIGNED_IN_USER: ISignedInUser | null = this.AUTH_CONTEXT.getSignedInUser();
+    if (SIGNED_IN_USER === null) {
+      throw new Error("Null signed in user");
+    }
+    return this.INITIALISED_DATA_STORAGES_CONTEXT.getStorageSecuredUserDataBoxConfigsForUserDataStorage(dataStorageId).map(
+      (storageSecuredDataBoxConfig: IStorageSecuredUserDataBoxConfig): IUserDataBox => {
+        return securedUserDataBoxConfigToUserDataBox(
+          storageSecuredUserDataBoxConfigToSecuredUserDataBoxConfig(storageSecuredDataBoxConfig, SIGNED_IN_USER.userDataAESKey, null),
+          null
+        );
+      }
+    );
   }
 }

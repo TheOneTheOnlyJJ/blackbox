@@ -5,6 +5,7 @@ import NewUserDataBoxConfigForm from "../forms/NewUserDataBoxConfigForm";
 import { appLogger } from "@renderer/utils/loggers";
 import { IUserDataBoxConfigCreateInput } from "@renderer/user/data/box/config/create/input/UserDataBoxConfigCreateInput";
 import { enqueueSnackbar } from "notistack";
+import { RJSFValidationError } from "@rjsf/utils";
 
 export interface INewUserDataBoxConfigFormDialogProps {
   defaultValues: Partial<IUserDataBoxConfigCreateInput> | null;
@@ -16,6 +17,10 @@ export interface INewUserDataBoxConfigFormDialogProps {
 const NewUserDataBoxConfigFormDialog: FC<INewUserDataBoxConfigFormDialogProps> = (props: INewUserDataBoxConfigFormDialogProps) => {
   const formRef: Ref<Form> = useRef<Form>(null);
   const [isAddUserDataBoxConfigPending, setIsAddUserDataBoxConfigPending] = useState<boolean>(false);
+  const [extraErrors, setExtraErrors] = useState<RJSFValidationError[]>([]);
+  // const errorSchemaBuilder = useMemo<ErrorSchemaBuilder>((): ErrorSchemaBuilder => {
+  //   return new ErrorSchemaBuilder();
+  // }, []);
 
   const isSubmitButtonDisabled = useMemo<boolean>((): boolean => {
     return isAddUserDataBoxConfigPending; // TODO: Implement condition of open user data storage. Take storageId as prop?
@@ -27,12 +32,14 @@ const NewUserDataBoxConfigFormDialog: FC<INewUserDataBoxConfigFormDialogProps> =
       appLogger.warn("Add User Data Box Config pending. No-op form sumit.");
       return;
     }
+    // errorSchemaBuilder.resetAllErrors();
+    setExtraErrors([]);
     if (!formRef.current?.validateForm()) {
       enqueueSnackbar({ message: "Invalid form data.", variant: "warning" });
       appLogger.warn("Invalid New User Data Box Config form data.");
       return;
     }
-    appLogger.info("Valid New User Data Box Config form data. Submitting.");
+    appLogger.info("Schema valid New User Data Box Config form data. Submitting.");
     formRef.current.submit();
   }, [isAddUserDataBoxConfigPending]);
 
@@ -46,6 +53,9 @@ const NewUserDataBoxConfigFormDialog: FC<INewUserDataBoxConfigFormDialogProps> =
           renderSubmitButton={false}
           isAddUserDataBoxConfigPending={isAddUserDataBoxConfigPending}
           setIsAddUserDataBoxConfigPending={setIsAddUserDataBoxConfigPending}
+          // errorSchemaBuilder={errorSchemaBuilder}
+          extraErrors={extraErrors}
+          setExtraErrors={setExtraErrors}
         />
       </DialogContent>
       <DialogActions>

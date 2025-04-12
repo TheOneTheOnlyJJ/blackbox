@@ -6,6 +6,7 @@ import { OPTION_B_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS } from "@share
 import { IOptionBUserDataStorageBackendInfo } from "@shared/user/data/storage/backend/info/implementations/optionB/OptionBUserDataStorageBackendInfo";
 import { AJV } from "@shared/utils/AJVJSONValidator";
 import { BASE_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/backend/constants/BaseUserDataStorageBackendConstants";
+import { IStorageSecuredUserDataBoxConfig } from "@main/user/data/box/config/StorageSecuredUserDataBoxConfig";
 
 export interface IOptionBUserDataStorageBackendConfig extends IBaseUserDataStorageBackendConfig {
   type: UserDataStorageBackendTypes["optionB"];
@@ -64,14 +65,26 @@ export class OptionBUserDataStorageBackend extends BaseUserDataStorageBackend<IO
   }
 
   public open(): boolean {
-    throw new Error("Cannot open Option B User Account Storage as it is mock");
+    throw new Error("Cannot open Option B User Data Storage as it is mock");
   }
 
   public close(): boolean {
-    throw new Error("Cannot close Option B User Account Storage as it is mock");
+    throw new Error("Cannot close Option B User Data Storage as it is mock");
   }
 
   public isLocal(): boolean {
     return true;
+  }
+
+  public isUserDataBoxIdAvailable(): boolean {
+    throw new Error("Cannot get User Data Box ID availability from Option B User Data Storage as it is a mock");
+  }
+
+  public addStorageSecuredUserDataBoxConfig(): boolean {
+    throw new Error("Cannot add Storage Secured User Data Box Config to Option B User Data Storage as it is a mock");
+  }
+
+  public getStorageSecuredUserDataBoxConfigs(): IStorageSecuredUserDataBoxConfig[] {
+    throw new Error("Cannot get Storage Secured User Data Box Configs from Option B User Data Storage as it is a mock");
   }
 }

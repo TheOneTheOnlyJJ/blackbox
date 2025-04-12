@@ -2,7 +2,6 @@ import { USER_DATA_STORAGE_BACKEND_CONFIG_JSON_SCHEMA, UserDataStorageBackendCon
 import { AJV } from "@shared/utils/AJVJSONValidator";
 import { JSONSchemaType, ValidateFunction } from "ajv";
 
-// This is the type User Account Storage should accept and return when storing User Data Storage Configs
 export interface IPrivateStorageSecuredUserDataStorageConfig {
   name: string;
   description: string | null;

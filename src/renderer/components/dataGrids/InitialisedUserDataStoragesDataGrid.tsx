@@ -16,7 +16,7 @@ import { FC, MutableRefObject, ReactElement, useCallback, useMemo, useState } fr
 import { ISignedInRootContext, useSignedInRootContext } from "../roots/signedInRoot/SignedInRootContext";
 import { IUserDataStorageInfo, USER_DATA_STORAGE_INFO_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/info/UserDataStorageInfo";
 import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
-import { PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS } from "@shared/user/data/storage/visibilityGroup/constants";
+import { PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS } from "@shared/user/data/storage/visibilityGroup/public/constants";
 import { USER_DATA_STORAGE_BACKEND_TYPE_NAMES } from "@shared/user/data/storage/backend/UserDataStorageBackendTypeName";
 import { BASE_USER_DATA_STORAGE_BACKEND_INFO_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/backend/info/BaseUserDataStorageBackendInfo";
 import { useDialogOpenState } from "@renderer/hooks/useDialogState";
@@ -95,7 +95,7 @@ const InitialisedUserDataStoragesDataGrid: FC = () => {
         valueGetter: (_: never, row: IUserDataStorageInfo): string | null => {
           return row.visibilityGroupId === null
             ? null
-            : signedInRootContext.getOpenUserDataStorageVisibilityGroupInfo(row.visibilityGroupId)?.name ?? row.visibilityGroupId;
+            : signedInRootContext.getOpenUserDataStorageVisibilityGroupInfoById(row.visibilityGroupId)?.name ?? row.visibilityGroupId;
         },
         renderCell: (params: GridRenderCellParams<IUserDataStorageInfo, string | null>) => {
           return params.value === null ? <em>{PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS.name}</em> : params.value;

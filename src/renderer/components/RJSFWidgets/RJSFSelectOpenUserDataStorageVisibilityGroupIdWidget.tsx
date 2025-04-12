@@ -3,7 +3,7 @@ import { getUiOptions, WidgetProps } from "@rjsf/utils";
 import { FC, FocusEvent, useCallback, useMemo } from "react";
 import { ISignedInRootContext, useSignedInRootContext } from "../roots/signedInRoot/SignedInRootContext";
 import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
-import { PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS } from "@shared/user/data/storage/visibilityGroup/constants";
+import { PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS } from "@shared/user/data/storage/visibilityGroup/public/constants";
 
 const RJSFSelectOpenUserDataStorageVisibilityGroupIdWidget: FC<WidgetProps> = (props: WidgetProps) => {
   const signedInRootContext: ISignedInRootContext = useSignedInRootContext();

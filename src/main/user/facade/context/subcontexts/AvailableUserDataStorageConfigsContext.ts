@@ -104,7 +104,7 @@ export class AvailableUserDataStorageConfigsContext {
       }
     }
     this.logger.info(
-      `Removed ${SECURED_DATA_STORAGE_CONFIG_IDS_TO_REMOVE.length.toString()} available User Data Storage Config${
+      `Removed ${SECURED_DATA_STORAGE_CONFIG_IDS_TO_REMOVE.length.toString()} available Secured User Data Storage Config${
         SECURED_DATA_STORAGE_CONFIG_IDS_TO_REMOVE.length === 1 ? "" : "s"
       }.`
     );

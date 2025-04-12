@@ -49,6 +49,7 @@ const userSignUpFormValidator: CustomValidator<IUserSignUpInput> = (
   if (formData === undefined || errors.username === undefined || errors.confirmPassword === undefined) {
     return errors;
   }
+  // TODO: Move this to onSubmit with extraErrors like in User Data Box Form
   const IS_USERNAME_AVAILABLE_RESPONSE: IPCAPIResponse<boolean> = window.userAuthAPI.isUsernameAvailable(formData.username);
   if (IS_USERNAME_AVAILABLE_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
     errors.username.addError("Could not get username availability.");

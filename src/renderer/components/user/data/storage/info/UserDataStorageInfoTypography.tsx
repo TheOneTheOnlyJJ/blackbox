@@ -6,7 +6,7 @@ import { ISignedInRootContext, useSignedInRootContext } from "@renderer/componen
 import { USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/config/info/UserDataStorageConfigInfo";
 import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
 import UserDataStorageVisibilityGroupInfoTypography from "../visibilityGroup/UserDataStorageVisibilityGroupInfoTypography";
-import { PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS } from "@shared/user/data/storage/visibilityGroup/constants";
+import { PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS } from "@shared/user/data/storage/visibilityGroup/public/constants";
 
 export interface IUserDataStorageInfoTypographyProps {
   userDataStorageInfo: IUserDataStorageInfo;
@@ -20,7 +20,7 @@ const UserDataStorageInfoTypography: FC<IUserDataStorageInfoTypographyProps> = (
     if (userDataStorageInfo.visibilityGroupId === null) {
       return null;
     }
-    return signedInRootContext.getOpenUserDataStorageVisibilityGroupInfo(userDataStorageInfo.visibilityGroupId); // TODO: Replace with Map.get
+    return signedInRootContext.getOpenUserDataStorageVisibilityGroupInfoById(userDataStorageInfo.visibilityGroupId); // TODO: Replace with Map.get
   }, [signedInRootContext, userDataStorageInfo]);
 
   return (

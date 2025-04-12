@@ -3,6 +3,8 @@ import { ValidateFunction } from "ajv";
 import { IBaseUserDataStorageBackendConfig } from "./config/BaseUserDataStorageBackendConfig";
 import { IUserDataStorageBackendInfoMap } from "@shared/user/data/storage/backend/info/UserDataStorageBackendInfo";
 import { deepFreeze } from "@main/utils/deepFreeze";
+import { IStorageSecuredUserDataBoxConfig } from "../../box/config/StorageSecuredUserDataBoxConfig";
+import { UUID } from "node:crypto";
 
 export abstract class BaseUserDataStorageBackend<T extends IBaseUserDataStorageBackendConfig> {
   protected readonly logger: LogFunctions;
@@ -37,6 +39,11 @@ export abstract class BaseUserDataStorageBackend<T extends IBaseUserDataStorageB
   public abstract isOpen(): boolean;
   public abstract isClosed(): boolean;
   public abstract isLocal(): boolean;
+  public abstract isUserDataBoxIdAvailable(boxId: UUID): boolean;
+  public abstract addStorageSecuredUserDataBoxConfig(storageSecuredUserDataBoxConfig: IStorageSecuredUserDataBoxConfig): boolean;
+  public abstract getStorageSecuredUserDataBoxConfigs(
+    storageId: UUID // Gets passed down from User Data Storage
+  ): IStorageSecuredUserDataBoxConfig[];
 
   public getInfo(): Readonly<IUserDataStorageBackendInfoMap[T["type"]]> {
     return this.info;

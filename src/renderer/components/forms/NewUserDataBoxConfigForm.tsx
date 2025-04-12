@@ -7,7 +7,7 @@ import {
   USER_DATA_BOX_CONFIG_CREATE_INPUT_JSON_SCHEMA,
   USER_DATA_BOX_CONFIG_CREATE_INPUT_UI_SCHEMA
 } from "@renderer/user/data/box/config/create/input/UserDataBoxConfigCreateInput";
-import { RJSFSchema } from "@rjsf/utils";
+import { RJSFSchema, RJSFValidationError, toErrorSchema } from "@rjsf/utils";
 import { customizeValidator } from "@rjsf/validator-ajv8";
 import { injectDefaultsInJSONSchema } from "@shared/utils/injectDefaultsInJSONSchema";
 import { appLogger } from "@renderer/utils/loggers";
@@ -17,6 +17,8 @@ import { userDataBoxConfigCreateInputToUserDataBoxConfigCreateDTO } from "@rende
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
+import { errorCapitalizerErrorTransformer } from "@renderer/utils/RJSF/errorTransformers/errorCapitalizerErrorTransformer";
+import { IUserDataBoxNameAvailabilityRequest } from "@shared/user/data/box/create/UserDataBoxNameAvailabilityRequest";
 
 const MUIForm = withTheme<IUserDataBoxConfigCreateInput>(Theme);
 
@@ -29,6 +31,9 @@ export interface INewUserDataBoxConfigFormProps {
   renderSubmitButton: boolean;
   isAddUserDataBoxConfigPending: boolean;
   setIsAddUserDataBoxConfigPending: Dispatch<SetStateAction<boolean>>;
+  // errorSchemaBuilder: ErrorSchemaBuilder;
+  extraErrors: RJSFValidationError[];
+  setExtraErrors: Dispatch<SetStateAction<RJSFValidationError[]>>;
 }
 
 const NewUserDataBoxConfigForm: FC<INewUserDataBoxConfigFormProps> = (props: INewUserDataBoxConfigFormProps) => {
@@ -45,41 +50,86 @@ const NewUserDataBoxConfigForm: FC<INewUserDataBoxConfigFormProps> = (props: INe
         return;
       }
       props.setIsAddUserDataBoxConfigPending(true);
+      // props.errorSchemaBuilder.resetAllErrors();
+      props.setExtraErrors([]);
       if (data.formData === undefined) {
         appLogger.error("Undefined User Data Box Config Create Input form data. No-op.");
         enqueueSnackbar({ message: "Missing form data.", variant: "error" });
         return;
       }
-      const USER_DATA_BOX_CONFIG_CREATE_DTO: IUserDataBoxConfigCreateDTO = userDataBoxConfigCreateInputToUserDataBoxConfigCreateDTO(
-        data.formData,
-        appLogger
-      );
-      window.IPCTLSAPI.encrypt<IUserDataBoxConfigCreateDTO>(USER_DATA_BOX_CONFIG_CREATE_DTO, "User Data Box Config Create DTO")
+      const FORM_DATA: IUserDataBoxConfigCreateInput = data.formData;
+      window.IPCTLSAPI.encrypt<IUserDataBoxNameAvailabilityRequest>(
+        { name: FORM_DATA.name, storageId: FORM_DATA.storageId } satisfies IUserDataBoxNameAvailabilityRequest,
+        "User Data Box name availability request"
+      )
         .then(
-          (encryptedUserDataBoxConfigCreateDTO: IEncryptedData<IUserDataBoxConfigCreateDTO>): void => {
-            const ADD_USER_DATA_BOX_CONFIG_RESPONSE: IPCAPIResponse<boolean> =
-              window.userDataBoxAPI.addNewUserDataBox(encryptedUserDataBoxConfigCreateDTO);
-            if (ADD_USER_DATA_BOX_CONFIG_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
-              if (ADD_USER_DATA_BOX_CONFIG_RESPONSE.data) {
-                enqueueSnackbar({ message: "Added User Data Box Config.", variant: "success" });
-                props.onAddedSuccessfully();
-              } else {
-                enqueueSnackbar({ message: "Could not add User Data Box Config.", variant: "error" });
-              }
+          async (encryptedUserDataBoxNameAvailabilityRequest: IEncryptedData<IUserDataBoxNameAvailabilityRequest>): Promise<void> => {
+            const IS_USER_DATA_BOX_NAME_AVAILABLE_RESPONSE: IPCAPIResponse<boolean> =
+              window.userDataBoxAPI.isUserDataBoxNameAvailableForUserDataStorage(encryptedUserDataBoxNameAvailabilityRequest);
+            if (IS_USER_DATA_BOX_NAME_AVAILABLE_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
+              // props.errorSchemaBuilder.setErrors("Could not get username availability.", "name");
+              props.setExtraErrors((prevExtraErrors: RJSFValidationError[]): RJSFValidationError[] => {
+                return [
+                  ...prevExtraErrors,
+                  {
+                    property: ".name",
+                    message: "Could not get name availability.",
+                    stack: "Could not get name availability."
+                  } satisfies RJSFValidationError
+                ];
+              });
             } else {
-              enqueueSnackbar({ message: "Error adding User Data Box Config.", variant: "error" });
+              if (IS_USER_DATA_BOX_NAME_AVAILABLE_RESPONSE.data) {
+                const USER_DATA_BOX_CONFIG_CREATE_DTO: IUserDataBoxConfigCreateDTO = userDataBoxConfigCreateInputToUserDataBoxConfigCreateDTO(
+                  FORM_DATA,
+                  appLogger
+                );
+                try {
+                  const ENCRYPTED_USER_DATA_BOX_CONFIG_CREATE_DTO: IEncryptedData<IUserDataBoxConfigCreateDTO> =
+                    await window.IPCTLSAPI.encrypt<IUserDataBoxConfigCreateDTO>(USER_DATA_BOX_CONFIG_CREATE_DTO, "User Data Box Config Create DTO");
+                  const ADD_USER_DATA_BOX_CONFIG_RESPONSE: IPCAPIResponse<boolean> = window.userDataBoxAPI.addUserDataBoxConfig(
+                    ENCRYPTED_USER_DATA_BOX_CONFIG_CREATE_DTO
+                  );
+                  if (ADD_USER_DATA_BOX_CONFIG_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
+                    if (ADD_USER_DATA_BOX_CONFIG_RESPONSE.data) {
+                      enqueueSnackbar({ message: "Added data box.", variant: "success" });
+                      props.onAddedSuccessfully();
+                    } else {
+                      enqueueSnackbar({ message: "Could not add data box.", variant: "error" });
+                    }
+                  } else {
+                    enqueueSnackbar({ message: "Error adding data box.", variant: "error" });
+                  }
+                } catch (error: unknown) {
+                  const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
+                  appLogger.error(`Could not encrypt User Data Box Config Create DTO: ${ERROR_MESSAGE}.`);
+                  enqueueSnackbar({ message: "Data box encryption error.", variant: "error" });
+                }
+              } else {
+                // props.errorSchemaBuilder.setErrors(`Name "${FORM_DATA.name}" is not available.`, "name");
+                props.setExtraErrors((prevExtraErrors: RJSFValidationError[]): RJSFValidationError[] => {
+                  return [
+                    ...prevExtraErrors,
+                    {
+                      property: ".name",
+                      message: `Name "${FORM_DATA.name}" is not available.`,
+                      stack: `Name "${FORM_DATA.name}" is not available.`
+                    } satisfies RJSFValidationError
+                  ];
+                });
+              }
             }
           },
           (reason: unknown): void => {
             const REASON_MESSAGE = reason instanceof Error ? reason.message : String(reason);
-            appLogger.error(`Could not encrypt User Data Box Config Create DTO. Reason: ${REASON_MESSAGE}.`);
-            enqueueSnackbar({ message: "User Data Box Config encryption error.", variant: "error" });
+            appLogger.error(`Could not encrypt User Data Box name availability request. Reason: ${REASON_MESSAGE}.`);
+            enqueueSnackbar({ message: "Data box name availability request encryption error.", variant: "error" });
           }
         )
         .catch((error: unknown): void => {
           const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
-          appLogger.error(`Could not encrypt User Data Box Config Create DTO. Reason: ${ERROR_MESSAGE}.`);
-          enqueueSnackbar({ message: "User Data Box Config encryption error.", variant: "error" });
+          appLogger.error(`Could not encrypt User Data Box name availability request. Reason: ${ERROR_MESSAGE}.`);
+          enqueueSnackbar({ message: "Data box name availability request encryption error.", variant: "error" });
         })
         .finally((): void => {
           props.setIsAddUserDataBoxConfigPending(false);
@@ -101,10 +151,11 @@ const NewUserDataBoxConfigForm: FC<INewUserDataBoxConfigFormProps> = (props: INe
       omitExtraData={true}
       liveOmit={true}
       showErrorList={false}
-      // TODO: Check is data box name is available for selected storage id
-      // customValidate={newUserDataStorageConfigFormValidator}
-      // transformErrors={}
+      transformErrors={errorCapitalizerErrorTransformer}
       onSubmit={handleFormSubmit}
+      // extraErrors={props.errorSchemaBuilder.ErrorSchema}
+      extraErrors={toErrorSchema<IUserDataBoxConfigCreateInput>(props.extraErrors)}
+      extraErrorsBlockSubmit={false}
       noHtml5Validate={true}
     >
       {props.renderSubmitButton && (

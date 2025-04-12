@@ -38,7 +38,7 @@ const NewUserDataStorageVisibilityGroupConfigFormDialog: FC<INewUserDataStorageV
       appLogger.warn("Invalid New User Data Storage Visibility Group Config form data.");
       return;
     }
-    appLogger.info("Valid New User Data Storage Visibility Group Config form data. Submitting.");
+    appLogger.info("Schema valid New User Data Storage Visibility Group Config form data. Submitting.");
     formRef.current.submit();
   }, [isAddUserDataStorageVisibilityGroupConfigPending]);
 

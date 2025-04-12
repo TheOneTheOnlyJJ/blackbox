@@ -5,6 +5,7 @@ import { IUserDataStorageConfigServiceContext } from "../services/UserDataStorag
 import { IUserDataStorageVisibilityGroupServiceContext } from "../services/UserDataStorageVisibilityGroupService";
 import { UserContext } from "./UserContext";
 import { IUserDataStorageServiceContext } from "../services/UserDataStorageService";
+import { IUserDataBoxServiceContext } from "../services/UserDataBoxService";
 
 export class UserContextProvider {
   private readonly logger: LogFunctions;
@@ -119,5 +120,27 @@ export class UserContextProvider {
         this.CONTEXT.OPEN_DATA_STORAGE_VISIBILITY_GROUPS_CONTEXT
       )
     } satisfies IUserDataStorageVisibilityGroupServiceContext;
+  }
+
+  public getUserDataBoxServiceContext(): IUserDataBoxServiceContext {
+    this.logger.debug("Providing User Data Box Service Context.");
+    return {
+      getSignedInUser: this.CONTEXT.AUTH_CONTEXT.getSignedInUser.bind(this.CONTEXT.AUTH_CONTEXT),
+      getAvailableDataBoxes: this.CONTEXT.AVAILABLE_DATA_BOXES_CONTEXT.getAvailableDataBoxes.bind(this.CONTEXT.AVAILABLE_DATA_BOXES_CONTEXT),
+      generateRandomDataBoxId: this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT.generateRandomDataBoxId.bind(
+        this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT
+      ),
+      addSecuredUserDataBoxConfig: this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT.addSecuredUserDataBoxConfig.bind(
+        this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT
+      ),
+      getAllSignedInUserInitialisedOpenDataStoragesInfo:
+        this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT.getAllSignedInUserInitialisedOpenDataStoragesInfo.bind(
+          this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT
+        ),
+      getStorageSecuredUserDataBoxConfigsForUserDataStorage:
+        this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT.getStorageSecuredUserDataBoxConfigsForUserDataStorage.bind(
+          this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT
+        )
+    } satisfies IUserDataBoxServiceContext;
   }
 }

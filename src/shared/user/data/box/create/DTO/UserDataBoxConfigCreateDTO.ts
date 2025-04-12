@@ -1,5 +1,6 @@
-import { JSONSchemaType } from "ajv";
+import { JSONSchemaType, ValidateFunction } from "ajv";
 import { USER_DATA_BOX_CONFIG_CREATE_JSON_SCHEMA_CONSTANTS } from "../UserDataBoxConfigCreateConstants";
+import { AJV } from "@shared/utils/AJVJSONValidator";
 
 export interface IUserDataBoxConfigCreateDTO {
   storageId: string;
@@ -22,3 +23,7 @@ export const USER_DATA_BOX_CONFIG_CREATE_DTO_JSON_SCHEMA: JSONSchemaType<IUserDa
   required: ["name", "storageId", "description"],
   additionalProperties: false
 } as const;
+
+export const isValidUserDataBoxConfigCreateDTO: ValidateFunction<IUserDataBoxConfigCreateDTO> = AJV.compile(
+  USER_DATA_BOX_CONFIG_CREATE_DTO_JSON_SCHEMA
+);

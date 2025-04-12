@@ -20,7 +20,7 @@ import {
   isStorageSecuredUserDataStorageConfigValid
 } from "@main/user/data/storage/config/StorageSecuredUserDataStorageConfig";
 import {
-  isStorageSecuredUserDataStorageVisibilityGroupConfigValid,
+  isValidStorageSecuredUserDataStorageVisibilityGroupConfig,
   IStorageSecuredUserDataStorageVisibilityGroupConfig
 } from "@main/user/data/storage/visibilityGroup/config/StorageSecuredUserDataStorageVisibilityGroupConfig";
 import { getSQLiteVersion } from "@main/utils/SQLite/getSQLiteVersion";
@@ -194,10 +194,10 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     const SQL_QUERY = "SELECT COUNT(*) AS count FROM users WHERE username = @username";
     const RESULT = this.db.prepare(SQL_QUERY).get({ username: username }) as { count: number };
     if (RESULT.count === 0) {
-      this.logger.debug(`Username "${username}" is available.`);
+      this.logger.debug(`Available username "${username}".`);
       return true;
     } else if (RESULT.count === 1) {
-      this.logger.debug(`Username "${username}" is not available.`);
+      this.logger.debug(`Unavailable username "${username}".`);
       return false;
     }
     throw new Error(`Found multiple (${RESULT.count.toString()}) users with same username "${username}"`);
@@ -451,7 +451,7 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     }
     // Validate visibility group
     this.logger.debug("Validating Storage Secured User Data Storage Visibility Group Config.");
-    if (!isStorageSecuredUserDataStorageVisibilityGroupConfigValid(storageSecuredUserDataStorageVisibilityGroupConfig)) {
+    if (!isValidStorageSecuredUserDataStorageVisibilityGroupConfig(storageSecuredUserDataStorageVisibilityGroupConfig)) {
       this.logger.debug("Invalid Storage Secured User Data Storage Visibility Group Config.");
       return false;
     }
@@ -522,16 +522,16 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
         rawStorageSecuredUserDataStorageVisibilityGroupConfig: IRawStorageSecuredUserDataStorageVisibilityGroupConfig,
         idx: number
       ): IStorageSecuredUserDataStorageVisibilityGroupConfig => {
-        const STORAGE_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUP: IStorageSecuredUserDataStorageVisibilityGroupConfig =
+        const STORAGE_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIG: IStorageSecuredUserDataStorageVisibilityGroupConfig =
           rawStorageSecuredUserDataStorageVisibilityGroupConfigToStorageSecuredUserDataStorageVisibilityGroupConfig(
             rawStorageSecuredUserDataStorageVisibilityGroupConfig,
             userId,
             null
           );
-        if (!isStorageSecuredUserDataStorageVisibilityGroupConfigValid(STORAGE_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUP)) {
+        if (!isValidStorageSecuredUserDataStorageVisibilityGroupConfig(STORAGE_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIG)) {
           throw new Error(`Invalid Storage Secured User Data Storage Visibility Group Config at index: ${idx.toString()}`);
         }
-        return STORAGE_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUP;
+        return STORAGE_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIG;
       }
     );
     this.logger.debug(

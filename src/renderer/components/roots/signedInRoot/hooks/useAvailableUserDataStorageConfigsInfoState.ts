@@ -20,7 +20,7 @@ export const useAvailableUserDataStorageConfigsInfoState = (logger: LogFunctions
   }, [logger, availableUserDataStorageConfigsInfo]);
 
   useEffect((): (() => void) => {
-    // Get all available User Data Storage Configs
+    // Get all available User Data Storage Configs Info
     const GET_ALL_SIGNED_IN_USER_AVAILABLE_DATA_STORAGE_CONFIGS_INFO_RESPONSE: IPCAPIResponse<IEncryptedData<IUserDataStorageConfigInfo[]>> =
       window.userDataStorageConfigAPI.getAllSignedInUserAvailableDataStorageConfigsInfo();
     if (GET_ALL_SIGNED_IN_USER_AVAILABLE_DATA_STORAGE_CONFIGS_INFO_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
