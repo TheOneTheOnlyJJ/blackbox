@@ -5,13 +5,17 @@ import NewUserDataStorageConfigFormDialog from "@renderer/components/dialogs/New
 import AvailableUserDataStorageConfigsDataGrid from "@renderer/components/dataGrids/AvailableUserDataStorageConfigsDataGrid";
 import { Box, Stack, Typography } from "@mui/material";
 import { DASHBOARD_NAVIGATION_AREAS } from "@renderer/navigationAreas/DashboardNavigationAreas";
-import { IUserDataLayoutRootContext, useUserDataLayoutRootContext } from "@renderer/components/roots/userDataLayoutRoot/UserDataLayoutRootContext";
-import { USER_DATA_NAVIGATION_AREAS } from "@renderer/navigationAreas/UserDataStoragesNavigationAreas";
+import {
+  IUserDataStoragesNavigationAreaLayoutRootContext,
+  useUserDataStoragesNavigationAreaLayoutRootContext
+} from "@renderer/components/roots/userDataStoragesNavigationAreaLayoutRoot/UserDataStoragesNavigationAreaLayoutRootContext";
+import { USER_DATA_STORAGES_NAVIGATION_AREAS } from "@renderer/navigationAreas/UserDataStoragesNavigationAreas";
 import { useDialogOpenState } from "@renderer/hooks/useDialogState";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 
 const UserDataStorageConfigsPage: FC = () => {
-  const userDataStoragesLayoutRootContext: IUserDataLayoutRootContext = useUserDataLayoutRootContext();
+  const userDataStoragesNavigationAreaLayoutRootContext: IUserDataStoragesNavigationAreaLayoutRootContext =
+    useUserDataStoragesNavigationAreaLayoutRootContext();
 
   const [isNewUserDataStorageConfigFormDialogOpen, setIsNewUserDataStorageConfigFormDialogOpen] = useDialogOpenState(
     appLogger,
@@ -32,11 +36,11 @@ const UserDataStorageConfigsPage: FC = () => {
   }, [handleNewUserDataStorageConfigFormDialogClose]);
 
   useEffect((): void => {
-    userDataStoragesLayoutRootContext.setDashboardNavigationArea(DASHBOARD_NAVIGATION_AREAS.dataStorages);
-    userDataStoragesLayoutRootContext.setUserDataNavigationArea(USER_DATA_NAVIGATION_AREAS.storageConfigs);
+    userDataStoragesNavigationAreaLayoutRootContext.setDashboardNavigationArea(DASHBOARD_NAVIGATION_AREAS.dataStorages);
+    userDataStoragesNavigationAreaLayoutRootContext.setUserDataStoragesNavigationArea(USER_DATA_STORAGES_NAVIGATION_AREAS.storageConfigs);
     // userDataStoragesLayoutRootContext.setAppBarTitle("Data Storage Configurations");
-    userDataStoragesLayoutRootContext.setForbiddenLocationName("Data Storage Configurations");
-  }, [userDataStoragesLayoutRootContext]);
+    userDataStoragesNavigationAreaLayoutRootContext.setForbiddenLocationName("Data Storage Configurations");
+  }, [userDataStoragesNavigationAreaLayoutRootContext]);
 
   return (
     <>
@@ -64,7 +68,7 @@ const UserDataStorageConfigsPage: FC = () => {
         }
       </Box>
       <NewUserDataStorageConfigFormDialog
-        userIdToAddTo={userDataStoragesLayoutRootContext.signedInUserInfo.userId}
+        userIdToAddTo={userDataStoragesNavigationAreaLayoutRootContext.signedInUserInfo.userId}
         onAddedSuccessfully={handleSuccessfullyAddedNewUserDataStorageConfig}
         open={isNewUserDataStorageConfigFormDialogOpen}
         onClose={handleNewUserDataStorageConfigFormDialogClose}

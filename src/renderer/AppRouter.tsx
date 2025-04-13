@@ -12,9 +12,9 @@ import ProfilePage from "@renderer/pages/ProfilePage";
 import SettingsPage from "@renderer/pages/SettingsPage";
 import DashboardLayoutRoot from "@renderer/components/roots/dashboardLayoutRoot/DashboardLayoutRoot";
 import UserDataStorageVisibilityGroupsPage from "./pages/UserDataStorageVisibilityGroupsPage";
-import UserDataLayoutRoot from "./components/roots/userDataLayoutRoot/UserDataLayoutRoot";
+import UserDataStoragesNavigationAreaLayoutRoot from "./components/roots/userDataStoragesNavigationAreaLayoutRoot/UserDataStoragesNavigationAreaLayoutRoot";
 import InitialisedUserDataStoragesPage from "./pages/InitialisedUserDataStoragesPage";
-import BoxesPage from "./pages/BoxesPage";
+import UserDataBoxesPage from "./pages/UserDataBoxesPage";
 
 const APP_ROUTER = createHashRouter([
   {
@@ -46,7 +46,7 @@ const APP_ROUTER = createHashRouter([
               },
               {
                 path: "data",
-                element: <UserDataLayoutRoot />,
+                element: <UserDataStoragesNavigationAreaLayoutRoot />,
                 children: [
                   {
                     path: "storageConfigs",
@@ -64,7 +64,7 @@ const APP_ROUTER = createHashRouter([
               },
               {
                 path: "boxes",
-                element: <BoxesPage />
+                element: <UserDataBoxesPage />
               },
               {
                 path: "profile",

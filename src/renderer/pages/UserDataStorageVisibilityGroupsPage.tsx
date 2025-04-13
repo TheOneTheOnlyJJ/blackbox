@@ -1,8 +1,11 @@
 import { Button, Box, Stack, Typography } from "@mui/material";
 import OpenUserDataStorageVisibilityGroupsDataGrid from "@renderer/components/dataGrids/OpenUserDataStorageVisibilityGroupsDataGrid";
 import { DASHBOARD_NAVIGATION_AREAS } from "@renderer/navigationAreas/DashboardNavigationAreas";
-import { USER_DATA_NAVIGATION_AREAS } from "@renderer/navigationAreas/UserDataStoragesNavigationAreas";
-import { IUserDataLayoutRootContext, useUserDataLayoutRootContext } from "@renderer/components/roots/userDataLayoutRoot/UserDataLayoutRootContext";
+import { USER_DATA_STORAGES_NAVIGATION_AREAS } from "@renderer/navigationAreas/UserDataStoragesNavigationAreas";
+import {
+  IUserDataStoragesNavigationAreaLayoutRootContext,
+  useUserDataStoragesNavigationAreaLayoutRootContext
+} from "@renderer/components/roots/userDataStoragesNavigationAreaLayoutRoot/UserDataStoragesNavigationAreaLayoutRootContext";
 import { FC, useCallback, useEffect } from "react";
 import { appLogger } from "@renderer/utils/loggers";
 import NewUserDataStorageVisibilityGroupConfigFormDialog from "@renderer/components/dialogs/NewUserDataStorageVisibilityGroupConfigFormDialog";
@@ -12,7 +15,8 @@ import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
 
 const UserDataStorageVisibilityGroupsPage: FC = () => {
-  const userDataStoragesLayoutRootContext: IUserDataLayoutRootContext = useUserDataLayoutRootContext();
+  const userDataStoragesNavigationAreaLayoutRootContext: IUserDataStoragesNavigationAreaLayoutRootContext =
+    useUserDataStoragesNavigationAreaLayoutRootContext();
   const [isNewUserDataStorageVisibilityGroupConfigFormDialogOpen, setIsNewUserDataStorageVisibilityGroupConfigFormDialogOpen] = useDialogOpenState(
     appLogger,
     "new User Data Storage Visibility Group Config form"
@@ -55,11 +59,11 @@ const UserDataStorageVisibilityGroupsPage: FC = () => {
   }, [handleOpenUserDataStorageVisibilityGroupFormDialogClose]);
 
   useEffect((): void => {
-    userDataStoragesLayoutRootContext.setDashboardNavigationArea(DASHBOARD_NAVIGATION_AREAS.dataStorages);
-    userDataStoragesLayoutRootContext.setUserDataNavigationArea(USER_DATA_NAVIGATION_AREAS.visibilityGroups);
+    userDataStoragesNavigationAreaLayoutRootContext.setDashboardNavigationArea(DASHBOARD_NAVIGATION_AREAS.dataStorages);
+    userDataStoragesNavigationAreaLayoutRootContext.setUserDataStoragesNavigationArea(USER_DATA_STORAGES_NAVIGATION_AREAS.visibilityGroups);
     // userDataStoragesLayoutRootContext.setAppBarTitle("Data Storage Visibility Groups");
-    userDataStoragesLayoutRootContext.setForbiddenLocationName("Data Storage Visibility Groups");
-  }, [userDataStoragesLayoutRootContext]);
+    userDataStoragesNavigationAreaLayoutRootContext.setForbiddenLocationName("Data Storage Visibility Groups");
+  }, [userDataStoragesNavigationAreaLayoutRootContext]);
 
   return (
     <>
@@ -87,14 +91,14 @@ const UserDataStorageVisibilityGroupsPage: FC = () => {
         </Box>
       </Box>
       <NewUserDataStorageVisibilityGroupConfigFormDialog
-        userIdToAddTo={userDataStoragesLayoutRootContext.signedInUserInfo.userId}
+        userIdToAddTo={userDataStoragesNavigationAreaLayoutRootContext.signedInUserInfo.userId}
         onAddedSuccessfully={handleSuccessfullyAddedNewUserDataStorageVisibilityGroupConfig}
         onOpenedSuccessfully={handleSuccessfullyOpenedNewlyAddedUserDataStorageVisibilityGroupConfig}
         open={isNewUserDataStorageVisibilityGroupConfigFormDialogOpen}
         onClose={handleNewUserDataStorageVisibilityGroupConfigFormDialogClose}
       />
       <OpenUserDataStorageVisibilityGroupFormDialog
-        userIdToOpenFor={userDataStoragesLayoutRootContext.signedInUserInfo.userId}
+        userIdToOpenFor={userDataStoragesNavigationAreaLayoutRootContext.signedInUserInfo.userId}
         onOpenedSuccessfully={handleSuccessfullyOpenedNewUserDataStorageVisibilityGroup}
         open={isOpenUserDataStorageVisibilityGroupFormDialogOpen}
         onClose={handleOpenUserDataStorageVisibilityGroupFormDialogClose}

@@ -6,7 +6,7 @@ import {
 import { DASHBOARD_NAVIGATION_AREAS } from "@renderer/navigationAreas/DashboardNavigationAreas";
 import { FC, useEffect } from "react";
 
-const BoxesPage: FC = () => {
+const UserDataBoxesPage: FC = () => {
   const dashboardLayoutRootContext: IDashboardLayoutRootContext = useDashboardLayoutRootContext();
 
   useEffect((): void => {
@@ -32,4 +32,4 @@ const BoxesPage: FC = () => {
   );
 };
 
-export default BoxesPage;
+export default UserDataBoxesPage;

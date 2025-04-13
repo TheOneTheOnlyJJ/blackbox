@@ -5,49 +5,51 @@ import DataObjectIcon from "@mui/icons-material/DataObject";
 import StorageOutlinedIcon from "@mui/icons-material/StorageOutlined";
 import { Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
 import DebouncedLink from "./DebouncedLink";
-import { USER_DATA_NAVIGATION_AREAS, UserDataNavigationArea } from "@renderer/navigationAreas/UserDataStoragesNavigationAreas";
+import { USER_DATA_STORAGES_NAVIGATION_AREAS, UserDataStoragesNavigationArea } from "@renderer/navigationAreas/UserDataStoragesNavigationAreas";
 
-interface IUserDataNavigationBarDrawerItem {
+interface IUserDataStoragesNavigationAreaBarDrawerItem {
   name: string;
   icon: SvgIconComponent;
-  userDataNavigationArea: UserDataNavigationArea;
+  userDataStoragesNavigationArea: UserDataStoragesNavigationArea;
   path: string;
   divider: boolean;
 }
 
-export interface IUserDataNavigationBarProps {
+export interface IUserDataStoragesNavigationAreaBarProps {
   width: number;
   leftOffset: number;
   heightOffset: number;
   signedInUserId: string;
-  userDataNavigationArea: UserDataNavigationArea | null;
+  userDataStoragesNavigationArea: UserDataStoragesNavigationArea | null;
 }
 
-const UserDataNavigationBar = forwardRef<HTMLDivElement, IUserDataNavigationBarProps>(function UserDataNavigationBar(
-  props: IUserDataNavigationBarProps,
+const UserDataStoragesNavigationAreaBar = forwardRef<HTMLDivElement, IUserDataStoragesNavigationAreaBarProps>(function UserDataNavigationBar(
+  props: IUserDataStoragesNavigationAreaBarProps,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _: ForwardedRef<HTMLDivElement> // This is needed
 ) {
-  const DRAWER_ITEMS: IUserDataNavigationBarDrawerItem[] = useMemo<IUserDataNavigationBarDrawerItem[]>((): IUserDataNavigationBarDrawerItem[] => {
+  const DRAWER_ITEMS: IUserDataStoragesNavigationAreaBarDrawerItem[] = useMemo<
+    IUserDataStoragesNavigationAreaBarDrawerItem[]
+  >((): IUserDataStoragesNavigationAreaBarDrawerItem[] => {
     return [
       {
         name: "Configurations",
         icon: DataObjectIcon,
-        userDataNavigationArea: USER_DATA_NAVIGATION_AREAS.storageConfigs,
+        userDataStoragesNavigationArea: USER_DATA_STORAGES_NAVIGATION_AREAS.storageConfigs,
         path: `/users/${props.signedInUserId}/data/storageConfigs`,
         divider: false
       },
       {
         name: "Active",
         icon: StorageOutlinedIcon,
-        userDataNavigationArea: USER_DATA_NAVIGATION_AREAS.initialisedStorages,
+        userDataStoragesNavigationArea: USER_DATA_STORAGES_NAVIGATION_AREAS.initialisedStorages,
         path: `/users/${props.signedInUserId}/data/initialisedStorages`,
         divider: false
       },
       {
         name: "Visibility Groups",
         icon: VisibilityIcon,
-        userDataNavigationArea: USER_DATA_NAVIGATION_AREAS.visibilityGroups,
+        userDataStoragesNavigationArea: USER_DATA_STORAGES_NAVIGATION_AREAS.visibilityGroups,
         path: `/users/${props.signedInUserId}/data/visibilityGroups`,
         divider: false
       }
@@ -71,9 +73,13 @@ const UserDataNavigationBar = forwardRef<HTMLDivElement, IUserDataNavigationBarP
       <Box sx={{ overflow: "auto" }}>
         <List>
           {DRAWER_ITEMS.map(
-            (item: IUserDataNavigationBarDrawerItem, index: number): React.JSX.Element => (
+            (item: IUserDataStoragesNavigationAreaBarDrawerItem, index: number): React.JSX.Element => (
               <ListItem key={index} disablePadding divider={item.divider}>
-                <ListItemButton component={DebouncedLink} to={item.path} selected={props.userDataNavigationArea === item.userDataNavigationArea}>
+                <ListItemButton
+                  component={DebouncedLink}
+                  to={item.path}
+                  selected={props.userDataStoragesNavigationArea === item.userDataStoragesNavigationArea}
+                >
                   <ListItemIcon>
                     <item.icon />
                   </ListItemIcon>
@@ -88,4 +94,4 @@ const UserDataNavigationBar = forwardRef<HTMLDivElement, IUserDataNavigationBarP
   );
 });
 
-export default UserDataNavigationBar;
+export default UserDataStoragesNavigationAreaBar;

@@ -1,8 +1,8 @@
-export const USER_DATA_NAVIGATION_AREAS = {
+export const USER_DATA_STORAGES_NAVIGATION_AREAS = {
   storageConfigs: "storageConfigs",
   visibilityGroups: "visibilityGroups",
   initialisedStorages: "initialisedStorages"
 } as const;
 
-export type UserDataNavigationAreas = typeof USER_DATA_NAVIGATION_AREAS;
-export type UserDataNavigationArea = UserDataNavigationAreas[keyof UserDataNavigationAreas];
+export type UserDataStoragesNavigationAreas = typeof USER_DATA_STORAGES_NAVIGATION_AREAS;
+export type UserDataStoragesNavigationArea = UserDataStoragesNavigationAreas[keyof UserDataStoragesNavigationAreas];
