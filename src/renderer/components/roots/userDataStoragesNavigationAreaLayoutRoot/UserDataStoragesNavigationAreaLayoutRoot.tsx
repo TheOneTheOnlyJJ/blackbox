@@ -18,9 +18,9 @@ const UserDataStoragesNavigationAreaLayoutRoot: FC = () => {
   const [userDataStoragesNavigationArea, setUserDataStoragesNavigationArea] = useUserDataStoragesNavigationAreaState(appLogger);
 
   useEffect((): (() => void) => {
-    appLogger.debug("Rendering User Data Layout Root component.");
+    appLogger.debug("Rendering User Data Storages Navigation Area Layout Root component.");
     return (): void => {
-      appLogger.debug("Removing User Data Layout Root component.");
+      appLogger.debug("Removing User Data Storages Navigation Area Layout Root component.");
     };
   }, []);
 

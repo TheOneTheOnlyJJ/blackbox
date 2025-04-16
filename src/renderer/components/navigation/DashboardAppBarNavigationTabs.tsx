@@ -77,13 +77,13 @@ export const DashboardAppBarNavigationTabs: FC<IDashboardAppBarNavigationTabsPro
         name: "Data Storages",
         // icon: WarehouseOutlinedIcon,
         dashboardNavigationArea: DASHBOARD_NAVIGATION_AREAS.dataStorages,
-        path: `/users/${signedInRootContext.signedInUserInfo.userId}/data/storageConfigs`
+        path: `/users/${signedInRootContext.signedInUserInfo.userId}/data/storages/configs`
       },
       {
         name: "Boxes",
         // icon: Inventory2OutlinedIcon,
         dashboardNavigationArea: DASHBOARD_NAVIGATION_AREAS.boxes,
-        path: `/users/${signedInRootContext.signedInUserInfo.userId}/boxes`
+        path: `/users/${signedInRootContext.signedInUserInfo.userId}/data/boxes/available`
       }
     ];
   }, [signedInRootContext.signedInUserInfo]);

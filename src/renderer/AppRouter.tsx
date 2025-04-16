@@ -14,7 +14,8 @@ import DashboardLayoutRoot from "@renderer/components/roots/dashboardLayoutRoot/
 import UserDataStorageVisibilityGroupsPage from "./pages/UserDataStorageVisibilityGroupsPage";
 import UserDataStoragesNavigationAreaLayoutRoot from "./components/roots/userDataStoragesNavigationAreaLayoutRoot/UserDataStoragesNavigationAreaLayoutRoot";
 import InitialisedUserDataStoragesPage from "./pages/InitialisedUserDataStoragesPage";
-import UserDataBoxesPage from "./pages/UserDataBoxesPage";
+import AvailableUserDataBoxesPage from "./pages/AvailableUserDataBoxesPage";
+import UserDataBoxesNavigationAreaLayoutRoot from "./components/roots/userDataBoxesNavigationAreaLayoutRoot/UserDataBoxesNavigationAreaLayoutRoot";
 
 const APP_ROUTER = createHashRouter([
   {
@@ -46,25 +47,36 @@ const APP_ROUTER = createHashRouter([
               },
               {
                 path: "data",
-                element: <UserDataStoragesNavigationAreaLayoutRoot />,
                 children: [
                   {
-                    path: "storageConfigs",
-                    element: <UserDataStorageConfigsPage />
+                    path: "storages",
+                    element: <UserDataStoragesNavigationAreaLayoutRoot />,
+                    children: [
+                      {
+                        path: "configs",
+                        element: <UserDataStorageConfigsPage />
+                      },
+                      {
+                        path: "initialised",
+                        element: <InitialisedUserDataStoragesPage />
+                      },
+                      {
+                        path: "visibilityGroups",
+                        element: <UserDataStorageVisibilityGroupsPage />
+                      }
+                    ]
                   },
                   {
-                    path: "initialisedStorages",
-                    element: <InitialisedUserDataStoragesPage />
-                  },
-                  {
-                    path: "visibilityGroups",
-                    element: <UserDataStorageVisibilityGroupsPage />
+                    path: "boxes",
+                    element: <UserDataBoxesNavigationAreaLayoutRoot />,
+                    children: [
+                      {
+                        path: "available",
+                        element: <AvailableUserDataBoxesPage />
+                      }
+                    ]
                   }
                 ]
-              },
-              {
-                path: "boxes",
-                element: <UserDataBoxesPage />
               },
               {
                 path: "profile",
