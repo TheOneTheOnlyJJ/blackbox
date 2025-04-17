@@ -39,7 +39,7 @@ const OpenUserDataStorageVisibilityGroupsDataGrid: FC = () => {
   const signedInRootContext: ISignedInRootContext = useSignedInRootContext();
 
   const gridAPIRef: MutableRefObject<GridApi> = useGridApiRef();
-  useMUIXDataGridAutosizeColumnsOnWindowResize({
+  const { gridAutosizeColumns } = useMUIXDataGridAutosizeColumnsOnWindowResize({
     logger: appLogger,
     gridAPIRef: gridAPIRef,
     autosizeOptions: GRID_AUTOSIZE_OPTIONS,
@@ -65,6 +65,7 @@ const OpenUserDataStorageVisibilityGroupsDataGrid: FC = () => {
           }
         }
       }}
+      onColumnVisibilityModelChange={gridAutosizeColumns}
     />
   );
 };

@@ -34,7 +34,7 @@ const AvailableUserDataStorageConfigsDataGrid: FC = () => {
   const signedInRootContext: ISignedInRootContext = useSignedInRootContext();
 
   const gridAPIRef: MutableRefObject<GridApi> = useGridApiRef();
-  useMUIXDataGridAutosizeColumnsOnWindowResize({
+  const { gridAutosizeColumns } = useMUIXDataGridAutosizeColumnsOnWindowResize({
     logger: appLogger,
     gridAPIRef: gridAPIRef,
     autosizeOptions: GRID_AUTOSIZE_OPTIONS,
@@ -163,6 +163,7 @@ const AvailableUserDataStorageConfigsDataGrid: FC = () => {
             }
           }
         }}
+        onColumnVisibilityModelChange={gridAutosizeColumns}
       />
       {chosenStorageConfigInfo !== null ? (
         <UserDataStorageConfigInfoDialog

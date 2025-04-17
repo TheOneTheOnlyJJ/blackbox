@@ -9,11 +9,30 @@ import { IDataChangedDiff, isValidDataChangedDiff } from "@shared/utils/DataChan
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 import { LogFunctions } from "electron-log";
 import { enqueueSnackbar } from "notistack";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-export const useInitialisedUserDataStoragesInfoState = (logger: LogFunctions): IUserDataStorageInfo[] => {
+export const useInitialisedUserDataStoragesInfoState = (
+  logger: LogFunctions
+): {
+  initialisedUserDataStoragesInfo: IUserDataStorageInfo[];
+  getInitialisedUserDataStorageInfoById: (storageId: string) => IUserDataStorageInfo | null;
+} => {
   // TODO: Replace with Map
   const [initialisedUserDataStoragesInfo, setInitialisedUserDataStoragesInfo] = useState<IUserDataStorageInfo[]>([]);
+
+  const getInitialisedUserDataStorageInfoById = useCallback(
+    (storageId: string): IUserDataStorageInfo | null => {
+      const DATA_STORAGE_INFO: IUserDataStorageInfo | undefined = initialisedUserDataStoragesInfo.find((dataStorageInfo: IUserDataStorageInfo) => {
+        return dataStorageInfo.storageId === storageId;
+      });
+      if (DATA_STORAGE_INFO === undefined) {
+        logger.warn(`Could not get info for User Data Storage ${storageId}.`);
+        return null;
+      }
+      return DATA_STORAGE_INFO;
+    },
+    [logger, initialisedUserDataStoragesInfo]
+  );
 
   useEffect((): void => {
     logger.info(`Initialised User Data Storages Info changed. Count: ${initialisedUserDataStoragesInfo.length.toString()}.`);
@@ -128,5 +147,8 @@ export const useInitialisedUserDataStoragesInfoState = (logger: LogFunctions): I
     };
   }, [logger]);
 
-  return initialisedUserDataStoragesInfo;
+  return {
+    initialisedUserDataStoragesInfo: initialisedUserDataStoragesInfo,
+    getInitialisedUserDataStorageInfoById: getInitialisedUserDataStorageInfoById
+  };
 };

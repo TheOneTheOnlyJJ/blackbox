@@ -7,7 +7,6 @@ import { IUserDataStorageConfigInfo } from "@shared/user/data/storage/config/inf
 import { useAvailableUserDataStorageConfigsInfoState } from "./hooks/useAvailableUserDataStorageConfigsInfoState";
 import { useOpenUserDataStorageVisibilityGroupsInfoState } from "./hooks/useOpenUserDataStorageVisibilityGroupsInfoState";
 import { useForbiddenLocationNameState } from "./hooks/useForbiddenLocationNameState";
-import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
 import { useInitialisedUserDataStoragesInfoState } from "./hooks/useInitialisedUserDataStoragesInfoState";
 import { useAvailableUserDataBoxesInfoState } from "./hooks/useAvailableUserDataBoxesInfoState";
 import { IUserDataBoxInfo } from "@shared/user/data/box/info/UserDataBoxInfo";
@@ -16,7 +15,7 @@ const SignedInRoot: FC = () => {
   const appRootContext: IAppRootContext = useAppRootContext();
 
   const availableUserDataStorageConfigsInfo: IUserDataStorageConfigInfo[] = useAvailableUserDataStorageConfigsInfoState(appLogger);
-  const initialisedUserDataStoragesInfo: IUserDataStorageInfo[] = useInitialisedUserDataStoragesInfoState(appLogger);
+  const { initialisedUserDataStoragesInfo, getInitialisedUserDataStorageInfoById } = useInitialisedUserDataStoragesInfoState(appLogger);
   const { openUserDataStorageVisibilityGroupsInfo, getOpenUserDataStorageVisibilityGroupInfo } =
     useOpenUserDataStorageVisibilityGroupsInfoState(appLogger);
   const availableUserDataDataBoxesInfo: IUserDataBoxInfo[] = useAvailableUserDataBoxesInfoState(appLogger);
@@ -39,6 +38,7 @@ const SignedInRoot: FC = () => {
           initialisedUserDataStoragesInfo: initialisedUserDataStoragesInfo,
           openUserDataStorageVisibilityGroupsInfo: openUserDataStorageVisibilityGroupsInfo,
           availableUserDataDataBoxesInfo: availableUserDataDataBoxesInfo,
+          getInitialisedUserDataStorageInfoById: getInitialisedUserDataStorageInfoById,
           getOpenUserDataStorageVisibilityGroupInfoById: getOpenUserDataStorageVisibilityGroupInfo,
           setForbiddenLocationName: URIEncodeAndSetForbiddenLocationName
         } satisfies ISignedInRootContext

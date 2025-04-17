@@ -1,4 +1,5 @@
 import { Box, Typography } from "@mui/material";
+import AvailableUserDataBoxesDataGrid from "@renderer/components/dataGrids/AvailableUserDataBoxesDataGrid";
 import {
   IUserDataBoxesNavigationAreaLayoutRootContext,
   useUserDataBoxesNavigationAreaLayoutRootContext
@@ -21,15 +22,15 @@ const AvailableUserDataBoxesPage: FC = () => {
     <Box
       sx={{
         display: "flex",
-        justifyContent: "start",
-        alignItems: "center",
         flexDirection: "column",
-        width: "100%",
         height: "100%",
-        background: "grey99"
+        width: "100%"
       }}
     >
-      <Typography variant="h5">Available Boxes...</Typography>
+      <Typography variant="h5">Available boxes:</Typography>
+      <Box sx={{ flex: 1, minHeight: 0, marginTop: ".5rem" }}>
+        <AvailableUserDataBoxesDataGrid />
+      </Box>
     </Box>
   );
 };
