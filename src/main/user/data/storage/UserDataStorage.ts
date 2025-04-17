@@ -1,11 +1,17 @@
 import { randomUUID, UUID } from "node:crypto";
 import log, { LogFunctions } from "electron-log";
 import { UserDataStorageBackend } from "./backend/UserDataStorageBackend";
-import { IUserDataStorageConfig } from "./config/UserDataStorageConfig";
 import { userDataStorageBackendFactory } from "./backend/userDataStorageBackendFactory";
 import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
 import { ISecuredUserDataStorageConfig } from "./config/SecuredUserDataStorageConfig";
 import { IStorageSecuredUserDataBoxConfig } from "../box/config/StorageSecuredUserDataBoxConfig";
+import { IUserDataStorageBackendHandlers } from "./backend/BaseUserDataStorageBackend";
+
+export interface IUserDataStorageHandlers {
+  onInfoChanged: ((newInfo: Readonly<IUserDataStorageInfo>) => void) | null;
+  onOpened: ((info: Readonly<IUserDataStorageInfo>) => void) | null;
+  onClosed: ((info: Readonly<IUserDataStorageInfo>) => void) | null;
+}
 
 export class UserDataStorage {
   private readonly logger: LogFunctions;
@@ -16,11 +22,7 @@ export class UserDataStorage {
   public readonly description: string | null;
   private readonly backend: UserDataStorageBackend;
 
-  public constructor(
-    config: IUserDataStorageConfig | ISecuredUserDataStorageConfig,
-    logScope: string,
-    onInfoChanged: (newInfo: Readonly<IUserDataStorageInfo>) => void
-  ) {
+  public constructor(config: ISecuredUserDataStorageConfig, logScope: string, handlers: IUserDataStorageHandlers) {
     this.logger = log.scope(logScope);
     this.logger.info(
       `Initialising User Data Storage "${config.name}" with ID "${config.storageId}" and backend type "${config.backendConfig.type}".`
@@ -30,11 +32,23 @@ export class UserDataStorage {
     this.visibilityGroupId = config.visibilityGroupId;
     this.name = config.name;
     this.description = config.description;
-    const onBackendInfoChanged = (): void => {
-      this.logger.info("Info changed.");
-      onInfoChanged(this.getInfo());
-    };
-    this.backend = userDataStorageBackendFactory(config.backendConfig, `${logScope}-bcknd`, onBackendInfoChanged, this.logger);
+    this.backend = userDataStorageBackendFactory(
+      config.backendConfig,
+      `${logScope}-bcknd`,
+      {
+        onInfoChanged: (): void => {
+          this.logger.silly("Info changed.");
+          handlers.onInfoChanged?.(this.getInfo());
+        },
+        onOpened: (): void => {
+          handlers.onOpened?.(this.getInfo());
+        },
+        onClosed: (): void => {
+          handlers.onClosed?.(this.getInfo());
+        }
+      } satisfies IUserDataStorageBackendHandlers,
+      this.logger
+    );
   }
 
   public isOpen(): boolean {

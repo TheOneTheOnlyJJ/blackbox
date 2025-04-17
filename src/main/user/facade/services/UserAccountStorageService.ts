@@ -1,5 +1,5 @@
 import { LogFunctions } from "electron-log";
-import { OnUserAccountStorageInfoChangedCallback, UserAccountStorage } from "../../account/storage/UserAccountStorage";
+import { IUserAccountStorageHandlers, UserAccountStorage } from "../../account/storage/UserAccountStorage";
 import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserAccountStorageInfo";
 import { IUserAccountStorageConfig } from "@main/user/account/storage/config/UserAccountStorageConfig";
 import { UUID } from "node:crypto";
@@ -47,10 +47,10 @@ export class UserAccountStorageService {
   public setAccountStorageFromConfig(
     newAccountStorageConfig: IUserAccountStorageConfig,
     logScope: string,
-    onInfoChanged: OnUserAccountStorageInfoChangedCallback
+    handlers: IUserAccountStorageHandlers
   ): boolean {
     this.logger.debug(`Setting User Account Storage from Config "${newAccountStorageConfig.storageId}" ("${newAccountStorageConfig.name}").`);
-    return this.setAccountStorage(new UserAccountStorage(newAccountStorageConfig, logScope, onInfoChanged));
+    return this.setAccountStorage(new UserAccountStorage(newAccountStorageConfig, logScope, handlers));
   }
 
   // TODO: Decide if this should be removed

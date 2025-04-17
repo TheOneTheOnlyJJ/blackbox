@@ -25,25 +25,33 @@ export interface IDataStorageVisibilityGroupFilter {
   excludeIds: UUID[] | null;
 }
 
+export interface IUserAccountStorageBackendHandlers {
+  onInfoChanged: (() => void) | null;
+  onOpened: (() => void) | null;
+  onClosed: (() => void) | null;
+}
+
 export abstract class BaseUserAccountStorageBackend<T extends IBaseUserAccountStorageBackendConfig> {
   protected readonly logger: LogFunctions;
   public readonly config: T;
   private info: Readonly<IUserAccountStorageBackendInfoMap[T["type"]]>;
-  private onInfoChanged: () => void;
+  private readonly onInfoChanged: (() => void) | null;
+  protected readonly onOpened: (() => void) | null;
+  protected readonly onClosed: (() => void) | null;
 
   public constructor(
     config: T,
     initialInfo: IUserAccountStorageBackendInfoMap[T["type"]],
     logScope: string,
-    onInfoChanged: (newInfo: Readonly<IUserAccountStorageBackendInfoMap[T["type"]]>) => void
+    handlers: IUserAccountStorageBackendHandlers
   ) {
     this.logger = log.scope(logScope);
     this.config = config;
     this.logger.info(`Initialising ${this.config.type} User Acount Storage Backend with info: ${JSON.stringify(initialInfo, null, 2)}.`);
     this.info = deepFreeze<IUserAccountStorageBackendInfoMap[T["type"]]>(initialInfo);
-    this.onInfoChanged = (): void => {
-      onInfoChanged(this.info);
-    };
+    this.onInfoChanged = handlers.onInfoChanged;
+    this.onOpened = handlers.onOpened;
+    this.onClosed = handlers.onClosed;
   }
 
   public static isValidConfig<T extends IBaseUserAccountStorageBackendConfig>(data: unknown, isValidConcreteConfig: ValidateFunction<T>): data is T {
@@ -86,6 +94,6 @@ export abstract class BaseUserAccountStorageBackend<T extends IBaseUserAccountSt
 
   protected updateInfo(newInfo: IUserAccountStorageBackendInfoMap[T["type"]]): void {
     this.info = deepFreeze<IUserAccountStorageBackendInfoMap[T["type"]]>(newInfo);
-    this.onInfoChanged();
+    this.onInfoChanged?.();
   }
 }

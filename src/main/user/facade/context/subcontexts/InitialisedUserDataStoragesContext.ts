@@ -3,7 +3,7 @@ import { IStorageSecuredUserDataBoxConfig } from "@main/user/data/box/config/Sto
 import { securedUserDataBoxConfigToStorageSecuredUserDataBoxConfig } from "@main/user/data/box/config/utils/securedUserDataBoxConfigToStorageSecuredUserDataBoxConfig";
 import { isValidSecuredUserDataStorageConfigArray } from "@main/user/data/storage/config/SecuredUserDataStorageConfig";
 import { IUserDataStorageConfig } from "@main/user/data/storage/config/UserDataStorageConfig";
-import { UserDataStorage } from "@main/user/data/storage/UserDataStorage";
+import { IUserDataStorageHandlers, UserDataStorage } from "@main/user/data/storage/UserDataStorage";
 import { isValidUUIDArray } from "@main/utils/dataValidation/isValidUUID";
 import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
 import { IDataChangedDiff } from "@shared/utils/DataChangedDiff";
@@ -67,9 +67,17 @@ export class InitialisedUserDataStoragesContext {
         const NEW_DATA_STORAGE: UserDataStorage = new UserDataStorage(
           securedUserDataStorageConfig,
           `m-udata-strg-${securedUserDataStorageConfig.storageId}`,
-          (newInfo: Readonly<IUserDataStorageInfo>): void => {
-            this.onInitialisedUserDataStorageInfoChangedCallback?.(newInfo);
-          }
+          {
+            onInfoChanged: (newInfo: Readonly<IUserDataStorageInfo>): void => {
+              this.onInitialisedUserDataStorageInfoChangedCallback?.(newInfo);
+            },
+            onOpened: (info: Readonly<IUserDataStorageInfo>): void => {
+              this.onOpenedInitialisedDataStorages?.([info]);
+            },
+            onClosed: (info: Readonly<IUserDataStorageInfo>): void => {
+              this.onClosedInitialisedDataStorages?.([info]);
+            }
+          } satisfies IUserDataStorageHandlers
         );
         NEW_INITIALISED_DATA_STORAGES.push(NEW_DATA_STORAGE);
       } catch (error: unknown) {
@@ -113,25 +121,15 @@ export class InitialisedUserDataStoragesContext {
       return IS_INITIALISED;
     });
     const TERMINATED_DATA_STORAGES_CONFIGS: IUserDataStorageConfig[] = [];
-    const CLOSED_TERMINATED_DATA_STORAGES_INFO: IUserDataStorageInfo[] = [];
     for (let idx = this.initialisedDataStorages.length - 1; idx >= 0; idx--) {
       const AVAILABLE_DATA_STORAGE: UserDataStorage = this.initialisedDataStorages[idx];
       if (DATA_STORAGE_IDS_TO_TERMINATE.includes(AVAILABLE_DATA_STORAGE.storageId)) {
         if (AVAILABLE_DATA_STORAGE.isOpen()) {
           AVAILABLE_DATA_STORAGE.close();
-          CLOSED_TERMINATED_DATA_STORAGES_INFO.push(AVAILABLE_DATA_STORAGE.getInfo());
         }
         TERMINATED_DATA_STORAGES_CONFIGS.push(AVAILABLE_DATA_STORAGE.getConfig());
         this.initialisedDataStorages.splice(idx, 1); // Remove from array in-place
       }
-    }
-    this.logger.info(
-      `Closed ${CLOSED_TERMINATED_DATA_STORAGES_INFO.length.toString()} User Data Storage${
-        CLOSED_TERMINATED_DATA_STORAGES_INFO.length === 1 ? "" : "s"
-      }.`
-    );
-    if (CLOSED_TERMINATED_DATA_STORAGES_INFO.length > 0) {
-      this.onClosedInitialisedDataStorages?.(CLOSED_TERMINATED_DATA_STORAGES_INFO);
     }
     this.logger.info(
       `Terminated ${DATA_STORAGE_IDS_TO_TERMINATE.length.toString()} User Data Storage${DATA_STORAGE_IDS_TO_TERMINATE.length === 1 ? "" : "s"}.`
@@ -151,25 +149,15 @@ export class InitialisedUserDataStoragesContext {
       this.logger.info("No initialised User Data Storages to terminate.");
       return 0;
     }
-    const CLOSED_TERMINATED_DATA_STORAGES_INFO: IUserDataStorageInfo[] = [];
     const SECURED_DATA_STORAGES_CONFIGS_TO_TERMINATE: IUserDataStorageConfig[] = this.initialisedDataStorages.map(
       (initialisedDataStorage: UserDataStorage): IUserDataStorageConfig => {
         if (initialisedDataStorage.isOpen()) {
           initialisedDataStorage.close();
-          CLOSED_TERMINATED_DATA_STORAGES_INFO.push(initialisedDataStorage.getInfo());
         }
         return initialisedDataStorage.getConfig();
       }
     );
     this.initialisedDataStorages = [];
-    this.logger.info(
-      `Closed ${CLOSED_TERMINATED_DATA_STORAGES_INFO.length.toString()} User Data Storage${
-        CLOSED_TERMINATED_DATA_STORAGES_INFO.length === 1 ? "" : "s"
-      }.`
-    );
-    if (CLOSED_TERMINATED_DATA_STORAGES_INFO.length > 0) {
-      this.onClosedInitialisedDataStorages?.(CLOSED_TERMINATED_DATA_STORAGES_INFO);
-    }
     this.logger.info(`Terminated all User Data Storages (${SECURED_DATA_STORAGES_CONFIGS_TO_TERMINATE.length.toString()}).`);
     this.onInitialisedUserDataStoragesChangedCallback?.({
       removed: SECURED_DATA_STORAGES_CONFIGS_TO_TERMINATE,
@@ -230,9 +218,6 @@ export class InitialisedUserDataStoragesContext {
         this.logger.warn(`Skip opening given missing initialised User Data Storage "${dataStorageId}".`);
       }
     });
-    if (OPENED_DATA_STORAGES_INFO.length > 0) {
-      this.onOpenedInitialisedDataStorages?.(OPENED_DATA_STORAGES_INFO);
-    }
     return OPENED_DATA_STORAGES_INFO.length;
   }
 
@@ -268,9 +253,6 @@ export class InitialisedUserDataStoragesContext {
         this.logger.warn(`Skip closing given missing initialised User Data Storage "${dataStorageId}".`);
       }
     });
-    if (CLOSED_DATA_STORAGES_INFO.length > 0) {
-      this.onClosedInitialisedDataStorages?.(CLOSED_DATA_STORAGES_INFO);
-    }
     return CLOSED_DATA_STORAGES_INFO.length;
   }
 

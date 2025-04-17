@@ -73,6 +73,7 @@ import {
 } from "@shared/user/data/box/create/UserDataBoxNameAvailabilityRequest";
 import { isValidUserDataBoxConfigCreateDTO, IUserDataBoxConfigCreateDTO } from "@shared/user/data/box/create/DTO/UserDataBoxConfigCreateDTO";
 import { IUserDataBoxInfo } from "@shared/user/data/box/info/UserDataBoxInfo";
+import { IUserAccountStorageHandlers } from "./user/account/storage/UserAccountStorage";
 
 type WindowPositionSetting = Rectangle | WindowStates["FullScreen"] | WindowStates["Maximized"];
 
@@ -1236,7 +1237,11 @@ export class App {
       this.DEFAULT_USER_ACCOUNT_STORAGE_CONFIG,
       this.DEFAULT_USER_ACCOUNT_STORAGE_LOG_SCOPE,
       // TODO: Move this entirely in user facade context
-      this.USER_ACCOUNT_STORAGE_API_HANDLERS.sendUserAccountStorageInfoChanged
+      {
+        onInfoChanged: this.USER_ACCOUNT_STORAGE_API_HANDLERS.sendUserAccountStorageInfoChanged,
+        onOpened: null,
+        onClosed: null
+      } satisfies IUserAccountStorageHandlers
     );
     this.userFacade.openAccountStorage();
     // TODO: Delete comment

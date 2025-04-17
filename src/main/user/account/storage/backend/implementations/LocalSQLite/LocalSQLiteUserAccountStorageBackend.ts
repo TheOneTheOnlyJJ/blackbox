@@ -1,4 +1,9 @@
-import { BaseUserAccountStorageBackend, IDataStorageConfigFilter, IDataStorageVisibilityGroupFilter } from "../../BaseUserAccountStorageBackend";
+import {
+  BaseUserAccountStorageBackend,
+  IDataStorageConfigFilter,
+  IDataStorageVisibilityGroupFilter,
+  IUserAccountStorageBackendHandlers
+} from "../../BaseUserAccountStorageBackend";
 import DatabaseConstructor, { Database, RunResult } from "better-sqlite3";
 import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
@@ -70,11 +75,7 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
 
   private db: Database | null;
 
-  public constructor(
-    config: ILocalSQLiteUserAccountStorageBackendConfig,
-    logScope: string,
-    onInfoChanged: (newInfo: Readonly<ILocalSQLiteUserAccountStorageBackendInfo>) => void
-  ) {
+  public constructor(config: ILocalSQLiteUserAccountStorageBackendConfig, logScope: string, handlers: IUserAccountStorageBackendHandlers) {
     if (
       !BaseUserAccountStorageBackend.isValidConfig<ILocalSQLiteUserAccountStorageBackendConfig>(
         config,
@@ -90,7 +91,7 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
       isOpen: false,
       isLocal: true
     };
-    super(config, INITIAL_INFO, logScope, onInfoChanged);
+    super(config, INITIAL_INFO, logScope, handlers);
     this.db = null;
   }
 
@@ -142,6 +143,7 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
       this.createUserDataStorageVisibilityGroupConfigsTable();
       this.logger.info(`Opened "${this.config.type}" User Acount Storage Backend.`);
       this.updateInfo({ ...this.getInfo(), isOpen: true });
+      this.onOpened?.();
       return true;
     } catch (error: unknown) {
       const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
@@ -161,6 +163,7 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
       this.db = null;
       this.logger.info(`Closed "${this.config.type}" User Account Storage Backend.`);
       this.updateInfo({ ...this.getInfo(), isOpen: false });
+      this.onClosed?.();
       return true;
     } catch (error: unknown) {
       const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);

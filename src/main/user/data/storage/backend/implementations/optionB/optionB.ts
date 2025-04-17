@@ -1,7 +1,7 @@
 import { USER_DATA_STORAGE_BACKEND_TYPES, UserDataStorageBackendTypes } from "@shared/user/data/storage/backend/UserDataStorageBackendType";
 import { JSONSchemaType, ValidateFunction } from "ajv";
 import { IBaseUserDataStorageBackendConfig } from "../../config/BaseUserDataStorageBackendConfig";
-import { BaseUserDataStorageBackend } from "../../BaseUserDataStorageBackend";
+import { BaseUserDataStorageBackend, IUserDataStorageBackendHandlers } from "../../BaseUserDataStorageBackend";
 import { OPTION_B_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/backend/constants/implementations/optionB/OptionBUserDataStorageBackendConstants";
 import { IOptionBUserDataStorageBackendInfo } from "@shared/user/data/storage/backend/info/implementations/optionB/OptionBUserDataStorageBackendInfo";
 import { AJV } from "@shared/utils/AJVJSONValidator";
@@ -34,11 +34,7 @@ export class OptionBUserDataStorageBackend extends BaseUserDataStorageBackend<IO
   public static readonly isValidOptionBUserDataStorageBackendConfig: ValidateFunction<IOptionBUserDataStorageBackendConfig> =
     AJV.compile<IOptionBUserDataStorageBackendConfig>(OptionBUserDataStorageBackend.CONFIG_JSON_SCHEMA);
 
-  public constructor(
-    config: IOptionBUserDataStorageBackendConfig,
-    logScope: string,
-    onInfoChanged: (newInfo: Readonly<IOptionBUserDataStorageBackendInfo>) => void
-  ) {
+  public constructor(config: IOptionBUserDataStorageBackendConfig, logScope: string, handlers: IUserDataStorageBackendHandlers) {
     if (
       !BaseUserDataStorageBackend.isValidConfig<IOptionBUserDataStorageBackendConfig>(
         config,
@@ -53,7 +49,7 @@ export class OptionBUserDataStorageBackend extends BaseUserDataStorageBackend<IO
       isOpen: false,
       isLocal: true
     };
-    super(config, INITIAL_INFO, logScope, onInfoChanged);
+    super(config, INITIAL_INFO, logScope, handlers);
   }
 
   public isOpen(): boolean {

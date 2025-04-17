@@ -3,7 +3,7 @@ import { UUID } from "node:crypto";
 import { IUserDataStorageConfig } from "../data/storage/config/UserDataStorageConfig";
 import { IUserSignInPayload } from "../account/UserSignInPayload";
 import { IUserSignUpPayload } from "../account/UserSignUpPayload";
-import { OnUserAccountStorageInfoChangedCallback, UserAccountStorage } from "../account/storage/UserAccountStorage";
+import { IUserAccountStorageHandlers, UserAccountStorage } from "../account/storage/UserAccountStorage";
 import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserAccountStorageInfo";
 import { ISignedInUserInfo } from "@shared/user/account/SignedInUserInfo";
 import { IUserDataStorageVisibilityGroupConfig } from "../data/storage/visibilityGroup/config/UserDataStorageVisibilityGroupConfig";
@@ -119,9 +119,9 @@ export class UserFacade {
   public setAccountStorageFromConfig(
     newAccountStorageConfig: IUserAccountStorageConfig,
     logScope: string,
-    onInfoChanged: OnUserAccountStorageInfoChangedCallback
+    handlers: IUserAccountStorageHandlers
   ): boolean {
-    return this.ACCOUNT_STORAGE_SERVICE.setAccountStorageFromConfig(newAccountStorageConfig, logScope, onInfoChanged);
+    return this.ACCOUNT_STORAGE_SERVICE.setAccountStorageFromConfig(newAccountStorageConfig, logScope, handlers);
   }
 
   public unsetAccountStorage(): boolean {

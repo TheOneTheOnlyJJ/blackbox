@@ -8,9 +8,17 @@ import { ISecuredPassword } from "@main/utils/encryption/SecuredPassword";
 import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserAccountStorageInfo";
 import { IStorageSecuredUserDataStorageConfig } from "@main/user/data/storage/config/StorageSecuredUserDataStorageConfig";
 import { IStorageSecuredUserDataStorageVisibilityGroupConfig } from "@main/user/data/storage/visibilityGroup/config/StorageSecuredUserDataStorageVisibilityGroupConfig";
-import { IDataStorageConfigFilter, IDataStorageVisibilityGroupFilter } from "./backend/BaseUserAccountStorageBackend";
+import {
+  IDataStorageConfigFilter,
+  IDataStorageVisibilityGroupFilter,
+  IUserAccountStorageBackendHandlers
+} from "./backend/BaseUserAccountStorageBackend";
 
-export type OnUserAccountStorageInfoChangedCallback = (newInfo: Readonly<IUserAccountStorageInfo>) => void;
+export interface IUserAccountStorageHandlers {
+  onInfoChanged: ((newInfo: Readonly<IUserAccountStorageInfo>) => void) | null;
+  onOpened: ((info: Readonly<IUserAccountStorageInfo>) => void) | null;
+  onClosed: ((info: Readonly<IUserAccountStorageInfo>) => void) | null;
+}
 
 export class UserAccountStorage {
   private readonly logger: LogFunctions;
@@ -18,16 +26,28 @@ export class UserAccountStorage {
   public readonly name: string;
   private readonly backend: UserAccountStorageBackend;
 
-  public constructor(config: IUserAccountStorageConfig, logScope: string, onInfoChanged: OnUserAccountStorageInfoChangedCallback) {
+  public constructor(config: IUserAccountStorageConfig, logScope: string, handlers: IUserAccountStorageHandlers) {
     this.logger = log.scope(logScope);
     this.logger.info(`Initialising "${config.backendConfig.type}" User Account Storage "${config.name}".`);
     this.storageId = config.storageId;
     this.name = config.name;
-    const onBackendInfoChanged = (): void => {
-      this.logger.info("Info changed.");
-      onInfoChanged(this.getInfo());
-    };
-    this.backend = userAccountStorageBackendFactory(config.backendConfig, `${logScope}-bcknd`, onBackendInfoChanged, this.logger);
+    this.backend = userAccountStorageBackendFactory(
+      config.backendConfig,
+      `${logScope}-bcknd`,
+      {
+        onInfoChanged: (): void => {
+          this.logger.debug("Info changed.");
+          handlers.onInfoChanged?.(this.getInfo());
+        },
+        onOpened: (): void => {
+          handlers.onOpened?.(this.getInfo());
+        },
+        onClosed: (): void => {
+          handlers.onClosed?.(this.getInfo());
+        }
+      } satisfies IUserAccountStorageBackendHandlers,
+      this.logger
+    );
   }
 
   public isOpen(): boolean {

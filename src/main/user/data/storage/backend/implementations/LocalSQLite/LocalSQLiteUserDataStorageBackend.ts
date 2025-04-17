@@ -1,4 +1,4 @@
-import { BaseUserDataStorageBackend } from "../../BaseUserDataStorageBackend";
+import { BaseUserDataStorageBackend, IUserDataStorageBackendHandlers } from "../../BaseUserDataStorageBackend";
 import { USER_DATA_STORAGE_BACKEND_TYPES, UserDataStorageBackendTypes } from "@shared/user/data/storage/backend/UserDataStorageBackendType";
 import { JSONSchemaType, ValidateFunction } from "ajv";
 import { LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/backend/constants/implementations/localSQLite/LocalSQLiteUserDataStorageBackendConstants";
@@ -52,11 +52,7 @@ export class LocalSQLiteUserDataStorageBackend extends BaseUserDataStorageBacken
 
   private db: Database | null;
 
-  public constructor(
-    config: ILocalSQLiteUserDataStorageBackendConfig,
-    logScope: string,
-    onInfoChanged: (newInfo: Readonly<ILocalSQLiteUserDataStorageBackendInfo>) => void
-  ) {
+  public constructor(config: ILocalSQLiteUserDataStorageBackendConfig, logScope: string, handlers: IUserDataStorageBackendHandlers) {
     if (
       !BaseUserDataStorageBackend.isValidConfig<ILocalSQLiteUserDataStorageBackendConfig>(
         config,
@@ -72,7 +68,7 @@ export class LocalSQLiteUserDataStorageBackend extends BaseUserDataStorageBacken
       isOpen: false,
       isLocal: true
     };
-    super(config, INITIAL_INFO, logScope, onInfoChanged);
+    super(config, INITIAL_INFO, logScope, handlers);
     this.db = null;
   }
 
@@ -122,6 +118,7 @@ export class LocalSQLiteUserDataStorageBackend extends BaseUserDataStorageBacken
       this.createUserDataBoxConfigsTable();
       this.logger.info(`Opened "${this.config.type}" User Data Storage Backend.`);
       this.updateInfo({ ...this.getInfo(), isOpen: true });
+      this.onOpened?.();
       return true;
     } catch (error: unknown) {
       const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
@@ -141,6 +138,7 @@ export class LocalSQLiteUserDataStorageBackend extends BaseUserDataStorageBacken
       this.db = null;
       this.logger.info(`Closed "${this.config.type}" User Data Storage Backend.`);
       this.updateInfo({ ...this.getInfo(), isOpen: false });
+      this.onClosed?.();
       return true;
     } catch (error: unknown) {
       const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
