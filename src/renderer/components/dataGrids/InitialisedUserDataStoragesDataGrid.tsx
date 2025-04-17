@@ -50,7 +50,7 @@ const InitialisedUserDataStoragesDataGrid: FC = () => {
     setChosenStorageInfo(null);
   }, [setIsShowInfoDialogOpen]);
 
-  // TODO: Move all of these to Boxes page
+  // TODO: Move all of these to Boxes page (Remove form here)
   const [isNewUserDataBoxConfigFormDialogOpen, setIsNewUserDataBoxConfigFormDialogOpen] = useDialogOpenState(
     appLogger,
     "new User Data Box Config form"
