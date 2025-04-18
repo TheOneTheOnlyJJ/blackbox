@@ -30,6 +30,7 @@ import { UserDataBoxService } from "./services/UserDataBoxService";
 import { IUserDataBoxConfigCreateDTO } from "@shared/user/data/box/create/DTO/UserDataBoxConfigCreateDTO";
 import { ISecuredUserDataBoxConfig } from "../data/box/config/SecuredUserDataBoxConfig";
 import { IUserDataBoxInfo } from "@shared/user/data/box/info/UserDataBoxInfo";
+import { IUserDataStorageNameAvailabilityRequest } from "@shared/user/data/storage/config/create/UserDataStorageNameAvailabilityRequest";
 
 export interface IUserServiceLoggers {
   auth: LogFunctions;
@@ -245,6 +246,10 @@ export class UserFacade {
 
   public getAllSignedInUserAvailableDataStorageConfigsInfo(): IUserDataStorageConfigInfo[] {
     return this.DATA_STORAGE_CONFIG_SERVICE.getAllSignedInUserAvailableSecuredDataStorageConfigsInfo();
+  }
+
+  public isUserDataStorageNameAvailable(userDataStorageNameAvailabilityRequest: IUserDataStorageNameAvailabilityRequest): boolean {
+    return this.DATA_STORAGE_SERVICE.isUserDataStorageNameAvailable(userDataStorageNameAvailabilityRequest);
   }
 
   public initialiseUserDataStorage(storageId: UUID): boolean {

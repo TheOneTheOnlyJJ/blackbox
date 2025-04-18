@@ -37,8 +37,13 @@ const NewUserDataTemplateFormDialog: FC<INewUserDataTemplateFormDialogProps> = (
     formRef.current.submit();
   }, [isAddUserDataTemplatePending]);
 
+  const handleDialogClose = useCallback((): void => {
+    setExtraErrors([]);
+    props.onClose();
+  }, [props]);
+
   return (
-    <Dialog maxWidth="md" fullWidth={true} open={props.open} onClose={props.onClose}>
+    <Dialog maxWidth="md" fullWidth={true} open={props.open} onClose={handleDialogClose}>
       <DialogContent>
         <NewUserDataTemplateForm
           formRef={formRef}
@@ -51,7 +56,7 @@ const NewUserDataTemplateFormDialog: FC<INewUserDataTemplateFormDialogProps> = (
         />
       </DialogContent>
       <DialogActions>
-        <Button onClick={props.onClose}>Cancel</Button>
+        <Button onClick={handleDialogClose}>Cancel</Button>
         <Button variant="contained" disabled={isSubmitButtonDisabled} onClick={handleSubmitButtonClick}>
           {isAddUserDataTemplatePending ? "Submitting..." : "Submit"}
         </Button>

@@ -1,5 +1,6 @@
 import { ISecuredUserDataStorageConfig } from "@main/user/data/storage/config/SecuredUserDataStorageConfig";
 import { IUserDataStorageConfig } from "@main/user/data/storage/config/UserDataStorageConfig";
+import { IUserDataStorageNameAvailabilityRequest } from "@shared/user/data/storage/config/create/UserDataStorageNameAvailabilityRequest";
 import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
 import { LogFunctions } from "electron-log";
 import { UUID } from "node:crypto";
@@ -21,6 +22,20 @@ export class UserDataStorageService {
     this.logger = logger;
     this.logger.debug("Initialising new User Data Storage Service.");
     this.CONTEXT = context;
+  }
+
+  public isUserDataStorageNameAvailable(userDataStorageNameAvailabilityRequest: IUserDataStorageNameAvailabilityRequest): boolean {
+    this.logger.debug(`Getting User Data Storage name availability.`);
+    // TODO: Should this request all configs from the account storage?
+    for (const SECURED_DATA_STORAGE_CONFIG of this.CONTEXT.getAvailableSecuredDataStorageConfigs()) {
+      if (
+        SECURED_DATA_STORAGE_CONFIG.visibilityGroupId === userDataStorageNameAvailabilityRequest.visibilityGroupId &&
+        SECURED_DATA_STORAGE_CONFIG.name === userDataStorageNameAvailabilityRequest.name
+      ) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public initialiseUserDataStorage(storageId: UUID): boolean {

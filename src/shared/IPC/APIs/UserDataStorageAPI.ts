@@ -3,6 +3,7 @@ import { TransformToIPCAPIChannels } from "../IPCAPIChannels";
 import { IDataChangedDiff } from "@shared/utils/DataChangedDiff";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 import { IPCAPIResponse } from "../IPCAPIResponse";
+import { IUserDataStorageNameAvailabilityRequest } from "@shared/user/data/storage/config/create/UserDataStorageNameAvailabilityRequest";
 
 export type InitialisedUserDataStoragesChangedCallback = (
   encryptedInitialisedUserDataStoragesInfoChangedDiff: IEncryptedData<IDataChangedDiff<string, IUserDataStorageInfo>>
@@ -10,6 +11,9 @@ export type InitialisedUserDataStoragesChangedCallback = (
 export type InitialisedUserDataStorageInfoChangedCallback = (encryptedNewUserDataStorageInfo: IEncryptedData<IUserDataStorageInfo>) => void;
 
 export interface IUserDataStorageAPI {
+  isUserDataStorageNameAvailable: (
+    encryptedUserDataStorageNameAvailabilityRequest: IEncryptedData<IUserDataStorageNameAvailabilityRequest>
+  ) => IPCAPIResponse<boolean>;
   initialiseUserDataStorage: (storageId: string) => IPCAPIResponse<IEncryptedData<boolean>>;
   terminateUserDataStorage: (storageId: string) => IPCAPIResponse<IEncryptedData<boolean>>;
   openUserDataStorage: (storageId: string) => IPCAPIResponse<IEncryptedData<boolean>>;
@@ -23,6 +27,7 @@ export type UserDataStorageAPIIPCChannels = TransformToIPCAPIChannels<"UserDataS
 export type UserDataStorageAPIIPCChannel = UserDataStorageAPIIPCChannels[keyof UserDataStorageAPIIPCChannels];
 
 export const USER_DATA_STORAGE_API_IPC_CHANNELS: UserDataStorageAPIIPCChannels = {
+  isUserDataStorageNameAvailable: "UserDataStorageAPI:isUserDataStorageNameAvailable",
   initialiseUserDataStorage: "UserDataStorageAPI:initialiseUserDataStorage",
   terminateUserDataStorage: "UserDataStorageAPI:terminateUserDataStorage",
   openUserDataStorage: "UserDataStorageAPI:openUserDataStorage",

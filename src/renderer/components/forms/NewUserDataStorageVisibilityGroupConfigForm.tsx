@@ -104,6 +104,7 @@ const NewUserDataStorageVisibilityGroupConfigForm: FC<INewUserDataStorageVisibil
               );
             if (ADD_USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIG_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
               if (ADD_USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIG_RESPONSE.data) {
+                appLogger.debug("Added User Data Storage Visibility Group.");
                 enqueueSnackbar({ message: "Added data storage visibility group.", variant: "success" });
                 onAddedSuccessfully();
                 if (DO_OPEN_AFTER_CREATING === true) {
@@ -121,6 +122,11 @@ const NewUserDataStorageVisibilityGroupConfigForm: FC<INewUserDataStorageVisibil
                         ENCRYPTED_USER_DATA_STORAGE_VISIBILITY_GROUP_OPEN_REQUEST_DTO
                       );
                     if (OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
+                      appLogger.debug(
+                        `Opened ${OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS_RESPONSE.data.toString()} User Data Storage Visibility Group${
+                          OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS_RESPONSE.data === 1 ? "" : "s"
+                        }.`
+                      );
                       if (OPEN_USER_DATA_STORAGE_VISIBILITY_GROUPS_RESPONSE.data > 0) {
                         enqueueSnackbar({
                           message: `Opened ${
@@ -135,18 +141,21 @@ const NewUserDataStorageVisibilityGroupConfigForm: FC<INewUserDataStorageVisibil
                         enqueueSnackbar({ message: "No new data storage visibility group opened.", variant: "error" });
                       }
                     } else {
+                      appLogger.error("Error opening User Data Storage Visibility Groups.");
                       enqueueSnackbar({ message: "Error opening data storage visibility group.", variant: "error" });
                     }
                   } catch (error: unknown) {
                     const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
-                    appLogger.error(`Could not open newly created User Data Storage Visibility Group. Reason: ${ERROR_MESSAGE}.`);
+                    appLogger.error(`Could not open newly created User Data Storage Visibility Group. Error: ${ERROR_MESSAGE}.`);
                     enqueueSnackbar({ message: "Data storage visibility group open error.", variant: "error" });
                   }
                 }
               } else {
+                appLogger.error("Could not add User Data Storage Visibility Group.");
                 enqueueSnackbar({ message: "Could not add data storage visibility group.", variant: "error" });
               }
             } else {
+              appLogger.error("Error adding User Data Storage Visibility Group.");
               enqueueSnackbar({ message: "Error adding data storage visibility group.", variant: "error" });
             }
           },
@@ -158,7 +167,7 @@ const NewUserDataStorageVisibilityGroupConfigForm: FC<INewUserDataStorageVisibil
         )
         .catch((error: unknown): void => {
           const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
-          appLogger.error(`Could not encrypt User Data Storage Visibility Group Config Create DTO. Reason: ${ERROR_MESSAGE}.`);
+          appLogger.error(`Could not encrypt User Data Storage Visibility Group Config Create DTO. Error: ${ERROR_MESSAGE}.`);
           enqueueSnackbar({ message: "Data storage visibility group encryption error.", variant: "error" });
         })
         .finally((): void => {

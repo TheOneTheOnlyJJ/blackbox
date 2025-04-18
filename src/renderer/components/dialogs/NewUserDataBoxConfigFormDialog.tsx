@@ -43,8 +43,13 @@ const NewUserDataBoxConfigFormDialog: FC<INewUserDataBoxConfigFormDialogProps> =
     formRef.current.submit();
   }, [isAddUserDataBoxConfigPending]);
 
+  const handleDialogClose = useCallback((): void => {
+    setExtraErrors([]);
+    props.onClose();
+  }, [props]);
+
   return (
-    <Dialog maxWidth="md" fullWidth={true} open={props.open} onClose={props.onClose}>
+    <Dialog maxWidth="md" fullWidth={true} open={props.open} onClose={handleDialogClose}>
       <DialogContent>
         <NewUserDataBoxConfigForm
           formRef={formRef}
@@ -59,7 +64,7 @@ const NewUserDataBoxConfigFormDialog: FC<INewUserDataBoxConfigFormDialogProps> =
         />
       </DialogContent>
       <DialogActions>
-        <Button onClick={props.onClose}>Cancel</Button>
+        <Button onClick={handleDialogClose}>Cancel</Button>
         <Button variant="contained" disabled={isSubmitButtonDisabled} onClick={handleSubmitButtonClick}>
           {isAddUserDataBoxConfigPending ? "Submitting..." : "Submit"}
         </Button>

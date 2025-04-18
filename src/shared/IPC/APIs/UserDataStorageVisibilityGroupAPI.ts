@@ -11,6 +11,7 @@ export type OpenUserDataStorageVisibilityGroupsChangedCallback = (
 ) => void;
 
 export interface IUserDataStorageVisibilityGroupAPI {
+  // TODO: Add proper NameAvailabilityRequest
   isUserDataStorageVisibilityGroupNameAvailableForSignedInUser: (name: string) => IPCAPIResponse<boolean>;
   addUserDataStorageVisibilityGroupConfig: (
     encryptedUserDataStorageVisibilityGroupConfigCreateDTO: IEncryptedData<IUserDataStorageVisibilityGroupConfigCreateDTO>

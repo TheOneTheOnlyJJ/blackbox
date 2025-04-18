@@ -11,6 +11,7 @@ export type AvailableUserDataBoxesChangedCallback = (
 ) => void;
 
 export interface IUserDataBoxAPI {
+  // TODO: Shorten name to just ...Available
   isUserDataBoxNameAvailableForUserDataStorage: (
     encryptedUserDataBoxNameAvailabilityRequest: IEncryptedData<IUserDataBoxNameAvailabilityRequest>
   ) => IPCAPIResponse<boolean>;

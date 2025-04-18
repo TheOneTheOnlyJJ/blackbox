@@ -7,6 +7,7 @@ import {
   UserDataStorageAPIIPCChannel
 } from "@shared/IPC/APIs/UserDataStorageAPI";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
+import { IUserDataStorageNameAvailabilityRequest } from "@shared/user/data/storage/config/create/UserDataStorageNameAvailabilityRequest";
 import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
 import { IDataChangedDiff } from "@shared/utils/DataChangedDiff";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
@@ -15,6 +16,13 @@ import { ipcRenderer, IpcRendererEvent } from "electron";
 const PRELOAD_IPC_USER_DATA_STORAGE_API_LOG_SCOPE = "p-ipc-udata-strg-api";
 
 export const USER_DATA_STORAGE_API_PRELOAD_HANDLERS: IUserDataStorageAPI = {
+  isUserDataStorageNameAvailable: (
+    encryptedUserDataStorageNameAvailabilityRequest: IEncryptedData<IUserDataStorageNameAvailabilityRequest>
+  ): IPCAPIResponse<boolean> => {
+    const CHANNEL: UserDataStorageAPIIPCChannel = USER_DATA_STORAGE_API_IPC_CHANNELS.isUserDataStorageNameAvailable;
+    sendLogToMainProcess(PRELOAD_IPC_USER_DATA_STORAGE_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
+    return ipcRenderer.sendSync(CHANNEL, encryptedUserDataStorageNameAvailabilityRequest) as IPCAPIResponse<boolean>;
+  },
   initialiseUserDataStorage: (storageId: string): IPCAPIResponse<IEncryptedData<boolean>> => {
     const CHANNEL: UserDataStorageAPIIPCChannel = USER_DATA_STORAGE_API_IPC_CHANNELS.initialiseUserDataStorage;
     sendLogToMainProcess(PRELOAD_IPC_USER_DATA_STORAGE_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);

@@ -35,6 +35,7 @@ const AvailableUserDataBoxesDataGrid: FC = () => {
   const COLUMNS: GridColDef[] = useMemo<GridColDef[]>((): GridColDef[] => {
     return [
       { field: "boxId", type: "string", headerName: USER_DATA_BOX_INFO_JSON_SCHEMA_CONSTANTS.boxId.title },
+      { field: "name", type: "string", headerName: USER_DATA_BOX_INFO_JSON_SCHEMA_CONSTANTS.name.title },
       {
         field: "storageId",
         type: "singleSelect",
@@ -46,7 +47,6 @@ const AvailableUserDataBoxesDataGrid: FC = () => {
           return signedInRootContext.getInitialisedUserDataStorageInfoById(row.storageId)?.name ?? row.storageId;
         }
       },
-      { field: "name", type: "string", headerName: USER_DATA_BOX_INFO_JSON_SCHEMA_CONSTANTS.name.title },
       {
         field: "description",
         type: "string",

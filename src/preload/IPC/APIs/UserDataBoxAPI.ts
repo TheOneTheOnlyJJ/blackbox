@@ -4,7 +4,7 @@ import {
   IUserDataBoxAPI,
   USER_DATA_BOX_API_IPC_CHANNELS,
   UserDataBoxAPIIPCChannel
-} from "@shared/IPC/APIs/IUserDataBoxAPI";
+} from "@shared/IPC/APIs/UserDataBoxAPI";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IUserDataBoxConfigCreateDTO } from "@shared/user/data/box/create/DTO/UserDataBoxConfigCreateDTO";
 import { IUserDataBoxNameAvailabilityRequest } from "@shared/user/data/box/create/UserDataBoxNameAvailabilityRequest";

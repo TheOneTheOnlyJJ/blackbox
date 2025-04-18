@@ -66,7 +66,7 @@ import {
 } from "@shared/IPC/APIs/UserDataStorageVisibilityGroupAPI";
 import { IUserDataStorageAPI, USER_DATA_STORAGE_API_IPC_CHANNELS, UserDataStorageAPIIPCChannel } from "@shared/IPC/APIs/UserDataStorageAPI";
 import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
-import { IUserDataBoxAPI, USER_DATA_BOX_API_IPC_CHANNELS, UserDataBoxAPIIPCChannel } from "@shared/IPC/APIs/IUserDataBoxAPI";
+import { IUserDataBoxAPI, USER_DATA_BOX_API_IPC_CHANNELS, UserDataBoxAPIIPCChannel } from "@shared/IPC/APIs/UserDataBoxAPI";
 import {
   isValidUserDataBoxNameAvailabilityRequest,
   IUserDataBoxNameAvailabilityRequest
@@ -74,6 +74,10 @@ import {
 import { isValidUserDataBoxConfigCreateDTO, IUserDataBoxConfigCreateDTO } from "@shared/user/data/box/create/DTO/UserDataBoxConfigCreateDTO";
 import { IUserDataBoxInfo } from "@shared/user/data/box/info/UserDataBoxInfo";
 import { IUserAccountStorageHandlers } from "./user/account/storage/UserAccountStorage";
+import {
+  isValidUserDataStorageNameAvailabilityRequest,
+  IUserDataStorageNameAvailabilityRequest
+} from "@shared/user/data/storage/config/create/UserDataStorageNameAvailabilityRequest";
 
 type WindowPositionSetting = Rectangle | WindowStates["FullScreen"] | WindowStates["Maximized"];
 
@@ -566,6 +570,31 @@ export class App {
   };
 
   private readonly USER_DATA_STORAGE_API_HANDLERS: MainProcessUserDataStorageAPIIPCHandlers = {
+    handleIsUserDataStorageNameAvailable: (
+      encryptedUserDataStorageNameAvailabilityRequest: IEncryptedData<IUserDataStorageNameAvailabilityRequest>
+    ): IPCAPIResponse<boolean> => {
+      try {
+        if (this.IPC_TLS_AES_KEY.value === null) {
+          throw new Error("Null IPC TLS AES key");
+        }
+        return {
+          status: IPC_API_RESPONSE_STATUSES.SUCCESS,
+          data: this.userFacade.isUserDataStorageNameAvailable(
+            decryptWithAESAndValidateJSON<IUserDataStorageNameAvailabilityRequest>(
+              encryptedUserDataStorageNameAvailabilityRequest,
+              isValidUserDataStorageNameAvailabilityRequest,
+              this.IPC_TLS_AES_KEY.value,
+              this.userDataStorageAPILogger,
+              "User Data Storage name availability request"
+            )
+          )
+        };
+      } catch (error: unknown) {
+        const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
+        this.userDataStorageAPILogger.error(`Get User Data Storage name availability error: ${ERROR_MESSAGE}!`);
+        return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
+      }
+    },
     handleInitialiseUserDataStorage: (storageId: string): IPCAPIResponse<IEncryptedData<boolean>> => {
       try {
         if (this.IPC_TLS_AES_KEY.value === null) {
@@ -1413,6 +1442,15 @@ export class App {
 
   private registerUserDataStorageAPIIPCHandlers(): void {
     this.windowLogger.debug("Registering User Data Storage API IPC handlers.");
+    ipcMain.on(
+      USER_DATA_STORAGE_API_IPC_CHANNELS.isUserDataStorageNameAvailable,
+      (event: IpcMainEvent, encryptedUserDataStorageNameAvailabilityRequest: IEncryptedData<IUserDataStorageNameAvailabilityRequest>): void => {
+        this.userDataStorageAPILogger.debug(
+          `Received message from renderer on channel: "${USER_DATA_STORAGE_API_IPC_CHANNELS.isUserDataStorageNameAvailable}".`
+        );
+        event.returnValue = this.USER_DATA_STORAGE_API_HANDLERS.handleIsUserDataStorageNameAvailable(encryptedUserDataStorageNameAvailabilityRequest);
+      }
+    );
     ipcMain.on(USER_DATA_STORAGE_API_IPC_CHANNELS.initialiseUserDataStorage, (event: IpcMainEvent, storageId: string): void => {
       this.userDataStorageAPILogger.debug(
         `Received message from renderer on channel: "${USER_DATA_STORAGE_API_IPC_CHANNELS.initialiseUserDataStorage}".`

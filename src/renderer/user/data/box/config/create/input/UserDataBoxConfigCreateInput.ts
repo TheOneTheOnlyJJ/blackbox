@@ -3,6 +3,7 @@ import { UiSchema } from "@rjsf/utils";
 import { USER_DATA_BOX_CONFIG_CREATE_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/box/create/UserDataBoxConfigCreateConstants";
 import { JSONSchemaType } from "ajv";
 
+// TODO: If no viable reason for a Box Config to exist is found, rename thsi and all related data to IUserDataBoxCreateInput
 export interface IUserDataBoxConfigCreateInput {
   storageId: string;
   name: string;

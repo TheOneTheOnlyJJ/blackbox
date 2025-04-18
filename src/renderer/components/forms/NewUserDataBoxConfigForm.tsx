@@ -1,4 +1,4 @@
-import { Dispatch, FC, SetStateAction, useCallback, useMemo } from "react";
+import { Dispatch, FC, SetStateAction, useCallback, useMemo, useState } from "react";
 import { Theme } from "@rjsf/mui";
 import { FormProps, IChangeEvent, withTheme } from "@rjsf/core";
 import { Button } from "@mui/material";
@@ -37,6 +37,8 @@ export interface INewUserDataBoxConfigFormProps {
 }
 
 const NewUserDataBoxConfigForm: FC<INewUserDataBoxConfigFormProps> = (props: INewUserDataBoxConfigFormProps) => {
+  const [formData, setFormData] = useState<IUserDataBoxConfigCreateInput | undefined>(undefined);
+
   const isSubmitButtonDisabled = useMemo<boolean>((): boolean => {
     // TODO: Check if this is all that's really needed?
     return props.isAddUserDataBoxConfigPending;
@@ -67,6 +69,7 @@ const NewUserDataBoxConfigForm: FC<INewUserDataBoxConfigFormProps> = (props: INe
             const IS_USER_DATA_BOX_NAME_AVAILABLE_RESPONSE: IPCAPIResponse<boolean> =
               window.userDataBoxAPI.isUserDataBoxNameAvailableForUserDataStorage(encryptedUserDataBoxNameAvailabilityRequest);
             if (IS_USER_DATA_BOX_NAME_AVAILABLE_RESPONSE.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
+              appLogger.error("Could not get name availability.");
               // props.errorSchemaBuilder.setErrors("Could not get username availability.", "name");
               props.setExtraErrors((prevExtraErrors: RJSFValidationError[]): RJSFValidationError[] => {
                 return [
@@ -92,12 +95,16 @@ const NewUserDataBoxConfigForm: FC<INewUserDataBoxConfigFormProps> = (props: INe
                   );
                   if (ADD_USER_DATA_BOX_CONFIG_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
                     if (ADD_USER_DATA_BOX_CONFIG_RESPONSE.data) {
+                      setFormData(undefined);
+                      appLogger.debug("Added User Data Storage Box.");
                       enqueueSnackbar({ message: "Added data box.", variant: "success" });
                       props.onAddedSuccessfully();
                     } else {
+                      appLogger.error("Could not add User Data Storage Box.");
                       enqueueSnackbar({ message: "Could not add data box.", variant: "error" });
                     }
                   } else {
+                    appLogger.error("Error adding User Data Storage Box.");
                     enqueueSnackbar({ message: "Error adding data box.", variant: "error" });
                   }
                 } catch (error: unknown) {
@@ -106,6 +113,7 @@ const NewUserDataBoxConfigForm: FC<INewUserDataBoxConfigFormProps> = (props: INe
                   enqueueSnackbar({ message: "Data box encryption error.", variant: "error" });
                 }
               } else {
+                appLogger.warn("User Data Box name not available.");
                 // props.errorSchemaBuilder.setErrors(`Name "${FORM_DATA.name}" is not available.`, "name");
                 props.setExtraErrors((prevExtraErrors: RJSFValidationError[]): RJSFValidationError[] => {
                   return [
@@ -128,7 +136,7 @@ const NewUserDataBoxConfigForm: FC<INewUserDataBoxConfigFormProps> = (props: INe
         )
         .catch((error: unknown): void => {
           const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
-          appLogger.error(`Could not encrypt User Data Box name availability request. Reason: ${ERROR_MESSAGE}.`);
+          appLogger.error(`Could not encrypt User Data Box name availability request. Error: ${ERROR_MESSAGE}.`);
           enqueueSnackbar({ message: "Data box name availability request encryption error.", variant: "error" });
         })
         .finally((): void => {
@@ -137,6 +145,10 @@ const NewUserDataBoxConfigForm: FC<INewUserDataBoxConfigFormProps> = (props: INe
     },
     [props]
   );
+
+  const handleFormOnChange = useCallback((data: IChangeEvent<IUserDataBoxConfigCreateInput>): void => {
+    setFormData(data.formData);
+  }, []);
 
   return (
     <MUIForm
@@ -157,6 +169,8 @@ const NewUserDataBoxConfigForm: FC<INewUserDataBoxConfigFormProps> = (props: INe
       extraErrors={toErrorSchema<IUserDataBoxConfigCreateInput>(props.extraErrors)}
       extraErrorsBlockSubmit={false}
       noHtml5Validate={true}
+      formData={formData}
+      onChange={handleFormOnChange}
     >
       {props.renderSubmitButton && (
         <Button type="submit" disabled={isSubmitButtonDisabled} variant="contained" size="large" sx={{ marginTop: "1vw", marginBottom: "1vw" }}>
