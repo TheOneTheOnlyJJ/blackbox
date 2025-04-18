@@ -22,7 +22,7 @@ export const USER_DATA_BOX_CONFIG_CREATE_INPUT_JSON_SCHEMA: JSONSchemaType<IUser
 } as const;
 
 export const USER_DATA_BOX_CONFIG_CREATE_INPUT_UI_SCHEMA: UiSchema<IUserDataBoxConfigCreateInput> = {
-  "ui:title": "New data box",
+  "ui:title": "New box",
   storageId: {
     "ui:title": "Data Storage",
     "ui:widget": RJSFSelectInitialisedOpenUserDataStorageIdWidget,

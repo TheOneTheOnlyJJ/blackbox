@@ -16,6 +16,7 @@ import UserDataStoragesNavigationAreaLayoutRoot from "./components/roots/userDat
 import InitialisedUserDataStoragesPage from "./pages/InitialisedUserDataStoragesPage";
 import AvailableUserDataBoxesPage from "./pages/AvailableUserDataBoxesPage";
 import UserDataBoxesNavigationAreaLayoutRoot from "./components/roots/userDataBoxesNavigationAreaLayoutRoot/UserDataBoxesNavigationAreaLayoutRoot";
+import AvailableUserDataTemplatesPage from "./pages/AvailableUserDataTemplatesPage";
 
 const APP_ROUTER = createHashRouter([
   {
@@ -73,6 +74,10 @@ const APP_ROUTER = createHashRouter([
                       {
                         path: "available",
                         element: <AvailableUserDataBoxesPage />
+                      },
+                      {
+                        path: "templates",
+                        element: <AvailableUserDataTemplatesPage />
                       }
                     ]
                   }

@@ -2,14 +2,14 @@ import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from "@m
 import { getUiOptions, WidgetProps } from "@rjsf/utils";
 import { FC, FocusEvent, useCallback, useMemo } from "react";
 import { ISignedInRootContext, useSignedInRootContext } from "../roots/signedInRoot/SignedInRootContext";
-import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
+import { IUserDataBoxInfo } from "@shared/user/data/box/info/UserDataBoxInfo";
 
-const RJSFSelectInitialisedOpenUserDataStorageIdWidget: FC<WidgetProps> = (props: WidgetProps) => {
+const RJSFSelectAvailableUserDataBoxIdWidget: FC<WidgetProps> = (props: WidgetProps) => {
   const signedInRootContext: ISignedInRootContext = useSignedInRootContext();
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const { id, value, uiSchema, required, disabled, readonly, rawErrors, options, onChange, onBlur, onFocus } = props;
   if (typeof options.showNoSelectionOption !== "boolean") {
-    throw new Error(`RJSF Select Initialised Open User Data Storage ID Widget must be provided a boolean "showNoSelectionOption" option`);
+    throw new Error(`RJSF Select Available User Data Box ID Widget must be provided a boolean "showNoSelectionOption" option`);
   }
 
   const label: string = useMemo<string>((): string => {
@@ -66,20 +66,16 @@ const RJSFSelectInitialisedOpenUserDataStorageIdWidget: FC<WidgetProps> = (props
             <em>None</em>
           </MenuItem>
         ) : null}
-        {signedInRootContext.initialisedUserDataStoragesInfo
-          .filter((initialisedUserDataStorageInfo: IUserDataStorageInfo): boolean => {
-            return initialisedUserDataStorageInfo.backend.isOpen;
-          })
-          .map((initialisedOpenUserDataStorageInfo: IUserDataStorageInfo): React.JSX.Element => {
-            return (
-              <MenuItem key={initialisedOpenUserDataStorageInfo.storageId} value={initialisedOpenUserDataStorageInfo.storageId}>
-                {initialisedOpenUserDataStorageInfo.name}
-              </MenuItem>
-            );
-          })}
+        {signedInRootContext.availableUserDataDataBoxesInfo.map((availableUserDataBoxInfo: IUserDataBoxInfo): React.JSX.Element => {
+          return (
+            <MenuItem key={availableUserDataBoxInfo.boxId} value={availableUserDataBoxInfo.boxId}>
+              {availableUserDataBoxInfo.name}
+            </MenuItem>
+          );
+        })}
       </Select>
     </FormControl>
   );
 };
 
-export default RJSFSelectInitialisedOpenUserDataStorageIdWidget;
+export default RJSFSelectAvailableUserDataBoxIdWidget;

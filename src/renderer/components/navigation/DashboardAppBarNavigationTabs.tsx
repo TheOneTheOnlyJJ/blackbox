@@ -74,7 +74,7 @@ export const DashboardAppBarNavigationTabs: FC<IDashboardAppBarNavigationTabsPro
         path: `/users/${signedInRootContext.signedInUserInfo.userId}/dashboard`
       },
       {
-        name: "Data Storages",
+        name: "Storages",
         // icon: WarehouseOutlinedIcon,
         dashboardNavigationArea: DASHBOARD_NAVIGATION_AREAS.dataStorages,
         path: `/users/${signedInRootContext.signedInUserInfo.userId}/data/storages/configs`

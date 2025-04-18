@@ -1,6 +1,7 @@
 import { SvgIconComponent } from "@mui/icons-material";
 import { ForwardedRef, forwardRef, useMemo } from "react";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
+import SchemaOutlinedIcon from "@mui/icons-material/SchemaOutlined";
 import { Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
 import DebouncedLink from "./DebouncedLink";
 import { USER_DATA_BOXES_NAVIGATION_AREAS, UserDataBoxesNavigationArea } from "@renderer/navigationAreas/UserDataBoxesNavigationAreas";
@@ -35,6 +36,13 @@ const UserDataBoxesNavigationAreaBar = forwardRef<HTMLDivElement, IUserDataBoxes
         icon: Inventory2OutlinedIcon,
         userDataBoxesNavigationArea: USER_DATA_BOXES_NAVIGATION_AREAS.availableBoxes,
         path: `/users/${props.signedInUserId}/data/boxes/available`,
+        divider: false
+      },
+      {
+        name: "Templates",
+        icon: SchemaOutlinedIcon,
+        userDataBoxesNavigationArea: USER_DATA_BOXES_NAVIGATION_AREAS.availableTemplates,
+        path: `/users/${props.signedInUserId}/data/boxes/templates`,
         divider: false
       }
     ];
