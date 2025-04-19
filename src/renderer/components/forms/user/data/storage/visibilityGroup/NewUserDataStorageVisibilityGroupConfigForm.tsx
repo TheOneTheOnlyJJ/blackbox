@@ -19,7 +19,7 @@ import { IUserDataStorageVisibilityGroupsOpenRequestDTO } from "@shared/user/dat
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 import { enqueueSnackbar } from "notistack";
 import { Dispatch, FC, SetStateAction, useCallback, useMemo } from "react";
-import { IAppRootContext, useAppRootContext } from "../roots/appRoot/AppRootContext";
+import { IAppRootContext, useAppRootContext } from "../../../../../roots/appRoot/AppRootContext";
 
 const MUIForm = withTheme<IUserDataStorageVisibilityGroupConfigCreateInput>(Theme);
 

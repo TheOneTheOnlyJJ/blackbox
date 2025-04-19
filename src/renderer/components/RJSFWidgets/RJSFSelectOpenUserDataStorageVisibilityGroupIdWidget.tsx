@@ -4,13 +4,35 @@ import { FC, FocusEvent, useCallback, useMemo } from "react";
 import { ISignedInRootContext, useSignedInRootContext } from "../roots/signedInRoot/SignedInRootContext";
 import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
 import { PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS } from "@shared/user/data/storage/visibilityGroup/public/constants";
+import { JSONSchemaType } from "ajv";
+import { AJV } from "@shared/utils/AJVJSONValidator";
+
+export interface IRJSFSelectOpenUserDataStorageVisibilityGroupIdWidgetOptions {
+  showNoSelectionOption: boolean;
+}
+
+export const RJSF_SELECT_OPEN_USER_DATA_STORAGE_VISIBILITY_GROUP_ID_WIDGET_OPTIONS_JSON_SCHEMA: JSONSchemaType<IRJSFSelectOpenUserDataStorageVisibilityGroupIdWidgetOptions> =
+  {
+    $schema: "http://json-schema.org/draft-07/schema#",
+    type: "object",
+    properties: {
+      showNoSelectionOption: { type: "boolean", title: "Show no selection option" }
+    },
+    required: ["showNoSelectionOption"],
+    additionalProperties: true
+  } as const;
+
+export const isValidRJSFSelectOpenUserDataStorageVisibilityGroupIdWidgetOptions =
+  AJV.compile<IRJSFSelectOpenUserDataStorageVisibilityGroupIdWidgetOptions>(
+    RJSF_SELECT_OPEN_USER_DATA_STORAGE_VISIBILITY_GROUP_ID_WIDGET_OPTIONS_JSON_SCHEMA
+  );
 
 const RJSFSelectOpenUserDataStorageVisibilityGroupIdWidget: FC<WidgetProps> = (props: WidgetProps) => {
   const signedInRootContext: ISignedInRootContext = useSignedInRootContext();
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const { id, value, uiSchema, required, disabled, readonly, rawErrors, options, onChange, onBlur, onFocus } = props;
-  if (typeof options.showNoSelectionOption !== "boolean") {
-    throw new Error(`RJSF Select Open User Data Storage Visibility Group ID Widget must be provided a boolean "showNoSelectionOption" option`);
+  if (!isValidRJSFSelectOpenUserDataStorageVisibilityGroupIdWidgetOptions(options)) {
+    throw new Error(`Invalid RJSF Select Open User Data Storage Visibility Group ID Widget options`);
   }
 
   const label: string = useMemo<string>((): string => {

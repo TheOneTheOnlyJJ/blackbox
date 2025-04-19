@@ -20,13 +20,13 @@ import { PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS } from "@shared/use
 import { USER_DATA_STORAGE_BACKEND_TYPE_NAMES } from "@shared/user/data/storage/backend/UserDataStorageBackendTypeName";
 import { BASE_USER_DATA_STORAGE_BACKEND_INFO_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/backend/info/BaseUserDataStorageBackendInfo";
 import { useDialogOpenState } from "@renderer/hooks/useDialogState";
-import UserDataStorageInfoDialog from "../dialogs/UserDataStorageInfoDialog";
+import UserDataStorageInfoDialog from "../dialogs/info/user/data/storage/UserDataStorageInfoDialog";
 import OpenUserDataStorageInfoDialogActionItem from "./actionCellItems/OpenUserDataStorageInfoDialogActionItem";
 import TerminateUserDataStorageActionItem from "./actionCellItems/TerminateUserDataStorageActionItem";
 import CloseUserDataStorageActionItem from "./actionCellItems/CloseUserDataStorageActionItem";
 import OpenUserDataStorageActionItem from "./actionCellItems/OpenUserDataStorageActionItem";
 import NewUserDataBoxActionItem from "./actionCellItems/NewUserDataBoxActionItem";
-import NewUserDataBoxConfigFormDialog from "../dialogs/NewUserDataBoxConfigFormDialog";
+import NewUserDataBoxConfigFormDialog from "../dialogs/forms/user/data/box/NewUserDataBoxConfigFormDialog";
 import { IUserDataBoxConfigCreateInput } from "@renderer/user/data/box/config/create/input/UserDataBoxConfigCreateInput";
 
 const GRID_AUTOSIZE_OPTIONS: GridAutosizeOptions = { expand: true, includeHeaders: true };

@@ -1,7 +1,7 @@
 import { Alert, AlertTitle, Button, Dialog, DialogActions, DialogContent, DialogProps, DialogTitle, Typography } from "@mui/material";
 import { FC } from "react";
-import { IAppRootContext, useAppRootContext } from "../roots/appRoot/AppRootContext";
-import UserAccountStorageInfoTypography from "../user/account/storage/info/UserAccountStorageInfoTypography";
+import { IAppRootContext, useAppRootContext } from "../../../../../roots/appRoot/AppRootContext";
+import UserAccountStorageInfoTypography from "../../../../../user/account/storage/info/UserAccountStorageInfoTypography";
 
 export interface IUserAccountStorageInfoDialogProps {
   open: DialogProps["open"];

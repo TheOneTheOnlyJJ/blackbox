@@ -2,12 +2,12 @@ import Dialog, { DialogProps } from "@mui/material/Dialog/Dialog";
 import { FC, Ref, useCallback, useMemo, useRef, useState } from "react";
 import DialogContent from "@mui/material/DialogContent/DialogContent";
 import DialogActions from "@mui/material/DialogActions/DialogActions";
-import NewUserDataStorageConfigForm from "../forms/NewUserDataStorageConfigForm";
+import NewUserDataStorageConfigForm from "../../../../../../forms/user/data/storage/config/NewUserDataStorageConfigForm";
 import Form from "@rjsf/core";
 import Button from "@mui/material/Button/Button";
 import { appLogger } from "@renderer/utils/loggers";
 import { enqueueSnackbar } from "notistack";
-import { IAppRootContext, useAppRootContext } from "../roots/appRoot/AppRootContext";
+import { IAppRootContext, useAppRootContext } from "../../../../../../roots/appRoot/AppRootContext";
 import { RJSFValidationError } from "@rjsf/utils";
 
 export interface INewUserDataStorageConfigFormDialogProps {

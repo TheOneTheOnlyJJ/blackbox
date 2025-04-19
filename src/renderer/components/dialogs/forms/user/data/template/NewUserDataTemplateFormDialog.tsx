@@ -4,7 +4,7 @@ import Form from "@rjsf/core";
 import { RJSFValidationError } from "@rjsf/utils";
 import { enqueueSnackbar } from "notistack";
 import { FC, Ref, useCallback, useMemo, useRef, useState } from "react";
-import NewUserDataTemplateForm from "../forms/NewUserDataTemplateForm";
+import NewUserDataTemplateForm from "../../../../../forms/user/data/template/NewUserDataTemplateForm";
 
 export interface INewUserDataTemplateFormDialogProps {
   onAddedSuccessfully: () => void;

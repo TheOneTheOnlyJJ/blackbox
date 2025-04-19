@@ -8,7 +8,7 @@ import { DASHBOARD_NAVIGATION_AREAS } from "@renderer/navigationAreas/DashboardN
 import { USER_DATA_BOXES_NAVIGATION_AREAS } from "@renderer/navigationAreas/UserDataBoxesNavigationAreas";
 import { FC, useCallback, useEffect } from "react";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
-import NewUserDataBoxConfigFormDialog from "@renderer/components/dialogs/NewUserDataBoxConfigFormDialog";
+import NewUserDataBoxConfigFormDialog from "@renderer/components/dialogs/forms/user/data/box/NewUserDataBoxConfigFormDialog";
 import { useDialogOpenState } from "@renderer/hooks/useDialogState";
 import { appLogger } from "@renderer/utils/loggers";
 

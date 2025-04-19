@@ -5,7 +5,9 @@ import { customizeValidator } from "@rjsf/validator-ajv8";
 import { withTheme, IChangeEvent } from "@rjsf/core";
 import { CustomValidator, ErrorTransformer, FormValidation, RJSFSchema, RJSFValidationError } from "@rjsf/utils";
 import { appLogger } from "@renderer/utils/loggers";
-import SuccessfulUserSignUpDialog, { ISuccessfulUserSignUpDialogProps } from "@renderer/components/dialogs/SuccessfulUserSignUpDialog";
+import SuccessfulUserSignUpDialog, {
+  ISuccessfulUserSignUpDialogProps
+} from "@renderer/components/dialogs/forms/user/account/SuccessfulUserSignUpDialog";
 import Button from "@mui/material/Button/Button";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
@@ -16,7 +18,7 @@ import { userSignUpInputToUserSignInDTO } from "@renderer/user/account/utils/use
 import { IUserSignUpDTO } from "@shared/user/account/UserSignUpDTO";
 import { IUserSignInDTO } from "@shared/user/account/UserSignInDTO";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
-import { IAppRootContext, useAppRootContext } from "../roots/appRoot/AppRootContext";
+import { IAppRootContext, useAppRootContext } from "../../../roots/appRoot/AppRootContext";
 
 const MUIForm = withTheme<IUserSignUpInput>(Theme);
 

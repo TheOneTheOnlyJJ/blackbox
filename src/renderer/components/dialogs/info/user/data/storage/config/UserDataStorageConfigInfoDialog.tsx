@@ -1,6 +1,6 @@
 import { Alert, AlertTitle, Button, Dialog, DialogActions, DialogContent, DialogProps, DialogTitle, Typography } from "@mui/material";
 import { FC } from "react";
-import UserDataStorageConfigInfoTypography from "../user/data/storage/config/info/UserDataStorageConfigInfoTypography";
+import UserDataStorageConfigInfoTypography from "../../../../../../user/data/storage/config/info/UserDataStorageConfigInfoTypography";
 import { IUserDataStorageConfigInfo } from "@shared/user/data/storage/config/info/UserDataStorageConfigInfo";
 
 export interface IUserDataStorageConfigInfoDialogProps {

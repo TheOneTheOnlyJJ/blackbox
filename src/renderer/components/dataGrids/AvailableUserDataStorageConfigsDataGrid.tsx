@@ -21,7 +21,7 @@ import { BASE_USER_DATA_STORAGE_BACKEND_CONFIG_INFO_JSON_SCHEMA_CONSTANTS } from
 import { USER_DATA_STORAGE_BACKEND_TYPE_NAMES } from "@shared/user/data/storage/backend/UserDataStorageBackendTypeName";
 import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
 import { appLogger } from "@renderer/utils/loggers";
-import UserDataStorageConfigInfoDialog from "../dialogs/UserDataStorageConfigInfoDialog";
+import UserDataStorageConfigInfoDialog from "../dialogs/info/user/data/storage/config/UserDataStorageConfigInfoDialog";
 import { useDialogOpenState } from "@renderer/hooks/useDialogState";
 import OpenUserDataStorageConfigInfoDialogActionItem from "./actionCellItems/OpenUserDataStorageConfigInfoDialogActionItem";
 import InitialiseUserDataStorageActionItem from "./actionCellItems/InitialiseUserDataStorageActionItem";

@@ -3,8 +3,8 @@ import { appLogger } from "@renderer/utils/loggers";
 import Form from "@rjsf/core";
 import { enqueueSnackbar } from "notistack";
 import { FC, Ref, useCallback, useMemo, useRef, useState } from "react";
-import NewUserDataStorageVisibilityGroupConfigForm from "../forms/NewUserDataStorageVisibilityGroupConfigForm";
-import { IAppRootContext, useAppRootContext } from "../roots/appRoot/AppRootContext";
+import NewUserDataStorageVisibilityGroupConfigForm from "../../../../../../forms/user/data/storage/visibilityGroup/NewUserDataStorageVisibilityGroupConfigForm";
+import { IAppRootContext, useAppRootContext } from "../../../../../../roots/appRoot/AppRootContext";
 
 export interface INewUserDataStorageVisibilityGroupConfigFormDialogProps {
   userIdToAddTo: string;

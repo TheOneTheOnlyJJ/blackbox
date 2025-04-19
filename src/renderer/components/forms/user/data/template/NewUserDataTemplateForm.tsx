@@ -1,4 +1,5 @@
 import { Button } from "@mui/material";
+import { ISelectedUserDataStorageIdFormContext } from "@renderer/components/forms/contexts/SelectedUserDataStorageIdFormContext";
 import {
   IUserDataTemplateCreateInput,
   USER_DATA_TEMPLATE_CREATE_INPUT_JSON_SCHEMA,
@@ -13,7 +14,7 @@ import { customizeValidator } from "@rjsf/validator-ajv8";
 import { enqueueSnackbar } from "notistack";
 import { Dispatch, SetStateAction, FC, useMemo, useCallback, useState } from "react";
 
-const MUIForm = withTheme<IUserDataTemplateCreateInput>(Theme);
+const MUIForm = withTheme<IUserDataTemplateCreateInput, RJSFSchema, ISelectedUserDataStorageIdFormContext>(Theme);
 
 const isValidUserDataTemplateCreateInput = customizeValidator<IUserDataTemplateCreateInput>();
 
@@ -74,6 +75,7 @@ const NewUserDataTemplateForm: FC<INewUserDataTemplateFormProps> = (props: INewU
       noHtml5Validate={true}
       formData={formData}
       onChange={handleFormOnChange}
+      formContext={{ selectedUserDataStorageId: formData?.storageId }}
     >
       {props.renderSubmitButton && (
         <Button type="submit" disabled={isSubmitButtonDisabled} variant="contained" size="large" sx={{ marginTop: "1vw", marginBottom: "1vw" }}>

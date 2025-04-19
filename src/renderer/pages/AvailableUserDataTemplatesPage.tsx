@@ -10,7 +10,7 @@ import { Button, Stack } from "@mui/material";
 import { appLogger } from "@renderer/utils/loggers";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import { useDialogOpenState } from "@renderer/hooks/useDialogState";
-import NewUserDataTemplateFormDialog from "@renderer/components/dialogs/NewUserDataTemplateFormDialog";
+import NewUserDataTemplateFormDialog from "@renderer/components/dialogs/forms/user/data/template/NewUserDataTemplateFormDialog";
 
 const AvailableUserDataTemplatesPage: FC = () => {
   const userDataBoxesNavigationAreaLayoutRootContext: IUserDataBoxesNavigationAreaLayoutRootContext =

@@ -1,4 +1,6 @@
-import RJSFSelectInitialisedOpenUserDataStorageIdWidget from "@renderer/components/RJSFWidgets/RJSFSelectInitialisedOpenUserDataStorageIdWidget";
+import RJSFSelectInitialisedUserDataStorageIdWidget, {
+  IRJSFSelectInitialisedUserDataStorageIdWidgetOptions
+} from "@renderer/components/RJSFWidgets/RJSFSelectInitialisedUserDataStorageIdWidget";
 import { UiSchema } from "@rjsf/utils";
 import { USER_DATA_BOX_CONFIG_CREATE_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/box/create/UserDataBoxConfigCreateConstants";
 import { JSONSchemaType } from "ajv";
@@ -26,10 +28,11 @@ export const USER_DATA_BOX_CONFIG_CREATE_INPUT_UI_SCHEMA: UiSchema<IUserDataBoxC
   "ui:title": "New box",
   storageId: {
     "ui:title": "Data Storage",
-    "ui:widget": RJSFSelectInitialisedOpenUserDataStorageIdWidget,
+    "ui:widget": RJSFSelectInitialisedUserDataStorageIdWidget,
     "ui:options": {
-      showNoSelectionOption: false
-    }
+      showNoSelectionOption: false,
+      onlyAllowOpenSelection: true
+    } satisfies IRJSFSelectInitialisedUserDataStorageIdWidgetOptions
   },
   description: {
     "ui:widget": "textarea"

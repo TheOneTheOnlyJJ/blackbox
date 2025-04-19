@@ -1,12 +1,16 @@
-import RJSFSelectAvailableUserDataBoxIdWidget from "@renderer/components/RJSFWidgets/RJSFSelectAvailableUserDataBoxIdWidget";
-import RJSFSelectInitialisedOpenUserDataStorageIdWidget from "@renderer/components/RJSFWidgets/RJSFSelectInitialisedOpenUserDataStorageIdWidget";
+import RJSFSelectAvailableUserDataBoxIdWidget, {
+  IRJSFSelectAvailableUserDataBoxIdWidgetOptions
+} from "@renderer/components/RJSFWidgets/RJSFSelectAvailableUserDataBoxIdWidget";
+import RJSFSelectInitialisedUserDataStorageIdWidget, {
+  IRJSFSelectInitialisedUserDataStorageIdWidgetOptions
+} from "@renderer/components/RJSFWidgets/RJSFSelectInitialisedUserDataStorageIdWidget";
 import { UiSchema } from "@rjsf/utils";
 import { USER_DATA_TEMPLATE_CREATE_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/template/create/UserDataTemplateCreateConstants";
 import { JSONSchemaType } from "ajv";
 
 export interface IUserDataTemplateCreateInput {
-  boxId: string;
   storageId: string;
+  boxId: string;
   name: string;
   description?: string;
 }
@@ -15,8 +19,8 @@ export const USER_DATA_TEMPLATE_CREATE_INPUT_JSON_SCHEMA: JSONSchemaType<IUserDa
   $schema: "http://json-schema.org/draft-07/schema#",
   type: "object",
   properties: {
-    boxId: { type: "string", ...USER_DATA_TEMPLATE_CREATE_JSON_SCHEMA_CONSTANTS.boxId },
     storageId: { type: "string", ...USER_DATA_TEMPLATE_CREATE_JSON_SCHEMA_CONSTANTS.storageId },
+    boxId: { type: "string", ...USER_DATA_TEMPLATE_CREATE_JSON_SCHEMA_CONSTANTS.boxId },
     name: { type: "string", ...USER_DATA_TEMPLATE_CREATE_JSON_SCHEMA_CONSTANTS.name },
     description: { type: "string", ...USER_DATA_TEMPLATE_CREATE_JSON_SCHEMA_CONSTANTS.description, nullable: true }
   },
@@ -28,18 +32,22 @@ export const USER_DATA_TEMPLATE_CREATE_INPUT_UI_SCHEMA: UiSchema<IUserDataTempla
   "ui:title": "New template",
   storageId: {
     "ui:title": "Data Storage",
-    "ui:widget": RJSFSelectInitialisedOpenUserDataStorageIdWidget,
+    "ui:widget": RJSFSelectInitialisedUserDataStorageIdWidget,
     "ui:options": {
-      showNoSelectionOption: false
-    }
+      showNoSelectionOption: true,
+      onlyAllowOpenSelection: true
+    } satisfies IRJSFSelectInitialisedUserDataStorageIdWidgetOptions
   },
-  // TODO: FInd a way to make the boxes select options limited to the currently selected storage id
   boxId: {
     "ui:title": "Box",
     "ui:widget": RJSFSelectAvailableUserDataBoxIdWidget,
     "ui:options": {
-      showNoSelectionOption: false
-    }
+      showNoSelectionOption: false,
+      formContextOptions: {
+        useSelectedUserDataStorageIdFormContext: true,
+        disableWhenNoSelectedUserDataStorageIdFormContext: true
+      }
+    } satisfies IRJSFSelectAvailableUserDataBoxIdWidgetOptions
   },
   description: {
     "ui:widget": "textarea"

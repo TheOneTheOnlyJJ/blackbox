@@ -3,11 +3,11 @@ import { Link } from "react-router-dom";
 import Box from "@mui/material/Box/Box";
 import Paper from "@mui/material/Paper/Paper";
 import Typography from "@mui/material/Typography/Typography";
-import UserSignUpForm from "@renderer/components/forms/UserSignUpForm";
+import UserSignUpForm from "@renderer/components/forms/user/account/UserSignUpForm";
 import { useDialogOpenState } from "@renderer/hooks/useDialogState";
 import { appLogger } from "@renderer/utils/loggers";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import UserAccountStorageInfoDialog from "@renderer/components/dialogs/UserAccountStorageInfoDialog";
+import UserAccountStorageInfoDialog from "@renderer/components/dialogs/info/user/account/storage/UserAccountStorageInfoDialog";
 import { IconButton, Stack, Tooltip } from "@mui/material";
 
 const SignUpPage: FC = () => {

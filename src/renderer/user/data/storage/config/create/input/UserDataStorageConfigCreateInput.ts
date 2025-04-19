@@ -5,7 +5,9 @@ import {
   UserDataStorageBackendConfigCreateInput
 } from "../../../backend/config/create/input/UserDataStorageBackendConfigCreateInput";
 import { UiSchema } from "@rjsf/utils";
-import RJSFSelectOpenUserDataStorageVisibilityGroupIdWidget from "@renderer/components/RJSFWidgets/RJSFSelectOpenUserDataStorageVisibilityGroupIdWidget";
+import RJSFSelectOpenUserDataStorageVisibilityGroupIdWidget, {
+  IRJSFSelectOpenUserDataStorageVisibilityGroupIdWidgetOptions
+} from "@renderer/components/RJSFWidgets/RJSFSelectOpenUserDataStorageVisibilityGroupIdWidget";
 import { USER_DATA_STORAGE_CONFIG_CREATE_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/config/create/UserDataStorageConfigCreateConstants";
 import { PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS } from "@shared/user/data/storage/visibilityGroup/public/constants";
 
@@ -42,7 +44,7 @@ export const USER_DATA_STORAGE_CONFIG_CREATE_INPUT_UI_SCHEMA: UiSchema<IUserData
     "ui:widget": RJSFSelectOpenUserDataStorageVisibilityGroupIdWidget,
     "ui:options": {
       showNoSelectionOption: true
-    }
+    } satisfies IRJSFSelectOpenUserDataStorageVisibilityGroupIdWidgetOptions
   },
   backendConfigCreateInput: USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_UI_SCHEMA
 } as const;

@@ -6,7 +6,7 @@ import {
 import { UiSchema } from "@rjsf/utils";
 import { LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/backend/constants/implementations/localSQLite/LocalSQLiteUserDataStorageBackendConstants";
 import { USER_DATA_STORAGE_BACKEND_TYPES, UserDataStorageBackendTypes } from "@shared/user/data/storage/backend/UserDataStorageBackendType";
-import RJSFDirectoryPickerWidget from "@renderer/components/RJSFWidgets/RJSFDirectoryPickerWidget";
+import RJSFDirectoryPickerWidget, { IRJSFDirectoryPickerWidgetOptions } from "@renderer/components/RJSFWidgets/RJSFDirectoryPickerWidget";
 import { USER_DATA_STORAGE_BACKEND_TYPE_NAMES } from "@shared/user/data/storage/backend/UserDataStorageBackendTypeName";
 
 export interface ILocalSQLiteUserDataStorageBackendConfigCreateInput extends IBaseUserDataStorageBackendConfigCreateInput {
@@ -53,7 +53,7 @@ export const LOCAL_SQLITE_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_UI_SCHEM
     "ui:widget": RJSFDirectoryPickerWidget,
     "ui:options": {
       pickerTitle: "Select folder for SQLite Data Storage file"
-    }
+    } satisfies IRJSFDirectoryPickerWidgetOptions
   },
   dbFileName: {
     "ui:enableMarkdownInDescription": true,

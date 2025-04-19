@@ -17,7 +17,7 @@ import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { userDataStorageConfigCreateInputToUserDataStorageConfigCreateDTO } from "@renderer/user/data/storage/config/create/input/utils/userDataStorageConfigCreateInputToUserDataStorageConfigCreateDTO";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 import Button from "@mui/material/Button/Button";
-import { IAppRootContext, useAppRootContext } from "../roots/appRoot/AppRootContext";
+import { IAppRootContext, useAppRootContext } from "../../../../../roots/appRoot/AppRootContext";
 import { IUserDataStorageNameAvailabilityRequest } from "@shared/user/data/storage/config/create/UserDataStorageNameAvailabilityRequest";
 
 const MUIForm = withTheme<IUserDataStorageConfigCreateInput>(Theme);

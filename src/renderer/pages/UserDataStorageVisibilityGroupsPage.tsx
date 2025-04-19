@@ -8,8 +8,8 @@ import {
 } from "@renderer/components/roots/userDataStoragesNavigationAreaLayoutRoot/UserDataStoragesNavigationAreaLayoutRootContext";
 import { FC, useCallback, useEffect } from "react";
 import { appLogger } from "@renderer/utils/loggers";
-import NewUserDataStorageVisibilityGroupConfigFormDialog from "@renderer/components/dialogs/NewUserDataStorageVisibilityGroupConfigFormDialog";
-import OpenUserDataStorageVisibilityGroupFormDialog from "@renderer/components/dialogs/OpenUserDataStorageVisibilityGroupFormDialog";
+import NewUserDataStorageVisibilityGroupConfigFormDialog from "@renderer/components/dialogs/forms/user/data/storage/visibilityGroup/NewUserDataStorageVisibilityGroupConfigFormDialog";
+import OpenUserDataStorageVisibilityGroupFormDialog from "@renderer/components/dialogs/forms/user/data/storage/visibilityGroup/OpenUserDataStorageVisibilityGroupFormDialog";
 import { useDialogOpenState } from "@renderer/hooks/useDialogState";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";

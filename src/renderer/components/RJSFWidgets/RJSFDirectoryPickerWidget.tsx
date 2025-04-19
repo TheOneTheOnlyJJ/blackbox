@@ -8,10 +8,34 @@ import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { enqueueSnackbar } from "notistack";
+import { JSONSchemaType } from "ajv";
+import { AJV } from "@shared/utils/AJVJSONValidator";
+
+export interface IRJSFDirectoryPickerWidgetOptions {
+  pickerTitle: string;
+}
+
+export const RJSF_DIRECTORY_PICKER_WIDGET_OPTIONS_JSON_SCHEMA: JSONSchemaType<IRJSFDirectoryPickerWidgetOptions> = {
+  $schema: "http://json-schema.org/draft-07/schema#",
+  type: "object",
+  properties: {
+    pickerTitle: { type: "string", title: "Picker Title" }
+  },
+  required: ["pickerTitle"],
+  additionalProperties: true
+} as const;
+
+export const isValidRJSFDirectoryPickerWidgetOptions = AJV.compile<IRJSFDirectoryPickerWidgetOptions>(
+  RJSF_DIRECTORY_PICKER_WIDGET_OPTIONS_JSON_SCHEMA
+);
 
 const RJSFDirectoryPickerWidget: FC<WidgetProps> = (props: WidgetProps) => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const { id, value, uiSchema, required, disabled, readonly, options, rawErrors, onChange, onBlur, onFocus } = props;
+  if (!isValidRJSFDirectoryPickerWidgetOptions(options)) {
+    throw new Error(`Invalid RJSF Directory Picker Widget options`);
+  }
+
   const theme: Theme = useTheme();
 
   const hasError: boolean = useMemo<boolean>((): boolean => {
@@ -22,23 +46,10 @@ const RJSFDirectoryPickerWidget: FC<WidgetProps> = (props: WidgetProps) => {
     return hasError ? theme.palette.error.main : theme.palette.text.secondary;
   }, [theme, hasError]);
 
-  const pickerTitle: string = useMemo<string>((): string => {
-    if (options.pickerTitle !== null && options.pickerTitle !== undefined) {
-      if (typeof options.pickerTitle === "string") {
-        return options.pickerTitle;
-      } else {
-        appLogger.warn(
-          `RJSF Directory Picker Widget picker title must be string if provided. Got "${typeof options.pickerTitle}". Using default title.`
-        );
-      }
-    }
-    return "Choose Directory";
-  }, [options]);
-
   const openDirectoryPickerIconButtonOnClick = useCallback((): void => {
     appLogger.debug("Open directory picker icon button clicked.");
     window.utilsAPI
-      .getDirectoryPathWithPicker({ pickerTitle: pickerTitle, multiple: false })
+      .getDirectoryPathWithPicker({ pickerTitle: options.pickerTitle, multiple: false })
       .then(
         async (getDirectoryPathWithPickerResponse: IPCAPIResponse<IEncryptedData<string[]> | null>): Promise<void> => {
           if (getDirectoryPathWithPickerResponse.status !== IPC_API_RESPONSE_STATUSES.SUCCESS) {
@@ -78,7 +89,7 @@ const RJSFDirectoryPickerWidget: FC<WidgetProps> = (props: WidgetProps) => {
         const ERROR_MESSAGE: string = error instanceof Error ? error.message : String(error);
         appLogger.error(`Get directory path with picker error: ${ERROR_MESSAGE}!`);
       });
-  }, [onChange, pickerTitle]);
+  }, [onChange, options]);
 
   const _onChange = useCallback(
     ({ target: { value } }: ChangeEvent<HTMLInputElement>): void => {

@@ -3,10 +3,10 @@ import Box from "@mui/material/Box/Box";
 import Typography from "@mui/material/Typography/Typography";
 import Paper from "@mui/material/Paper/Paper";
 import { FC, useCallback, useState } from "react";
-import UserSignInForm from "@renderer/components/forms/UserSignInForm";
+import UserSignInForm from "@renderer/components/forms/user/account/UserSignInForm";
 import { IconButton, Stack, Tooltip } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import UserAccountStorageInfoDialog from "@renderer/components/dialogs/UserAccountStorageInfoDialog";
+import UserAccountStorageInfoDialog from "@renderer/components/dialogs/info/user/account/storage/UserAccountStorageInfoDialog";
 import { appLogger } from "@renderer/utils/loggers";
 import { useDialogOpenState } from "@renderer/hooks/useDialogState";
 

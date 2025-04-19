@@ -1,7 +1,7 @@
 import { FC, useCallback, useEffect } from "react";
 import Button from "@mui/material/Button/Button";
 import { appLogger } from "@renderer/utils/loggers";
-import NewUserDataStorageConfigFormDialog from "@renderer/components/dialogs/NewUserDataStorageConfigFormDialog";
+import NewUserDataStorageConfigFormDialog from "@renderer/components/dialogs/forms/user/data/storage/config/NewUserDataStorageConfigFormDialog";
 import AvailableUserDataStorageConfigsDataGrid from "@renderer/components/dataGrids/AvailableUserDataStorageConfigsDataGrid";
 import { Box, Stack, Typography } from "@mui/material";
 import { DASHBOARD_NAVIGATION_AREAS } from "@renderer/navigationAreas/DashboardNavigationAreas";

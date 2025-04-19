@@ -15,7 +15,7 @@ import { IUserSignInInput, USER_SIGN_IN_INPUT_JSON_SCHEMA, USER_SIGN_IN_INPUT_UI
 import { userSignInInputToUserSignInDTO } from "@renderer/user/account/utils/userSignInInputToUserSignInDTO";
 import { IUserSignInDTO } from "@shared/user/account/UserSignInDTO";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
-import { IAppRootContext, useAppRootContext } from "../roots/appRoot/AppRootContext";
+import { IAppRootContext, useAppRootContext } from "../../../roots/appRoot/AppRootContext";
 
 const MUIForm = withTheme<IUserSignInInput>(Theme);
 

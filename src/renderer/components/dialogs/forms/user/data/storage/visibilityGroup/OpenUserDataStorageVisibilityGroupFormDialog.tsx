@@ -1,10 +1,10 @@
 import { Button, Dialog, DialogActions, DialogContent, DialogProps } from "@mui/material";
 import { FC, Ref, useCallback, useMemo, useRef, useState } from "react";
-import OpenUserDataStorageVisibilityGroupForm from "../forms/OpenUserDataStorageVisibilityGroupForm";
+import OpenUserDataStorageVisibilityGroupForm from "../../../../../../forms/user/data/storage/visibilityGroup/OpenUserDataStorageVisibilityGroupForm";
 import Form from "@rjsf/core";
 import { appLogger } from "@renderer/utils/loggers";
 import { enqueueSnackbar } from "notistack";
-import { IAppRootContext, useAppRootContext } from "../roots/appRoot/AppRootContext";
+import { IAppRootContext, useAppRootContext } from "../../../../../../roots/appRoot/AppRootContext";
 
 export interface IOpenUserDataStorageVisibilityGroupFormDialogProps {
   userIdToOpenFor: string;

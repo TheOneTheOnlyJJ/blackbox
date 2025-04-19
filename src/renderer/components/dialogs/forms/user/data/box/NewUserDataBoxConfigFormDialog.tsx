@@ -1,7 +1,7 @@
 import { Button, Dialog, DialogActions, DialogContent, DialogProps } from "@mui/material";
 import Form from "@rjsf/core";
 import { FC, Ref, useCallback, useMemo, useRef, useState } from "react";
-import NewUserDataBoxConfigForm from "../forms/NewUserDataBoxConfigForm";
+import NewUserDataBoxConfigForm from "../../../../../forms/user/data/box/NewUserDataBoxConfigForm";
 import { appLogger } from "@renderer/utils/loggers";
 import { IUserDataBoxConfigCreateInput } from "@renderer/user/data/box/config/create/input/UserDataBoxConfigCreateInput";
 import { enqueueSnackbar } from "notistack";
