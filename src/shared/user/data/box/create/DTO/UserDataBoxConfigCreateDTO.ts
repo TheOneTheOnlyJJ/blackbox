@@ -20,7 +20,7 @@ export const USER_DATA_BOX_CONFIG_CREATE_DTO_JSON_SCHEMA: JSONSchemaType<IUserDa
       nullable: true as false // https://github.com/ajv-validator/ajv/issues/2163#issuecomment-2085689455
     }
   },
-  required: ["name", "storageId", "description"],
+  required: ["storageId", "name", "description"],
   additionalProperties: false
 } as const;
 

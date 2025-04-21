@@ -34,7 +34,7 @@ export const USER_DATA_TEMPLATE_CREATE_INPUT_UI_SCHEMA: UiSchema<IUserDataTempla
     "ui:title": "Data Storage",
     "ui:widget": RJSFSelectInitialisedUserDataStorageIdWidget,
     "ui:options": {
-      showNoSelectionOption: true,
+      showNoSelectionOption: false,
       onlyAllowOpenSelection: true
     } satisfies IRJSFSelectInitialisedUserDataStorageIdWidgetOptions
   },

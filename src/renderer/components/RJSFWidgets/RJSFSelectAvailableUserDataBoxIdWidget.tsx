@@ -1,6 +1,6 @@
 import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from "@mui/material";
 import { getUiOptions, WidgetProps } from "@rjsf/utils";
-import { FC, FocusEvent, useCallback, useEffect, useMemo } from "react";
+import { FC, FocusEvent, useCallback, useMemo } from "react";
 import { ISignedInRootContext, useSignedInRootContext } from "../roots/signedInRoot/SignedInRootContext";
 import { IUserDataBoxInfo } from "@shared/user/data/box/info/UserDataBoxInfo";
 import {
@@ -122,10 +122,6 @@ const RJSFSelectAvailableUserDataBoxIdWidget: FC<WidgetProps> = (props: WidgetPr
     },
     [onFocus, id]
   );
-
-  useEffect((): void => {
-    onChange(undefined);
-  }, [formContextSelectedUserDataStorageId, onChange]);
 
   return (
     <FormControl fullWidth>

@@ -78,6 +78,7 @@ import {
   isValidUserDataStorageNameAvailabilityRequest,
   IUserDataStorageNameAvailabilityRequest
 } from "@shared/user/data/storage/config/create/UserDataStorageNameAvailabilityRequest";
+import { IUserDataTemplateAPI } from "@shared/IPC/APIs/UserDataTemplateAPI";
 
 type WindowPositionSetting = Rectangle | WindowStates["FullScreen"] | WindowStates["Maximized"];
 
@@ -97,6 +98,7 @@ type MainProcessUserDataStorageConfigAPIIPCHandlers = MainProcessIPCAPIHandlers<
 type MainProcessUserDataStorageAPIIPCHandlers = MainProcessIPCAPIHandlers<IUserDataStorageAPI>;
 type MainProcessUserDataStorageVisibilityGroupAPIIPCHandlers = MainProcessIPCAPIHandlers<IUserDataStorageVisibilityGroupAPI>;
 type MainProcessUserDataBoxAPIIPCHandlers = MainProcessIPCAPIHandlers<IUserDataBoxAPI>;
+type MainProcessUserDataTemplateAPIIPCHandlers = MainProcessIPCAPIHandlers<IUserDataTemplateAPI>;
 type MainProcessUtilsAPIIPCHandlers = MainProcessIPCAPIHandlers<IUtilsAPI>;
 
 export class App {
@@ -964,6 +966,9 @@ export class App {
       );
     }
   };
+
+  // TODO: Implement this, service and ocntext in facade, wire up IPC handlers down here
+  private readonly USER_DATA_TEMPLATE_API_HANDLERS: MainProcessUserDataTemplateAPIIPCHandlers = {};
 
   private readonly UTILS_API_HANDLERS: MainProcessUtilsAPIIPCHandlers = {
     handleGetDirectoryPathWithPicker: async (

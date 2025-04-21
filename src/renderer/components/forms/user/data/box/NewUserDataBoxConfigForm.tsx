@@ -96,15 +96,15 @@ const NewUserDataBoxConfigForm: FC<INewUserDataBoxConfigFormProps> = (props: INe
                   if (ADD_USER_DATA_BOX_CONFIG_RESPONSE.status === IPC_API_RESPONSE_STATUSES.SUCCESS) {
                     if (ADD_USER_DATA_BOX_CONFIG_RESPONSE.data) {
                       setFormData(undefined);
-                      appLogger.debug("Added User Data Storage Box.");
+                      appLogger.debug("Added User Data Box.");
                       enqueueSnackbar({ message: "Added data box.", variant: "success" });
                       props.onAddedSuccessfully();
                     } else {
-                      appLogger.error("Could not add User Data Storage Box.");
+                      appLogger.error("Could not add User Data Box.");
                       enqueueSnackbar({ message: "Could not add data box.", variant: "error" });
                     }
                   } else {
-                    appLogger.error("Error adding User Data Storage Box.");
+                    appLogger.error("Error adding User Data Box.");
                     enqueueSnackbar({ message: "Error adding data box.", variant: "error" });
                   }
                 } catch (error: unknown) {

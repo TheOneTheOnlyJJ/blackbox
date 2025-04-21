@@ -1,6 +1,7 @@
 import { App } from "@main/App";
 
 // TODO: Rename create to createRequest? Make a new requests folder?
+// TODO: Make visibility group open request shared?
 // TODO: Rename visibility group to just group. Rename open to unlocked/available?
 // TODO: Add User Data Box Groups
 // TODO: Make groups be one of public/hidden/secret. Rename default group to something like default/ungrouped
