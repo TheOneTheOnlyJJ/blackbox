@@ -1,4 +1,4 @@
-export const USER_DATA_TEMPLATE_CREATE_JSON_SCHEMA_CONSTANTS = {
+export const USER_DATA_TEMPLATE_CONFIG_CREATE_JSON_SCHEMA_CONSTANTS = {
   name: {
     title: "Name",
     minLength: 1

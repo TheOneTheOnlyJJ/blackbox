@@ -5,9 +5,10 @@ import { IPCAPIResponse } from "../IPCAPIResponse";
 import { IUserDataBoxNameAvailabilityRequest } from "@shared/user/data/box/create/UserDataBoxNameAvailabilityRequest";
 import { IUserDataBoxInfo } from "@shared/user/data/box/info/UserDataBoxInfo";
 import { IDataChangedDiff } from "@shared/utils/DataChangedDiff";
+import { IUserDataBoxIdentifier } from "@shared/user/data/box/identifier/UserDataBoxIdentifier";
 
 export type AvailableUserDataBoxesChangedCallback = (
-  encryptedAvailableUserDataBoxesInfoChangedDiff: IEncryptedData<IDataChangedDiff<string, IUserDataBoxInfo>>
+  encryptedAvailableUserDataBoxesInfoChangedDiff: IEncryptedData<IDataChangedDiff<IUserDataBoxIdentifier, IUserDataBoxInfo>>
 ) => void;
 
 export interface IUserDataBoxAPI {

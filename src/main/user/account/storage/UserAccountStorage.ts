@@ -9,8 +9,8 @@ import { IUserAccountStorageInfo } from "@shared/user/account/storage/info/UserA
 import { IStorageSecuredUserDataStorageConfig } from "@main/user/data/storage/config/StorageSecuredUserDataStorageConfig";
 import { IStorageSecuredUserDataStorageVisibilityGroupConfig } from "@main/user/data/storage/visibilityGroup/config/StorageSecuredUserDataStorageVisibilityGroupConfig";
 import {
-  IDataStorageConfigFilter,
-  IDataStorageVisibilityGroupFilter,
+  IUserAccountStorageUserDataStorageConfigFilter,
+  IUserAccountStorageUserDataStorageVisibilityGroupFilter,
   IUserAccountStorageBackendHandlers
 } from "./backend/BaseUserAccountStorageBackend";
 
@@ -165,13 +165,13 @@ export class UserAccountStorage {
   }
 
   public getStorageSecuredUserDataStorageVisibilityGroupConfigs(
-    options: IDataStorageVisibilityGroupFilter
+    filter: IUserAccountStorageUserDataStorageVisibilityGroupFilter
   ): IStorageSecuredUserDataStorageVisibilityGroupConfig[] {
-    return this.backend.getStorageSecuredUserDataStorageVisibilityGroupConfigs(options);
+    return this.backend.getStorageSecuredUserDataStorageVisibilityGroupConfigs(filter);
   }
 
-  public getStorageSecuredUserDataStorageConfigs(options: IDataStorageConfigFilter): IStorageSecuredUserDataStorageConfig[] {
-    return this.backend.getStorageSecuredUserDataStorageConfigs(options);
+  public getStorageSecuredUserDataStorageConfigs(filter: IUserAccountStorageUserDataStorageConfigFilter): IStorageSecuredUserDataStorageConfig[] {
+    return this.backend.getStorageSecuredUserDataStorageConfigs(filter);
   }
 
   public getStorageSecuredUserDataStorageVisibilityGroupConfigForConfigId(

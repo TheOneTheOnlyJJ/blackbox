@@ -1,5 +1,7 @@
 import { App } from "@main/App";
 
+// TODO: Add identifier types for all User Data types
+// TODO: Encrypt & decrypt box content with visibility group encryption key
 // TODO: Rename create to createRequest? Make a new requests folder?
 // TODO: Make visibility group open request shared?
 // TODO: Rename visibility group to just group. Rename open to unlocked/available?

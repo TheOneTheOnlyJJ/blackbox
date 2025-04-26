@@ -6,6 +6,7 @@ import { userDataBoxConfigCreateDTOToUserDataBoxConfig } from "@main/user/data/b
 import { userDataBoxConfigToSecuredUserDataBoxConfig } from "@main/user/data/box/config/utils/userDataBoxConfigToSecuredUserDataBoxConfig";
 import { IUserDataBox } from "@main/user/data/box/UserDataBox";
 import { userDataBoxToUserDataBoxInfo } from "@main/user/data/box/utils/userDataBoxToUserDataBoxInfo";
+import { IUserDataStorageUserDataBoxConfigFilter } from "@main/user/data/storage/backend/BaseUserDataStorageBackend";
 import { IUserDataBoxConfigCreateDTO } from "@shared/user/data/box/create/DTO/UserDataBoxConfigCreateDTO";
 import { IUserDataBoxNameAvailabilityRequest } from "@shared/user/data/box/create/UserDataBoxNameAvailabilityRequest";
 import { IUserDataBoxInfo } from "@shared/user/data/box/info/UserDataBoxInfo";
@@ -19,7 +20,10 @@ export interface IUserDataBoxServiceContext {
   generateRandomDataBoxId: (userDataStorageId: UUID) => UUID;
   addSecuredUserDataBoxConfig: (securedUserDataBoxConfig: ISecuredUserDataBoxConfig, encryptionAESKey: Buffer) => boolean;
   getAllSignedInUserInitialisedOpenDataStoragesInfo: () => IUserDataStorageInfo[]; // TODO: Remove this?
-  getStorageSecuredUserDataBoxConfigsForUserDataStorage: (userDataStorageId: UUID) => IStorageSecuredUserDataBoxConfig[];
+  getStorageSecuredUserDataBoxConfigsForUserDataStorage: (
+    userDataStorageId: UUID,
+    filter: IUserDataStorageUserDataBoxConfigFilter
+  ) => IStorageSecuredUserDataBoxConfig[];
 }
 
 export class UserDataBoxService {
@@ -65,8 +69,10 @@ export class UserDataBoxService {
     if (SIGNED_IN_USER === null) {
       throw new Error("No signed in user");
     }
+    // TODO: Don't make a data storage read for this
     for (const STORAGE_SECURED_DATA_BOX_CONFIG of this.CONTEXT.getStorageSecuredUserDataBoxConfigsForUserDataStorage(
-      userDataBoxNameAvailabilityRequest.storageId as UUID
+      userDataBoxNameAvailabilityRequest.storageId as UUID,
+      { includeIds: "all", excludeIds: null } satisfies IUserDataStorageUserDataBoxConfigFilter
     )) {
       const SECURED_DATA_BOX_CONFIG: ISecuredUserDataBoxConfig = storageSecuredUserDataBoxConfigToSecuredUserDataBoxConfig(
         STORAGE_SECURED_DATA_BOX_CONFIG,

@@ -1,4 +1,5 @@
-import { JSONSchemaType } from "ajv";
+import { AJV } from "@shared/utils/AJVJSONValidator";
+import { JSONSchemaType, ValidateFunction } from "ajv";
 import { UUID } from "node:crypto";
 
 export interface IUserDataBoxConfig {
@@ -23,3 +24,5 @@ export const USER_DATA_BOX_CONFIG_JSON_SCHEMA: JSONSchemaType<IUserDataBoxConfig
   required: ["boxId", "name", "storageId", "description"],
   additionalProperties: false
 } as const;
+
+export const isValidUserDataBoxConfig: ValidateFunction<IUserDataBoxConfig> = AJV.compile<IUserDataBoxConfig>(USER_DATA_BOX_CONFIG_JSON_SCHEMA);

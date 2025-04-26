@@ -6,11 +6,12 @@ import {
   useUserDataBoxesNavigationAreaLayoutRootContext
 } from "@renderer/components/roots/userDataBoxesNavigationAreaLayoutRoot/UserDataBoxesNavigationAreaLayoutRootContext";
 import { USER_DATA_BOXES_NAVIGATION_AREAS } from "@renderer/navigationAreas/UserDataBoxesNavigationAreas";
-import { Button, Stack } from "@mui/material";
+import { Button, Stack, Typography } from "@mui/material";
 import { appLogger } from "@renderer/utils/loggers";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import { useDialogOpenState } from "@renderer/hooks/useDialogState";
-import NewUserDataTemplateFormDialog from "@renderer/components/dialogs/forms/user/data/template/NewUserDataTemplateFormDialog";
+import NewUserDataTemplateConfigFormDialog from "@renderer/components/dialogs/forms/user/data/template/NewUserDataTemplateConfigFormDialog";
+import AvailableUserDataTemplatesDataGrid from "@renderer/components/dataGrids/AvailableUserDataTemplatesDataGrid";
 
 const AvailableUserDataTemplatesPage: FC = () => {
   const userDataBoxesNavigationAreaLayoutRootContext: IUserDataBoxesNavigationAreaLayoutRootContext =
@@ -51,8 +52,14 @@ const AvailableUserDataTemplatesPage: FC = () => {
             New template
           </Button>
         </Stack>
+        <Typography variant="h5" sx={{ marginTop: ".5rem" }}>
+          Available templates:
+        </Typography>
+        <Box sx={{ flex: 1, minHeight: 0, marginTop: ".5rem" }}>
+          <AvailableUserDataTemplatesDataGrid />
+        </Box>
       </Box>
-      <NewUserDataTemplateFormDialog
+      <NewUserDataTemplateConfigFormDialog
         onAddedSuccessfully={handleSuccessfullyAddedNewUserDataTemplate}
         open={isNewUserDataTemplateFormDialogOpen}
         onClose={handleNewUserDataTemplateFormDialogClose}

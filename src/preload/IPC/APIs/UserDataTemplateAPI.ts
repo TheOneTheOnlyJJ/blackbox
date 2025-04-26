@@ -6,8 +6,9 @@ import {
   UserDataTemplateAPIIPCChannel
 } from "@shared/IPC/APIs/UserDataTemplateAPI";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
-import { IUserDataTemplateCreateDTO } from "@shared/user/data/template/create/DTO/UserDataTemplateCreateDTO";
+import { IUserDataTemplateConfigCreateDTO } from "@shared/user/data/template/create/DTO/UserDataTemplateConfigCreateDTO";
 import { IUserDataTemplateNameAvailabilityRequest } from "@shared/user/data/template/create/UserDataTemplateNameAvailabilityRequest";
+import { IUserDataTemplateIdentifier } from "@shared/user/data/template/identifier/UserDataTemplateIdentifier";
 import { IUserDataTemplateInfo } from "@shared/user/data/template/info/UserDataTemplateInfo";
 import { IDataChangedDiff } from "@shared/utils/DataChangedDiff";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
@@ -23,13 +24,15 @@ export const USER_DATA_TEMPLATE_API_PRELOAD_HANDLERS: IUserDataTemplateAPI = {
     sendLogToMainProcess(PRELOAD_IPC_USER_DATA_TEMPLATE_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL, encryptedUserDataTemplateNameAvailabilityRequest) as IPCAPIResponse<boolean>;
   },
-  addUserDataTemplate: (encryptedUserDataTemplateCreateDTO: IEncryptedData<IUserDataTemplateCreateDTO>): IPCAPIResponse<boolean> => {
-    const CHANNEL: UserDataTemplateAPIIPCChannel = USER_DATA_TEMPLATE_API_IPC_CHANNELS.addUserDataTemplate;
+  addUserDataTemplateConfig: (
+    encryptedUserDataTemplateConfigCreateDTO: IEncryptedData<IUserDataTemplateConfigCreateDTO>
+  ): IPCAPIResponse<boolean> => {
+    const CHANNEL: UserDataTemplateAPIIPCChannel = USER_DATA_TEMPLATE_API_IPC_CHANNELS.addUserDataTemplateConfig;
     sendLogToMainProcess(PRELOAD_IPC_USER_DATA_TEMPLATE_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
-    return ipcRenderer.sendSync(CHANNEL, encryptedUserDataTemplateCreateDTO) as IPCAPIResponse<boolean>;
+    return ipcRenderer.sendSync(CHANNEL, encryptedUserDataTemplateConfigCreateDTO) as IPCAPIResponse<boolean>;
   },
-  getAllSignedInUserAvailableUserDataTemplateInfo: (): IPCAPIResponse<IEncryptedData<IUserDataTemplateInfo[]>> => {
-    const CHANNEL: UserDataTemplateAPIIPCChannel = USER_DATA_TEMPLATE_API_IPC_CHANNELS.getAllSignedInUserAvailableUserDataTemplateInfo;
+  getAllSignedInUserAvailableUserDataTemplatesInfo: (): IPCAPIResponse<IEncryptedData<IUserDataTemplateInfo[]>> => {
+    const CHANNEL: UserDataTemplateAPIIPCChannel = USER_DATA_TEMPLATE_API_IPC_CHANNELS.getAllSignedInUserAvailableUserDataTemplatesInfo;
     sendLogToMainProcess(PRELOAD_IPC_USER_DATA_TEMPLATE_API_LOG_SCOPE, "debug", `Messaging main on channel: "${CHANNEL}".`);
     return ipcRenderer.sendSync(CHANNEL) as IPCAPIResponse<IEncryptedData<IUserDataTemplateInfo[]>>;
   },
@@ -38,7 +41,7 @@ export const USER_DATA_TEMPLATE_API_PRELOAD_HANDLERS: IUserDataTemplateAPI = {
     sendLogToMainProcess(PRELOAD_IPC_USER_DATA_TEMPLATE_API_LOG_SCOPE, "debug", `Adding listener from main on channel: "${CHANNEL}".`);
     const LISTENER = (
       _: IpcRendererEvent,
-      encryptedAvailableUserDataTemplatesInfoChangedDiff: IEncryptedData<IDataChangedDiff<string, IUserDataTemplateInfo>>
+      encryptedAvailableUserDataTemplatesInfoChangedDiff: IEncryptedData<IDataChangedDiff<IUserDataTemplateIdentifier, IUserDataTemplateInfo>>
     ): void => {
       sendLogToMainProcess(PRELOAD_IPC_USER_DATA_TEMPLATE_API_LOG_SCOPE, "debug", `Received message from main on channel: "${CHANNEL}".`);
       callback(encryptedAvailableUserDataTemplatesInfoChangedDiff);

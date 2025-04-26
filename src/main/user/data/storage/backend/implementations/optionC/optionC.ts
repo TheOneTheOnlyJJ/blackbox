@@ -7,6 +7,7 @@ import { AJV } from "@shared/utils/AJVJSONValidator";
 import { IOptionCUserDataStorageBackendInfo } from "@shared/user/data/storage/backend/info/implementations/optionC/OptionCUserDataStorageBackendInfo";
 import { BASE_USER_DATA_STORAGE_BACKEND_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/backend/constants/BaseUserDataStorageBackendConstants";
 import { IStorageSecuredUserDataBoxConfig } from "@main/user/data/box/config/StorageSecuredUserDataBoxConfig";
+import { IStorageSecuredUserDataTemplateConfig } from "@main/user/data/template/config/StorageSecuredUserDataTemplateConfig";
 
 export interface IOptionCUserDataStorageBackendConfig extends IBaseUserDataStorageBackendConfig {
   type: UserDataStorageBackendTypes["optionC"];
@@ -76,11 +77,23 @@ export class OptionCUserDataStorageBackend extends BaseUserDataStorageBackend<IO
     throw new Error("Cannot get User Data Box ID availability from Option C User Data Storage as it is a mock");
   }
 
+  public isUserDataTemplateIdAvailable(): boolean {
+    throw new Error("Cannot get User Data Template ID availability from Option C User Data Storage as it is a mock");
+  }
+
   public addStorageSecuredUserDataBoxConfig(): boolean {
     throw new Error("Cannot add Storage Secured User Data Box Config to Option C User Data Storage as it is a mock");
   }
 
+  public addStorageSecuredUserDataTemplateConfig(): boolean {
+    throw new Error("Cannot add Storage Secured User Data Template Config to Option C User Data Storage as it is a mock");
+  }
+
   public getStorageSecuredUserDataBoxConfigs(): IStorageSecuredUserDataBoxConfig[] {
     throw new Error("Cannot get Storage Secured User Data Box Configs from Option C User Data Storage as it is a mock");
+  }
+
+  public getStorageSecuredUserDataTemplateConfigs(): IStorageSecuredUserDataTemplateConfig[] {
+    throw new Error("Cannot get Storage Secured User Data Template Configs from Option C User Data Storage as it is a mock");
   }
 }

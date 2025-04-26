@@ -9,7 +9,8 @@ import { useOpenUserDataStorageVisibilityGroupsInfoState } from "./hooks/useOpen
 import { useForbiddenLocationNameState } from "./hooks/useForbiddenLocationNameState";
 import { useInitialisedUserDataStoragesInfoState } from "./hooks/useInitialisedUserDataStoragesInfoState";
 import { useAvailableUserDataBoxesInfoState } from "./hooks/useAvailableUserDataBoxesInfoState";
-import { IUserDataBoxInfo } from "@shared/user/data/box/info/UserDataBoxInfo";
+import { IUserDataTemplateInfo } from "@shared/user/data/template/info/UserDataTemplateInfo";
+import { useAvailableUserDataTemplatesInfoState } from "./hooks/useAvailableUserDataTemplatesInfoState";
 
 const SignedInRoot: FC = () => {
   const appRootContext: IAppRootContext = useAppRootContext();
@@ -18,7 +19,8 @@ const SignedInRoot: FC = () => {
   const { initialisedUserDataStoragesInfo, getInitialisedUserDataStorageInfoById } = useInitialisedUserDataStoragesInfoState(appLogger);
   const { openUserDataStorageVisibilityGroupsInfo, getOpenUserDataStorageVisibilityGroupInfo } =
     useOpenUserDataStorageVisibilityGroupsInfoState(appLogger);
-  const availableUserDataDataBoxesInfo: IUserDataBoxInfo[] = useAvailableUserDataBoxesInfoState(appLogger);
+  const { availableUserDataDataBoxesInfo, getAvailableUserDataBoxInfoByIdentifier } = useAvailableUserDataBoxesInfoState(appLogger);
+  const availableUserDataDataTemplatesInfo: IUserDataTemplateInfo[] = useAvailableUserDataTemplatesInfoState(appLogger);
   const [forbiddenLocationName, URIEncodeAndSetForbiddenLocationName] = useForbiddenLocationNameState(appLogger);
 
   useEffect((): (() => void) => {
@@ -38,8 +40,10 @@ const SignedInRoot: FC = () => {
           initialisedUserDataStoragesInfo: initialisedUserDataStoragesInfo,
           openUserDataStorageVisibilityGroupsInfo: openUserDataStorageVisibilityGroupsInfo,
           availableUserDataDataBoxesInfo: availableUserDataDataBoxesInfo,
+          availableUserDataDataTemplatesInfo: availableUserDataDataTemplatesInfo,
           getInitialisedUserDataStorageInfoById: getInitialisedUserDataStorageInfoById,
           getOpenUserDataStorageVisibilityGroupInfoById: getOpenUserDataStorageVisibilityGroupInfo,
+          getAvailableUserDataBoxInfoByIdentifier: getAvailableUserDataBoxInfoByIdentifier,
           setForbiddenLocationName: URIEncodeAndSetForbiddenLocationName
         } satisfies ISignedInRootContext
       }

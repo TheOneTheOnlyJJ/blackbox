@@ -9,7 +9,8 @@ import { IStorageSecuredUserDataStorageVisibilityGroupConfig } from "@main/user/
 import { IUserAccountStorageBackendInfoMap } from "@shared/user/account/storage/backend/info/UserAccountStorageBackendInfo";
 import { deepFreeze } from "@main/utils/deepFreeze";
 
-export interface IDataStorageConfigFilter {
+// TODO: Should these be Identifier objects?
+export interface IUserAccountStorageUserDataStorageConfigFilter {
   userId: UUID;
   includeIds: UUID[] | "all";
   excludeIds: UUID[] | null;
@@ -19,7 +20,7 @@ export interface IDataStorageConfigFilter {
   };
 }
 
-export interface IDataStorageVisibilityGroupFilter {
+export interface IUserAccountStorageUserDataStorageVisibilityGroupFilter {
   userId: UUID;
   includeIds: UUID[] | "all";
   excludeIds: UUID[] | null;
@@ -79,9 +80,11 @@ export abstract class BaseUserAccountStorageBackend<T extends IBaseUserAccountSt
   public abstract addStorageSecuredUserDataStorageVisibilityGroupConfig(
     storageSecuredUserDataStorageVisibilityGroupConfig: IStorageSecuredUserDataStorageVisibilityGroupConfig
   ): boolean;
-  public abstract getStorageSecuredUserDataStorageConfigs(filter: IDataStorageConfigFilter): IStorageSecuredUserDataStorageConfig[];
+  public abstract getStorageSecuredUserDataStorageConfigs(
+    filter: IUserAccountStorageUserDataStorageConfigFilter
+  ): IStorageSecuredUserDataStorageConfig[];
   public abstract getStorageSecuredUserDataStorageVisibilityGroupConfigs(
-    filter: IDataStorageVisibilityGroupFilter
+    filter: IUserAccountStorageUserDataStorageVisibilityGroupFilter
   ): IStorageSecuredUserDataStorageVisibilityGroupConfig[];
   public abstract getStorageSecuredUserDataStorageVisibilityGroupConfigForConfigId(
     userId: UUID,

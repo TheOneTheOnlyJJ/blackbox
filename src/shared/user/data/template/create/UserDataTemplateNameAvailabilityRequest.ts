@@ -1,6 +1,6 @@
 import { AJV } from "@shared/utils/AJVJSONValidator";
 import { JSONSchemaType, ValidateFunction } from "ajv";
-import { USER_DATA_TEMPLATE_CREATE_JSON_SCHEMA_CONSTANTS } from "./UserDataTemplateCreateConstants";
+import { USER_DATA_TEMPLATE_CONFIG_CREATE_JSON_SCHEMA_CONSTANTS } from "./UserDataTemplateConfigCreateConstants";
 
 export interface IUserDataTemplateNameAvailabilityRequest {
   name: string;
@@ -12,9 +12,9 @@ export const USER_DATA_TEMPLATE_NAME_AVAILABILITY_REQUEST_JSON_SCHEMA: JSONSchem
   $schema: "http://json-schema.org/draft-07/schema#",
   type: "object",
   properties: {
-    name: { type: "string", ...USER_DATA_TEMPLATE_CREATE_JSON_SCHEMA_CONSTANTS.name },
-    boxId: { type: "string", ...USER_DATA_TEMPLATE_CREATE_JSON_SCHEMA_CONSTANTS.boxId },
-    storageId: { type: "string", ...USER_DATA_TEMPLATE_CREATE_JSON_SCHEMA_CONSTANTS.storageId }
+    name: { type: "string", ...USER_DATA_TEMPLATE_CONFIG_CREATE_JSON_SCHEMA_CONSTANTS.name },
+    boxId: { type: "string", ...USER_DATA_TEMPLATE_CONFIG_CREATE_JSON_SCHEMA_CONSTANTS.boxId },
+    storageId: { type: "string", ...USER_DATA_TEMPLATE_CONFIG_CREATE_JSON_SCHEMA_CONSTANTS.storageId }
   },
   required: ["name", "boxId", "storageId"],
   additionalProperties: false

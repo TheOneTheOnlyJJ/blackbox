@@ -1,7 +1,7 @@
 import { LogFunctions } from "electron-log";
 import { timingSafeEqual, UUID } from "node:crypto";
 import { ISecuredUserDataStorageVisibilityGroupConfig } from "@main/user/data/storage/visibilityGroup/config/SecuredUserDataStorageVisibilityGroupConfig";
-import { IDataStorageVisibilityGroupFilter } from "@main/user/account/storage/backend/BaseUserAccountStorageBackend";
+import { IUserAccountStorageUserDataStorageVisibilityGroupFilter } from "@main/user/account/storage/backend/BaseUserAccountStorageBackend";
 import { IStorageSecuredUserDataStorageVisibilityGroupConfig } from "@main/user/data/storage/visibilityGroup/config/StorageSecuredUserDataStorageVisibilityGroupConfig";
 import { storageSecuredUserDataStorageVisibilityGroupConfigToSecuredUserDataStorageVisibilityGroupConfig } from "@main/user/data/storage/visibilityGroup/config/utils/storageSecuredUserDataStorageVisibilityGroupConfigToSecuredUserDataStorageVisibilityGroupConfig";
 import {
@@ -26,7 +26,7 @@ export interface IUserDataStorageVisibilityGroupServiceContext {
   isAccountStorageSet: () => boolean;
   generateRandomUserDataStorageVisibilityGroupId: () => UUID;
   getStorageSecuredUserDataStorageVisibilityGroupConfigs: (
-    options: IDataStorageVisibilityGroupFilter
+    filter: IUserAccountStorageUserDataStorageVisibilityGroupFilter
   ) => IStorageSecuredUserDataStorageVisibilityGroupConfig[];
   isUserIdAvailable: (userId: UUID) => boolean;
   addSecuredUserDataStorageVisibilityGroupConfig: (
@@ -86,21 +86,21 @@ export class UserDataStorageVisibilityGroupService {
   }
 
   public getSecuredDataStorageVisibilityGroupConfigs(
-    options: IDataStorageVisibilityGroupFilter,
+    filter: IUserAccountStorageUserDataStorageVisibilityGroupFilter,
     AESKey: Buffer
   ): ISecuredUserDataStorageVisibilityGroupConfig[] {
-    if (options.includeIds === "all") {
-      this.logger.debug(`Getting all Secured User Data Storage Visibility Group Configs for user "${options.userId}".`);
+    if (filter.includeIds === "all") {
+      this.logger.debug(`Getting all Secured User Data Storage Visibility Group Configs for user "${filter.userId}".`);
     } else {
       this.logger.debug(
-        `Getting ${options.includeIds.length.toString()} Secured User Data Storage Visibility Group Configs for user "${options.userId}".`
+        `Getting ${filter.includeIds.length.toString()} Secured User Data Storage Visibility Group Configs for user "${filter.userId}".`
       );
     }
     if (!this.CONTEXT.isAccountStorageSet()) {
       throw new Error("Null User Account Storage");
     }
     const STORAGE_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIGS: IStorageSecuredUserDataStorageVisibilityGroupConfig[] =
-      this.CONTEXT.getStorageSecuredUserDataStorageVisibilityGroupConfigs(options);
+      this.CONTEXT.getStorageSecuredUserDataStorageVisibilityGroupConfigs(filter);
     return STORAGE_SECURED_USER_DATA_STORAGE_VISIBILITY_GROUP_CONFIGS.map(
       (
         storageSecuredUserDataStorageVisibilityGroupConfig: IStorageSecuredUserDataStorageVisibilityGroupConfig

@@ -5,6 +5,21 @@ import { IUserDataStorageBackendInfoMap } from "@shared/user/data/storage/backen
 import { deepFreeze } from "@main/utils/deepFreeze";
 import { IStorageSecuredUserDataBoxConfig } from "../../box/config/StorageSecuredUserDataBoxConfig";
 import { UUID } from "node:crypto";
+import { IStorageSecuredUserDataTemplateConfig } from "../../template/config/StorageSecuredUserDataTemplateConfig";
+
+export interface IUserDataStorageUserDataBoxConfigFilter {
+  includeIds: UUID[] | "all";
+  excludeIds: UUID[] | null;
+}
+
+export interface IUserDataStorageUserDataTemplateConfigFilter {
+  includeIds: UUID[] | "all";
+  excludeIds: UUID[] | null;
+  boxes: {
+    includeIds: UUID[] | "all";
+    excludeIds: UUID[] | null;
+  };
+}
 
 export interface IUserDataStorageBackendHandlers {
   onInfoChanged: (() => void) | null;
@@ -42,11 +57,20 @@ export abstract class BaseUserDataStorageBackend<T extends IBaseUserDataStorageB
   public abstract isOpen(): boolean;
   public abstract isClosed(): boolean;
   public abstract isLocal(): boolean;
+  // TODO: These should accept Identifier objects as arguments for complete ID availability checks
   public abstract isUserDataBoxIdAvailable(boxId: UUID): boolean;
+  // TODO: For example boxId is useless until now but some storages may allow the same template ID in different boxes
+  public abstract isUserDataTemplateIdAvailable(templateId: UUID, boxId: UUID): boolean;
   public abstract addStorageSecuredUserDataBoxConfig(storageSecuredUserDataBoxConfig: IStorageSecuredUserDataBoxConfig): boolean;
+  public abstract addStorageSecuredUserDataTemplateConfig(storageSecuredUserDataTemplateConfig: IStorageSecuredUserDataTemplateConfig): boolean;
   public abstract getStorageSecuredUserDataBoxConfigs(
-    storageId: UUID // Gets passed down from User Data Storage
+    storageId: UUID, // Gets passed down from User Data Storage
+    filter: IUserDataStorageUserDataBoxConfigFilter
   ): IStorageSecuredUserDataBoxConfig[];
+  public abstract getStorageSecuredUserDataTemplateConfigs(
+    storageId: UUID, // Gets passed down from User Data Storage
+    filter: IUserDataStorageUserDataTemplateConfigFilter
+  ): IStorageSecuredUserDataTemplateConfig[];
 
   public getInfo(): Readonly<IUserDataStorageBackendInfoMap[T["type"]]> {
     return this.info;

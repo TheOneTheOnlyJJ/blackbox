@@ -49,7 +49,7 @@ const AvailableUserDataStorageConfigsDataGrid: FC = () => {
   }, [setIsShowConfigInfoDialogOpen]);
 
   const rowIdGetter: GridRowIdGetter<IUserDataStorageConfigInfo> = useCallback((row: IUserDataStorageConfigInfo): GridRowId => {
-    return row.storageId;
+    return row.visibilityGroupId === null ? row.storageId : row.storageId + row.visibilityGroupId;
   }, []);
 
   const COLUMNS: GridColDef[] = useMemo<GridColDef[]>((): GridColDef[] => {

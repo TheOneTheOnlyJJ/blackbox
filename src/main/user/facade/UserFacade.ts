@@ -27,10 +27,15 @@ import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataSto
 import { UserDataStorageService } from "./services/UserDataStorageService";
 import { IUserDataBoxNameAvailabilityRequest } from "@shared/user/data/box/create/UserDataBoxNameAvailabilityRequest";
 import { UserDataBoxService } from "./services/UserDataBoxService";
+import { UserDataTemplateService } from "./services/UserDataTemplateService";
 import { IUserDataBoxConfigCreateDTO } from "@shared/user/data/box/create/DTO/UserDataBoxConfigCreateDTO";
 import { ISecuredUserDataBoxConfig } from "../data/box/config/SecuredUserDataBoxConfig";
 import { IUserDataBoxInfo } from "@shared/user/data/box/info/UserDataBoxInfo";
 import { IUserDataStorageNameAvailabilityRequest } from "@shared/user/data/storage/config/create/UserDataStorageNameAvailabilityRequest";
+import { IUserDataTemplateNameAvailabilityRequest } from "@shared/user/data/template/create/UserDataTemplateNameAvailabilityRequest";
+import { IUserDataTemplateConfigCreateDTO } from "@shared/user/data/template/create/DTO/UserDataTemplateConfigCreateDTO";
+import { IUserDataTemplateInfo } from "@shared/user/data/template/info/UserDataTemplateInfo";
+import { ISecuredUserDataTemplateConfig } from "../data/template/config/SecuredUserDataTemplateConfig";
 
 export interface IUserServiceLoggers {
   auth: LogFunctions;
@@ -40,6 +45,7 @@ export interface IUserServiceLoggers {
   dataStorage: LogFunctions;
   dataStorageVisibilityGroup: LogFunctions;
   dataBox: LogFunctions;
+  dataTemplate: LogFunctions;
 }
 
 export interface IUserFacadeConstructorProps {
@@ -59,6 +65,7 @@ export class UserFacade {
   private readonly DATA_STORAGE_SERVICE: UserDataStorageService;
   private readonly DATA_STORAGE_VISIBILITY_GROUP_SERVICE: UserDataStorageVisibilityGroupService;
   private readonly DATA_BOX_SERVICE: UserDataBoxService;
+  private readonly DATA_TEMPLATE_SERVICE: UserDataTemplateService;
 
   public constructor(props: IUserFacadeConstructorProps) {
     this.logger = props.logger;
@@ -80,6 +87,7 @@ export class UserFacade {
       CONTEXT_PROVIDER.getUserDataStorageVisibilityGroupServiceContext()
     );
     this.DATA_BOX_SERVICE = new UserDataBoxService(props.serviceLoggers.dataBox, CONTEXT_PROVIDER.getUserDataBoxServiceContext());
+    this.DATA_TEMPLATE_SERVICE = new UserDataTemplateService(props.serviceLoggers.dataTemplate, CONTEXT_PROVIDER.getUserDataTemplateServiceContext());
   }
 
   public destroy(): void {
@@ -147,6 +155,10 @@ export class UserFacade {
 
   public isUserDataBoxNameAvailableForUserDataStorage(userDataBoxNameAvailabilityRequest: IUserDataBoxNameAvailabilityRequest): boolean {
     return this.DATA_BOX_SERVICE.isUserDataBoxNameAvailableForUserDataStorage(userDataBoxNameAvailabilityRequest);
+  }
+
+  public isUserDataTemplateNameAvailable(userDataTemplateNameAvailabilityRequest: IUserDataTemplateNameAvailabilityRequest): boolean {
+    return this.DATA_TEMPLATE_SERVICE.isUserDataTemplateNameAvailable(userDataTemplateNameAvailabilityRequest);
   }
 
   public generateRandomUserId(): UUID {
@@ -228,6 +240,14 @@ export class UserFacade {
     return this.DATA_BOX_SERVICE.addSecuredUserDataBoxConfigFromCreateDTO(userDataBoxConfigCreateDTO);
   }
 
+  public addSecuredUserDataTemplateConfig(securedUserDataTemplateConfig: ISecuredUserDataTemplateConfig): boolean {
+    return this.DATA_TEMPLATE_SERVICE.addSecuredUserDataTemplateConfig(securedUserDataTemplateConfig);
+  }
+
+  public addSecuredUserDataTemplateConfigFromCreateDTO(userDataTemplateConfigCreateDTO: IUserDataTemplateConfigCreateDTO): boolean {
+    return this.DATA_TEMPLATE_SERVICE.addSecuredUserDataTemplateConfigFromCreateDTO(userDataTemplateConfigCreateDTO);
+  }
+
   public openUserDataStorageVisibilityGroups(userDataStorageVisibilityGroupOpenRequest: IUserDataStorageVisibilityGroupsOpenRequest): number {
     return this.DATA_STORAGE_VISIBILITY_GROUP_SERVICE.openUserDataStorageVisibilityGroups(userDataStorageVisibilityGroupOpenRequest);
   }
@@ -278,5 +298,9 @@ export class UserFacade {
 
   public getAllSignedInUserAvailableUserDataBoxesInfo(): IUserDataBoxInfo[] {
     return this.DATA_BOX_SERVICE.getAllSignedInUserAvailableUserDataBoxesInfo();
+  }
+
+  public getAllSignedInUserAvailableUserDataTemplatesInfo(): IUserDataTemplateInfo[] {
+    return this.DATA_TEMPLATE_SERVICE.getAllSignedInUserAvailableUserDataTemplatesInfo();
   }
 }

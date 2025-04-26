@@ -85,6 +85,7 @@ export class OpenUserDataStorageVisibilityGroupsContext {
     }
     const VISIBILITY_GROUP_IDS: UUID[] = visibilityGroupIds.filter((visibilityGroupId: UUID): boolean => {
       const IS_OPEN: boolean = this.openDataStorageVisibilityGroups.some((openVisibilityGroup: IUserDataStorageVisibilityGroup): boolean => {
+        // TODO: Add check for data storage id
         return visibilityGroupId === openVisibilityGroup.visibilityGroupId;
       });
       if (!IS_OPEN) {

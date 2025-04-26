@@ -8,6 +8,7 @@ import {
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IUserDataBoxConfigCreateDTO } from "@shared/user/data/box/create/DTO/UserDataBoxConfigCreateDTO";
 import { IUserDataBoxNameAvailabilityRequest } from "@shared/user/data/box/create/UserDataBoxNameAvailabilityRequest";
+import { IUserDataBoxIdentifier } from "@shared/user/data/box/identifier/UserDataBoxIdentifier";
 import { IUserDataBoxInfo } from "@shared/user/data/box/info/UserDataBoxInfo";
 import { IDataChangedDiff } from "@shared/utils/DataChangedDiff";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
@@ -38,7 +39,7 @@ export const USER_DATA_BOX_API_PRELOAD_HANDLERS: IUserDataBoxAPI = {
     sendLogToMainProcess(PRELOAD_IPC_USER_DATA_BOX_API_LOG_SCOPE, "debug", `Adding listener from main on channel: "${CHANNEL}".`);
     const LISTENER = (
       _: IpcRendererEvent,
-      encryptedAvailableUserDataBoxesInfoChangedDiff: IEncryptedData<IDataChangedDiff<string, IUserDataBoxInfo>>
+      encryptedAvailableUserDataBoxesInfoChangedDiff: IEncryptedData<IDataChangedDiff<IUserDataBoxIdentifier, IUserDataBoxInfo>>
     ): void => {
       sendLogToMainProcess(PRELOAD_IPC_USER_DATA_BOX_API_LOG_SCOPE, "debug", `Received message from main on channel: "${CHANNEL}".`);
       callback(encryptedAvailableUserDataBoxesInfoChangedDiff);

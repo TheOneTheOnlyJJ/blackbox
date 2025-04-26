@@ -1,7 +1,7 @@
 import {
   BaseUserAccountStorageBackend,
-  IDataStorageConfigFilter,
-  IDataStorageVisibilityGroupFilter,
+  IUserAccountStorageUserDataStorageConfigFilter,
+  IUserAccountStorageUserDataStorageVisibilityGroupFilter,
   IUserAccountStorageBackendHandlers
 } from "../../BaseUserAccountStorageBackend";
 import DatabaseConstructor, { Database, RunResult } from "better-sqlite3";
@@ -341,12 +341,12 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     }
   }
 
-  public getStorageSecuredUserDataStorageConfigs(options: IDataStorageConfigFilter): IStorageSecuredUserDataStorageConfig[] {
-    const { userId, includeIds, excludeIds, visibilityGroups } = options;
-    this.logger.debug(`Getting Storage Secured User Data Storage Configs for user: "${userId}".`);
+  public getStorageSecuredUserDataStorageConfigs(filter: IUserAccountStorageUserDataStorageConfigFilter): IStorageSecuredUserDataStorageConfig[] {
+    this.logger.debug(`Getting Storage Secured User Data Storage Configs for user: "${filter.userId}".`);
     if (this.db === null) {
       throw new Error(`Closed "${this.config.type}" User Account Storage Backend`);
     }
+    const { userId, includeIds, excludeIds, visibilityGroups } = filter;
     let SQLQuery = `
       SELECT
         storage_id AS storageId,
@@ -358,7 +358,7 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
       WHERE
         user_id = @userId
       `;
-    const SQL_QUERY_ARGUMENTS: Map<string, unknown> = new Map<string, unknown>([["userId", userId]]);
+    const SQL_QUERY_ARGUMENTS: Map<string, string> = new Map<string, string>([["userId", userId]]);
     if (includeIds !== "all") {
       if (includeIds.length === 0) {
         throw new Error("Include IDs list cannot be empty");
@@ -485,9 +485,9 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
   }
 
   public getStorageSecuredUserDataStorageVisibilityGroupConfigs(
-    options: IDataStorageVisibilityGroupFilter
+    filter: IUserAccountStorageUserDataStorageVisibilityGroupFilter
   ): IStorageSecuredUserDataStorageVisibilityGroupConfig[] {
-    const { userId, includeIds, excludeIds } = options;
+    const { userId, includeIds, excludeIds } = filter;
     this.logger.debug(`Getting Storage Secured User Data Storage Visibility Group Configs for user: "${userId}".`);
     if (this.db === null) {
       throw new Error(`Closed "${this.config.type}" User Account Storage Backend`);
@@ -502,7 +502,7 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
       WHERE
         user_id = @userId
     `;
-    const SQL_QUERY_ARGUMENTS: Map<string, unknown> = new Map<string, unknown>([["userId", userId]]);
+    const SQL_QUERY_ARGUMENTS: Map<string, string> = new Map<string, string>([["userId", userId]]);
     if (includeIds !== "all") {
       if (includeIds.length === 0) {
         throw new Error("Include IDs list cannot be empty");

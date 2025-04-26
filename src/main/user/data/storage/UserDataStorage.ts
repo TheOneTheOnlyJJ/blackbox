@@ -5,7 +5,12 @@ import { userDataStorageBackendFactory } from "./backend/userDataStorageBackendF
 import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
 import { ISecuredUserDataStorageConfig } from "./config/SecuredUserDataStorageConfig";
 import { IStorageSecuredUserDataBoxConfig } from "../box/config/StorageSecuredUserDataBoxConfig";
-import { IUserDataStorageBackendHandlers } from "./backend/BaseUserDataStorageBackend";
+import {
+  IUserDataStorageBackendHandlers,
+  IUserDataStorageUserDataBoxConfigFilter,
+  IUserDataStorageUserDataTemplateConfigFilter
+} from "./backend/BaseUserDataStorageBackend";
+import { IStorageSecuredUserDataTemplateConfig } from "../template/config/StorageSecuredUserDataTemplateConfig";
 
 export interface IUserDataStorageHandlers {
   onInfoChanged: ((newInfo: Readonly<IUserDataStorageInfo>) => void) | null;
@@ -77,6 +82,16 @@ export class UserDataStorage {
     return boxId;
   }
 
+  public generateRandomDataTemplateId(boxId: UUID): UUID {
+    this.logger.debug("Generating random User Data Template ID.");
+    let templateId: UUID = randomUUID({ disableEntropyCache: true });
+    while (!this.isUserDataTemplateIdAvailable(templateId, boxId)) {
+      this.logger.debug("Generating a new random ID.");
+      templateId = randomUUID({ disableEntropyCache: true });
+    }
+    return templateId;
+  }
+
   public getInfo(): IUserDataStorageInfo {
     this.logger.info("Getting User Data Storage Info.");
     return {
@@ -104,11 +119,25 @@ export class UserDataStorage {
     return this.backend.isUserDataBoxIdAvailable(boxId);
   }
 
+  public isUserDataTemplateIdAvailable(templateId: UUID, boxId: UUID): boolean {
+    return this.backend.isUserDataTemplateIdAvailable(templateId, boxId);
+  }
+
   public addStorageSecuredUserDataBoxConfig(storageSecuredUserDataBoxConfig: IStorageSecuredUserDataBoxConfig): boolean {
     return this.backend.addStorageSecuredUserDataBoxConfig(storageSecuredUserDataBoxConfig);
   }
 
-  public getStorageSecuredUserDataBoxConfigs(): IStorageSecuredUserDataBoxConfig[] {
-    return this.backend.getStorageSecuredUserDataBoxConfigs(this.storageId);
+  public addStorageSecuredUserDataTemplateConfig(storageSecuredUserDataTemplateConfig: IStorageSecuredUserDataTemplateConfig): boolean {
+    return this.backend.addStorageSecuredUserDataTemplateConfig(storageSecuredUserDataTemplateConfig);
+  }
+
+  public getStorageSecuredUserDataBoxConfigs(filter: IUserDataStorageUserDataBoxConfigFilter): IStorageSecuredUserDataBoxConfig[] {
+    // TODO: Add a new ID-less type for this and add it on the results here?
+    return this.backend.getStorageSecuredUserDataBoxConfigs(this.storageId, filter);
+  }
+
+  public getStorageSecuredUserDataTemplateConfigs(filter: IUserDataStorageUserDataTemplateConfigFilter): IStorageSecuredUserDataTemplateConfig[] {
+    // TODO: Add a new ID-less type for this and add it on the results here?
+    return this.backend.getStorageSecuredUserDataTemplateConfigs(this.storageId, filter);
   }
 }

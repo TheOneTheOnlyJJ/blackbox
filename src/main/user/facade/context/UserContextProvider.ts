@@ -6,6 +6,7 @@ import { IUserDataStorageVisibilityGroupServiceContext } from "../services/UserD
 import { UserContext } from "./UserContext";
 import { IUserDataStorageServiceContext } from "../services/UserDataStorageService";
 import { IUserDataBoxServiceContext } from "../services/UserDataBoxService";
+import { IUserDataTemplateServiceContext } from "../services/UserDataTemplateService";
 
 export class UserContextProvider {
   private readonly logger: LogFunctions;
@@ -142,5 +143,24 @@ export class UserContextProvider {
           this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT
         )
     } satisfies IUserDataBoxServiceContext;
+  }
+
+  public getUserDataTemplateServiceContext(): IUserDataTemplateServiceContext {
+    this.logger.debug("Providing User Data Template Service Context.");
+    return {
+      getSignedInUser: this.CONTEXT.AUTH_CONTEXT.getSignedInUser.bind(this.CONTEXT.AUTH_CONTEXT),
+      getAvailableDataTemplates: this.CONTEXT.AVAILABLE_DATA_TEMPLATES_CONTEXT.getAvailableDataTemplates.bind(
+        this.CONTEXT.AVAILABLE_DATA_TEMPLATES_CONTEXT
+      ),
+      generateRandomDataTemplateId: this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT.generateRandomDataTemplateId.bind(
+        this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT
+      ),
+      addSecuredUserDataTemplateConfig: this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT.addSecuredUserDataTemplateConfig.bind(
+        this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT
+      ),
+      getStorageSecuredUserDataTemplates: this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT.getStorageSecuredUserDataTemplates.bind(
+        this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT
+      )
+    } satisfies IUserDataTemplateServiceContext;
   }
 }

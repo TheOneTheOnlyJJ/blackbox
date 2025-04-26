@@ -1,5 +1,8 @@
 import { ISecuredUserSignUpPayload } from "@main/user/account/SecuredUserSignUpPayload";
-import { IDataStorageConfigFilter, IDataStorageVisibilityGroupFilter } from "@main/user/account/storage/backend/BaseUserAccountStorageBackend";
+import {
+  IUserAccountStorageUserDataStorageConfigFilter,
+  IUserAccountStorageUserDataStorageVisibilityGroupFilter
+} from "@main/user/account/storage/backend/BaseUserAccountStorageBackend";
 import { UserAccountStorage } from "@main/user/account/storage/UserAccountStorage";
 import { ISecuredUserDataStorageConfig } from "@main/user/data/storage/config/SecuredUserDataStorageConfig";
 import { IStorageSecuredUserDataStorageConfig } from "@main/user/data/storage/config/StorageSecuredUserDataStorageConfig";
@@ -203,19 +206,19 @@ export class UserAccountStorageContext {
     );
   }
 
-  public getStorageSecuredUserDataStorageConfigs(options: IDataStorageConfigFilter): IStorageSecuredUserDataStorageConfig[] {
+  public getStorageSecuredUserDataStorageConfigs(filter: IUserAccountStorageUserDataStorageConfigFilter): IStorageSecuredUserDataStorageConfig[] {
     if (this.accountStorage === null) {
       throw new Error("Null User Account Storage");
     }
-    return this.accountStorage.getStorageSecuredUserDataStorageConfigs(options);
+    return this.accountStorage.getStorageSecuredUserDataStorageConfigs(filter);
   }
 
   public getStorageSecuredUserDataStorageVisibilityGroupConfigs(
-    options: IDataStorageVisibilityGroupFilter
+    filter: IUserAccountStorageUserDataStorageVisibilityGroupFilter
   ): IStorageSecuredUserDataStorageVisibilityGroupConfig[] {
     if (this.accountStorage === null) {
       throw new Error("Null User Account Storage");
     }
-    return this.accountStorage.getStorageSecuredUserDataStorageVisibilityGroupConfigs(options);
+    return this.accountStorage.getStorageSecuredUserDataStorageVisibilityGroupConfigs(filter);
   }
 }
