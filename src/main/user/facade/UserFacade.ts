@@ -32,8 +32,8 @@ import { IUserDataBoxConfigCreateDTO } from "@shared/user/data/box/create/DTO/Us
 import { ISecuredUserDataBoxConfig } from "../data/box/config/SecuredUserDataBoxConfig";
 import { IUserDataBoxInfo } from "@shared/user/data/box/info/UserDataBoxInfo";
 import { IUserDataStorageNameAvailabilityRequest } from "@shared/user/data/storage/config/create/UserDataStorageNameAvailabilityRequest";
-import { IUserDataTemplateNameAvailabilityRequest } from "@shared/user/data/template/create/UserDataTemplateNameAvailabilityRequest";
-import { IUserDataTemplateConfigCreateDTO } from "@shared/user/data/template/create/DTO/UserDataTemplateConfigCreateDTO";
+import { IUserDataTemplateNameAvailabilityRequest } from "@shared/user/data/template/config/create/UserDataTemplateNameAvailabilityRequest";
+import { IUserDataTemplateConfigCreateDTO } from "@shared/user/data/template/config/create/DTO/UserDataTemplateConfigCreateDTO";
 import { IUserDataTemplateInfo } from "@shared/user/data/template/info/UserDataTemplateInfo";
 import { ISecuredUserDataTemplateConfig } from "../data/template/config/SecuredUserDataTemplateConfig";
 

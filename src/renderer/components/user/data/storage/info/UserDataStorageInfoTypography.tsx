@@ -5,7 +5,7 @@ import UserDataStorageBackendInfoTypography from "../backend/info/UserDataStorag
 import { ISignedInRootContext, useSignedInRootContext } from "@renderer/components/roots/signedInRoot/SignedInRootContext";
 import { USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/config/info/UserDataStorageConfigInfo";
 import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
-import UserDataStorageVisibilityGroupInfoTypography from "../visibilityGroup/UserDataStorageVisibilityGroupInfoTypography";
+import UserDataStorageVisibilityGroupInfoTypography from "../visibilityGroup/info/UserDataStorageVisibilityGroupInfoTypography";
 import { PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS } from "@shared/user/data/storage/visibilityGroup/public/constants";
 
 export interface IUserDataStorageInfoTypographyProps {
@@ -46,7 +46,7 @@ const UserDataStorageInfoTypography: FC<IUserDataStorageInfoTypographyProps> = (
           <Typography>
             <b>{USER_DATA_STORAGE_CONFIG_INFO_JSON_SCHEMA_CONSTANTS.visibilityGroupId.title}:</b>
           </Typography>
-          <Box sx={{ textIndent: "1rem" }}>
+          <Box sx={{ pl: "1rem" }}>
             <UserDataStorageVisibilityGroupInfoTypography userDataStorageVisibilityGroupInfo={userDataStorageVisibilityGroupInfo} doShowId={true} />
           </Box>
         </>
@@ -54,7 +54,7 @@ const UserDataStorageInfoTypography: FC<IUserDataStorageInfoTypographyProps> = (
       <Typography>
         <b>{USER_DATA_STORAGE_INFO_JSON_SCHEMA_CONSTANTS.backend.title}:</b>
       </Typography>
-      <Box sx={{ textIndent: "1rem" }}>
+      <Box sx={{ pl: "1rem" }}>
         <UserDataStorageBackendInfoTypography userDataStorageBackendInfo={userDataStorageInfo.backend} />
       </Box>
     </>

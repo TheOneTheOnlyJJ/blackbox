@@ -40,13 +40,13 @@ const AvailableUserDataStorageConfigsDataGrid: FC = () => {
     autosizeOptions: GRID_AUTOSIZE_OPTIONS,
     gridPurposeToLog: "available User Data Storage Configs"
   });
-  const [isShowConfigInfoDialogOpen, setIsShowConfigInfoDialogOpen] = useDialogOpenState(appLogger, "available User Data Storage Config Info");
+  const [isConfigInfoDialogOpen, setIsConfigInfoDialogOpen] = useDialogOpenState(appLogger, "available User Data Storage Config Info");
   const [chosenStorageConfigInfo, setChosenStorageConfigInfo] = useState<IUserDataStorageConfigInfo | null>(null);
 
   const handleConfigInfoDialogClose = useCallback((): void => {
-    setIsShowConfigInfoDialogOpen(false);
+    setIsConfigInfoDialogOpen(false);
     setChosenStorageConfigInfo(null);
-  }, [setIsShowConfigInfoDialogOpen]);
+  }, [setIsConfigInfoDialogOpen]);
 
   const rowIdGetter: GridRowIdGetter<IUserDataStorageConfigInfo> = useCallback((row: IUserDataStorageConfigInfo): GridRowId => {
     return row.visibilityGroupId === null ? row.storageId : row.storageId + row.visibilityGroupId;
@@ -112,7 +112,7 @@ const AvailableUserDataStorageConfigsDataGrid: FC = () => {
               key="openInfoDialog"
               userDataStorageConfigInfo={params.row}
               setChosenUserDataStorageConfigInfo={setChosenStorageConfigInfo}
-              setIsShowUserDataStorageConfigInfoDialogOpen={setIsShowConfigInfoDialogOpen}
+              setIsUserDataStorageConfigInfoDialogOpen={setIsConfigInfoDialogOpen}
               showInMenu={false}
             />
           ];
@@ -145,7 +145,7 @@ const AvailableUserDataStorageConfigsDataGrid: FC = () => {
         }
       }
     ];
-  }, [setIsShowConfigInfoDialogOpen, signedInRootContext]);
+  }, [setIsConfigInfoDialogOpen, signedInRootContext]);
 
   return (
     <>
@@ -167,7 +167,7 @@ const AvailableUserDataStorageConfigsDataGrid: FC = () => {
       />
       {chosenStorageConfigInfo !== null ? (
         <UserDataStorageConfigInfoDialog
-          open={isShowConfigInfoDialogOpen}
+          open={isConfigInfoDialogOpen}
           onClose={handleConfigInfoDialogClose}
           userDataStorageConfigInfo={chosenStorageConfigInfo}
           doShowId={true}

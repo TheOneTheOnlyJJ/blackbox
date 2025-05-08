@@ -1,5 +1,9 @@
 import { JSONSchemaType } from "ajv";
 import { UUID } from "node:crypto";
+import {
+  SECURED_USER_DATA_TEMPLATE_FIELD_CONFIG_JSON_SCHEMA,
+  SecuredUserDataTemplateFieldConfig
+} from "../field/config/SecuredUserDataTemplateFieldConfig";
 
 export interface ISecuredUserDataTemplateConfig {
   templateId: UUID;
@@ -7,6 +11,7 @@ export interface ISecuredUserDataTemplateConfig {
   boxId: UUID;
   name: string;
   description: string | null;
+  fields: SecuredUserDataTemplateFieldConfig[];
 }
 
 export const SECURED_USER_DATA_TEMPLATE_CONFIG_JSON_SCHEMA: JSONSchemaType<ISecuredUserDataTemplateConfig> = {
@@ -20,7 +25,8 @@ export const SECURED_USER_DATA_TEMPLATE_CONFIG_JSON_SCHEMA: JSONSchemaType<ISecu
     description: {
       type: "string",
       nullable: true as false // https://github.com/ajv-validator/ajv/issues/2163#issuecomment-2085689455
-    }
+    },
+    fields: { type: "array", items: SECURED_USER_DATA_TEMPLATE_FIELD_CONFIG_JSON_SCHEMA, minItems: 1 }
   },
   required: ["templateId", "storageId", "boxId", "name", "description"],
   additionalProperties: false

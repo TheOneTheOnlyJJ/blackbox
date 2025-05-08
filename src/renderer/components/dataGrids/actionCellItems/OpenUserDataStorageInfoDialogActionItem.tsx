@@ -9,20 +9,20 @@ export interface IOpenUserDataStorageInfoDialogActionItemProps {
   key: string | number;
   userDataStorageInfo: IUserDataStorageInfo;
   setChosenUserDataStorageInfo: Dispatch<SetStateAction<IUserDataStorageInfo | null>>;
-  setIsShowUserDataStorageInfoDialogOpen: Dispatch<SetStateAction<boolean>>;
+  setIsUserDataStorageInfoDialogOpen: Dispatch<SetStateAction<boolean>>;
   showInMenu: boolean;
 }
 
 const OpenUserDataStorageInfoDialogActionItem: FC<IOpenUserDataStorageInfoDialogActionItemProps> = (
   props: IOpenUserDataStorageInfoDialogActionItemProps
 ) => {
-  const { logger, key, userDataStorageInfo, setChosenUserDataStorageInfo, setIsShowUserDataStorageInfoDialogOpen, showInMenu } = props;
+  const { logger, key, userDataStorageInfo, setChosenUserDataStorageInfo, setIsUserDataStorageInfoDialogOpen, showInMenu } = props;
 
   const handleInfoClick = useCallback((): void => {
-    logger.info(`Clicked show User Data Storage Info "${userDataStorageInfo.storageId}" action button.`);
+    logger.info(`Clicked open User Data Storage Info "${userDataStorageInfo.storageId}" action button.`);
     setChosenUserDataStorageInfo(userDataStorageInfo);
-    setIsShowUserDataStorageInfoDialogOpen(true);
-  }, [logger, userDataStorageInfo, setChosenUserDataStorageInfo, setIsShowUserDataStorageInfoDialogOpen]);
+    setIsUserDataStorageInfoDialogOpen(true);
+  }, [logger, userDataStorageInfo, setChosenUserDataStorageInfo, setIsUserDataStorageInfoDialogOpen]);
 
   return <GridActionsCellItem key={key} icon={<InfoOutlinedIcon />} onClick={handleInfoClick} label="Show information" showInMenu={showInMenu} />;
 };

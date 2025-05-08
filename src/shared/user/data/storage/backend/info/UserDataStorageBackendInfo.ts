@@ -13,13 +13,11 @@ import {
   OPTION_C_USER_DATA_STORAGE_BACKEND_INFO_JSON_SCHEMA
 } from "./implementations/optionC/OptionCUserDataStorageBackendInfo";
 
-// Map of every user data storage backend type to its corresponding info type
 export interface IUserDataStorageBackendInfoMap {
   [USER_DATA_STORAGE_BACKEND_TYPES.localSQLite]: ILocalSQLiteUserDataStorageBackendInfo;
   [USER_DATA_STORAGE_BACKEND_TYPES.optionB]: IOptionBUserDataStorageBackendInfo;
   [USER_DATA_STORAGE_BACKEND_TYPES.optionC]: IOptionCUserDataStorageBackendInfo;
 }
-// Union of all concrete user data storage backend info interfaces
 export type UserDataStorageBackendInfo = IUserDataStorageBackendInfoMap[keyof IUserDataStorageBackendInfoMap];
 
 type UserDataStorageBackendInfoJSONSchemaMap = {

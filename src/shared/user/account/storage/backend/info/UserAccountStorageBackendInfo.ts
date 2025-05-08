@@ -8,11 +8,9 @@ import {
   LOCAL_SQLITE_USER_ACCOUNT_STORAGE_BACKEND_INFO_JSON_SCHEMA
 } from "./implementations/localSQLite/LocalSQLiteUserAccountStorageBackendInfo";
 
-// Map of every user account storage backend type to its corresponding info type
 export interface IUserAccountStorageBackendInfoMap {
   [USER_ACCOUNT_STORAGE_BACKEND_TYPES.localSQLite]: ILocalSQLiteUserAccountStorageBackendInfo;
 }
-// Union of all concrete user account storage backend config info interfaces
 export type UserAccountStorageBackendInfo = IUserAccountStorageBackendInfoMap[keyof IUserAccountStorageBackendInfoMap];
 
 type UserAccountStorageBackendInfoJSONSchemaMap = {

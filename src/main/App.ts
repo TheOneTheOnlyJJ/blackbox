@@ -82,11 +82,11 @@ import { IUserDataTemplateAPI, USER_DATA_TEMPLATE_API_IPC_CHANNELS, UserDataTemp
 import {
   isValidUserDataTemplateNameAvailabilityRequest,
   IUserDataTemplateNameAvailabilityRequest
-} from "@shared/user/data/template/create/UserDataTemplateNameAvailabilityRequest";
+} from "@shared/user/data/template/config/create/UserDataTemplateNameAvailabilityRequest";
 import {
   isValidUserDataTemplateConfigCreateDTO,
   IUserDataTemplateConfigCreateDTO
-} from "@shared/user/data/template/create/DTO/UserDataTemplateConfigCreateDTO";
+} from "@shared/user/data/template/config/create/DTO/UserDataTemplateConfigCreateDTO";
 import { IUserDataTemplateInfo } from "@shared/user/data/template/info/UserDataTemplateInfo";
 import { IUserDataBoxIdentifier } from "@shared/user/data/box/identifier/UserDataBoxIdentifier";
 import { IUserDataTemplateIdentifier } from "@shared/user/data/template/identifier/UserDataTemplateIdentifier";

@@ -82,6 +82,10 @@ const NewUserDataStorageConfigForm: FC<INewUserDataStorageConfigFormProps> = (pr
         return;
       }
       const FORM_DATA: IUserDataStorageConfigCreateInput = data.formData;
+      // TODO: Add a new UserDataStorageResourceAvailabilityRequest that checks for existing files with the same name for Local SQLite Data Storages
+      // TODO: So that an existing database with the input data name is not overwritten
+      // TODO: Maybe rename all NameAvailabilityRequest to ResourceAvailabilityRequest
+      // TODO: OR maybe include all of this logic in the addNewX and add errors here dynamically; NO, validation should be an intentional separate step with its own API surface
       window.IPCTLSAPI.encrypt<IUserDataStorageNameAvailabilityRequest>(
         {
           name: FORM_DATA.name,

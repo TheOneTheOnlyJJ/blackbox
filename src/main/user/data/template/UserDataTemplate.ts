@@ -1,6 +1,7 @@
 import { AJV } from "@shared/utils/AJVJSONValidator";
 import { JSONSchemaType, ValidateFunction } from "ajv";
 import { UUID } from "node:crypto";
+import { USER_DATA_TEMPLATE_FIELD_JSON_SCHEMA, UserDataTemplateField } from "./field/UserDataTemplateField";
 
 export interface IUserDataTemplate {
   templateId: UUID;
@@ -8,6 +9,7 @@ export interface IUserDataTemplate {
   boxId: UUID;
   name: string;
   description: string | null;
+  fields: UserDataTemplateField[];
 }
 
 export const USER_DATA_TEMPLATE_JSON_SCHEMA: JSONSchemaType<IUserDataTemplate> = {
@@ -21,9 +23,10 @@ export const USER_DATA_TEMPLATE_JSON_SCHEMA: JSONSchemaType<IUserDataTemplate> =
     description: {
       type: "string",
       nullable: true as false // https://github.com/ajv-validator/ajv/issues/2163#issuecomment-2085689455
-    }
+    },
+    fields: { type: "array", items: USER_DATA_TEMPLATE_FIELD_JSON_SCHEMA, minItems: 1 }
   },
-  required: ["templateId", "storageId", "boxId", "name", "description"],
+  required: ["templateId", "storageId", "boxId", "name", "description", "fields"],
   additionalProperties: false
 } as const;
 

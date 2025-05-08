@@ -8,11 +8,9 @@ import {
   UserAccountStorageBackendType
 } from "@shared/user/account/storage/backend/UserAccountStorageBackendType";
 
-// Map of every user account storage backend type to its corresponding config type
 export interface IUserAccountStorageBackendConfigMap {
   [USER_ACCOUNT_STORAGE_BACKEND_TYPES.localSQLite]: ILocalSQLiteUserAccountStorageBackendConfig;
 }
-// Union of all user account storage backend config concrete implementation interfaces
 export type UserAccountStorageBackendConfig = IUserAccountStorageBackendConfigMap[keyof IUserAccountStorageBackendConfigMap];
 
 type UserAccountStorageBackendConfigJSONSchemaMap = {

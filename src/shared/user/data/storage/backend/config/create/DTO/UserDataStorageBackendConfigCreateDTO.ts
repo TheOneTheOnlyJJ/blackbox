@@ -13,13 +13,11 @@ import {
   OPTION_C_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_DTO_JSON_SCHEMA
 } from "./implementations/optionC/optionC";
 
-// Map of every user data storage backend type to its corresponding config create DTO type
 export interface IUserDataStorageBackendConfigCreateDTOMap {
   [USER_DATA_STORAGE_BACKEND_TYPES.localSQLite]: ILocalSQLiteUserDataStorageBackendConfigCreateDTO;
   [USER_DATA_STORAGE_BACKEND_TYPES.optionB]: IOptionBUserDataStorageBackendConfigCreateDTO;
   [USER_DATA_STORAGE_BACKEND_TYPES.optionC]: IOptionCUserDataStorageBackendConfigCreateDTO;
 }
-// Union of all concrete user data storage backend config create DTO interfaces
 export type UserDataStorageBackendConfigCreateDTO = IUserDataStorageBackendConfigCreateDTOMap[keyof IUserDataStorageBackendConfigCreateDTOMap];
 
 type UserDataStorageBackendConfigCreateDTOJSONSchemaMap = {

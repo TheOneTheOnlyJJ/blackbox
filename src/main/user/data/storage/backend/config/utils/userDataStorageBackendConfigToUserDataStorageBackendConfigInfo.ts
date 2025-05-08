@@ -15,6 +15,7 @@ import { IOptionCUserDataStorageBackendConfigInfo } from "@shared/user/data/stor
 type UserDataStorageBackendConfigToUserDataStorageBackendConfigInfoFunctionMap = {
   [K in UserDataStorageBackendType]: (userDataStorageBackendConfig: IUserDataStorageBackendConfigMap[K]) => IUserDataStorageBackendConfigInfoMap[K];
 };
+// TODO: Move these to utils folders
 const USER_DATA_STORAGE_BACKEND_CONFIG_TO_USER_DATA_STORAGE_BACKEND_CONFIG_INFO_FUNCTION_MAP: UserDataStorageBackendConfigToUserDataStorageBackendConfigInfoFunctionMap =
   {
     [USER_DATA_STORAGE_BACKEND_TYPES.localSQLite]: (

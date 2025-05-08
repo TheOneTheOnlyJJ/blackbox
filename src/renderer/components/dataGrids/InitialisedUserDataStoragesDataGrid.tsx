@@ -41,14 +41,14 @@ const InitialisedUserDataStoragesDataGrid: FC = () => {
     autosizeOptions: GRID_AUTOSIZE_OPTIONS,
     gridPurposeToLog: "initialised User Data Storages"
   });
-  const [isShowInfoDialogOpen, setIsShowInfoDialogOpen] = useDialogOpenState(appLogger, "initialised User Data Storage Info");
+  const [isStorageInfoDialogOpen, setIsStorageInfoDialogOpen] = useDialogOpenState(appLogger, "initialised User Data Storage Info");
   const [chosenStorageInfo, setChosenStorageInfo] = useState<IUserDataStorageInfo | null>(null);
   const [newUserDataBoxConfigDefaultValues, setNewUserDataBoxConfigDefaultValues] = useState<Partial<IUserDataBoxConfigCreateInput> | null>(null);
 
-  const handleInfoDialogClose = useCallback((): void => {
-    setIsShowInfoDialogOpen(false);
+  const handleStorageInfoDialogClose = useCallback((): void => {
+    setIsStorageInfoDialogOpen(false);
     setChosenStorageInfo(null);
-  }, [setIsShowInfoDialogOpen]);
+  }, [setIsStorageInfoDialogOpen]);
 
   // TODO: Move all of these to Boxes page (Remove form here)
   const [isNewUserDataBoxConfigFormDialogOpen, setIsNewUserDataBoxConfigFormDialogOpen] = useDialogOpenState(
@@ -138,7 +138,7 @@ const InitialisedUserDataStoragesDataGrid: FC = () => {
               key="openInfoDialog"
               userDataStorageInfo={params.row}
               setChosenUserDataStorageInfo={setChosenStorageInfo}
-              setIsShowUserDataStorageInfoDialogOpen={setIsShowInfoDialogOpen}
+              setIsUserDataStorageInfoDialogOpen={setIsStorageInfoDialogOpen}
               showInMenu={false}
             />
           ];
@@ -192,7 +192,7 @@ const InitialisedUserDataStoragesDataGrid: FC = () => {
         }
       }
     ];
-  }, [signedInRootContext, setIsShowInfoDialogOpen, handleNewDataBoxConfigButtonClick]);
+  }, [signedInRootContext, setIsStorageInfoDialogOpen, handleNewDataBoxConfigButtonClick]);
 
   return (
     <>
@@ -214,8 +214,8 @@ const InitialisedUserDataStoragesDataGrid: FC = () => {
       />
       {chosenStorageInfo !== null ? (
         <UserDataStorageInfoDialog
-          open={isShowInfoDialogOpen}
-          onClose={handleInfoDialogClose}
+          open={isStorageInfoDialogOpen}
+          onClose={handleStorageInfoDialogClose}
           userDataStorageInfo={chosenStorageInfo}
           doShowId={true}
         />

@@ -7,8 +7,8 @@ import { userDataTemplateConfigCreateDTOToUserDataTemplateConfig } from "@main/u
 import { userDataTemplateConfigToSecuredUserDataTemplateConfig } from "@main/user/data/template/config/utils/userDataTemplateConfigToSecuredUserDataTemplateConfig";
 import { IUserDataTemplate } from "@main/user/data/template/UserDataTemplate";
 import { userDataTemplateToUserDataTemplateInfo } from "@main/user/data/template/utils/userDataTemplateToUserDataTemplateInfo";
-import { IUserDataTemplateConfigCreateDTO } from "@shared/user/data/template/create/DTO/UserDataTemplateConfigCreateDTO";
-import { IUserDataTemplateNameAvailabilityRequest } from "@shared/user/data/template/create/UserDataTemplateNameAvailabilityRequest";
+import { IUserDataTemplateConfigCreateDTO } from "@shared/user/data/template/config/create/DTO/UserDataTemplateConfigCreateDTO";
+import { IUserDataTemplateNameAvailabilityRequest } from "@shared/user/data/template/config/create/UserDataTemplateNameAvailabilityRequest";
 import { IUserDataTemplateInfo } from "@shared/user/data/template/info/UserDataTemplateInfo";
 import { LogFunctions } from "electron-log";
 import { UUID } from "node:crypto";
@@ -59,6 +59,8 @@ export class UserDataTemplateService {
     if (SIGNED_IN_USER === null) {
       throw new Error("No signed in user");
     }
+    // TODO: Delete this
+    // this.logger.info(`RECEIVED TEMPLATE CONFIG:\n${JSON.stringify(securedUserDataTemplateConfig, null, 2)}`);
     return this.CONTEXT.addSecuredUserDataTemplateConfig(securedUserDataTemplateConfig, SIGNED_IN_USER.userDataAESKey); // TODO: When Box Visibility Groups, use key from there
   }
 

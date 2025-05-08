@@ -26,6 +26,7 @@ export const storageSecuredUserDataTemplateConfigToSecuredUserDataTemplateConfig
     storageId: storageSecuredUserDataTemplateConfig.storageId,
     boxId: storageSecuredUserDataTemplateConfig.boxId,
     name: DECRYPTED_PRIVATE_STORAGE_SECURED_USER_DATA_TEMPLATE_CONFIG.name,
-    description: DECRYPTED_PRIVATE_STORAGE_SECURED_USER_DATA_TEMPLATE_CONFIG.description
+    description: DECRYPTED_PRIVATE_STORAGE_SECURED_USER_DATA_TEMPLATE_CONFIG.description,
+    fields: DECRYPTED_PRIVATE_STORAGE_SECURED_USER_DATA_TEMPLATE_CONFIG.fields
   } satisfies ISecuredUserDataTemplateConfig;
 };

@@ -9,6 +9,7 @@ export interface ISecuredUserDataStorageConfig {
   visibilityGroupId: UUID | null;
   name: string;
   description: string | null;
+  // TODO: A new SecuredUserDataStorageBackendConfig type for consistency?
   backendConfig: UserDataStorageBackendConfig;
 }
 

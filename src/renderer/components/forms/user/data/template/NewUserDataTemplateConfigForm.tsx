@@ -4,25 +4,92 @@ import {
   IUserDataTemplateConfigCreateInput,
   USER_DATA_TEMPLATE_CONFIG_CREATE_INPUT_JSON_SCHEMA,
   USER_DATA_TEMPLATE_CONFIG_CREATE_INPUT_UI_SCHEMA
-} from "@renderer/user/data/template/create/input/UserDataTemplateCreateInput";
-import { userDataTemplateConfigCreateInputToUserDataTemplateConfigCreateDTO } from "@renderer/user/data/template/create/input/utils/userDataTemplateConfigCreateInputToUserDataTemplateConfigCreateDTO";
+} from "@renderer/user/data/template/config/create/input/UserDataTemplateConfigCreateInput";
+import { userDataTemplateConfigCreateInputToUserDataTemplateConfigCreateDTO } from "@renderer/user/data/template/config/create/input/utils/userDataTemplateConfigCreateInputToUserDataTemplateConfigCreateDTO";
+import { UserDataTemplateFieldConfigCreateInput } from "@renderer/user/data/template/field/config/create/input/UserDataTemplateFieldConfigCreateInput";
 import { appLogger } from "@renderer/utils/loggers";
 import { errorCapitalizerErrorTransformer } from "@renderer/utils/RJSF/errorTransformers/errorCapitalizerErrorTransformer";
 import { FormProps, IChangeEvent, withTheme } from "@rjsf/core";
 import { Theme } from "@rjsf/mui";
-import { RJSFValidationError, RJSFSchema, toErrorSchema } from "@rjsf/utils";
+import { RJSFValidationError, RJSFSchema, toErrorSchema, ErrorTransformer, CustomValidator, FormValidation } from "@rjsf/utils";
 import { customizeValidator } from "@rjsf/validator-ajv8";
 import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
-import { IUserDataTemplateConfigCreateDTO } from "@shared/user/data/template/create/DTO/UserDataTemplateConfigCreateDTO";
-import { IUserDataTemplateNameAvailabilityRequest } from "@shared/user/data/template/create/UserDataTemplateNameAvailabilityRequest";
+import { IUserDataTemplateConfigCreateDTO } from "@shared/user/data/template/config/create/DTO/UserDataTemplateConfigCreateDTO";
+import { IUserDataTemplateNameAvailabilityRequest } from "@shared/user/data/template/config/create/UserDataTemplateNameAvailabilityRequest";
+import { AJV_OPTIONS } from "@shared/utils/AJVJSONValidator";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 import { enqueueSnackbar } from "notistack";
 import { Dispatch, SetStateAction, FC, useMemo, useCallback, useState } from "react";
 
 const MUIForm = withTheme<IUserDataTemplateConfigCreateInput, RJSFSchema, ISelectedUserDataStorageIdFormContext>(Theme);
 
-const isValidUserDataTemplateConfigCreateInput = customizeValidator<IUserDataTemplateConfigCreateInput>();
+const isValidUserDataTemplateConfigCreateInput = customizeValidator<IUserDataTemplateConfigCreateInput>({
+  ajvOptionsOverrides: AJV_OPTIONS // TODO: Delete this?
+});
+
+const newUserDataTemplateConfigFormErrorTransformer: ErrorTransformer<IUserDataTemplateConfigCreateInput> = (
+  errors: RJSFValidationError[]
+): RJSFValidationError[] => {
+  return errorCapitalizerErrorTransformer(
+    errors.filter((error: RJSFValidationError): boolean => {
+      // RJSF cannot determine from which anyOf option the errors come from, so they're filtered out
+      if (error.name === "additionalProperties") {
+        appLogger.debug("Filtered additional properties error from new User Data Template Config form.");
+        return false;
+      }
+      // Error coming from no anyOf subschema validity is not relevant for the users, as the specific errors for the current anyOf subschema are displayed
+      if (error.name === "anyOf") {
+        appLogger.debug("Filtered anyOf error from new User Data Template Config form.");
+        return false;
+      }
+      return true;
+    })
+  );
+};
+
+const newUserDataTemplateConfigFormValidator: CustomValidator<IUserDataTemplateConfigCreateInput> = (
+  formData: IUserDataTemplateConfigCreateInput | undefined,
+  errors: FormValidation<IUserDataTemplateConfigCreateInput>
+): FormValidation<IUserDataTemplateConfigCreateInput> => {
+  // Skip if no form data or errors
+  if (formData === undefined || errors.fields === undefined) {
+    return errors;
+  }
+  const FIELD_NAME_COUNTS: Map<string, number> = formData.fields.reduce(
+    (acc: Map<string, number>, fieldConfigCreateInput: UserDataTemplateFieldConfigCreateInput): Map<string, number> => {
+      const FIELD_NAME: string = fieldConfigCreateInput.name;
+      acc.set(FIELD_NAME, (acc.get(FIELD_NAME) ?? 0) + 1);
+      return acc;
+    },
+    new Map<string, number>()
+  );
+  const FIELD_NAME_DUPLICATES: [string, number][] = Array.from(FIELD_NAME_COUNTS.entries()).filter(
+    ([, fieldNameCount]: [string, number]): boolean => {
+      return fieldNameCount > 1;
+    }
+  );
+  if (FIELD_NAME_DUPLICATES.length > 0) {
+    const FORMATTED_DUPLICATE_FIELD_NAMES: string[] = FIELD_NAME_DUPLICATES.map(([fieldName, fieldNameCount]: [string, number]) => {
+      return `"${fieldName}" (${fieldNameCount.toString()})`;
+    });
+    let duplicateFieldNamesDisplayString: string;
+    if (FORMATTED_DUPLICATE_FIELD_NAMES.length === 1) {
+      duplicateFieldNamesDisplayString = FORMATTED_DUPLICATE_FIELD_NAMES.join(", ");
+    } else {
+      const LAST_FORMATTED_DUPLICATE_FIELD_NAME: string | undefined = FORMATTED_DUPLICATE_FIELD_NAMES.pop();
+      if (LAST_FORMATTED_DUPLICATE_FIELD_NAME === undefined) {
+        throw new Error("Undefined last formatted duplicate field name");
+      }
+      duplicateFieldNamesDisplayString = `${FORMATTED_DUPLICATE_FIELD_NAMES.join(", ")} and ${LAST_FORMATTED_DUPLICATE_FIELD_NAME}`;
+    }
+    const DUPLICATE_FIELD_NAMES_ERROR_MESSAGE = `All names must be unique! Name${
+      FIELD_NAME_DUPLICATES.length === 1 ? "" : "s"
+    } ${duplicateFieldNamesDisplayString} ${FIELD_NAME_DUPLICATES.length === 1 ? "is" : "are"} not unique.`;
+    errors.fields.addError(DUPLICATE_FIELD_NAMES_ERROR_MESSAGE);
+  }
+  return errors;
+};
 
 export interface INewUserDataTemplateConfigFormProps {
   formRef: FormProps["ref"];
@@ -36,6 +103,11 @@ export interface INewUserDataTemplateConfigFormProps {
 
 const NewUserDataTemplateConfigForm: FC<INewUserDataTemplateConfigFormProps> = (props: INewUserDataTemplateConfigFormProps) => {
   const [formData, setFormData] = useState<IUserDataTemplateConfigCreateInput | undefined>(undefined);
+
+  // TODO: Delete this
+  // useEffect((): void => {
+  //   appLogger.error(`FORM DATA CHANGED:\n${JSON.stringify(formData, null, 2)}`);
+  // }, [formData]);
 
   const isSubmitButtonDisabled = useMemo<boolean>((): boolean => {
     // TODO: Check if this is all that's really needed?
@@ -57,6 +129,8 @@ const NewUserDataTemplateConfigForm: FC<INewUserDataTemplateConfigFormProps> = (
         return;
       }
       const FORM_DATA: IUserDataTemplateConfigCreateInput = data.formData;
+      // TODO: Delete this
+      appLogger.error(`FORM DATA\n${JSON.stringify(FORM_DATA, null, 2)}`);
       window.IPCTLSAPI.encrypt<IUserDataTemplateNameAvailabilityRequest>(
         { name: FORM_DATA.name, storageId: FORM_DATA.storageId, boxId: FORM_DATA.boxId } satisfies IUserDataTemplateNameAvailabilityRequest,
         "User Data Template name availability request"
@@ -82,6 +156,8 @@ const NewUserDataTemplateConfigForm: FC<INewUserDataTemplateConfigFormProps> = (
               if (IS_USER_DATA_TEMPLATE_NAME_AVAILABLE_RESPONSE.data) {
                 const USER_DATA_TEMPLATE_CONFIG_CREATE_DTO: IUserDataTemplateConfigCreateDTO =
                   userDataTemplateConfigCreateInputToUserDataTemplateConfigCreateDTO(FORM_DATA, appLogger);
+                // TODO: Delete this
+                appLogger.error(`FORM DATA DTO\n${JSON.stringify(USER_DATA_TEMPLATE_CONFIG_CREATE_DTO, null, 2)}`);
                 try {
                   const ENCRYPTED_USER_DATA_TEMPLATE_CONFIG_CREATE_DTO: IEncryptedData<IUserDataTemplateConfigCreateDTO> =
                     await window.IPCTLSAPI.encrypt<IUserDataTemplateConfigCreateDTO>(
@@ -156,7 +232,8 @@ const NewUserDataTemplateConfigForm: FC<INewUserDataTemplateConfigFormProps> = (
       omitExtraData={true}
       liveOmit={true}
       showErrorList={false}
-      transformErrors={errorCapitalizerErrorTransformer}
+      customValidate={newUserDataTemplateConfigFormValidator}
+      transformErrors={newUserDataTemplateConfigFormErrorTransformer}
       onSubmit={handleFormSubmit}
       extraErrors={toErrorSchema<IUserDataTemplateConfigCreateInput>(props.extraErrors)}
       extraErrorsBlockSubmit={false}

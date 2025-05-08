@@ -17,13 +17,11 @@ import {
   OPTION_C_USER_DATA_STORAGE_BACKEND_CONFIG_CREATE_INPUT_UI_SCHEMA
 } from "@renderer/user/data/storage/backend/implementations/optionC/optionCUserDataStorageBackendConfigCreateInput";
 
-// Map of every user data storage backend type to its corresponding config create input type
 export interface IUserDataStorageBackendConfigCreateInputMap {
   [USER_DATA_STORAGE_BACKEND_TYPES.localSQLite]: ILocalSQLiteUserDataStorageBackendConfigCreateInput;
   [USER_DATA_STORAGE_BACKEND_TYPES.optionB]: IOptionBUserDataStorageBackendConfigCreateInput;
   [USER_DATA_STORAGE_BACKEND_TYPES.optionC]: IOptionCUserDataStorageBackendConfigCreateInput;
 }
-// Union of all concrete user data storage backend config create input interfaces
 export type UserDataStorageBackendConfigCreateInput = IUserDataStorageBackendConfigCreateInputMap[keyof IUserDataStorageBackendConfigCreateInputMap];
 
 type UserDataStorageBackendConfigCreateInputJSONSchemaMap = {

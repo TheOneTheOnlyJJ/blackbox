@@ -24,7 +24,7 @@ const UserAccountStorageInfoTypography: FC<IUserAccountStorageInfoTypographyProp
       <Typography>
         <b>{USER_ACCOUNT_STORAGE_INFO_JSON_SCHEMA_CONSTANTS.backend.title}:</b>
       </Typography>
-      <Box sx={{ textIndent: "1rem" }}>
+      <Box sx={{ pl: "1rem" }}>
         <UserAccountStorageBackendInfoTypography userAccountStorageBackendInfo={userAccountStorageInfo.backend} />
       </Box>
     </>

@@ -1,10 +1,10 @@
-import { IUserDataTemplateConfigCreateDTO } from "@shared/user/data/template/create/DTO/UserDataTemplateConfigCreateDTO";
+import { IUserDataTemplateConfigCreateDTO } from "@shared/user/data/template/config/create/DTO/UserDataTemplateConfigCreateDTO";
 import { TransformToIPCAPIChannels } from "../IPCAPIChannels";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 import { IPCAPIResponse } from "../IPCAPIResponse";
 import { IDataChangedDiff } from "@shared/utils/DataChangedDiff";
 import { IUserDataTemplateInfo } from "@shared/user/data/template/info/UserDataTemplateInfo";
-import { IUserDataTemplateNameAvailabilityRequest } from "@shared/user/data/template/create/UserDataTemplateNameAvailabilityRequest";
+import { IUserDataTemplateNameAvailabilityRequest } from "@shared/user/data/template/config/create/UserDataTemplateNameAvailabilityRequest";
 import { IUserDataTemplateIdentifier } from "@shared/user/data/template/identifier/UserDataTemplateIdentifier";
 
 export type AvailableUserDataTemplatesChangedCallback = (

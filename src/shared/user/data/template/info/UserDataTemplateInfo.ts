@@ -1,5 +1,6 @@
 import { AJV } from "@shared/utils/AJVJSONValidator";
 import { JSONSchemaType, ValidateFunction } from "ajv";
+import { USER_DATA_TEMPLATE_FIELD_INFO_JSON_SCHEMA, UserDataTemplateFieldInfo } from "../field/info/UserDataTemplateFieldInfo";
 
 export interface IUserDataTemplateInfo {
   templateId: string;
@@ -7,6 +8,7 @@ export interface IUserDataTemplateInfo {
   boxId: string;
   name: string;
   description: string | null;
+  fields: UserDataTemplateFieldInfo[];
 }
 
 export const USER_DATA_TEMPLATE_INFO_JSON_SCHEMA_CONSTANTS = {
@@ -14,7 +16,8 @@ export const USER_DATA_TEMPLATE_INFO_JSON_SCHEMA_CONSTANTS = {
   storageId: { title: "Storage", format: "uuid" },
   boxId: { title: "Box", format: "uuid" },
   name: { title: "Name" },
-  description: { title: "Description" }
+  description: { title: "Description" },
+  fields: { title: "Fields" }
 } as const;
 
 export const USER_DATA_TEMPLATE_INFO_JSON_SCHEMA: JSONSchemaType<IUserDataTemplateInfo> = {
@@ -29,9 +32,10 @@ export const USER_DATA_TEMPLATE_INFO_JSON_SCHEMA: JSONSchemaType<IUserDataTempla
       type: "string",
       ...USER_DATA_TEMPLATE_INFO_JSON_SCHEMA_CONSTANTS.description,
       nullable: true as false // https://github.com/ajv-validator/ajv/issues/2163#issuecomment-2085689455
-    }
+    },
+    fields: { type: "array", items: USER_DATA_TEMPLATE_FIELD_INFO_JSON_SCHEMA, minItems: 1, ...USER_DATA_TEMPLATE_INFO_JSON_SCHEMA_CONSTANTS.fields }
   },
-  required: ["templateId", "storageId", "boxId", "name", "description"],
+  required: ["templateId", "storageId", "boxId", "name", "description", "fields"],
   additionalProperties: false
 } as const;
 

@@ -9,6 +9,7 @@ export const securedUserDataTemplateConfigToPrivateStorageSecuredUserDataTemplat
   logger?.debug("Converting Secured User Data Template Config to Private Storage Secured User Data Template Config.");
   return {
     name: securedUserDataTemplateConfig.name,
-    description: securedUserDataTemplateConfig.description
+    description: securedUserDataTemplateConfig.description,
+    fields: securedUserDataTemplateConfig.fields
   } satisfies IPrivateStorageSecuredUserDataTemplateConfig;
 };

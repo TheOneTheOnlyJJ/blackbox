@@ -7,13 +7,11 @@ import { USER_DATA_STORAGE_BACKEND_TYPES, UserDataStorageBackendType } from "@sh
 import { IOptionBUserDataStorageBackendConfig, OptionBUserDataStorageBackend } from "../implementations/optionB/optionB";
 import { IOptionCUserDataStorageBackendConfig, OptionCUserDataStorageBackend } from "../implementations/optionC/optionC";
 
-// Map of every user data storage backend type to its corresponding config type
 export interface IUserDataStorageBackendConfigMap {
   [USER_DATA_STORAGE_BACKEND_TYPES.localSQLite]: ILocalSQLiteUserDataStorageBackendConfig;
   [USER_DATA_STORAGE_BACKEND_TYPES.optionB]: IOptionBUserDataStorageBackendConfig;
   [USER_DATA_STORAGE_BACKEND_TYPES.optionC]: IOptionCUserDataStorageBackendConfig;
 }
-// Union of all user data storage backend config concrete implementation interfaces
 export type UserDataStorageBackendConfig = IUserDataStorageBackendConfigMap[keyof IUserDataStorageBackendConfigMap];
 
 type UserDataStorageBackendConfigJSONSchemaMap = {
