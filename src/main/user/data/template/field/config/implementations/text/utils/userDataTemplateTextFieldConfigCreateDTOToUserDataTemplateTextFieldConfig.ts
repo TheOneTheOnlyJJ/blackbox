@@ -11,6 +11,7 @@ export const userDataTemplateTextFieldConfigCreateDTOToUserDataTemplateTextField
     type: userDataTemplateTextFieldConfigCreateDTO.type,
     name: userDataTemplateTextFieldConfigCreateDTO.name,
     description: userDataTemplateTextFieldConfigCreateDTO.description,
+    isRequired: userDataTemplateTextFieldConfigCreateDTO.isRequired,
     useTextBox: userDataTemplateTextFieldConfigCreateDTO.useTextBox,
     default: userDataTemplateTextFieldConfigCreateDTO.default
   } satisfies IUserDataTemplateTextFieldConfig;

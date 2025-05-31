@@ -47,6 +47,27 @@ const RJSFSelectOpenUserDataStorageVisibilityGroupIdWidget: FC<WidgetProps> = (p
     return rawErrors !== undefined && rawErrors.length > 0;
   }, [rawErrors]);
 
+  const menuItems: React.JSX.Element[] = useMemo<React.JSX.Element[]>((): React.JSX.Element[] => {
+    const MENU_ITEMS: React.JSX.Element[] = [];
+    if (options.showNoSelectionOption) {
+      MENU_ITEMS.push(
+        <MenuItem value={undefined} divider={true}>
+          <em>{PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS.name}</em>
+        </MenuItem>
+      );
+    }
+    const DATA_STORAGE_VISIBILITY_GROUP_MENU_ITEMS: React.JSX.Element[] = signedInRootContext.openUserDataStorageVisibilityGroupsInfo.map(
+      (visibilityGroupInfo: IUserDataStorageVisibilityGroupInfo): React.JSX.Element => {
+        return (
+          <MenuItem key={visibilityGroupInfo.visibilityGroupId} value={visibilityGroupInfo.visibilityGroupId}>
+            {visibilityGroupInfo.name}
+          </MenuItem>
+        );
+      }
+    );
+    return MENU_ITEMS.concat(DATA_STORAGE_VISIBILITY_GROUP_MENU_ITEMS);
+  }, [options, signedInRootContext]);
+
   const _onChange = useCallback(
     ({ target: { value } }: SelectChangeEvent): void => {
       onChange(value);
@@ -68,7 +89,9 @@ const RJSFSelectOpenUserDataStorageVisibilityGroupIdWidget: FC<WidgetProps> = (p
 
   return (
     <FormControl fullWidth>
-      <InputLabel id={labelId}>{label}</InputLabel>
+      <InputLabel id={labelId} required={required}>
+        {label}
+      </InputLabel>
       <Select
         id={id}
         label={label}
@@ -84,20 +107,7 @@ const RJSFSelectOpenUserDataStorageVisibilityGroupIdWidget: FC<WidgetProps> = (p
         inputProps={{ readOnly: readonly }}
         defaultValue={undefined}
       >
-        {options.showNoSelectionOption ? (
-          <MenuItem value={undefined} divider={true}>
-            <em>{PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS.name}</em>
-          </MenuItem>
-        ) : null}
-        {signedInRootContext.openUserDataStorageVisibilityGroupsInfo.map(
-          (visibilityGroupInfo: IUserDataStorageVisibilityGroupInfo): React.JSX.Element => {
-            return (
-              <MenuItem key={visibilityGroupInfo.visibilityGroupId} value={visibilityGroupInfo.visibilityGroupId}>
-                {visibilityGroupInfo.name}
-              </MenuItem>
-            );
-          }
-        )}
+        {menuItems}
       </Select>
     </FormControl>
   );

@@ -12,7 +12,7 @@ export interface IUserDataStorageConfigInfoDialogProps {
 
 const UserDataStorageConfigInfoDialog: FC<IUserDataStorageConfigInfoDialogProps> = (props: IUserDataStorageConfigInfoDialogProps) => {
   return (
-    <Dialog maxWidth="md" fullWidth={true} open={props.open}>
+    <Dialog maxWidth="md" fullWidth={true} open={props.open} onClose={props.onClose}>
       <DialogTitle>User data storage configuration information</DialogTitle>
       <DialogContent>
         <Typography sx={{ marginBottom: ".5rem" }}>

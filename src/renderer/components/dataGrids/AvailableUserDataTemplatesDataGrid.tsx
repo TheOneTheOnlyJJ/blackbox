@@ -20,6 +20,11 @@ import { IUserDataBoxIdentifier } from "@shared/user/data/box/identifier/UserDat
 import UserDataTemplateInfoDialog from "../dialogs/info/user/data/template/UserDataTemplateInfoDialog";
 import { useDialogOpenState } from "@renderer/hooks/useDialogState";
 import OpenUserDataTemplateInfoDialogActionItem from "./actionCellItems/OpenUserDataTemplateInfoDialogActionItem";
+import NewUserDataEntryActionItem from "./actionCellItems/NewUserDataEntryActionItem";
+import { userDataTemplateInfoToUserDataTemplateIdentifier } from "@shared/user/data/template/utils/userDataTemplateInfoToUserDataTemplateIdentifier";
+import { IUserDataTemplateIdentifier } from "@shared/user/data/template/identifier/UserDataTemplateIdentifier";
+import NewUserDataEntryFormDialog from "../dialogs/forms/user/data/entry/NewUserDataEntryFormDialog";
+import NavigateToUserDataEntriesPageActionItem from "./actionCellItems/NavigateToUserDataEntriesPageActionItem";
 
 const GRID_AUTOSIZE_OPTIONS: GridAutosizeOptions = { expand: true, includeHeaders: true };
 
@@ -35,14 +40,41 @@ const AvailableUserDataTemplatesDataGrid: FC = () => {
   });
   const [isTemplateInfoDialogOpen, setIsTemplateInfoDialogOpen] = useDialogOpenState(appLogger, "User Data Template Info");
   const [chosenTemplateInfo, setChosenTemplateInfo] = useState<IUserDataTemplateInfo | null>(null);
+  const [newUserDataEntryTemplateInfo, setNewUserDataEntryTemplateInfo] = useState<IUserDataTemplateInfo | null>(null);
 
   const handleTemplateInfoDialogClose = useCallback((): void => {
     setIsTemplateInfoDialogOpen(false);
     setChosenTemplateInfo(null);
   }, [setIsTemplateInfoDialogOpen]);
 
+  const [isNewUserDataEntryFormDialogOpen, setIsNewUserDataEntryFormDialogOpen] = useDialogOpenState(appLogger, "new User Data Entry form");
+
+  const handleNewDataEntryButtonClick = useCallback(
+    (dataTemplateIdentifier: IUserDataTemplateIdentifier): void => {
+      appLogger.debug("New User Data Entry button clicked.");
+      const TEMPLATE_INFO: IUserDataTemplateInfo | null = signedInRootContext.getAvailableUserDataTemplateInfoByIdentifier(dataTemplateIdentifier);
+      if (TEMPLATE_INFO === null) {
+        appLogger.warn(
+          `Missing User Data Template ${dataTemplateIdentifier.templateId} from User Data Box ${dataTemplateIdentifier.boxId} from User Data Storage ${dataTemplateIdentifier.storageId}!`
+        );
+        return;
+      }
+      setNewUserDataEntryTemplateInfo(TEMPLATE_INFO);
+      setIsNewUserDataEntryFormDialogOpen(true);
+    },
+    [setIsNewUserDataEntryFormDialogOpen, signedInRootContext]
+  );
+
+  const handleNewUserDataEntryFormDialogClose = useCallback((): void => {
+    setIsNewUserDataEntryFormDialogOpen(false);
+  }, [setIsNewUserDataEntryFormDialogOpen]);
+
+  const handleSuccessfullyAddedNewUserDataEntry = useCallback((): void => {
+    handleNewUserDataEntryFormDialogClose();
+  }, [handleNewUserDataEntryFormDialogClose]);
+
   const rowIdGetter: GridRowIdGetter<IUserDataTemplateInfo> = useCallback((row: IUserDataTemplateInfo): GridRowId => {
-    return row.templateId + row.boxId + row.storageId;
+    return "".concat(row.templateId, row.boxId, row.storageId);
   }, []);
 
   const COLUMNS: GridColDef[] = useMemo<GridColDef[]>((): GridColDef[] => {
@@ -91,6 +123,7 @@ const AvailableUserDataTemplatesDataGrid: FC = () => {
         type: "actions",
         headerName: "Actions",
         getActions: (params: GridRowParams<IUserDataTemplateInfo>) => {
+          const CURRENT_ROW_IDENTIFIER: IUserDataTemplateIdentifier = userDataTemplateInfoToUserDataTemplateIdentifier(params.row, null);
           return [
             <OpenUserDataTemplateInfoDialogActionItem
               logger={appLogger}
@@ -99,12 +132,25 @@ const AvailableUserDataTemplatesDataGrid: FC = () => {
               setChosenUserDataTemplateInfo={setChosenTemplateInfo}
               setIsUserDataTemplateInfoDialogOpen={setIsTemplateInfoDialogOpen}
               showInMenu={false}
+            />,
+            <NewUserDataEntryActionItem
+              logger={appLogger}
+              key="newDataEntry"
+              dataTemplateIdentifier={CURRENT_ROW_IDENTIFIER}
+              onButtonClick={handleNewDataEntryButtonClick}
+              showInMenu={false}
+            />,
+            <NavigateToUserDataEntriesPageActionItem
+              logger={appLogger}
+              key="navigateToEntries"
+              dataTemplateIdentifier={CURRENT_ROW_IDENTIFIER}
+              showInMenu={false}
             />
           ];
         }
       }
     ];
-  }, [signedInRootContext, setIsTemplateInfoDialogOpen]);
+  }, [signedInRootContext, setIsTemplateInfoDialogOpen, handleNewDataEntryButtonClick]);
 
   return (
     <>
@@ -130,6 +176,14 @@ const AvailableUserDataTemplatesDataGrid: FC = () => {
           onClose={handleTemplateInfoDialogClose}
           userDataTemplateInfo={chosenTemplateInfo}
           doShowId={true}
+        />
+      ) : null}
+      {newUserDataEntryTemplateInfo !== null ? (
+        <NewUserDataEntryFormDialog
+          templateInfo={newUserDataEntryTemplateInfo}
+          onAddedSuccessfully={handleSuccessfullyAddedNewUserDataEntry}
+          open={isNewUserDataEntryFormDialogOpen}
+          onClose={handleNewUserDataEntryFormDialogClose}
         />
       ) : null}
     </>

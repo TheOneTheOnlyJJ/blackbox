@@ -11,6 +11,7 @@ export const securedUserDataTemplateRealFieldConfigToUserDataTemplateRealField =
     type: securedUserDataTemplateRealFieldConfig.type,
     name: securedUserDataTemplateRealFieldConfig.name,
     description: securedUserDataTemplateRealFieldConfig.description,
+    isRequired: securedUserDataTemplateRealFieldConfig.isRequired,
     minimum: securedUserDataTemplateRealFieldConfig.minimum,
     maximum: securedUserDataTemplateRealFieldConfig.maximum,
     multipleOf: securedUserDataTemplateRealFieldConfig.multipleOf,

@@ -16,11 +16,12 @@ export const useOpenUserDataStorageVisibilityGroupsInfoState = (
 ): {
   // TODO: Replace with Map
   openUserDataStorageVisibilityGroupsInfo: IUserDataStorageVisibilityGroupInfo[];
-  getOpenUserDataStorageVisibilityGroupInfo: (visibilityGroupId: string) => IUserDataStorageVisibilityGroupInfo | null;
+  // TODO: Add VisibilityGroup identifier as it is dependant on the parent data storage
+  getOpenUserDataStorageVisibilityGroupInfoById: (visibilityGroupId: string) => IUserDataStorageVisibilityGroupInfo | null;
 } => {
   const [openUserDataStorageVisibilityGroupsInfo, setOpenUserDataStorageVisibilityGroupsInfo] = useState<IUserDataStorageVisibilityGroupInfo[]>([]);
 
-  const getOpenUserDataStorageVisibilityGroupInfo = useCallback(
+  const getOpenUserDataStorageVisibilityGroupInfoById = useCallback(
     (visibilityGroupId: string): IUserDataStorageVisibilityGroupInfo | null => {
       const VISIBILITY_GROUP_INFO: IUserDataStorageVisibilityGroupInfo | undefined = openUserDataStorageVisibilityGroupsInfo.find(
         (openVisibilityGroupInfo: IUserDataStorageVisibilityGroupInfo) => {
@@ -127,6 +128,6 @@ export const useOpenUserDataStorageVisibilityGroupsInfoState = (
 
   return {
     openUserDataStorageVisibilityGroupsInfo: openUserDataStorageVisibilityGroupsInfo,
-    getOpenUserDataStorageVisibilityGroupInfo: getOpenUserDataStorageVisibilityGroupInfo
+    getOpenUserDataStorageVisibilityGroupInfoById: getOpenUserDataStorageVisibilityGroupInfoById
   };
 };

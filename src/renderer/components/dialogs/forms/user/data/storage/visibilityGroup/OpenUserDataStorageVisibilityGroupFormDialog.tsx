@@ -41,8 +41,22 @@ const OpenUserDataStorageVisibilityGroupFormDialog: FC<IOpenUserDataStorageVisib
     formRef.current.submit();
   }, [isOpenUserDataStorageVisibilityGroupPending]);
 
+  const handleDialogClose = useCallback((): void => {
+    props.onClose();
+  }, [props]);
+
+  const handleDialogCloseWithReason = useCallback(
+    (_: object, reason?: "backdropClick" | "escapeKeyDown"): void => {
+      if (reason !== undefined && reason === "backdropClick") {
+        return;
+      }
+      handleDialogClose();
+    },
+    [handleDialogClose]
+  );
+
   return (
-    <Dialog maxWidth="md" fullWidth={true} open={props.open} onClose={props.onClose}>
+    <Dialog maxWidth="md" fullWidth={true} open={props.open} onClose={handleDialogCloseWithReason}>
       <DialogContent>
         <OpenUserDataStorageVisibilityGroupForm
           formRef={formRef}
@@ -54,7 +68,7 @@ const OpenUserDataStorageVisibilityGroupFormDialog: FC<IOpenUserDataStorageVisib
         />
       </DialogContent>
       <DialogActions>
-        <Button onClick={props.onClose}>Cancel</Button>
+        <Button onClick={handleDialogClose}>Cancel</Button>
         <Button variant="contained" disabled={isSubmitButtonDisabled} onClick={handleSubmitButtonClick}>
           {isOpenUserDataStorageVisibilityGroupPending ? "Opening..." : "Open"}
         </Button>

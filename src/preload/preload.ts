@@ -8,6 +8,7 @@ import { UTILS_API_PRELOAD_HANDLERS } from "./IPC/APIs/UtilsAPI";
 import { USER_DATA_STORAGE_API_PRELOAD_HANDLERS } from "./IPC/APIs/UserDataStorageAPI";
 import { USER_DATA_BOX_API_PRELOAD_HANDLERS } from "./IPC/APIs/UserDataBoxAPI";
 import { USER_DATA_TEMPLATE_API_PRELOAD_HANDLERS } from "./IPC/APIs/UserDataTemplateAPI";
+import { USER_DATA_ENTRY_API_PRELOAD_HANDLERS } from "./IPC/APIs/UserDataEntryAPI";
 
 void bootstrapIPCTLS();
 // Expose the APIs in the renderer
@@ -20,4 +21,5 @@ contextBridge.exposeInMainWorld("userDataStorageAPI", USER_DATA_STORAGE_API_PREL
 contextBridge.exposeInMainWorld("userDataStorageVisibilityGroupAPI", USER_DATA_STORAGE_VISIBILITY_GROUP_API_PRELOAD_HANDLERS);
 contextBridge.exposeInMainWorld("userDataBoxAPI", USER_DATA_BOX_API_PRELOAD_HANDLERS);
 contextBridge.exposeInMainWorld("userDataTemplateAPI", USER_DATA_TEMPLATE_API_PRELOAD_HANDLERS);
+contextBridge.exposeInMainWorld("userDataEntryAPI", USER_DATA_ENTRY_API_PRELOAD_HANDLERS);
 contextBridge.exposeInMainWorld("utilsAPI", UTILS_API_PRELOAD_HANDLERS);

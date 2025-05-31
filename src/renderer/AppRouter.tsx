@@ -17,6 +17,7 @@ import InitialisedUserDataStoragesPage from "./pages/InitialisedUserDataStorages
 import AvailableUserDataBoxesPage from "./pages/AvailableUserDataBoxesPage";
 import UserDataBoxesNavigationAreaLayoutRoot from "./components/roots/userDataBoxesNavigationAreaLayoutRoot/UserDataBoxesNavigationAreaLayoutRoot";
 import AvailableUserDataTemplatesPage from "./pages/AvailableUserDataTemplatesPage";
+import AvailableUserDataEntriesPage from "./pages/AvailableUserDataEntriesPage";
 
 const APP_ROUTER = createHashRouter([
   {
@@ -80,6 +81,10 @@ const APP_ROUTER = createHashRouter([
                         element: <AvailableUserDataTemplatesPage />
                       }
                     ]
+                  },
+                  {
+                    path: "entries/:storageId/:boxId/:templateId/available",
+                    element: <AvailableUserDataEntriesPage />
                   }
                 ]
               },

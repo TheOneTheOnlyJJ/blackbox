@@ -165,6 +165,7 @@ export class AvailableUserDataTemplatesContext {
     const DATA_TEMPLATE_IDENTIFIERS: IUserDataTemplateIdentifier[] = [];
     for (const DATA_BOX_IDENTIFIER of dataBoxIdentifiers) {
       for (const AVAILABLE_DATA_TEMPLATE of this.availableDataTemplates) {
+        // TODO: Is matching identifier function?
         if (DATA_BOX_IDENTIFIER.boxId === AVAILABLE_DATA_TEMPLATE.boxId && DATA_BOX_IDENTIFIER.storageId === AVAILABLE_DATA_TEMPLATE.storageId) {
           DATA_TEMPLATE_IDENTIFIERS.push(userDataTemplateToUserDataTemplateIdentifier(AVAILABLE_DATA_TEMPLATE, null));
         }

@@ -48,8 +48,18 @@ const NewUserDataBoxConfigFormDialog: FC<INewUserDataBoxConfigFormDialogProps> =
     props.onClose();
   }, [props]);
 
+  const handleDialogCloseWithReason = useCallback(
+    (_: object, reason?: "backdropClick" | "escapeKeyDown"): void => {
+      if (reason !== undefined && reason === "backdropClick") {
+        return;
+      }
+      handleDialogClose();
+    },
+    [handleDialogClose]
+  );
+
   return (
-    <Dialog maxWidth="md" fullWidth={true} open={props.open} onClose={handleDialogClose}>
+    <Dialog maxWidth="md" fullWidth={true} open={props.open} onClose={handleDialogCloseWithReason}>
       <DialogContent>
         <NewUserDataBoxConfigForm
           formRef={formRef}

@@ -1,8 +1,12 @@
 import { ISecuredUserDataBoxConfig } from "@main/user/data/box/config/SecuredUserDataBoxConfig";
 import { IStorageSecuredUserDataBoxConfig } from "@main/user/data/box/config/StorageSecuredUserDataBoxConfig";
 import { securedUserDataBoxConfigToStorageSecuredUserDataBoxConfig } from "@main/user/data/box/config/utils/securedUserDataBoxConfigToStorageSecuredUserDataBoxConfig";
+import { IStorageSecuredUserDataEntry } from "@main/user/data/entry/StorageSecuredUserDataEntry";
+import { IUserDataEntry } from "@main/user/data/entry/UserDataEntry";
+import { userDataEntryToStorageSecuredUserDataEntry } from "@main/user/data/entry/utils/userDataEntryToStorageSecuredUserDataEntry";
 import {
   IUserDataStorageUserDataBoxConfigFilter,
+  IUserDataStorageUserDataEntryFilter,
   IUserDataStorageUserDataTemplateConfigFilter
 } from "@main/user/data/storage/backend/BaseUserDataStorageBackend";
 import { isValidSecuredUserDataStorageConfigArray } from "@main/user/data/storage/config/SecuredUserDataStorageConfig";
@@ -31,6 +35,7 @@ export class InitialisedUserDataStoragesContext {
   public onInitialisedUserDataStorageInfoChangedCallback: ((userDataStorageInfo: Readonly<IUserDataStorageInfo>) => void) | null;
   public onAddedNewSecuredUserDataBoxConfigsCallback: ((newSecuredUserDataBoxConfigs: ISecuredUserDataBoxConfig[]) => void) | null;
   public onAddedNewSecuredUserDataTemplateConfigsCallback: ((newSecuredUserDataTemplateConfigs: ISecuredUserDataTemplateConfig[]) => void) | null;
+  public onAddedNewUserDataEntriesCallback: ((newUserDataEntries: IUserDataEntry[]) => void) | null;
   public onOpenedInitialisedDataStorages: ((openedDataStoragesInfo: IUserDataStorageInfo[]) => void) | null;
   public onClosedInitialisedDataStorages: ((closedDataStoragesInfo: IUserDataStorageInfo[]) => void) | null;
 
@@ -42,6 +47,7 @@ export class InitialisedUserDataStoragesContext {
     this.onInitialisedUserDataStorageInfoChangedCallback = null;
     this.onAddedNewSecuredUserDataBoxConfigsCallback = null;
     this.onAddedNewSecuredUserDataTemplateConfigsCallback = null;
+    this.onAddedNewUserDataEntriesCallback = null;
     this.onOpenedInitialisedDataStorages = null;
     this.onClosedInitialisedDataStorages = null;
   }
@@ -312,6 +318,18 @@ export class InitialisedUserDataStoragesContext {
     throw new Error(`Cannot generate random User Data Template ID for missing initialised User Data Storage "${userDataStorageId}"`);
   }
 
+  public generateRandomDataEntryId(userDataStorageId: UUID, userDataBoxId: UUID, userDataTemplateId: UUID): UUID {
+    this.logger.debug(
+      `Generating random User Data Entry ID for User Data Storage "${userDataStorageId}", User Data Box "${userDataBoxId}" and User Data Template "${userDataTemplateId}".`
+    );
+    for (const INITIALISED_DATA_STORAGE of this.initialisedDataStorages) {
+      if (INITIALISED_DATA_STORAGE.storageId === userDataStorageId) {
+        return INITIALISED_DATA_STORAGE.generateRandomDataEntryId(userDataBoxId, userDataTemplateId);
+      }
+    }
+    throw new Error(`Cannot generate random User Data Entry ID for missing initialised User Data Storage "${userDataStorageId}"`);
+  }
+
   public addSecuredUserDataBoxConfig(securedUserDataBoxConfig: ISecuredUserDataBoxConfig, encryptionAESKey: Buffer): boolean {
     this.logger.debug(`Adding Secured User Data Box Config to User Data Storage "${securedUserDataBoxConfig.storageId}".`);
     for (const INITIALISED_DATA_STORAGE of this.initialisedDataStorages) {
@@ -346,6 +364,22 @@ export class InitialisedUserDataStoragesContext {
     );
   }
 
+  public addUserDataEntry(userDataEntry: IUserDataEntry, encryptionAESKey: Buffer): boolean {
+    this.logger.debug(`Adding User Data Entry to User Data Storage "${userDataEntry.storageId}".`);
+    for (const INITIALISED_DATA_STORAGE of this.initialisedDataStorages) {
+      if (INITIALISED_DATA_STORAGE.storageId === userDataEntry.storageId) {
+        const WAS_ADDED: boolean = INITIALISED_DATA_STORAGE.addStorageSecuredUserDataEntry(
+          userDataEntryToStorageSecuredUserDataEntry(userDataEntry, encryptionAESKey, this.logger)
+        );
+        if (WAS_ADDED) {
+          this.onAddedNewUserDataEntriesCallback?.([userDataEntry]);
+        }
+        return WAS_ADDED;
+      }
+    }
+    throw new Error(`Cannot add User Data Entry for missing initialised User Data Storage "${userDataEntry.storageId}"`);
+  }
+
   public getStorageSecuredUserDataBoxConfigsForUserDataStorage(
     userDataStorageId: UUID,
     filter: IUserDataStorageUserDataBoxConfigFilter
@@ -372,5 +406,16 @@ export class InitialisedUserDataStoragesContext {
       }
     }
     throw new Error(`Cannot get Storage Secured User Data Template Configs for missing initialised User Data Storage "${userDataStorageId}"`);
+  }
+
+  public getStorageSecuredUserDataEntries(userDataStorageId: UUID, filter: IUserDataStorageUserDataEntryFilter): IStorageSecuredUserDataEntry[] {
+    this.logger.debug(`Getting Storage Secured User Data Entries from User Data Storage "${userDataStorageId}".`);
+    for (const INITIALISED_DATA_STORAGE of this.initialisedDataStorages) {
+      if (INITIALISED_DATA_STORAGE.storageId === userDataStorageId) {
+        // TODO: Add filter here like in user account storage
+        return INITIALISED_DATA_STORAGE.getStorageSecuredUserDataEntries(filter);
+      }
+    }
+    throw new Error(`Cannot get Storage Secured User Data Entries for missing initialised User Data Storage "${userDataStorageId}"`);
   }
 }

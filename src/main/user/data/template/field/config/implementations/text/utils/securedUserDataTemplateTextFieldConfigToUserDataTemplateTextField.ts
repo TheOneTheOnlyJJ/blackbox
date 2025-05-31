@@ -11,6 +11,7 @@ export const securedUserDataTemplateTextFieldConfigToUserDataTemplateTextField =
     type: securedUserDataTemplateTextFieldConfig.type,
     name: securedUserDataTemplateTextFieldConfig.name,
     description: securedUserDataTemplateTextFieldConfig.description,
+    isRequired: securedUserDataTemplateTextFieldConfig.isRequired,
     useTextBox: securedUserDataTemplateTextFieldConfig.useTextBox,
     default: securedUserDataTemplateTextFieldConfig.default
   } satisfies IUserDataTemplateTextField;

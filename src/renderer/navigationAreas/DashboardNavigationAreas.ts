@@ -2,6 +2,7 @@ export const DASHBOARD_NAVIGATION_AREAS = {
   dashboard: "dashboard",
   dataStorages: "dataStorages",
   boxes: "boxes",
+  entries: "entries",
   profile: "profile",
   settings: "settings"
 } as const;

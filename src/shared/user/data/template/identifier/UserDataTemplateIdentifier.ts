@@ -7,6 +7,8 @@ export interface IUserDataTemplateIdentifier {
   storageId: string;
 }
 
+// export type UserDataTemplateIdentifierWithoutStorageId = Omit<IUserDataTemplateIdentifier, "storageId">;
+
 export const USER_DATA_TEMPLATE_IDENTIFIER_JSON_SCHEMA: JSONSchemaType<IUserDataTemplateIdentifier> = {
   $schema: "http://json-schema.org/draft-07/schema#",
   type: "object",

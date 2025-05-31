@@ -11,7 +11,9 @@ import { IStorageSecuredUserDataStorageVisibilityGroupConfig } from "@main/user/
 import {
   IUserAccountStorageUserDataStorageConfigFilter,
   IUserAccountStorageUserDataStorageVisibilityGroupFilter,
-  IUserAccountStorageBackendHandlers
+  IUserAccountStorageBackendHandlers,
+  ICheckUserDataStorageVisibilityGroupIdAvailabilityArgs,
+  ICheckUserDataStorageIdAvailabilityArgs
 } from "./backend/BaseUserAccountStorageBackend";
 
 export interface IUserAccountStorageHandlers {
@@ -79,7 +81,7 @@ export class UserAccountStorage {
   public generateRandomUserDataStorageId(): UUID {
     this.logger.debug("Generating random User Data Storage ID.");
     let storageId: UUID = randomUUID({ disableEntropyCache: true });
-    while (!this.isUserDataStorageIdAvailable(storageId)) {
+    while (!this.isUserDataStorageIdAvailable({ storageId: storageId })) {
       this.logger.debug("Generating a new random ID.");
       storageId = randomUUID({ disableEntropyCache: true });
     }
@@ -89,7 +91,7 @@ export class UserAccountStorage {
   public generateRandomUserDataStorageVisibilityGroupId(): UUID {
     this.logger.debug("Generating random User Data Storage Visibility Group ID.");
     let dataStorageVisibilityGroupId: UUID = randomUUID({ disableEntropyCache: true });
-    while (!this.isUserDataStorageVisibilityGroupIdAvailable(dataStorageVisibilityGroupId)) {
+    while (!this.isUserDataStorageVisibilityGroupIdAvailable({ visibilityGroupId: dataStorageVisibilityGroupId })) {
       this.logger.debug("Generating a new random ID.");
       dataStorageVisibilityGroupId = randomUUID({ disableEntropyCache: true });
     }
@@ -122,12 +124,12 @@ export class UserAccountStorage {
     return this.backend.isUserIdAvailable(userId);
   }
 
-  public isUserDataStorageIdAvailable(storageId: UUID): boolean {
-    return this.backend.isUserDataStorageIdAvailable(storageId);
+  public isUserDataStorageIdAvailable(args: ICheckUserDataStorageIdAvailabilityArgs): boolean {
+    return this.backend.isUserDataStorageIdAvailable(args);
   }
 
-  public isUserDataStorageVisibilityGroupIdAvailable(dataStorageVisibilityGroupId: UUID): boolean {
-    return this.backend.isUserDataStorageVisibilityGroupIdAvailable(dataStorageVisibilityGroupId);
+  public isUserDataStorageVisibilityGroupIdAvailable(args: ICheckUserDataStorageVisibilityGroupIdAvailabilityArgs): boolean {
+    return this.backend.isUserDataStorageVisibilityGroupIdAvailable(args);
   }
 
   public getUserCount(): number {

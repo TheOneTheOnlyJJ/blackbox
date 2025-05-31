@@ -11,6 +11,7 @@ export const userDataTemplateRealFieldConfigCreateDTOToUserDataTemplateRealField
     type: userDataTemplateRealFieldConfigCreateDTO.type,
     name: userDataTemplateRealFieldConfigCreateDTO.name,
     description: userDataTemplateRealFieldConfigCreateDTO.description,
+    isRequired: userDataTemplateRealFieldConfigCreateDTO.isRequired,
     minimum: userDataTemplateRealFieldConfigCreateDTO.minimum,
     maximum: userDataTemplateRealFieldConfigCreateDTO.maximum,
     multipleOf: userDataTemplateRealFieldConfigCreateDTO.multipleOf,

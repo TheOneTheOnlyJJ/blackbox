@@ -6,11 +6,16 @@ import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataSto
 import { ISecuredUserDataStorageConfig } from "./config/SecuredUserDataStorageConfig";
 import { IStorageSecuredUserDataBoxConfig } from "../box/config/StorageSecuredUserDataBoxConfig";
 import {
+  ICheckUserDataBoxIdAvailabilityArgs,
+  ICheckUserDataEntryIdAvailabilityArgs,
+  ICheckUserDataTemplateIdAvailabilityArgs,
   IUserDataStorageBackendHandlers,
   IUserDataStorageUserDataBoxConfigFilter,
+  IUserDataStorageUserDataEntryFilter,
   IUserDataStorageUserDataTemplateConfigFilter
 } from "./backend/BaseUserDataStorageBackend";
 import { IStorageSecuredUserDataTemplateConfig } from "../template/config/StorageSecuredUserDataTemplateConfig";
+import { IStorageSecuredUserDataEntry } from "../entry/StorageSecuredUserDataEntry";
 
 export interface IUserDataStorageHandlers {
   onInfoChanged: ((newInfo: Readonly<IUserDataStorageInfo>) => void) | null;
@@ -75,7 +80,7 @@ export class UserDataStorage {
   public generateRandomDataBoxId(): UUID {
     this.logger.debug("Generating random User Data Box ID.");
     let boxId: UUID = randomUUID({ disableEntropyCache: true });
-    while (!this.isUserDataBoxIdAvailable(boxId)) {
+    while (!this.isUserDataBoxIdAvailable({ boxId: boxId })) {
       this.logger.debug("Generating a new random ID.");
       boxId = randomUUID({ disableEntropyCache: true });
     }
@@ -85,11 +90,21 @@ export class UserDataStorage {
   public generateRandomDataTemplateId(boxId: UUID): UUID {
     this.logger.debug("Generating random User Data Template ID.");
     let templateId: UUID = randomUUID({ disableEntropyCache: true });
-    while (!this.isUserDataTemplateIdAvailable(templateId, boxId)) {
+    while (!this.isUserDataTemplateIdAvailable({ templateId: templateId, boxId: boxId })) {
       this.logger.debug("Generating a new random ID.");
       templateId = randomUUID({ disableEntropyCache: true });
     }
     return templateId;
+  }
+
+  public generateRandomDataEntryId(boxId: UUID, templateId: UUID): UUID {
+    this.logger.debug("Generating random User Data Entry ID.");
+    let entryId: UUID = randomUUID({ disableEntropyCache: true });
+    while (!this.isUserDataEntryIdAvailable({ entryId: entryId, templateId: templateId, boxId: boxId })) {
+      this.logger.debug("Generating a new random ID.");
+      entryId = randomUUID({ disableEntropyCache: true });
+    }
+    return entryId;
   }
 
   public getInfo(): IUserDataStorageInfo {
@@ -115,12 +130,16 @@ export class UserDataStorage {
     } satisfies ISecuredUserDataStorageConfig;
   }
 
-  public isUserDataBoxIdAvailable(boxId: UUID): boolean {
-    return this.backend.isUserDataBoxIdAvailable(boxId);
+  public isUserDataBoxIdAvailable(args: ICheckUserDataBoxIdAvailabilityArgs): boolean {
+    return this.backend.isUserDataBoxIdAvailable(args);
   }
 
-  public isUserDataTemplateIdAvailable(templateId: UUID, boxId: UUID): boolean {
-    return this.backend.isUserDataTemplateIdAvailable(templateId, boxId);
+  public isUserDataTemplateIdAvailable(args: ICheckUserDataTemplateIdAvailabilityArgs): boolean {
+    return this.backend.isUserDataTemplateIdAvailable(args);
+  }
+
+  public isUserDataEntryIdAvailable(args: ICheckUserDataEntryIdAvailabilityArgs): boolean {
+    return this.backend.isUserDataEntryIdAvailable(args);
   }
 
   public addStorageSecuredUserDataBoxConfig(storageSecuredUserDataBoxConfig: IStorageSecuredUserDataBoxConfig): boolean {
@@ -131,6 +150,10 @@ export class UserDataStorage {
     return this.backend.addStorageSecuredUserDataTemplateConfig(storageSecuredUserDataTemplateConfig);
   }
 
+  public addStorageSecuredUserDataEntry(storageSecuredUserDataEntry: IStorageSecuredUserDataEntry): boolean {
+    return this.backend.addStorageSecuredUserDataEntry(storageSecuredUserDataEntry);
+  }
+
   public getStorageSecuredUserDataBoxConfigs(filter: IUserDataStorageUserDataBoxConfigFilter): IStorageSecuredUserDataBoxConfig[] {
     // TODO: Add a new ID-less type for this and add it on the results here?
     return this.backend.getStorageSecuredUserDataBoxConfigs(this.storageId, filter);
@@ -139,5 +162,9 @@ export class UserDataStorage {
   public getStorageSecuredUserDataTemplateConfigs(filter: IUserDataStorageUserDataTemplateConfigFilter): IStorageSecuredUserDataTemplateConfig[] {
     // TODO: Add a new ID-less type for this and add it on the results here?
     return this.backend.getStorageSecuredUserDataTemplateConfigs(this.storageId, filter);
+  }
+
+  public getStorageSecuredUserDataEntries(filter: IUserDataStorageUserDataEntryFilter): IStorageSecuredUserDataEntry[] {
+    return this.backend.getStorageSecuredUserDataEntries(this.storageId, filter);
   }
 }

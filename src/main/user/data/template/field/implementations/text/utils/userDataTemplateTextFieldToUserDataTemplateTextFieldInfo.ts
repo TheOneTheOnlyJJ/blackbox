@@ -11,6 +11,7 @@ export const userDataTemplateTextFieldToUserDataTemplateTextFieldInfo = (
     type: userDataTemplateTextField.type,
     name: userDataTemplateTextField.name,
     description: userDataTemplateTextField.description,
+    isRequired: userDataTemplateTextField.isRequired,
     useTextBox: userDataTemplateTextField.useTextBox,
     default: userDataTemplateTextField.default
   } satisfies IUserDataTemplateTextFieldInfo;

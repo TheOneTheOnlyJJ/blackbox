@@ -6,6 +6,7 @@ import { deepFreeze } from "@main/utils/deepFreeze";
 import { IStorageSecuredUserDataBoxConfig } from "../../box/config/StorageSecuredUserDataBoxConfig";
 import { UUID } from "node:crypto";
 import { IStorageSecuredUserDataTemplateConfig } from "../../template/config/StorageSecuredUserDataTemplateConfig";
+import { IStorageSecuredUserDataEntry } from "../../entry/StorageSecuredUserDataEntry";
 
 export interface IUserDataStorageUserDataBoxConfigFilter {
   includeIds: UUID[] | "all";
@@ -19,6 +20,30 @@ export interface IUserDataStorageUserDataTemplateConfigFilter {
     includeIds: UUID[] | "all";
     excludeIds: UUID[] | null;
   };
+}
+
+export interface IUserDataStorageUserDataEntryFilter {
+  includeIds: UUID[] | "all";
+  excludeIds: UUID[] | null;
+  templates: {
+    includeIds: UUID[] | "all";
+    excludeIds: UUID[] | null;
+  };
+}
+
+export interface ICheckUserDataBoxIdAvailabilityArgs {
+  boxId: UUID;
+}
+
+export interface ICheckUserDataTemplateIdAvailabilityArgs {
+  templateId: UUID;
+  boxId: UUID;
+}
+
+export interface ICheckUserDataEntryIdAvailabilityArgs {
+  entryId: UUID;
+  templateId: UUID;
+  boxId: UUID;
 }
 
 export interface IUserDataStorageBackendHandlers {
@@ -57,12 +82,12 @@ export abstract class BaseUserDataStorageBackend<T extends IBaseUserDataStorageB
   public abstract isOpen(): boolean;
   public abstract isClosed(): boolean;
   public abstract isLocal(): boolean;
-  // TODO: These should accept Identifier objects as arguments for complete ID availability checks
-  public abstract isUserDataBoxIdAvailable(boxId: UUID): boolean;
-  // TODO: For example boxId is useless until now but some storages may allow the same template ID in different boxes
-  public abstract isUserDataTemplateIdAvailable(templateId: UUID, boxId: UUID): boolean;
+  public abstract isUserDataBoxIdAvailable(args: ICheckUserDataBoxIdAvailabilityArgs): boolean;
+  public abstract isUserDataTemplateIdAvailable(args: ICheckUserDataTemplateIdAvailabilityArgs): boolean;
+  public abstract isUserDataEntryIdAvailable(args: ICheckUserDataEntryIdAvailabilityArgs): boolean;
   public abstract addStorageSecuredUserDataBoxConfig(storageSecuredUserDataBoxConfig: IStorageSecuredUserDataBoxConfig): boolean;
   public abstract addStorageSecuredUserDataTemplateConfig(storageSecuredUserDataTemplateConfig: IStorageSecuredUserDataTemplateConfig): boolean;
+  public abstract addStorageSecuredUserDataEntry(storageSecuredUserDataEntry: IStorageSecuredUserDataEntry): boolean;
   public abstract getStorageSecuredUserDataBoxConfigs(
     storageId: UUID, // Gets passed down from User Data Storage
     filter: IUserDataStorageUserDataBoxConfigFilter
@@ -71,6 +96,10 @@ export abstract class BaseUserDataStorageBackend<T extends IBaseUserDataStorageB
     storageId: UUID, // Gets passed down from User Data Storage
     filter: IUserDataStorageUserDataTemplateConfigFilter
   ): IStorageSecuredUserDataTemplateConfig[];
+  public abstract getStorageSecuredUserDataEntries(
+    storageId: UUID, // Gets passed down from User Data Storage
+    filter: IUserDataStorageUserDataEntryFilter
+  ): IStorageSecuredUserDataEntry[];
 
   public getInfo(): Readonly<IUserDataStorageBackendInfoMap[T["type"]]> {
     return this.info;

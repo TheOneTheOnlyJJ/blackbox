@@ -52,8 +52,7 @@ export const USER_DATA_TEMPLATE_CONFIG_CREATE_INPUT_UI_SCHEMA: UiSchema<IUserDat
     "ui:options": {
       showNoSelectionOption: false,
       formContextOptions: {
-        useSelectedUserDataStorageIdFormContext: true,
-        disableWhenNoSelectedUserDataStorageIdFormContext: true
+        selectedUserDataStorageIdFormContext: { use: true, disableWhenNoSelection: true }
       }
     } satisfies IRJSFSelectAvailableUserDataBoxIdWidgetOptions
   },

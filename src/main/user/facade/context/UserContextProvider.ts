@@ -7,6 +7,7 @@ import { UserContext } from "./UserContext";
 import { IUserDataStorageServiceContext } from "../services/UserDataStorageService";
 import { IUserDataBoxServiceContext } from "../services/UserDataBoxService";
 import { IUserDataTemplateServiceContext } from "../services/UserDataTemplateService";
+import { IUserDataEntryServiceContext } from "../services/UserDataEntryService";
 
 export class UserContextProvider {
   private readonly logger: LogFunctions;
@@ -162,5 +163,17 @@ export class UserContextProvider {
         this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT
       )
     } satisfies IUserDataTemplateServiceContext;
+  }
+
+  public getUserDataEntryServiceContext(): IUserDataEntryServiceContext {
+    this.logger.debug("Providing User Data Entry Service Context.");
+    return {
+      getSignedInUser: this.CONTEXT.AUTH_CONTEXT.getSignedInUser.bind(this.CONTEXT.AUTH_CONTEXT),
+      getAvailableDataEntries: this.CONTEXT.AVAILABLE_DATA_ENTRIES_CONTEXT.getAvailableDataEntries.bind(this.CONTEXT.AVAILABLE_DATA_ENTRIES_CONTEXT),
+      generateRandomDataEntryId: this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT.generateRandomDataEntryId.bind(
+        this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT
+      ),
+      addUserDataEntry: this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT.addUserDataEntry.bind(this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT)
+    } satisfies IUserDataEntryServiceContext;
   }
 }

@@ -2,12 +2,11 @@ import { AJV } from "@shared/utils/AJVJSONValidator";
 import { JSONSchemaType } from "ajv";
 
 export interface ISelectedUserDataStorageIdFormContext {
-  selectedUserDataStorageId?: string;
+  selectedUserDataStorageId: string | undefined;
 }
 
 export interface ISelectedUserDataStorageIdFormContextWidgetOptions {
-  useSelectedUserDataStorageIdFormContext: boolean;
-  disableWhenNoSelectedUserDataStorageIdFormContext: boolean;
+  selectedUserDataStorageIdFormContext: { use: false } | { use: true; disableWhenNoSelection: boolean };
 }
 
 export const SELECTED_USER_DATA_STORAGE_ID_FORM_CONTEXT_JSON_SCHEMA: JSONSchemaType<ISelectedUserDataStorageIdFormContext> = {
@@ -24,10 +23,31 @@ export const SELECTED_USER_DATA_STORAGE_ID_FORM_CONTEXT_WIDGET_OPTIONS_JSON_SCHE
     $schema: "http://json-schema.org/draft-07/schema#",
     type: "object",
     properties: {
-      useSelectedUserDataStorageIdFormContext: { type: "boolean", title: "Show no selection option" },
-      disableWhenNoSelectedUserDataStorageIdFormContext: { type: "boolean", title: "Show no selection option" }
+      selectedUserDataStorageIdFormContext: {
+        type: "object",
+        required: ["use"],
+        oneOf: [
+          {
+            type: "object",
+            properties: {
+              use: { const: false }
+            },
+            required: ["use"],
+            additionalProperties: false
+          },
+          {
+            type: "object",
+            properties: {
+              use: { const: true },
+              disableWhenNoSelection: { type: "boolean", title: "Disable when no selection" }
+            },
+            required: ["use", "disableWhenNoSelection"],
+            additionalProperties: false
+          }
+        ]
+      }
     },
-    required: ["useSelectedUserDataStorageIdFormContext", "disableWhenNoSelectedUserDataStorageIdFormContext"],
+    required: ["selectedUserDataStorageIdFormContext"],
     additionalProperties: true
   } as const;
 

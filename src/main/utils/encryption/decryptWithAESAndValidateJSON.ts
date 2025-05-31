@@ -47,7 +47,6 @@ export const decryptWithAESAndValidateJSON = <T>(
     return DECRYPTED_DATA_OBJECT satisfies T;
   } else {
     // TODO; Delete this
-    // logger?.error(`JSON SCHEMA:\n${JSON.stringify(USER_DATA_TEMPLATE_FIELD_CONFIG_CREATE_DTO_JSON_SCHEMA, null, 2)}`);
     // logger?.error(`RECEIVED INFO:\n${JSON.stringify(DECRYPTED_DATA_OBJECT, null, 2)}`);
     // isValidData.errors.forEach((e) => {
     //   logger?.error(JSON.stringify(e, null, 2));

@@ -28,11 +28,6 @@ const SuccessfulUserSignUpDialog: FC<ISuccessfulUserSignUpDialogProps> = (props:
   const navigate: NavigateFunction = useNavigate();
   const [signInError, setSignInError] = useState<boolean>(false);
 
-  const handleDialogClose = useCallback((): void => {
-    // This ensures no backdrop click or escape keypress closes the dialog
-    return;
-  }, []);
-
   const handleBackToSignInButtonClick = useCallback((): void => {
     appLogger.debug("Back to sign in button clicked.");
     navigate("/");
@@ -65,7 +60,7 @@ const SuccessfulUserSignUpDialog: FC<ISuccessfulUserSignUpDialogProps> = (props:
   }, [props.encryptedNewUserSignInDTO, props.username]);
 
   return (
-    <Dialog maxWidth="xl" open={props.open} onClose={handleDialogClose}>
+    <Dialog maxWidth="xl" open={props.open}>
       <DialogContent>
         <Box
           sx={{
@@ -92,7 +87,7 @@ const SuccessfulUserSignUpDialog: FC<ISuccessfulUserSignUpDialogProps> = (props:
           )}
         </Box>
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ display: "flex", justifyContent: "space-evenly" }}>
         <Button variant={props.encryptedNewUserSignInDTO === null ? "contained" : "outlined"} onClick={handleBackToSignInButtonClick}>
           Back to Sign In
         </Button>

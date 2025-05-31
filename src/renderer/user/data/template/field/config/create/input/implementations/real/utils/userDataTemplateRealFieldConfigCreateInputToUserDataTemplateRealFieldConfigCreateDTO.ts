@@ -30,6 +30,7 @@ export const userDataTemplateRealFieldConfigCreateInputToUserDataTemplateRealFie
     type: userDataTemplateRealFieldConfigCreateInput.type,
     name: userDataTemplateRealFieldConfigCreateInput.name,
     description: userDataTemplateRealFieldConfigCreateInput.description ?? null,
+    isRequired: userDataTemplateRealFieldConfigCreateInput.isRequired ?? false,
     minimum: min,
     maximum: max,
     multipleOf: userDataTemplateRealFieldConfigCreateInput.realMultipleOf ?? null,

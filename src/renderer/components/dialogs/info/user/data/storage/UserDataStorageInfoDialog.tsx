@@ -12,7 +12,7 @@ export interface IUserDataStorageInfoDialogProps {
 
 const UserDataStorageInfoDialog: FC<IUserDataStorageInfoDialogProps> = (props: IUserDataStorageInfoDialogProps) => {
   return (
-    <Dialog maxWidth="md" fullWidth={true} open={props.open}>
+    <Dialog maxWidth="md" fullWidth={true} open={props.open} onClose={props.onClose}>
       <DialogTitle>User data storage information</DialogTitle>
       <DialogContent>
         <Typography sx={{ marginBottom: ".5rem" }}>Data storages host your data.</Typography>

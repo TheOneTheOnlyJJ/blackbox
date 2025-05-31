@@ -11,6 +11,7 @@ export const userDataTemplateTextFieldConfigCreateInputToUserDataTemplateTextFie
     type: userDataTemplateTextFieldConfigCreateInput.type,
     name: userDataTemplateTextFieldConfigCreateInput.name,
     description: userDataTemplateTextFieldConfigCreateInput.description ?? null,
+    isRequired: userDataTemplateTextFieldConfigCreateInput.isRequired ?? false,
     useTextBox: userDataTemplateTextFieldConfigCreateInput.textUseTextBox ?? false,
     default: userDataTemplateTextFieldConfigCreateInput.textDefault ?? null
   } satisfies IUserDataTemplateTextFieldConfigCreateDTO;

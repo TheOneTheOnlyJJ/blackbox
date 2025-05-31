@@ -90,6 +90,10 @@ import {
 import { IUserDataTemplateInfo } from "@shared/user/data/template/info/UserDataTemplateInfo";
 import { IUserDataBoxIdentifier } from "@shared/user/data/box/identifier/UserDataBoxIdentifier";
 import { IUserDataTemplateIdentifier } from "@shared/user/data/template/identifier/UserDataTemplateIdentifier";
+import { IUserDataEntryAPI, USER_DATA_ENTRY_API_IPC_CHANNELS, UserDataEntryAPIIPCChannel } from "@shared/IPC/APIs/UserDataEntryAPI";
+import { isValidUserDataEntryCreateDTO, IUserDataEntryCreateDTO } from "@shared/user/data/entry/create/DTO/UserDataEntryCreateDTO";
+import { IUserDataEntryIdentifier } from "@shared/user/data/entry/identifier/UserDataEntryIdentifier";
+import { IUserDataEntryInfo } from "@shared/user/data/entry/info/UserDataEntryInfo";
 
 type WindowPositionSetting = Rectangle | WindowStates["FullScreen"] | WindowStates["Maximized"];
 
@@ -110,6 +114,7 @@ type MainProcessUserDataStorageAPIIPCHandlers = MainProcessIPCAPIHandlers<IUserD
 type MainProcessUserDataStorageVisibilityGroupAPIIPCHandlers = MainProcessIPCAPIHandlers<IUserDataStorageVisibilityGroupAPI>;
 type MainProcessUserDataBoxAPIIPCHandlers = MainProcessIPCAPIHandlers<IUserDataBoxAPI>;
 type MainProcessUserDataTemplateAPIIPCHandlers = MainProcessIPCAPIHandlers<IUserDataTemplateAPI>;
+type MainProcessUserDataEntryAPIIPCHandlers = MainProcessIPCAPIHandlers<IUserDataEntryAPI>;
 type MainProcessUtilsAPIIPCHandlers = MainProcessIPCAPIHandlers<IUtilsAPI>;
 
 export class App {
@@ -140,6 +145,7 @@ export class App {
   private readonly userDataStorageVisibilityGroupAPILogger: LogFunctions = log.scope("m-udata-strg-vgrp-api");
   private readonly userDataBoxAPILogger: LogFunctions = log.scope("m-udata-box-api");
   private readonly userDataTemplateAPILogger: LogFunctions = log.scope("m-udata-tmpl-api");
+  private readonly userDataEntryAPILogger: LogFunctions = log.scope("m-udata-ent-api");
   private readonly utilsAPILogger: LogFunctions = log.scope("m-utls-api");
 
   private readonly userFacadeLogger: LogFunctions = log.scope("m-usr-fac");
@@ -153,7 +159,8 @@ export class App {
       openDataStorageVisibilityGroups: log.scope("m-opn-udata-strg-vgrp-ctx"),
       initialisedDataStorages: log.scope("m-init-udata-strg-ctx"),
       availableDataBoxes: log.scope("m-avail-udata-box-ctx"),
-      availableDataTemplates: log.scope("m-avail-udata-tmpl-ctx")
+      availableDataTemplates: log.scope("m-avail-udata-tmpl-ctx"),
+      availableDataEntries: log.scope("m-avail-udata-ent-ctx")
     }
   } as const;
   private readonly USER_SERVICE_LOGGERS: IUserServiceLoggers = {
@@ -164,7 +171,8 @@ export class App {
     dataStorage: log.scope("m-udata-strg-svc"),
     dataStorageVisibilityGroup: log.scope("m-udata-strg-vgrp-svc"),
     dataBox: log.scope("m-udata-box-svc"),
-    dataTemplate: log.scope("m-udata-tmpl-svc")
+    dataTemplate: log.scope("m-udata-tmpl-svc"),
+    dataEntry: log.scope("m-udata-ent-svc")
   } as const;
 
   // Settings
@@ -981,7 +989,6 @@ export class App {
     }
   };
 
-  // TODO: Implement this, service and ocntext in facade, wire up IPC handlers down here
   private readonly USER_DATA_TEMPLATE_API_HANDLERS: MainProcessUserDataTemplateAPIIPCHandlers = {
     handleIsUserDataTemplateNameAvailable: (
       encryptedUserDataTemplateNameAvailabilityRequest: IEncryptedData<IUserDataTemplateNameAvailabilityRequest>
@@ -1080,6 +1087,77 @@ export class App {
     }
   };
 
+  private readonly USER_DATA_ENTRY_API_HANDLERS: MainProcessUserDataEntryAPIIPCHandlers = {
+    handleAddUserDataEntry: (encryptedUserDataEntryCreateDTO: IEncryptedData<IUserDataEntryCreateDTO>): IPCAPIResponse<boolean> => {
+      try {
+        if (this.IPC_TLS_AES_KEY.value === null) {
+          throw new Error("Null IPC TLS AES key");
+        }
+        return {
+          status: IPC_API_RESPONSE_STATUSES.SUCCESS,
+          data: this.userFacade.addUserDataEntryFromCreateDTO(
+            decryptWithAESAndValidateJSON<IUserDataEntryCreateDTO>(
+              encryptedUserDataEntryCreateDTO,
+              isValidUserDataEntryCreateDTO,
+              this.IPC_TLS_AES_KEY.value,
+              this.userDataEntryAPILogger,
+              "User Data Entry Create DTO"
+            )
+          )
+        };
+      } catch (error: unknown) {
+        const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
+        this.userDataEntryAPILogger.error(`Add User Data Entry error: ${ERROR_MESSAGE}!`);
+        return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
+      }
+    },
+    handleGetAllSignedInUserAvailableUserDataEntriesInfo: (): IPCAPIResponse<IEncryptedData<IUserDataEntryInfo[]>> => {
+      try {
+        if (this.IPC_TLS_AES_KEY.value === null) {
+          throw new Error("Null IPC TLS AES key");
+        }
+        return {
+          status: IPC_API_RESPONSE_STATUSES.SUCCESS,
+          data: encryptWithAES<IUserDataEntryInfo[]>(
+            this.userFacade.getAllSignedInUserAvailableUserDataEntriesInfo(),
+            this.IPC_TLS_AES_KEY.value,
+            this.userDataEntryAPILogger,
+            "all signed in user's available User Data Entries Info"
+          )
+        };
+      } catch (error: unknown) {
+        const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
+        this.userDataEntryAPILogger.error(`Get all signed in user's User Data Entries Info error: ${ERROR_MESSAGE}!`);
+        return { status: IPC_API_RESPONSE_STATUSES.INTERNAL_ERROR, error: "An internal error occurred" };
+      }
+    },
+    sendAvailableUserDataEntriesChanged: (
+      availableUserDataEntriesInfoChangedDiff: IDataChangedDiff<IUserDataEntryIdentifier, IUserDataEntryInfo>
+    ) => {
+      this.userDataEntryAPILogger.debug(
+        `Sending window available User Data Entries Info Changed Diff. Removals: ${availableUserDataEntriesInfoChangedDiff.removed.length.toString()}. Additions: ${availableUserDataEntriesInfoChangedDiff.added.length.toString()}.`
+      );
+      if (this.window === null) {
+        this.userDataEntryAPILogger.debug("Window is null. No-op.");
+        return;
+      }
+      if (this.IPC_TLS_AES_KEY.value === null) {
+        throw new Error("Null IPC TLS AES key");
+      }
+      const CHANNEL: UserDataEntryAPIIPCChannel = USER_DATA_ENTRY_API_IPC_CHANNELS.onAvailableUserDataEntriesChanged;
+      this.userDataEntryAPILogger.debug(`Messaging renderer on channel: "${CHANNEL}".`);
+      this.window.webContents.send(
+        CHANNEL,
+        encryptWithAES<IDataChangedDiff<IUserDataEntryIdentifier, IUserDataEntryInfo>>(
+          availableUserDataEntriesInfoChangedDiff,
+          this.IPC_TLS_AES_KEY.value,
+          this.userDataEntryAPILogger,
+          "available User Data Entries Info Changed Diff"
+        )
+      );
+    }
+  };
+
   private readonly UTILS_API_HANDLERS: MainProcessUtilsAPIIPCHandlers = {
     handleGetDirectoryPathWithPicker: async (
       options: IGetDirectoryPathWithPickerOptions
@@ -1163,7 +1241,8 @@ export class App {
         onInitialisedUserDataStoragesChangedCallback: this.USER_DATA_STORAGE_API_HANDLERS.sendInitialisedUserDataStoragesChanged,
         onInitialisedUserDataStorageInfoChangedCallback: this.USER_DATA_STORAGE_API_HANDLERS.sendInitialisedUserDataStorageInfoChanged,
         onAvailableUserDataBoxesChanged: this.USER_DATA_BOX_API_HANDLERS.sendAvailableUserDataBoxesChanged,
-        onAvailableUserDataTemplatesChanged: this.USER_DATA_TEMPLATE_API_HANDLERS.sendAvailableUserDataTemplatesChanged
+        onAvailableUserDataTemplatesChanged: this.USER_DATA_TEMPLATE_API_HANDLERS.sendAvailableUserDataTemplatesChanged,
+        onAvailableUserDataEntriesChanged: this.USER_DATA_ENTRY_API_HANDLERS.sendAvailableUserDataEntriesChanged
       } satisfies IUserContextHandlers
     } satisfies IUserFacadeConstructorProps);
     this.IPCTLSBootstrapPrivateRSAKey = null;
@@ -1455,6 +1534,7 @@ export class App {
     this.registerUserDataStorageVisibilityGroupAPIIPCHandlers();
     this.registerUserDataBoxAPIIPCHandlers();
     this.registerUserDataTemplateAPIIPCHandlers();
+    this.registerUserDataEntryAPIIPCHandlers();
     this.registerUtilsAPIIPCHandlers();
   }
 
@@ -1712,6 +1792,23 @@ export class App {
         `Received message from renderer on channel: "${USER_DATA_TEMPLATE_API_IPC_CHANNELS.getAllSignedInUserAvailableUserDataTemplatesInfo}".`
       );
       event.returnValue = this.USER_DATA_TEMPLATE_API_HANDLERS.handleGetAllSignedInUserAvailableUserDataTemplatesInfo();
+    });
+  }
+
+  private registerUserDataEntryAPIIPCHandlers(): void {
+    this.windowLogger.debug("Registering User Data Entry API IPC handlers.");
+    ipcMain.on(
+      USER_DATA_ENTRY_API_IPC_CHANNELS.addUserDataEntry,
+      (event: IpcMainEvent, encryptedUserDataEntryCreateDTO: IEncryptedData<IUserDataEntryCreateDTO>): void => {
+        this.userDataEntryAPILogger.debug(`Received message from renderer on channel: "${USER_DATA_ENTRY_API_IPC_CHANNELS.addUserDataEntry}".`);
+        event.returnValue = this.USER_DATA_ENTRY_API_HANDLERS.handleAddUserDataEntry(encryptedUserDataEntryCreateDTO);
+      }
+    );
+    ipcMain.on(USER_DATA_ENTRY_API_IPC_CHANNELS.getAllSignedInUserAvailableUserDataEntriesInfo, (event: IpcMainEvent): void => {
+      this.userDataEntryAPILogger.debug(
+        `Received message from renderer on channel: "${USER_DATA_ENTRY_API_IPC_CHANNELS.getAllSignedInUserAvailableUserDataEntriesInfo}".`
+      );
+      event.returnValue = this.USER_DATA_ENTRY_API_HANDLERS.handleGetAllSignedInUserAvailableUserDataEntriesInfo();
     });
   }
 

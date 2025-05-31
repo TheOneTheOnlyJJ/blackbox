@@ -20,10 +20,19 @@ export interface IUserAccountStorageUserDataStorageConfigFilter {
   };
 }
 
+// TODO: Identifier here?
 export interface IUserAccountStorageUserDataStorageVisibilityGroupFilter {
   userId: UUID;
   includeIds: UUID[] | "all";
   excludeIds: UUID[] | null;
+}
+
+export interface ICheckUserDataStorageIdAvailabilityArgs {
+  storageId: UUID;
+}
+
+export interface ICheckUserDataStorageVisibilityGroupIdAvailabilityArgs {
+  visibilityGroupId: UUID;
 }
 
 export interface IUserAccountStorageBackendHandlers {
@@ -74,8 +83,8 @@ export abstract class BaseUserAccountStorageBackend<T extends IBaseUserAccountSt
   public abstract getUserDataAESKeySalt(userId: UUID): string | null;
   public abstract getUserCount(): number;
   public abstract getUsernameForUserId(userId: UUID): string | null;
-  public abstract isUserDataStorageIdAvailable(storageId: UUID): boolean;
-  public abstract isUserDataStorageVisibilityGroupIdAvailable(dataStorageVisibilityGroupId: UUID): boolean;
+  public abstract isUserDataStorageIdAvailable(args: ICheckUserDataStorageIdAvailabilityArgs): boolean;
+  public abstract isUserDataStorageVisibilityGroupIdAvailable(args: ICheckUserDataStorageVisibilityGroupIdAvailabilityArgs): boolean;
   public abstract addStorageSecuredUserDataStorageConfig(storageSecuredUserDataStorageConfig: IStorageSecuredUserDataStorageConfig): boolean;
   public abstract addStorageSecuredUserDataStorageVisibilityGroupConfig(
     storageSecuredUserDataStorageVisibilityGroupConfig: IStorageSecuredUserDataStorageVisibilityGroupConfig

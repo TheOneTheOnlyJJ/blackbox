@@ -30,6 +30,7 @@ export const userDataTemplateIntegerFieldConfigCreateInputToUserDataTemplateInte
     type: userDataTemplateIntegerFieldConfigCreateInput.type,
     name: userDataTemplateIntegerFieldConfigCreateInput.name,
     description: userDataTemplateIntegerFieldConfigCreateInput.description ?? null,
+    isRequired: userDataTemplateIntegerFieldConfigCreateInput.isRequired ?? false,
     minimum: min,
     maximum: max,
     multipleOf: userDataTemplateIntegerFieldConfigCreateInput.integerMultipleOf ?? null,

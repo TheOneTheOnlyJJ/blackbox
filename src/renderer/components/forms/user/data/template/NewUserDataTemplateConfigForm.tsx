@@ -17,16 +17,15 @@ import { IPCAPIResponse } from "@shared/IPC/IPCAPIResponse";
 import { IPC_API_RESPONSE_STATUSES } from "@shared/IPC/IPCAPIResponseStatus";
 import { IUserDataTemplateConfigCreateDTO } from "@shared/user/data/template/config/create/DTO/UserDataTemplateConfigCreateDTO";
 import { IUserDataTemplateNameAvailabilityRequest } from "@shared/user/data/template/config/create/UserDataTemplateNameAvailabilityRequest";
-import { AJV_OPTIONS } from "@shared/utils/AJVJSONValidator";
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 import { enqueueSnackbar } from "notistack";
 import { Dispatch, SetStateAction, FC, useMemo, useCallback, useState } from "react";
 
-const MUIForm = withTheme<IUserDataTemplateConfigCreateInput, RJSFSchema, ISelectedUserDataStorageIdFormContext>(Theme);
+type NewUserDataTemplateConfigFormContext = ISelectedUserDataStorageIdFormContext;
 
-const isValidUserDataTemplateConfigCreateInput = customizeValidator<IUserDataTemplateConfigCreateInput>({
-  ajvOptionsOverrides: AJV_OPTIONS // TODO: Delete this?
-});
+const MUIForm = withTheme<IUserDataTemplateConfigCreateInput, RJSFSchema, NewUserDataTemplateConfigFormContext>(Theme);
+
+const isValidUserDataTemplateConfigCreateInput = customizeValidator<IUserDataTemplateConfigCreateInput>();
 
 const newUserDataTemplateConfigFormErrorTransformer: ErrorTransformer<IUserDataTemplateConfigCreateInput> = (
   errors: RJSFValidationError[]
@@ -103,6 +102,10 @@ export interface INewUserDataTemplateConfigFormProps {
 
 const NewUserDataTemplateConfigForm: FC<INewUserDataTemplateConfigFormProps> = (props: INewUserDataTemplateConfigFormProps) => {
   const [formData, setFormData] = useState<IUserDataTemplateConfigCreateInput | undefined>(undefined);
+
+  const formContext = useMemo<NewUserDataTemplateConfigFormContext>((): NewUserDataTemplateConfigFormContext => {
+    return { selectedUserDataStorageId: formData?.storageId };
+  }, [formData]);
 
   // TODO: Delete this
   // useEffect((): void => {
@@ -188,6 +191,7 @@ const NewUserDataTemplateConfigForm: FC<INewUserDataTemplateConfigFormProps> = (
                 }
               } else {
                 appLogger.warn("User Data Template name not available.");
+                // TODO: Add Readonly<> around all prevXXX types
                 props.setExtraErrors((prevExtraErrors: RJSFValidationError[]): RJSFValidationError[] => {
                   return [
                     ...prevExtraErrors,
@@ -240,7 +244,7 @@ const NewUserDataTemplateConfigForm: FC<INewUserDataTemplateConfigFormProps> = (
       noHtml5Validate={true}
       formData={formData}
       onChange={handleFormOnChange}
-      formContext={{ selectedUserDataStorageId: formData?.storageId }}
+      formContext={formContext}
     >
       {props.renderSubmitButton && (
         <Button type="submit" disabled={isSubmitButtonDisabled} variant="contained" size="large" sx={{ marginTop: "1vw", marginBottom: "1vw" }}>

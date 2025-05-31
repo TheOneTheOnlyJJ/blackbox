@@ -9,18 +9,19 @@ import { useOpenUserDataStorageVisibilityGroupsInfoState } from "./hooks/useOpen
 import { useForbiddenLocationNameState } from "./hooks/useForbiddenLocationNameState";
 import { useInitialisedUserDataStoragesInfoState } from "./hooks/useInitialisedUserDataStoragesInfoState";
 import { useAvailableUserDataBoxesInfoState } from "./hooks/useAvailableUserDataBoxesInfoState";
-import { IUserDataTemplateInfo } from "@shared/user/data/template/info/UserDataTemplateInfo";
 import { useAvailableUserDataTemplatesInfoState } from "./hooks/useAvailableUserDataTemplatesInfoState";
+import { useAvailableUserDataEntriesInfoState } from "./hooks/useAvailableUserDataEntriesInfoState";
 
 const SignedInRoot: FC = () => {
   const appRootContext: IAppRootContext = useAppRootContext();
 
   const availableUserDataStorageConfigsInfo: IUserDataStorageConfigInfo[] = useAvailableUserDataStorageConfigsInfoState(appLogger);
   const { initialisedUserDataStoragesInfo, getInitialisedUserDataStorageInfoById } = useInitialisedUserDataStoragesInfoState(appLogger);
-  const { openUserDataStorageVisibilityGroupsInfo, getOpenUserDataStorageVisibilityGroupInfo } =
+  const { openUserDataStorageVisibilityGroupsInfo, getOpenUserDataStorageVisibilityGroupInfoById } =
     useOpenUserDataStorageVisibilityGroupsInfoState(appLogger);
   const { availableUserDataDataBoxesInfo, getAvailableUserDataBoxInfoByIdentifier } = useAvailableUserDataBoxesInfoState(appLogger);
-  const availableUserDataDataTemplatesInfo: IUserDataTemplateInfo[] = useAvailableUserDataTemplatesInfoState(appLogger);
+  const { availableUserDataDataTemplatesInfo, getAvailableUserDataTemplateInfoByIdentifier } = useAvailableUserDataTemplatesInfoState(appLogger);
+  const { availableUserDataDataEntriesInfo, getAvailableUserDataEntryInfoByIdentifier } = useAvailableUserDataEntriesInfoState(appLogger);
   const [forbiddenLocationName, URIEncodeAndSetForbiddenLocationName] = useForbiddenLocationNameState(appLogger);
 
   useEffect((): (() => void) => {
@@ -32,6 +33,7 @@ const SignedInRoot: FC = () => {
 
   return appRootContext.signedInUserInfo !== null ? (
     <Outlet
+      // TODO: Put these in useMemo
       context={
         {
           ...appRootContext,
@@ -41,9 +43,12 @@ const SignedInRoot: FC = () => {
           openUserDataStorageVisibilityGroupsInfo: openUserDataStorageVisibilityGroupsInfo,
           availableUserDataDataBoxesInfo: availableUserDataDataBoxesInfo,
           availableUserDataDataTemplatesInfo: availableUserDataDataTemplatesInfo,
+          availableUserDataDataEntriesInfo: availableUserDataDataEntriesInfo,
           getInitialisedUserDataStorageInfoById: getInitialisedUserDataStorageInfoById,
-          getOpenUserDataStorageVisibilityGroupInfoById: getOpenUserDataStorageVisibilityGroupInfo,
+          getOpenUserDataStorageVisibilityGroupInfoById: getOpenUserDataStorageVisibilityGroupInfoById,
           getAvailableUserDataBoxInfoByIdentifier: getAvailableUserDataBoxInfoByIdentifier,
+          getAvailableUserDataTemplateInfoByIdentifier: getAvailableUserDataTemplateInfoByIdentifier,
+          getAvailableUserDataEntryInfoByIdentifier: getAvailableUserDataEntryInfoByIdentifier,
           setForbiddenLocationName: URIEncodeAndSetForbiddenLocationName
         } satisfies ISignedInRootContext
       }

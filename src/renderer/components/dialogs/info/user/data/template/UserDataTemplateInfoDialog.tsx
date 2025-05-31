@@ -12,7 +12,7 @@ export interface IUserDataTemplateInfoDialogProps {
 
 const UserDataTemplateInfoDialog: FC<IUserDataTemplateInfoDialogProps> = (props: IUserDataTemplateInfoDialogProps) => {
   return (
-    <Dialog maxWidth="md" fullWidth={true} open={props.open}>
+    <Dialog maxWidth="md" fullWidth={true} open={props.open} onClose={props.onClose}>
       <DialogTitle>User data template information</DialogTitle>
       <DialogContent>
         <Typography sx={{ marginBottom: ".5rem" }}>Data templates define the shape of your data.</Typography>

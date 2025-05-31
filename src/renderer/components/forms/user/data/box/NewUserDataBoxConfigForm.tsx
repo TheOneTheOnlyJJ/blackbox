@@ -9,7 +9,7 @@ import {
 } from "@renderer/user/data/box/config/create/input/UserDataBoxConfigCreateInput";
 import { RJSFSchema, RJSFValidationError, toErrorSchema } from "@rjsf/utils";
 import { customizeValidator } from "@rjsf/validator-ajv8";
-import { injectDefaultsInJSONSchema } from "@shared/utils/injectDefaultsInJSONSchema";
+import { injectDefaultsInObjectJSONSchema } from "@shared/utils/injectDefaultsInObjectJSONSchema";
 import { appLogger } from "@renderer/utils/loggers";
 import { enqueueSnackbar } from "notistack";
 import { IUserDataBoxConfigCreateDTO } from "@shared/user/data/box/create/DTO/UserDataBoxConfigCreateDTO";
@@ -153,10 +153,11 @@ const NewUserDataBoxConfigForm: FC<INewUserDataBoxConfigFormProps> = (props: INe
   return (
     <MUIForm
       ref={props.formRef}
+      // TODO: Memoize this and UI Schema for all forms where computation happens
       schema={
         props.defaultValues === null
           ? (USER_DATA_BOX_CONFIG_CREATE_INPUT_JSON_SCHEMA as RJSFSchema)
-          : (injectDefaultsInJSONSchema(USER_DATA_BOX_CONFIG_CREATE_INPUT_JSON_SCHEMA, props.defaultValues) as RJSFSchema)
+          : (injectDefaultsInObjectJSONSchema(USER_DATA_BOX_CONFIG_CREATE_INPUT_JSON_SCHEMA, props.defaultValues) as RJSFSchema)
       }
       validator={isValidUserDataBoxConfigCreateInput}
       uiSchema={{ ...USER_DATA_BOX_CONFIG_CREATE_INPUT_UI_SCHEMA, "ui:submitButtonOptions": { norender: !props.renderSubmitButton } }}

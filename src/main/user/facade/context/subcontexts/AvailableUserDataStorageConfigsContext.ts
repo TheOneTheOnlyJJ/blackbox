@@ -149,6 +149,7 @@ export class AvailableUserDataStorageConfigsContext {
     const DATA_STORAGE_IDS: UUID[] = [];
     for (const VISIBILITY_GROUP_ID of visibilityGroupIds) {
       for (const AVAILABLE_SECURED_DATA_STORAGE_CONFIG of this.availableSecuredDataStorageConfigs) {
+        // TODO: Is matching identifier function?
         if (VISIBILITY_GROUP_ID === AVAILABLE_SECURED_DATA_STORAGE_CONFIG.visibilityGroupId) {
           DATA_STORAGE_IDS.push(AVAILABLE_SECURED_DATA_STORAGE_CONFIG.storageId);
         }

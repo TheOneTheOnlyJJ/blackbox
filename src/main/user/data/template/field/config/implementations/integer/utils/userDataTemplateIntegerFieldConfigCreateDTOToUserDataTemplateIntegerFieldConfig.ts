@@ -11,6 +11,7 @@ export const userDataTemplateIntegerFieldConfigCreateDTOToUserDataTemplateIntege
     type: userDataTemplateIntegerFieldConfigCreateDTO.type,
     name: userDataTemplateIntegerFieldConfigCreateDTO.name,
     description: userDataTemplateIntegerFieldConfigCreateDTO.description,
+    isRequired: userDataTemplateIntegerFieldConfigCreateDTO.isRequired,
     minimum: userDataTemplateIntegerFieldConfigCreateDTO.minimum,
     maximum: userDataTemplateIntegerFieldConfigCreateDTO.maximum,
     multipleOf: userDataTemplateIntegerFieldConfigCreateDTO.multipleOf,

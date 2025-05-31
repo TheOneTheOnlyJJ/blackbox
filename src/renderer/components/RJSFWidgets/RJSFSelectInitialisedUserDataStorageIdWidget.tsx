@@ -1,4 +1,4 @@
-import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from "@mui/material";
+import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, Typography } from "@mui/material";
 import { getUiOptions, WidgetProps } from "@rjsf/utils";
 import { FC, FocusEvent, useCallback, useMemo } from "react";
 import { ISignedInRootContext, useSignedInRootContext } from "../roots/signedInRoot/SignedInRootContext";
@@ -66,14 +66,26 @@ const RJSFSelectInitialisedUserDataStorageIdWidget: FC<WidgetProps> = (props: Wi
     } else {
       initialisedUserDataStoragesSelectOptions = signedInRootContext.initialisedUserDataStoragesInfo;
     }
-    initialisedUserDataStoragesSelectOptions.forEach((initialisedOpenUserDataStorageInfo: IUserDataStorageInfo): void => {
+    if (initialisedUserDataStoragesSelectOptions.length === 0) {
       MENU_ITEMS.push(
-        <MenuItem key={initialisedOpenUserDataStorageInfo.storageId} value={initialisedOpenUserDataStorageInfo.storageId}>
-          {initialisedOpenUserDataStorageInfo.name}
+        <MenuItem key="empty" disabled>
+          <Typography>
+            <em>No data storages found</em>
+          </Typography>
         </MenuItem>
       );
-    });
-    return MENU_ITEMS;
+      return MENU_ITEMS;
+    }
+    const DATA_STORAGE_MENU_ITEMS: React.JSX.Element[] = initialisedUserDataStoragesSelectOptions.map(
+      (initialisedOpenUserDataStorageInfo: IUserDataStorageInfo): React.JSX.Element => {
+        return (
+          <MenuItem key={initialisedOpenUserDataStorageInfo.storageId} value={initialisedOpenUserDataStorageInfo.storageId}>
+            <Typography>{initialisedOpenUserDataStorageInfo.name}</Typography>
+          </MenuItem>
+        );
+      }
+    );
+    return MENU_ITEMS.concat(DATA_STORAGE_MENU_ITEMS);
   }, [options, signedInRootContext]);
 
   const _onChange = useCallback(
@@ -97,7 +109,9 @@ const RJSFSelectInitialisedUserDataStorageIdWidget: FC<WidgetProps> = (props: Wi
 
   return (
     <FormControl fullWidth>
-      <InputLabel id={labelId}>{label}</InputLabel>
+      <InputLabel id={labelId} required={required}>
+        {label}
+      </InputLabel>
       <Select
         id={id}
         label={label}

@@ -6,7 +6,7 @@ import { GridActionsCellItem } from "@mui/x-data-grid";
 export interface INewUserDataBoxActionItemProps {
   logger: LogFunctions;
   key: string | number;
-  dataStorage: { name: string; id: string };
+  dataStorage: { name: string; id: string }; // TODO: Identifier here?
   onButtonClick: (dataStorage: { name: string; id: string }) => void;
   showInMenu: boolean;
 }
@@ -15,7 +15,7 @@ export const NewUserDataBoxActionItem: FC<INewUserDataBoxActionItemProps> = (pro
   const { logger, key, dataStorage, onButtonClick, showInMenu } = props;
 
   const handleNewUserDataBoxClick = useCallback((): void => {
-    logger.info(`Clicked new User Data Box for User Data Storage "${dataStorage.id}" action button.`);
+    logger.info(`Clicked new User Data Box action button for User Data Storage "${dataStorage.id}".`);
     // TODO: Implement this; Dialog should be outside, in the Data Grid, and this should set it to open and give the storage ID
     onButtonClick(dataStorage);
   }, [logger, dataStorage, onButtonClick]);

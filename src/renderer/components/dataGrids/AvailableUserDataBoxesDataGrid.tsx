@@ -29,7 +29,7 @@ const AvailableUserDataBoxesDataGrid: FC = () => {
   });
 
   const rowIdGetter: GridRowIdGetter<IUserDataBoxInfo> = useCallback((row: IUserDataBoxInfo): GridRowId => {
-    return row.boxId + row.storageId;
+    return "".concat(row.boxId, row.storageId);
   }, []);
 
   const COLUMNS: GridColDef[] = useMemo<GridColDef[]>((): GridColDef[] => {

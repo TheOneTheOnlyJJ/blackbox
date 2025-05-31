@@ -43,9 +43,23 @@ import { storageSecuredUserDataTemplateConfigToSecuredUserDataTemplateConfig } f
 import { securedUserDataTemplateConfigToUserDataTemplate } from "@main/user/data/template/config/utils/securedUserDataTemplateConfigToUserDataTemplate";
 import {
   IUserDataStorageUserDataBoxConfigFilter,
+  IUserDataStorageUserDataEntryFilter,
   IUserDataStorageUserDataTemplateConfigFilter
 } from "@main/user/data/storage/backend/BaseUserDataStorageBackend";
 import { ISecuredUserDataTemplateConfig } from "@main/user/data/template/config/SecuredUserDataTemplateConfig";
+import { AvailableUserDataEntriesContext } from "./subcontexts/AvailableUserDataEntriesContext";
+import { IUserDataEntryIdentifier } from "@shared/user/data/entry/identifier/UserDataEntryIdentifier";
+import { IUserDataEntry } from "@main/user/data/entry/UserDataEntry";
+import { IUserDataEntryInfo } from "@shared/user/data/entry/info/UserDataEntryInfo";
+import { userDataEntryToUserDataEntryInfo } from "@main/user/data/entry/utils/userDataEntryToUserDataEntryInfo";
+import { IStorageSecuredUserDataEntry } from "@main/user/data/entry/StorageSecuredUserDataEntry";
+import { storageSecuredUserDataEntryToUserDataEntry } from "@main/user/data/entry/utils/storageSecuredUserDataEntryToUserDataEntry";
+import { isUserDataTemplateIdentifierMatchingUserDataTemplate } from "@main/user/data/template/utils/isUserDataTemplateIdentifierMatchingUserDataTemplate";
+import { JSONSchemaType, ValidateFunction } from "ajv";
+import { getUserDataEntryJSONSchemaFromTemplateInfo } from "@main/user/data/entry/utils/getUserDataEntryJSONSchemaFromTemplateInfo";
+import { AJV } from "@shared/utils/AJVJSONValidator";
+import { userDataEntryToUserDataEntryIdentifier } from "@main/user/data/entry/utils/userDataEntryToUserDataEntryIdentifier";
+import { isUserDataEntryIdentifierMatchingUserDataEntry } from "@main/user/data/entry/utils/isUserDataEntryIdentifierMatchingUserDataEntry";
 
 export interface IUserContextLoggers {
   main: LogFunctions;
@@ -57,6 +71,7 @@ export interface IUserContextLoggers {
     initialisedDataStorages: LogFunctions;
     availableDataBoxes: LogFunctions;
     availableDataTemplates: LogFunctions;
+    availableDataEntries: LogFunctions;
   };
 }
 
@@ -67,6 +82,7 @@ export interface IUserContextHandlers {
     | ((availableUserDataStorageConfigsInfoChangedDiff: IDataChangedDiff<string, IUserDataStorageConfigInfo>) => void)
     | null;
   onAvailableSecuredUserDataStorageConfigInfoChangedCallback: ((newUserDataStorageCnfigInfo: Readonly<IUserDataStorageConfigInfo>) => void) | null;
+  // TODO: This should use a proper identifier?
   onOpenUserDataStorageVisibilityGroupsChangedCallback:
     | ((dataStorageVisibilityGroupsInfoChangedDiff: IDataChangedDiff<string, IUserDataStorageVisibilityGroupInfo>) => void)
     | null;
@@ -77,6 +93,9 @@ export interface IUserContextHandlers {
   onAvailableUserDataBoxesChanged: ((availableDataBoxesChangedDiff: IDataChangedDiff<IUserDataBoxIdentifier, IUserDataBoxInfo>) => void) | null;
   onAvailableUserDataTemplatesChanged:
     | ((availableDataTemplatesChangedDiff: IDataChangedDiff<IUserDataTemplateIdentifier, IUserDataTemplateInfo>) => void)
+    | null;
+  onAvailableUserDataEntriesChanged:
+    | ((availableDataEntriesChangedDiff: IDataChangedDiff<IUserDataEntryIdentifier, IUserDataEntryInfo>) => void)
     | null;
 }
 
@@ -91,6 +110,7 @@ export class UserContext {
   public readonly OPEN_DATA_STORAGE_VISIBILITY_GROUPS_CONTEXT: OpenUserDataStorageVisibilityGroupsContext;
   public readonly AVAILABLE_DATA_BOXES_CONTEXT: AvailableUserDataBoxesContext;
   public readonly AVAILABLE_DATA_TEMPLATES_CONTEXT: AvailableUserDataTemplatesContext;
+  public readonly AVAILABLE_DATA_ENTRIES_CONTEXT: AvailableUserDataEntriesContext;
 
   public constructor(loggers: IUserContextLoggers, contextHandlers: IUserContextHandlers) {
     this.logger = loggers.main;
@@ -106,6 +126,7 @@ export class UserContext {
     );
     this.AVAILABLE_DATA_BOXES_CONTEXT = new AvailableUserDataBoxesContext(loggers.subcontexts.availableDataBoxes);
     this.AVAILABLE_DATA_TEMPLATES_CONTEXT = new AvailableUserDataTemplatesContext(loggers.subcontexts.availableDataTemplates);
+    this.AVAILABLE_DATA_ENTRIES_CONTEXT = new AvailableUserDataEntriesContext(loggers.subcontexts.availableDataEntries);
     // Wire up context interdependencies
     this.wireAllContextHandlers();
   }
@@ -119,6 +140,7 @@ export class UserContext {
     this.wireOpenUserDataStorageVisibilityGroupsContextHandlers();
     this.wireAvailableUserDataBoxesContextHandlers();
     this.wireAvailableUserDataTemplatesContextHandlers();
+    this.wireAvailableUserDataEntriesContextHandlers();
   }
 
   private wireUserAccountStorageContextHandlers(): void {
@@ -245,6 +267,11 @@ export class UserContext {
         );
       }
     };
+    this.INITIALISED_DATA_STORAGES_CONTEXT.onAddedNewUserDataEntriesCallback = (newUserDataEntries: IUserDataEntry[]): void => {
+      if (newUserDataEntries.length > 0) {
+        this.AVAILABLE_DATA_ENTRIES_CONTEXT.addAvailableDataEntries(newUserDataEntries);
+      }
+    };
     this.INITIALISED_DATA_STORAGES_CONTEXT.onOpenedInitialisedDataStorages = (openedDataStoragesInfo: IUserDataStorageInfo[]): void => {
       openedDataStoragesInfo.map((openedDataStorageInfo: IUserDataStorageInfo): void => {
         this.AVAILABLE_DATA_BOXES_CONTEXT.addAvailableDataBoxes(this.getAllDataBoxesFromDataStorage(openedDataStorageInfo.storageId as UUID));
@@ -310,7 +337,7 @@ export class UserContext {
   }
 
   private wireAvailableUserDataBoxesContextHandlers(): void {
-    this.logger.info("Wiring Open User Data Boxes Context handlers.");
+    this.logger.info("Wiring Available User Data Boxes Context handlers.");
     this.AVAILABLE_DATA_BOXES_CONTEXT.onAvailableDataBoxesChangedCallback = (
       availableDataBoxesChangedDiff: IDataChangedDiff<IUserDataBoxIdentifier, IUserDataBox>
     ): void => {
@@ -341,10 +368,25 @@ export class UserContext {
   }
 
   private wireAvailableUserDataTemplatesContextHandlers(): void {
-    this.logger.info("Wiring Open User Data Templates Context handlers.");
+    this.logger.info("Wiring Available User Data Templates Context handlers.");
     this.AVAILABLE_DATA_TEMPLATES_CONTEXT.onAvailableDataTemplatesChangedCallback = (
       availableDataTemplatesChangedDiff: IDataChangedDiff<IUserDataTemplateIdentifier, IUserDataTemplate>
     ): void => {
+      if (availableDataTemplatesChangedDiff.removed.length > 0) {
+        const DATA_ENTRY_IDENTIFIERS_TO_BE_REMOVED: IUserDataEntryIdentifier[] =
+          this.AVAILABLE_DATA_ENTRIES_CONTEXT.getAllAvailableUserDataEntryIdentifiersForUserDataTemplateIdentifiers(
+            availableDataTemplatesChangedDiff.removed
+          );
+        if (DATA_ENTRY_IDENTIFIERS_TO_BE_REMOVED.length > 0) {
+          this.AVAILABLE_DATA_ENTRIES_CONTEXT.removeAvailableDataEntries(DATA_ENTRY_IDENTIFIERS_TO_BE_REMOVED);
+        }
+      }
+      if (availableDataTemplatesChangedDiff.added.length > 0) {
+        const DATA_ENTRIES_TO_BE_ADDED: IUserDataEntry[] = this.getAllDataEntriesFromDataTemplates(availableDataTemplatesChangedDiff.added);
+        if (DATA_ENTRIES_TO_BE_ADDED.length > 0) {
+          this.AVAILABLE_DATA_ENTRIES_CONTEXT.addAvailableDataEntries(DATA_ENTRIES_TO_BE_ADDED);
+        }
+      }
       if (availableDataTemplatesChangedDiff.removed.length > 0 || availableDataTemplatesChangedDiff.added.length > 0) {
         this.HANDLERS.onAvailableUserDataTemplatesChanged?.({
           removed: availableDataTemplatesChangedDiff.removed,
@@ -352,6 +394,22 @@ export class UserContext {
             return userDataTemplateToUserDataTemplateInfo(newUserDataTemplate, null);
           })
         } satisfies IDataChangedDiff<IUserDataTemplateIdentifier, IUserDataTemplateInfo>);
+      }
+    };
+  }
+
+  private wireAvailableUserDataEntriesContextHandlers(): void {
+    this.logger.info("Wiring Available User Data Entries Context handlers.");
+    this.AVAILABLE_DATA_ENTRIES_CONTEXT.onAvailableDataEntriesChangedCallback = (
+      availableDataEntriesChangedDiff: IDataChangedDiff<IUserDataEntryIdentifier, IUserDataEntry>
+    ): void => {
+      if (availableDataEntriesChangedDiff.removed.length > 0 || availableDataEntriesChangedDiff.added.length > 0) {
+        this.HANDLERS.onAvailableUserDataEntriesChanged?.({
+          removed: availableDataEntriesChangedDiff.removed,
+          added: availableDataEntriesChangedDiff.added.map((newUserDataEntry: IUserDataEntry): IUserDataEntryInfo => {
+            return userDataEntryToUserDataEntryInfo(newUserDataEntry, null);
+          })
+        } satisfies IDataChangedDiff<IUserDataEntryIdentifier, IUserDataEntryInfo>);
       }
     };
   }
@@ -474,5 +532,94 @@ export class UserContext {
       });
     });
     return DATA_TEMPLATES;
+  }
+
+  private getAllDataEntriesFromDataTemplates(dataTemplates: IUserDataTemplate[]): IUserDataEntry[] {
+    this.logger.info(
+      `Getting all User Data Entries from ${dataTemplates.length.toString()} User Data Templates${dataTemplates.length === 1 ? "" : "es"}.`
+    );
+    const SIGNED_IN_USER: ISignedInUser | null = this.AUTH_CONTEXT.getSignedInUser();
+    if (SIGNED_IN_USER === null) {
+      throw new Error("Null signed in user");
+    }
+    const STORAGE_ID_TO_TEMPLATE_IDS: Map<UUID, UUID[]> = new Map<UUID, UUID[]>();
+    dataTemplates.forEach((dataTemplate: IUserDataTemplate): void => {
+      const TEMPLATE_IDS: UUID[] = STORAGE_ID_TO_TEMPLATE_IDS.get(dataTemplate.storageId) ?? [];
+      TEMPLATE_IDS.push(dataTemplate.templateId);
+      STORAGE_ID_TO_TEMPLATE_IDS.set(dataTemplate.storageId, TEMPLATE_IDS);
+    });
+    let dataEntries: IUserDataEntry[] = [];
+    STORAGE_ID_TO_TEMPLATE_IDS.forEach((templateIds: UUID[], storageId: UUID): void => {
+      const STORAGE_SECURED_DATA_ENTRIES: IStorageSecuredUserDataEntry[] = this.INITIALISED_DATA_STORAGES_CONTEXT.getStorageSecuredUserDataEntries(
+        storageId,
+        {
+          includeIds: "all",
+          excludeIds: null,
+          templates: {
+            includeIds: templateIds,
+            excludeIds: null
+          }
+        } satisfies IUserDataStorageUserDataEntryFilter
+      );
+      STORAGE_SECURED_DATA_ENTRIES.forEach((storageSecuredUserDataEntry: IStorageSecuredUserDataEntry): void => {
+        dataEntries.push(storageSecuredUserDataEntryToUserDataEntry(storageSecuredUserDataEntry, SIGNED_IN_USER.userDataAESKey, null));
+      });
+    });
+    if (dataEntries.length > 0) {
+      this.logger.debug("Validating read User Data Entries against their User Data Templates.");
+      const TEMPLATE_IDENTIFIER_TO_ENTRIES: Map<IUserDataTemplateIdentifier, IUserDataEntry[]> = new Map<
+        IUserDataTemplateIdentifier,
+        IUserDataEntry[]
+      >();
+      dataEntries.forEach((userDataEntry: IUserDataEntry): void => {
+        const TEMPLATE_IDENTIFIER_FOR_CURRENT_ENTRY: IUserDataTemplateIdentifier = {
+          templateId: userDataEntry.templateId,
+          boxId: userDataEntry.boxId,
+          storageId: userDataEntry.storageId
+        } satisfies IUserDataTemplateIdentifier;
+        const ENTRIES: IUserDataEntry[] = TEMPLATE_IDENTIFIER_TO_ENTRIES.get(TEMPLATE_IDENTIFIER_FOR_CURRENT_ENTRY) ?? [];
+        ENTRIES.push(userDataEntry);
+        TEMPLATE_IDENTIFIER_TO_ENTRIES.set(TEMPLATE_IDENTIFIER_FOR_CURRENT_ENTRY, ENTRIES);
+      });
+      const INVALID_DATA_ENTRIES_IDENTIFIERS: IUserDataEntryIdentifier[] = [];
+      TEMPLATE_IDENTIFIER_TO_ENTRIES.forEach((userDataEntries: IUserDataEntry[], templateIdentifier: IUserDataTemplateIdentifier): void => {
+        const MATCHING_TEMPLATE: IUserDataTemplate | undefined = this.AVAILABLE_DATA_TEMPLATES_CONTEXT.getAvailableDataTemplates().find(
+          (availableUserDataTemplate: IUserDataTemplate): boolean => {
+            return isUserDataTemplateIdentifierMatchingUserDataTemplate(templateIdentifier, availableUserDataTemplate);
+          }
+        );
+        if (MATCHING_TEMPLATE === undefined) {
+          throw new Error(
+            `Unavailable User Data Template "${templateIdentifier.templateId}" from User Data Box "${templateIdentifier.boxId}" from User Data Storage "${templateIdentifier.storageId}"`
+          );
+        }
+        const MATCHING_TEMPLATE_ENTRY_JSON_SCHEMA: JSONSchemaType<IUserDataEntry> = getUserDataEntryJSONSchemaFromTemplateInfo(
+          userDataTemplateToUserDataTemplateInfo(MATCHING_TEMPLATE, null),
+          null
+        );
+        const MATCHING_TEMPLATE_ENTRY_JSON_SCHEMA_VALIDATE_FUNCTION: ValidateFunction<IUserDataEntry> =
+          AJV.compile<IUserDataEntry>(MATCHING_TEMPLATE_ENTRY_JSON_SCHEMA);
+        userDataEntries.forEach((userDataEntry: IUserDataEntry): void => {
+          if (!MATCHING_TEMPLATE_ENTRY_JSON_SCHEMA_VALIDATE_FUNCTION(userDataEntry)) {
+            this.logger.error(
+              `Invalid User Data Entry "${(userDataEntry as IUserDataEntry).entryId}" found for User Data Template "${
+                MATCHING_TEMPLATE.templateId
+              }" from User Data Box "${MATCHING_TEMPLATE.boxId}" from User Data Storage "${MATCHING_TEMPLATE.storageId}".`
+            );
+            INVALID_DATA_ENTRIES_IDENTIFIERS.push(userDataEntryToUserDataEntryIdentifier(userDataEntry, null));
+          }
+        });
+      });
+      if (INVALID_DATA_ENTRIES_IDENTIFIERS.length > 0) {
+        dataEntries = dataEntries.filter((dataEntry: IUserDataEntry): boolean => {
+          return !INVALID_DATA_ENTRIES_IDENTIFIERS.some((invalidUserDataEntryIdentifier: IUserDataEntryIdentifier): boolean => {
+            return isUserDataEntryIdentifierMatchingUserDataEntry(invalidUserDataEntryIdentifier, dataEntry);
+          });
+        });
+      } else {
+        this.logger.debug("All User Data Entries are valid against their User Data Templates.");
+      }
+    }
+    return dataEntries;
   }
 }

@@ -36,6 +36,10 @@ import { IUserDataTemplateNameAvailabilityRequest } from "@shared/user/data/temp
 import { IUserDataTemplateConfigCreateDTO } from "@shared/user/data/template/config/create/DTO/UserDataTemplateConfigCreateDTO";
 import { IUserDataTemplateInfo } from "@shared/user/data/template/info/UserDataTemplateInfo";
 import { ISecuredUserDataTemplateConfig } from "../data/template/config/SecuredUserDataTemplateConfig";
+import { IUserDataEntryCreateDTO } from "@shared/user/data/entry/create/DTO/UserDataEntryCreateDTO";
+import { IUserDataEntry } from "../data/entry/UserDataEntry";
+import { UserDataEntryService } from "./services/UserDataEntryService";
+import { IUserDataEntryInfo } from "@shared/user/data/entry/info/UserDataEntryInfo";
 
 export interface IUserServiceLoggers {
   auth: LogFunctions;
@@ -46,6 +50,7 @@ export interface IUserServiceLoggers {
   dataStorageVisibilityGroup: LogFunctions;
   dataBox: LogFunctions;
   dataTemplate: LogFunctions;
+  dataEntry: LogFunctions;
 }
 
 export interface IUserFacadeConstructorProps {
@@ -66,6 +71,7 @@ export class UserFacade {
   private readonly DATA_STORAGE_VISIBILITY_GROUP_SERVICE: UserDataStorageVisibilityGroupService;
   private readonly DATA_BOX_SERVICE: UserDataBoxService;
   private readonly DATA_TEMPLATE_SERVICE: UserDataTemplateService;
+  private readonly DATA_ENTRY_SERVICE: UserDataEntryService;
 
   public constructor(props: IUserFacadeConstructorProps) {
     this.logger = props.logger;
@@ -88,6 +94,7 @@ export class UserFacade {
     );
     this.DATA_BOX_SERVICE = new UserDataBoxService(props.serviceLoggers.dataBox, CONTEXT_PROVIDER.getUserDataBoxServiceContext());
     this.DATA_TEMPLATE_SERVICE = new UserDataTemplateService(props.serviceLoggers.dataTemplate, CONTEXT_PROVIDER.getUserDataTemplateServiceContext());
+    this.DATA_ENTRY_SERVICE = new UserDataEntryService(props.serviceLoggers.dataEntry, CONTEXT_PROVIDER.getUserDataEntryServiceContext());
   }
 
   public destroy(): void {
@@ -248,6 +255,14 @@ export class UserFacade {
     return this.DATA_TEMPLATE_SERVICE.addSecuredUserDataTemplateConfigFromCreateDTO(userDataTemplateConfigCreateDTO);
   }
 
+  public addUserDataEntry(userDataEntry: IUserDataEntry): boolean {
+    return this.DATA_ENTRY_SERVICE.addUserDataEntry(userDataEntry);
+  }
+
+  public addUserDataEntryFromCreateDTO(userDataEntryCreateDTO: IUserDataEntryCreateDTO): boolean {
+    return this.DATA_ENTRY_SERVICE.addUserDataEntryFromCreateDTO(userDataEntryCreateDTO);
+  }
+
   public openUserDataStorageVisibilityGroups(userDataStorageVisibilityGroupOpenRequest: IUserDataStorageVisibilityGroupsOpenRequest): number {
     return this.DATA_STORAGE_VISIBILITY_GROUP_SERVICE.openUserDataStorageVisibilityGroups(userDataStorageVisibilityGroupOpenRequest);
   }
@@ -302,5 +317,9 @@ export class UserFacade {
 
   public getAllSignedInUserAvailableUserDataTemplatesInfo(): IUserDataTemplateInfo[] {
     return this.DATA_TEMPLATE_SERVICE.getAllSignedInUserAvailableUserDataTemplatesInfo();
+  }
+
+  public getAllSignedInUserAvailableUserDataEntriesInfo(): IUserDataEntryInfo[] {
+    return this.DATA_ENTRY_SERVICE.getAllSignedInUserAvailableUserDataEntriesInfo();
   }
 }

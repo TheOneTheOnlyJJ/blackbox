@@ -34,5 +34,5 @@ export const encryptWithAES = <T>(data: T, AESKey: Buffer, logger: LogFunctions 
   return {
     data: ENCRYPTED_DATA,
     iv: IV
-  };
+  } satisfies IEncryptedData<T>;
 };

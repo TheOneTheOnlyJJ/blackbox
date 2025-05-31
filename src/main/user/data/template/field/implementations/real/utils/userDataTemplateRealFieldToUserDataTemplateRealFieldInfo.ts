@@ -11,6 +11,7 @@ export const userDataTemplateRealFieldToUserDataTemplateRealFieldInfo = (
     type: userDataTemplateRealField.type,
     name: userDataTemplateRealField.name,
     description: userDataTemplateRealField.description,
+    isRequired: userDataTemplateRealField.isRequired,
     minimum: userDataTemplateRealField.minimum,
     maximum: userDataTemplateRealField.maximum,
     multipleOf: userDataTemplateRealField.multipleOf,

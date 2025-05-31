@@ -1,4 +1,4 @@
-import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from "@mui/material";
+import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, Stack, Typography } from "@mui/material";
 import { getUiOptions, WidgetProps } from "@rjsf/utils";
 import { FC, FocusEvent, useCallback, useMemo } from "react";
 import { ISignedInRootContext, useSignedInRootContext } from "../roots/signedInRoot/SignedInRootContext";
@@ -40,21 +40,22 @@ const RJSFSelectAvailableUserDataBoxIdWidget: FC<WidgetProps> = (props: WidgetPr
   }
 
   const formContextSelectedUserDataStorageId: string | null | undefined = useMemo<string | null | undefined>((): string | null | undefined => {
-    if (!options.formContextOptions.useSelectedUserDataStorageIdFormContext) {
+    if (!options.formContextOptions.selectedUserDataStorageIdFormContext.use) {
       return undefined;
     }
     if (!isValidSelectedUserDataStorageIdFormContext(formContext)) {
-      throw new Error(`Invalid Selected User Data Storage ID Form Context provided.`);
+      throw new Error(`Invalid Selected User Data Storage ID Form Context provided`);
     }
     return formContext.selectedUserDataStorageId ?? null;
   }, [options, formContext]);
 
   const isDisabled: boolean = useMemo<boolean>((): boolean => {
     const DISABLED_PROP: boolean = disabled ?? false;
-    if (!options.formContextOptions.disableWhenNoSelectedUserDataStorageIdFormContext) {
-      return DISABLED_PROP;
-    }
-    if (formContextSelectedUserDataStorageId === undefined || formContextSelectedUserDataStorageId === null) {
+    if (
+      options.formContextOptions.selectedUserDataStorageIdFormContext.use &&
+      options.formContextOptions.selectedUserDataStorageIdFormContext.disableWhenNoSelection &&
+      (formContextSelectedUserDataStorageId === undefined || formContextSelectedUserDataStorageId === null)
+    ) {
       return true;
     }
     return DISABLED_PROP;
@@ -85,23 +86,48 @@ const RJSFSelectAvailableUserDataBoxIdWidget: FC<WidgetProps> = (props: WidgetPr
       return MENU_ITEMS;
     }
     let userDataBoxesSelectOptions: IUserDataBoxInfo[];
+    let storageNameElement: React.JSX.Element | undefined;
     if (formContextSelectedUserDataStorageId === undefined) {
       userDataBoxesSelectOptions = signedInRootContext.availableUserDataDataBoxesInfo;
+      storageNameElement = undefined;
     } else {
       userDataBoxesSelectOptions = signedInRootContext.availableUserDataDataBoxesInfo.filter(
         (availableUserDataBoxInfo: IUserDataBoxInfo): boolean => {
           return availableUserDataBoxInfo.storageId === formContextSelectedUserDataStorageId;
         }
       );
+      const STORAGE_NAME: string | undefined = signedInRootContext.getInitialisedUserDataStorageInfoById(formContextSelectedUserDataStorageId)?.name;
+      storageNameElement = STORAGE_NAME !== undefined ? <span>{STORAGE_NAME}</span> : <em>Unknown</em>;
     }
-    userDataBoxesSelectOptions.forEach((availableUserDataBoxInfo: IUserDataBoxInfo): void => {
+    if (userDataBoxesSelectOptions.length === 0) {
       MENU_ITEMS.push(
+        <MenuItem key="empty" disabled>
+          <Typography>
+            <em>No boxes found</em>
+          </Typography>
+        </MenuItem>
+      );
+      return MENU_ITEMS;
+    }
+    const BOX_MENU_ITEMS: React.JSX.Element[] = userDataBoxesSelectOptions.map((availableUserDataBoxInfo: IUserDataBoxInfo): React.JSX.Element => {
+      return (
+        // TODO: Check uniqueness of all keys (give them index?) in all RJSF components
         <MenuItem key={availableUserDataBoxInfo.boxId} value={availableUserDataBoxInfo.boxId}>
-          {availableUserDataBoxInfo.name}
+          <Stack>
+            <Typography>{availableUserDataBoxInfo.name}</Typography>
+            <Typography variant="caption">
+              {"From data storage "}
+              <b>
+                {storageNameElement ?? signedInRootContext.getInitialisedUserDataStorageInfoById(availableUserDataBoxInfo.storageId)?.name ?? (
+                  <em>Unknown</em>
+                )}
+              </b>
+            </Typography>
+          </Stack>
         </MenuItem>
       );
     });
-    return MENU_ITEMS;
+    return MENU_ITEMS.concat(BOX_MENU_ITEMS);
   }, [options, formContextSelectedUserDataStorageId, signedInRootContext]);
 
   const _onChange = useCallback(
@@ -123,9 +149,20 @@ const RJSFSelectAvailableUserDataBoxIdWidget: FC<WidgetProps> = (props: WidgetPr
     [onFocus, id]
   );
 
+  // TODO: Find a way to fix this. Set the value to undefined when the conext selected value changes
+  // useEffect((): void => {
+  // appLogger.warn(`CLEANUP HOOK. Value ${String(value)} and ctx strg id ${String(formContextSelectedUserDataStorageId)}`);
+  // if (formContextSelectedUserDataStorageId === null) {
+  // appLogger.warn("RUNNING ON CHANGE HOOK");
+  // onChange(undefined);
+  // }
+  // }, [formContextSelectedUserDataStorageId]);
+
   return (
     <FormControl fullWidth>
-      <InputLabel id={labelId}>{label}</InputLabel>
+      <InputLabel id={labelId} required={required}>
+        {label}
+      </InputLabel>
       <Select
         id={id}
         label={label}

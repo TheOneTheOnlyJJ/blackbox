@@ -75,7 +75,7 @@ const InitialisedUserDataStoragesDataGrid: FC = () => {
   // Move until here
 
   const rowIdGetter: GridRowIdGetter<IUserDataStorageInfo> = useCallback((row: IUserDataStorageInfo): GridRowId => {
-    return row.visibilityGroupId === null ? row.storageId : row.storageId + row.visibilityGroupId;
+    return row.visibilityGroupId === null ? row.storageId : "".concat(row.storageId, row.visibilityGroupId);
   }, []);
 
   const COLUMNS: GridColDef[] = useMemo<GridColDef[]>((): GridColDef[] => {

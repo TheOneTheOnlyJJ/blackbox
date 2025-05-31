@@ -2,7 +2,9 @@ import {
   BaseUserAccountStorageBackend,
   IUserAccountStorageUserDataStorageConfigFilter,
   IUserAccountStorageUserDataStorageVisibilityGroupFilter,
-  IUserAccountStorageBackendHandlers
+  IUserAccountStorageBackendHandlers,
+  ICheckUserDataStorageIdAvailabilityArgs,
+  ICheckUserDataStorageVisibilityGroupIdAvailabilityArgs
 } from "../../BaseUserAccountStorageBackend";
 import DatabaseConstructor, { Database, RunResult } from "better-sqlite3";
 import { existsSync, mkdirSync } from "node:fs";
@@ -141,15 +143,15 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
       this.createUsersTable();
       this.createUserDataStorageConfigsTable();
       this.createUserDataStorageVisibilityGroupConfigsTable();
-      this.logger.info(`Opened "${this.config.type}" User Acount Storage Backend.`);
-      this.updateInfo({ ...this.getInfo(), isOpen: true });
-      this.onOpened?.();
-      return true;
     } catch (error: unknown) {
       const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
       this.logger.error(`Could not open "${this.config.type}" User Acount Storage Backend: ${ERROR_MESSAGE}!`);
       return false;
     }
+    this.logger.info(`Opened "${this.config.type}" User Acount Storage Backend.`);
+    this.updateInfo({ ...this.getInfo(), isOpen: true });
+    this.onOpened?.();
+    return true;
   }
 
   public close(): boolean {
@@ -161,15 +163,15 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     try {
       this.db.close();
       this.db = null;
-      this.logger.info(`Closed "${this.config.type}" User Account Storage Backend.`);
-      this.updateInfo({ ...this.getInfo(), isOpen: false });
-      this.onClosed?.();
-      return true;
     } catch (error: unknown) {
       const ERROR_MESSAGE = error instanceof Error ? error.message : String(error);
       this.logger.error(`Could not close "${this.config.type}" User Acount Storage Backend: ${ERROR_MESSAGE}!`);
       return false;
     }
+    this.logger.info(`Closed "${this.config.type}" User Account Storage Backend.`);
+    this.updateInfo({ ...this.getInfo(), isOpen: false });
+    this.onClosed?.();
+    return true;
   }
 
   public isUserIdAvailable(userId: UUID): boolean {
@@ -290,7 +292,8 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     return RESULT.username;
   }
 
-  public isUserDataStorageIdAvailable(storageId: UUID): boolean {
+  public isUserDataStorageIdAvailable(args: ICheckUserDataStorageIdAvailabilityArgs): boolean {
+    const { storageId } = args;
     this.logger.debug(`Checking if User Data Storage ID "${storageId}" is available.`);
     if (this.db === null) {
       throw new Error(`Closed "${this.config.type}" User Account Storage Backend`);
@@ -421,8 +424,9 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     return STORAGE_SECURED_USER_DATA_STORAGE_CONFIGS;
   }
 
-  public isUserDataStorageVisibilityGroupIdAvailable(dataStorageVisibilityGroupId: UUID): boolean {
-    this.logger.debug(`Checking if User Data Storage Visibility Group ID "${dataStorageVisibilityGroupId}" is available.`);
+  public isUserDataStorageVisibilityGroupIdAvailable(args: ICheckUserDataStorageVisibilityGroupIdAvailabilityArgs): boolean {
+    const { visibilityGroupId } = args;
+    this.logger.debug(`Checking if User Data Storage Visibility Group ID "${visibilityGroupId}" is available.`);
     if (this.db === null) {
       throw new Error(`Closed "${this.config.type}" User Account Storage Backend`);
     }
@@ -430,17 +434,15 @@ export class LocalSQLiteUserAccountStorageBackend extends BaseUserAccountStorage
     SELECT
       COUNT(*) AS count
     FROM user_data_storage_visibility_group_configs WHERE visibility_group_id = @visibilityGroupId`;
-    const RESULT = this.db.prepare(SQL_QUERY).get({ visibilityGroupId: dataStorageVisibilityGroupId }) as { count: number };
+    const RESULT = this.db.prepare(SQL_QUERY).get({ visibilityGroupId: visibilityGroupId }) as { count: number };
     if (RESULT.count === 0) {
-      this.logger.debug(`User Data Storage Visibility Group ID "${dataStorageVisibilityGroupId}" is available.`);
+      this.logger.debug(`User Data Storage Visibility Group ID "${visibilityGroupId}" is available.`);
       return true;
     } else if (RESULT.count === 1) {
-      this.logger.debug(`User Data Storage Visibility Group ID "${dataStorageVisibilityGroupId}" is not available.`);
+      this.logger.debug(`User Data Storage Visibility Group ID "${visibilityGroupId}" is not available.`);
       return false;
     }
-    throw new Error(
-      `Found multiple (${RESULT.count.toString()}) User Data Storage Visibility Group Configs with same ID "${dataStorageVisibilityGroupId}"`
-    );
+    throw new Error(`Found multiple (${RESULT.count.toString()}) User Data Storage Visibility Group Configs with same ID "${visibilityGroupId}"`);
   }
 
   public addStorageSecuredUserDataStorageVisibilityGroupConfig(

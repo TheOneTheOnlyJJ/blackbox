@@ -11,6 +11,7 @@ export const userDataTemplateIntegerFieldToUserDataTemplateIntegerFieldInfo = (
     type: userDataTemplateIntegerField.type,
     name: userDataTemplateIntegerField.name,
     description: userDataTemplateIntegerField.description,
+    isRequired: userDataTemplateIntegerField.isRequired,
     minimum: userDataTemplateIntegerField.minimum,
     maximum: userDataTemplateIntegerField.maximum,
     multipleOf: userDataTemplateIntegerField.multipleOf,

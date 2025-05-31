@@ -12,7 +12,7 @@ export interface IUserAccountStorageInfoDialogProps {
 const UserAccountStorageInfoDialog: FC<IUserAccountStorageInfoDialogProps> = (props: IUserAccountStorageInfoDialogProps) => {
   const { userAccountStorageInfo }: IAppRootContext = useAppRootContext();
   return (
-    <Dialog maxWidth="md" fullWidth={true} open={props.open}>
+    <Dialog maxWidth="md" fullWidth={true} open={props.open} onClose={props.onClose}>
       <DialogTitle>User account storage information</DialogTitle>
       <DialogContent>
         <Typography sx={{ marginBottom: ".5rem" }}>

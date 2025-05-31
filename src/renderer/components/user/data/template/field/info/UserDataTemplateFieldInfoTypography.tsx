@@ -57,7 +57,8 @@ const UserDataTemplateFieldInfoTypography: FC<IUserDataTemplateFieldInfoTypograp
       </Typography> */}
       <Typography>
         <b>
-          {displayIndex}. {userDataTemplateFieldInfo.name} ({USER_DATA_TEMPLATE_FIELD_TYPE_NAMES[userDataTemplateFieldInfo.type]})
+          {displayIndex}. {userDataTemplateFieldInfo.name}
+          {userDataTemplateFieldInfo.isRequired ? "*" : null} ({USER_DATA_TEMPLATE_FIELD_TYPE_NAMES[userDataTemplateFieldInfo.type]})
         </b>
       </Typography>
       <Box sx={{ pl: "1rem" }}>

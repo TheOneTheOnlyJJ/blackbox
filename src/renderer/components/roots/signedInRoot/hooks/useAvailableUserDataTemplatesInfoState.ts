@@ -11,11 +11,34 @@ import { IDataChangedDiff, isValidDataChangedDiff } from "@shared/utils/DataChan
 import { IEncryptedData } from "@shared/utils/EncryptedData";
 import { LogFunctions } from "electron-log";
 import { enqueueSnackbar } from "notistack";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-export const useAvailableUserDataTemplatesInfoState = (logger: LogFunctions): IUserDataTemplateInfo[] => {
+export const useAvailableUserDataTemplatesInfoState = (
+  logger: LogFunctions
+): {
+  availableUserDataDataTemplatesInfo: IUserDataTemplateInfo[];
+  getAvailableUserDataTemplateInfoByIdentifier: (userDataTemplateIdentifier: IUserDataTemplateIdentifier) => IUserDataTemplateInfo | null;
+} => {
   // TODO: Replace with Map
   const [availableUserDataDataTemplatesInfo, setAvailableUserDataDataTemplatesInfo] = useState<IUserDataTemplateInfo[]>([]);
+
+  const getAvailableUserDataTemplateInfoByIdentifier = useCallback(
+    (userDataTemplateIdentifier: IUserDataTemplateIdentifier): IUserDataTemplateInfo | null => {
+      const DATA_TEMPLATE_INFO: IUserDataTemplateInfo | undefined = availableUserDataDataTemplatesInfo.find(
+        (dataTemplateInfo: IUserDataTemplateInfo) => {
+          return isUserDataTemplateIdentifierMatchingUserDataTemplateInfo(userDataTemplateIdentifier, dataTemplateInfo);
+        }
+      );
+      if (DATA_TEMPLATE_INFO === undefined) {
+        logger.warn(
+          `Could not get info for User Data Template ${userDataTemplateIdentifier.templateId} from User Data Box ${userDataTemplateIdentifier.boxId} from User Data Storage ${userDataTemplateIdentifier.storageId}.`
+        );
+        return null;
+      }
+      return DATA_TEMPLATE_INFO;
+    },
+    [logger, availableUserDataDataTemplatesInfo]
+  );
 
   useEffect((): void => {
     logger.info(`Available User Data Templates Info changed. Count: ${availableUserDataDataTemplatesInfo.length.toString()}.`);
@@ -100,5 +123,8 @@ export const useAvailableUserDataTemplatesInfoState = (logger: LogFunctions): IU
     };
   }, [logger]);
 
-  return availableUserDataDataTemplatesInfo;
+  return {
+    availableUserDataDataTemplatesInfo: availableUserDataDataTemplatesInfo,
+    getAvailableUserDataTemplateInfoByIdentifier: getAvailableUserDataTemplateInfoByIdentifier
+  };
 };

@@ -11,6 +11,7 @@ export const userDataTemplateIntegerFieldConfigToSecuredUserDataTemplateIntegerF
     type: userDataTemplateIntegerFieldConfig.type,
     name: userDataTemplateIntegerFieldConfig.name,
     description: userDataTemplateIntegerFieldConfig.description,
+    isRequired: userDataTemplateIntegerFieldConfig.isRequired,
     minimum: userDataTemplateIntegerFieldConfig.minimum,
     maximum: userDataTemplateIntegerFieldConfig.maximum,
     multipleOf: userDataTemplateIntegerFieldConfig.multipleOf,
