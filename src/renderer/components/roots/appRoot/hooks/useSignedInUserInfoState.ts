@@ -27,7 +27,8 @@ export const useSignedInUserInfoState = (
       navigationPath = "/";
       setSignedInNavigationEntryIndex(0);
     } else {
-      navigationPath = `/users/${signedInUserInfo.userId}/dashboard`;
+      // TODO: Replce with Dashboard route once that's complete
+      navigationPath = `/users/${signedInUserInfo.userId}/data/storages/configs`;
       if (window.navigation.currentEntry === null) {
         logger.error("Window DOM navigation API current entry is null!");
         setSignedInNavigationEntryIndex(0);

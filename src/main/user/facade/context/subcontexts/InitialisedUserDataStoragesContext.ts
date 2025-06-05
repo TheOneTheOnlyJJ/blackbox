@@ -387,7 +387,6 @@ export class InitialisedUserDataStoragesContext {
     this.logger.debug(`Getting Storage Secured User Data Box Configs for User Data Storage "${userDataStorageId}".`);
     for (const INITIALISED_DATA_STORAGE of this.initialisedDataStorages) {
       if (INITIALISED_DATA_STORAGE.storageId === userDataStorageId) {
-        // TODO: Add filter here like in user account storage
         return INITIALISED_DATA_STORAGE.getStorageSecuredUserDataBoxConfigs(filter);
       }
     }
@@ -401,7 +400,6 @@ export class InitialisedUserDataStoragesContext {
     this.logger.debug(`Getting Storage Secured User Data Template Configs from User Data Storage "${userDataStorageId}".`);
     for (const INITIALISED_DATA_STORAGE of this.initialisedDataStorages) {
       if (INITIALISED_DATA_STORAGE.storageId === userDataStorageId) {
-        // TODO: Add filter here like in user account storage
         return INITIALISED_DATA_STORAGE.getStorageSecuredUserDataTemplateConfigs(filter);
       }
     }
@@ -412,7 +410,6 @@ export class InitialisedUserDataStoragesContext {
     this.logger.debug(`Getting Storage Secured User Data Entries from User Data Storage "${userDataStorageId}".`);
     for (const INITIALISED_DATA_STORAGE of this.initialisedDataStorages) {
       if (INITIALISED_DATA_STORAGE.storageId === userDataStorageId) {
-        // TODO: Add filter here like in user account storage
         return INITIALISED_DATA_STORAGE.getStorageSecuredUserDataEntries(filter);
       }
     }

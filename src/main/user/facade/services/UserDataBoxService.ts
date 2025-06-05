@@ -10,7 +10,6 @@ import { IUserDataStorageUserDataBoxConfigFilter } from "@main/user/data/storage
 import { IUserDataBoxConfigCreateDTO } from "@shared/user/data/box/create/DTO/UserDataBoxConfigCreateDTO";
 import { IUserDataBoxNameAvailabilityRequest } from "@shared/user/data/box/create/UserDataBoxNameAvailabilityRequest";
 import { IUserDataBoxInfo } from "@shared/user/data/box/info/UserDataBoxInfo";
-import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
 import { LogFunctions } from "electron-log";
 import { UUID } from "node:crypto";
 
@@ -19,7 +18,6 @@ export interface IUserDataBoxServiceContext {
   getAvailableDataBoxes: () => IUserDataBox[];
   generateRandomDataBoxId: (userDataStorageId: UUID) => UUID;
   addSecuredUserDataBoxConfig: (securedUserDataBoxConfig: ISecuredUserDataBoxConfig, encryptionAESKey: Buffer) => boolean;
-  getAllSignedInUserInitialisedOpenDataStoragesInfo: () => IUserDataStorageInfo[]; // TODO: Remove this?
   getStorageSecuredUserDataBoxConfigsForUserDataStorage: (
     userDataStorageId: UUID,
     filter: IUserDataStorageUserDataBoxConfigFilter

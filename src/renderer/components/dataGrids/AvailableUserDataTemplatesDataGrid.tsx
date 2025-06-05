@@ -9,7 +9,7 @@ import {
   GridRowParams,
   useGridApiRef
 } from "@mui/x-data-grid";
-import { FC, MutableRefObject, useCallback, useMemo, useState } from "react";
+import { FC, MutableRefObject, ReactNode, useCallback, useMemo, useState } from "react";
 import { ISignedInRootContext, useSignedInRootContext } from "../roots/signedInRoot/SignedInRootContext";
 import { useMUIXDataGridAutosizeColumnsOnWindowResize } from "@renderer/hooks/useMUIXDataGridAutosizeOnWindowResize";
 import { appLogger } from "@renderer/utils/loggers";
@@ -113,7 +113,7 @@ const AvailableUserDataTemplatesDataGrid: FC = () => {
         field: "description",
         type: "string",
         headerName: USER_DATA_TEMPLATE_INFO_JSON_SCHEMA_CONSTANTS.description.title,
-        renderCell: (params: GridRenderCellParams<IUserDataTemplateInfo, string | null>) => {
+        renderCell: (params: GridRenderCellParams<IUserDataTemplateInfo, string | null>): ReactNode => {
           return params.value === null ? <em>No description</em> : params.value;
         }
       },

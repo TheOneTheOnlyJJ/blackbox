@@ -10,7 +10,7 @@ import {
   GridRowParams,
   useGridApiRef
 } from "@mui/x-data-grid";
-import { FC, MutableRefObject, ReactElement, useCallback, useMemo, useState } from "react";
+import { FC, MutableRefObject, ReactElement, ReactNode, useCallback, useMemo, useState } from "react";
 import { ISignedInRootContext, useSignedInRootContext } from "../roots/signedInRoot/SignedInRootContext";
 import { PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS } from "@shared/user/data/storage/visibilityGroup/public/constants";
 import {
@@ -71,7 +71,7 @@ const AvailableUserDataStorageConfigsDataGrid: FC = () => {
             ? null
             : signedInRootContext.getOpenUserDataStorageVisibilityGroupInfoById(row.visibilityGroupId)?.name ?? row.visibilityGroupId;
         },
-        renderCell: (params: GridRenderCellParams<IUserDataStorageConfigInfo, string | null>) => {
+        renderCell: (params: GridRenderCellParams<IUserDataStorageConfigInfo, string | null>): ReactNode => {
           return params.value === null ? <em>{PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS.name}</em> : params.value;
         }
       },

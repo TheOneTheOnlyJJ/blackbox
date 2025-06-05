@@ -70,6 +70,7 @@ const APP_ROUTER = createHashRouter([
                   },
                   {
                     path: "boxes",
+                    // TODO: Rename this and rearrange entire UI into a single sidebar
                     element: <UserDataBoxesNavigationAreaLayoutRoot />,
                     children: [
                       {

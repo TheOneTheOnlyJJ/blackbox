@@ -10,14 +10,21 @@ export interface IUserDataEntryInfo {
   data: UserDataEntryData;
 }
 
+export const USER_DATA_ENTRY_INFO_JSON_SCHEMA_CONSTANTS = {
+  entryId: { title: "ID", format: "uuid" },
+  storageId: { title: "Storage", format: "uuid" },
+  boxId: { title: "Box", format: "uuid" },
+  templateId: { title: "Template", format: "uuid" }
+} as const;
+
 export const USER_DATA_ENTRY_INFO_JSON_SCHEMA: JSONSchemaType<IUserDataEntryInfo> = {
   $schema: "http://json-schema.org/draft-07/schema#",
   type: "object",
   properties: {
-    entryId: { type: "string", format: "uuid" },
-    storageId: { type: "string", format: "uuid" },
-    boxId: { type: "string", format: "uuid" },
-    templateId: { type: "string", format: "uuid" },
+    entryId: { type: "string", ...USER_DATA_ENTRY_INFO_JSON_SCHEMA_CONSTANTS.entryId },
+    storageId: { type: "string", ...USER_DATA_ENTRY_INFO_JSON_SCHEMA_CONSTANTS.storageId },
+    boxId: { type: "string", ...USER_DATA_ENTRY_INFO_JSON_SCHEMA_CONSTANTS.boxId },
+    templateId: { type: "string", ...USER_DATA_ENTRY_INFO_JSON_SCHEMA_CONSTANTS.templateId },
     data: USER_DATA_ENTRY_DATA_JSON_SCHEMA
   },
   required: ["entryId", "storageId", "boxId", "templateId", "data"],

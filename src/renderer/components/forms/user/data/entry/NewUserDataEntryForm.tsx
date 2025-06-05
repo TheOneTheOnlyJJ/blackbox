@@ -101,7 +101,7 @@ const NewUserDataEntryForm: FC<INewUserDataEntryFormProps> = (props: INewUserDat
       }
       const USER_DATA_ENTRY_CREATE_DTO: IUserDataEntryCreateDTO = userDataEntryCreateInputToUserDataEntryCreateDTO(data.formData, appLogger);
       // TODO: DELETE THIS
-      appLogger.warn(`USER DATA ENTRY CREATE DTO: ${JSON.stringify(USER_DATA_ENTRY_CREATE_DTO, null, 2)}`);
+      // appLogger.warn(`USER DATA ENTRY CREATE DTO: ${JSON.stringify(USER_DATA_ENTRY_CREATE_DTO, null, 2)}`);
       window.IPCTLSAPI.encrypt<IUserDataEntryCreateDTO>(USER_DATA_ENTRY_CREATE_DTO, "User Data Entry Create DTO")
         .then(
           (encryptedUserDataEntryCreateDTO: IEncryptedData<IUserDataEntryCreateDTO>): void => {

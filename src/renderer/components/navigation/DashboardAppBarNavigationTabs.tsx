@@ -67,20 +67,21 @@ export const DashboardAppBarNavigationTabs: FC<IDashboardAppBarNavigationTabsPro
 
   const NAVIGATION_ITEMS: IDashboardAppBarNavigationItem[] = useMemo<IDashboardAppBarNavigationItem[]>((): IDashboardAppBarNavigationItem[] => {
     return [
+      // TODO: Reenable this once Daqhsboard page is implemented
+      // {
+      //   name: "Dashboard",
+      //   // icon: DashboardOutlinedIcon,
+      //   dashboardNavigationArea: DASHBOARD_NAVIGATION_AREAS.dashboard,
+      //   path: `/users/${signedInRootContext.signedInUserInfo.userId}/dashboard`
+      // },
       {
-        name: "Dashboard",
-        // icon: DashboardOutlinedIcon,
-        dashboardNavigationArea: DASHBOARD_NAVIGATION_AREAS.dashboard,
-        path: `/users/${signedInRootContext.signedInUserInfo.userId}/dashboard`
-      },
-      {
-        name: "Storages",
+        name: "Storage",
         // icon: WarehouseOutlinedIcon,
         dashboardNavigationArea: DASHBOARD_NAVIGATION_AREAS.dataStorages,
         path: `/users/${signedInRootContext.signedInUserInfo.userId}/data/storages/configs`
       },
       {
-        name: "Boxes",
+        name: "Data",
         // icon: Inventory2OutlinedIcon,
         dashboardNavigationArea: DASHBOARD_NAVIGATION_AREAS.boxes,
         path: `/users/${signedInRootContext.signedInUserInfo.userId}/data/boxes/available`

@@ -12,7 +12,7 @@ import {
 } from "@mui/x-data-grid";
 import { useMUIXDataGridAutosizeColumnsOnWindowResize } from "@renderer/hooks/useMUIXDataGridAutosizeOnWindowResize";
 import { appLogger } from "@renderer/utils/loggers";
-import { FC, MutableRefObject, ReactElement, useCallback, useMemo, useState } from "react";
+import { FC, MutableRefObject, ReactElement, ReactNode, useCallback, useMemo, useState } from "react";
 import { ISignedInRootContext, useSignedInRootContext } from "../roots/signedInRoot/SignedInRootContext";
 import { IUserDataStorageInfo, USER_DATA_STORAGE_INFO_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/storage/info/UserDataStorageInfo";
 import { IUserDataStorageVisibilityGroupInfo } from "@shared/user/data/storage/visibilityGroup/info/UserDataStorageVisibilityGroupInfo";
@@ -97,7 +97,7 @@ const InitialisedUserDataStoragesDataGrid: FC = () => {
             ? null
             : signedInRootContext.getOpenUserDataStorageVisibilityGroupInfoById(row.visibilityGroupId)?.name ?? row.visibilityGroupId;
         },
-        renderCell: (params: GridRenderCellParams<IUserDataStorageInfo, string | null>) => {
+        renderCell: (params: GridRenderCellParams<IUserDataStorageInfo, string | null>): ReactNode => {
           return params.value === null ? <em>{PUBLIC_USER_DATA_STORAGE_VISIBILITY_GROUP_CONSTANTS.name}</em> : params.value;
         }
       },

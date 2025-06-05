@@ -32,7 +32,7 @@ const UserDataBoxesNavigationAreaBar = forwardRef<HTMLDivElement, IUserDataBoxes
   >((): IUserDataBoxesNavigationAreaBarDrawerItem[] => {
     return [
       {
-        name: "Available",
+        name: "Boxes",
         icon: Inventory2OutlinedIcon,
         userDataBoxesNavigationArea: USER_DATA_BOXES_NAVIGATION_AREAS.availableBoxes,
         path: `/users/${props.signedInUserId}/data/boxes/available`,

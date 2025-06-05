@@ -10,7 +10,7 @@ import {
 } from "@mui/x-data-grid";
 import { useMUIXDataGridAutosizeColumnsOnWindowResize } from "@renderer/hooks/useMUIXDataGridAutosizeOnWindowResize";
 import { appLogger } from "@renderer/utils/loggers";
-import { FC, MutableRefObject, useCallback, useMemo } from "react";
+import { FC, MutableRefObject, ReactNode, useCallback, useMemo } from "react";
 import { ISignedInRootContext, useSignedInRootContext } from "../roots/signedInRoot/SignedInRootContext";
 import { IUserDataBoxInfo, USER_DATA_BOX_INFO_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/box/info/UserDataBoxInfo";
 import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
@@ -51,7 +51,7 @@ const AvailableUserDataBoxesDataGrid: FC = () => {
         field: "description",
         type: "string",
         headerName: USER_DATA_BOX_INFO_JSON_SCHEMA_CONSTANTS.description.title,
-        renderCell: (params: GridRenderCellParams<IUserDataBoxInfo, string | null>) => {
+        renderCell: (params: GridRenderCellParams<IUserDataBoxInfo, string | null>): ReactNode => {
           return params.value === null ? <em>No description</em> : params.value;
         }
       }

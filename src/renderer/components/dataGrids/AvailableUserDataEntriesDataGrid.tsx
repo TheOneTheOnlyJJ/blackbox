@@ -3,7 +3,7 @@ import { useMUIXDataGridAutosizeColumnsOnWindowResize } from "@renderer/hooks/us
 import { appLogger } from "@renderer/utils/loggers";
 import { FC, MutableRefObject, useCallback, useMemo } from "react";
 import { ISignedInRootContext, useSignedInRootContext } from "../roots/signedInRoot/SignedInRootContext";
-import { IUserDataEntryInfo } from "@shared/user/data/entry/info/UserDataEntryInfo";
+import { IUserDataEntryInfo, USER_DATA_ENTRY_INFO_JSON_SCHEMA_CONSTANTS } from "@shared/user/data/entry/info/UserDataEntryInfo";
 import { isUserDataEntryMatchingUserDataTemplate } from "@shared/user/data/entry/utils/isUserDataEntryMatchingUserDataTemplate";
 import { IUserDataTemplateInfo } from "@shared/user/data/template/info/UserDataTemplateInfo";
 import { getUserDataEntryFieldInfoDataGridColumnDefinitionFromUserDataTemplateFieldInfo } from "@renderer/user/data/entry/info/utils/field/getUserDataEntryFieldInfoDataGridColumnDefinitionFromUserDataTemplateFieldInfo";
@@ -11,7 +11,6 @@ import { UserDataTemplateFieldInfo } from "@shared/user/data/template/field/info
 import { getUserDataEntryFieldKey } from "@shared/user/data/entry/utils/getUserDataEntryFieldKey";
 
 const GRID_AUTOSIZE_OPTIONS: GridAutosizeOptions = { expand: true, includeHeaders: true };
-const MUI_X_GRID_COL_DEF_VALUE_GETTER_PROPERTY_NAME = "valueGetter";
 
 export interface IAvailableUserDataEntriesDataGridProps {
   userDataTemplateInfo: IUserDataTemplateInfo;
@@ -39,20 +38,23 @@ const AvailableUserDataEntriesDataGrid: FC<IAvailableUserDataEntriesDataGridProp
   }, [props, signedInRootContext.availableUserDataDataEntriesInfo]);
 
   const COLUMNS: GridColDef[] = useMemo<GridColDef[]>((): GridColDef[] => {
-    return props.userDataTemplateInfo.fields.map((userDataTemplateInfoField: UserDataTemplateFieldInfo, index: number): GridColDef => {
-      const USER_DATA_ENTRY_FIELD_KEY: string = getUserDataEntryFieldKey(index);
-      const USER_DATA_ENTRY_FIELD_INFO_DATA_GRID_COLUMN_DEFINITION: GridColDef =
-        getUserDataEntryFieldInfoDataGridColumnDefinitionFromUserDataTemplateFieldInfo(userDataTemplateInfoField, USER_DATA_ENTRY_FIELD_KEY, null);
-      if (USER_DATA_ENTRY_FIELD_INFO_DATA_GRID_COLUMN_DEFINITION[MUI_X_GRID_COL_DEF_VALUE_GETTER_PROPERTY_NAME] !== undefined) {
-        appLogger.warn(
-          `User Data Entry Field Info data grid column definition has a ${MUI_X_GRID_COL_DEF_VALUE_GETTER_PROPERTY_NAME}! It will be replaced!`
-        );
-      }
-      USER_DATA_ENTRY_FIELD_INFO_DATA_GRID_COLUMN_DEFINITION.valueGetter = (_: never, row: IUserDataEntryInfo) => {
-        return row.data[USER_DATA_ENTRY_FIELD_KEY];
-      };
-      return USER_DATA_ENTRY_FIELD_INFO_DATA_GRID_COLUMN_DEFINITION;
-    });
+    return [
+      // TODO: Add this headerName to a list of disallowed entry field names to avoid user confusion if an entry field has the same name
+      { field: "entryId", type: "string", headerName: USER_DATA_ENTRY_INFO_JSON_SCHEMA_CONSTANTS.entryId.title },
+      ...props.userDataTemplateInfo.fields.map((userDataTemplateInfoField: UserDataTemplateFieldInfo, index: number): GridColDef => {
+        const USER_DATA_ENTRY_FIELD_KEY: string = getUserDataEntryFieldKey(index);
+        const USER_DATA_ENTRY_FIELD_INFO_DATA_GRID_COLUMN_DEFINITION: GridColDef =
+          getUserDataEntryFieldInfoDataGridColumnDefinitionFromUserDataTemplateFieldInfo(userDataTemplateInfoField, USER_DATA_ENTRY_FIELD_KEY, null);
+        if (USER_DATA_ENTRY_FIELD_INFO_DATA_GRID_COLUMN_DEFINITION.valueGetter !== undefined) {
+          appLogger.warn(`User Data Entry Field Info data grid column definition has a value getter! It will be replaced!`);
+        }
+        USER_DATA_ENTRY_FIELD_INFO_DATA_GRID_COLUMN_DEFINITION.valueGetter = (_: never, row: IUserDataEntryInfo): unknown => {
+          return row.data[USER_DATA_ENTRY_FIELD_KEY];
+        };
+        // TODO: Handle null or undefined values with a renderCell function, should be inside the ColDef getter function
+        return USER_DATA_ENTRY_FIELD_INFO_DATA_GRID_COLUMN_DEFINITION;
+      })
+    ];
   }, [props]);
 
   return (
@@ -66,7 +68,7 @@ const AvailableUserDataEntriesDataGrid: FC<IAvailableUserDataEntriesDataGridProp
       initialState={{
         columns: {
           columnVisibilityModel: {
-            boxId: false
+            entryId: false
           }
         }
       }}

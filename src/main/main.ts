@@ -6,6 +6,7 @@ import { App } from "@main/App";
 // TODO: Make visibility group open request shared?
 // TODO: Rename visibility group to just group. Rename open to unlocked/available?
 // TODO: Add User Data Box Groups
+// TODO: Make boxes openable & closable. Only load templates and entries once a box is opened. Remove when closed.
 // TODO: Make groups be one of public/hidden/secret. Rename default group to something like default/ungrouped
 // TODO: Edit & delete user data storage configs from frontend
 // TODO: Chack name availability for all WhateverNameAvailabilityRequest on the backend aswell before adding whatever

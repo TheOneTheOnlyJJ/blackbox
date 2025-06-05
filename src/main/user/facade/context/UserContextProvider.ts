@@ -135,10 +135,6 @@ export class UserContextProvider {
       addSecuredUserDataBoxConfig: this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT.addSecuredUserDataBoxConfig.bind(
         this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT
       ),
-      getAllSignedInUserInitialisedOpenDataStoragesInfo:
-        this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT.getAllSignedInUserInitialisedOpenDataStoragesInfo.bind(
-          this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT
-        ),
       getStorageSecuredUserDataBoxConfigsForUserDataStorage:
         this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT.getStorageSecuredUserDataBoxConfigsForUserDataStorage.bind(
           this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT

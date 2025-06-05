@@ -2,12 +2,12 @@ import { FC, useMemo } from "react";
 import Menu, { MenuProps } from "@mui/material/Menu/Menu";
 import MenuItem from "@mui/material/MenuItem/MenuItem";
 import ListItemIcon from "@mui/material/ListItemIcon/ListItemIcon";
-import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
-import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
+// import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
+// import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import DebouncedLink from "./DebouncedLink";
 import { SvgIconComponent } from "@mui/icons-material";
-import { DASHBOARD_NAVIGATION_AREAS, DashboardNavigationArea } from "@renderer/navigationAreas/DashboardNavigationAreas";
+import { DashboardNavigationArea } from "@renderer/navigationAreas/DashboardNavigationAreas";
 import { ISignedInRootContext, useSignedInRootContext } from "../roots/signedInRoot/SignedInRootContext";
 
 interface IUserAccountMenuItem {
@@ -31,20 +31,21 @@ const UserAccountMenu: FC<IUserAccountMenuProps> = (props: IUserAccountMenuProps
   const { dashboardNavigationArea, ...menuProps } = props;
   const USER_ACCOUNT_MENU_ITEMS: IUserAccountMenuItem[] = useMemo<IUserAccountMenuItem[]>((): IUserAccountMenuItem[] => {
     return [
-      {
-        name: "Profile",
-        icon: PersonOutlineOutlinedIcon,
-        dashboardNavigationArea: DASHBOARD_NAVIGATION_AREAS.profile,
-        path: `/users/${signedInRootContext.signedInUserInfo.userId}/profile`,
-        divider: false
-      },
-      {
-        name: "Settings",
-        icon: SettingsOutlinedIcon,
-        dashboardNavigationArea: DASHBOARD_NAVIGATION_AREAS.settings,
-        path: `/users/${signedInRootContext.signedInUserInfo.userId}/settings`,
-        divider: true
-      },
+      // TODO: Reenable these once their pages are complete
+      // {
+      //   name: "Profile",
+      //   icon: PersonOutlineOutlinedIcon,
+      //   dashboardNavigationArea: DASHBOARD_NAVIGATION_AREAS.profile,
+      //   path: `/users/${signedInRootContext.signedInUserInfo.userId}/profile`,
+      //   divider: false
+      // },
+      // {
+      //   name: "Settings",
+      //   icon: SettingsOutlinedIcon,
+      //   dashboardNavigationArea: DASHBOARD_NAVIGATION_AREAS.settings,
+      //   path: `/users/${signedInRootContext.signedInUserInfo.userId}/settings`,
+      //   divider: true
+      // },
       {
         name: "Sign Out",
         icon: LogoutOutlinedIcon,

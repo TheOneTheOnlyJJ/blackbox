@@ -18,7 +18,6 @@ export interface IUserDataTemplateServiceContext {
   getAvailableDataTemplates: () => IUserDataTemplate[];
   generateRandomDataTemplateId: (userDataStorageId: UUID, userDataBoxId: UUID) => UUID;
   addSecuredUserDataTemplateConfig: (securedUserDataTemplateConfig: ISecuredUserDataTemplateConfig, encryptionAESKey: Buffer) => boolean;
-  // getAllSignedInUserInitialisedOpenDataStoragesInfo: () => IUserDataStorageInfo[]; // TODO: Remove this?
   getStorageSecuredUserDataTemplates: (
     userDataStorageId: UUID,
     filter: IUserDataStorageUserDataTemplateConfigFilter
