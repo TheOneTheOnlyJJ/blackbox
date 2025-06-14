@@ -15,6 +15,7 @@ import { UUID } from "node:crypto";
 
 export interface IUserDataBoxServiceContext {
   getSignedInUser: () => Readonly<ISignedInUser> | null;
+  getDataStorageResourceAESKeyFromId: (storageId: UUID, logger: LogFunctions | null) => Buffer | undefined;
   getAvailableDataBoxes: () => IUserDataBox[];
   generateRandomDataBoxId: (userDataStorageId: UUID) => UUID;
   addSecuredUserDataBoxConfig: (securedUserDataBoxConfig: ISecuredUserDataBoxConfig, encryptionAESKey: Buffer) => boolean;
@@ -58,7 +59,11 @@ export class UserDataBoxService {
     if (SIGNED_IN_USER === null) {
       throw new Error("No signed in user");
     }
-    return this.CONTEXT.addSecuredUserDataBoxConfig(securedUserDataBoxConfig, SIGNED_IN_USER.userDataAESKey); // TODO: When Box Visibility Groups, use key from there
+    const ENCRYPTION_AES_KEY: Buffer | undefined = this.CONTEXT.getDataStorageResourceAESKeyFromId(securedUserDataBoxConfig.storageId, this.logger);
+    if (ENCRYPTION_AES_KEY === undefined) {
+      throw new Error(`Could not get Secured User Data Box Config encryption AES key`);
+    }
+    return this.CONTEXT.addSecuredUserDataBoxConfig(securedUserDataBoxConfig, ENCRYPTION_AES_KEY);
   }
 
   public isUserDataBoxNameAvailableForUserDataStorage(userDataBoxNameAvailabilityRequest: IUserDataBoxNameAvailabilityRequest): boolean {
@@ -67,6 +72,13 @@ export class UserDataBoxService {
     if (SIGNED_IN_USER === null) {
       throw new Error("No signed in user");
     }
+    const DECRYPTION_AES_KEY: Buffer | undefined = this.CONTEXT.getDataStorageResourceAESKeyFromId(
+      userDataBoxNameAvailabilityRequest.storageId as UUID,
+      this.logger
+    );
+    if (DECRYPTION_AES_KEY === undefined) {
+      throw new Error(`Could not get Storage Secured User Data Box Config decryption AES key`);
+    }
     // TODO: Don't make a data storage read for this
     for (const STORAGE_SECURED_DATA_BOX_CONFIG of this.CONTEXT.getStorageSecuredUserDataBoxConfigsForUserDataStorage(
       userDataBoxNameAvailabilityRequest.storageId as UUID,
@@ -74,7 +86,7 @@ export class UserDataBoxService {
     )) {
       const SECURED_DATA_BOX_CONFIG: ISecuredUserDataBoxConfig = storageSecuredUserDataBoxConfigToSecuredUserDataBoxConfig(
         STORAGE_SECURED_DATA_BOX_CONFIG,
-        SIGNED_IN_USER.userDataAESKey, // TODO: When Box Visibility Groups become a thing, use the corresponding key here
+        DECRYPTION_AES_KEY,
         null
       );
       if (SECURED_DATA_BOX_CONFIG.name === userDataBoxNameAvailabilityRequest.name) {

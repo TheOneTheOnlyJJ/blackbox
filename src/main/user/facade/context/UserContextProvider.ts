@@ -128,6 +128,7 @@ export class UserContextProvider {
     this.logger.debug("Providing User Data Box Service Context.");
     return {
       getSignedInUser: this.CONTEXT.AUTH_CONTEXT.getSignedInUser.bind(this.CONTEXT.AUTH_CONTEXT),
+      getDataStorageResourceAESKeyFromId: this.CONTEXT.getDataStorageResourceAESKeyFromId.bind(this.CONTEXT),
       getAvailableDataBoxes: this.CONTEXT.AVAILABLE_DATA_BOXES_CONTEXT.getAvailableDataBoxes.bind(this.CONTEXT.AVAILABLE_DATA_BOXES_CONTEXT),
       generateRandomDataBoxId: this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT.generateRandomDataBoxId.bind(
         this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT
@@ -146,6 +147,7 @@ export class UserContextProvider {
     this.logger.debug("Providing User Data Template Service Context.");
     return {
       getSignedInUser: this.CONTEXT.AUTH_CONTEXT.getSignedInUser.bind(this.CONTEXT.AUTH_CONTEXT),
+      getDataStorageResourceAESKeyFromId: this.CONTEXT.getDataStorageResourceAESKeyFromId.bind(this.CONTEXT),
       getAvailableDataTemplates: this.CONTEXT.AVAILABLE_DATA_TEMPLATES_CONTEXT.getAvailableDataTemplates.bind(
         this.CONTEXT.AVAILABLE_DATA_TEMPLATES_CONTEXT
       ),
@@ -165,6 +167,7 @@ export class UserContextProvider {
     this.logger.debug("Providing User Data Entry Service Context.");
     return {
       getSignedInUser: this.CONTEXT.AUTH_CONTEXT.getSignedInUser.bind(this.CONTEXT.AUTH_CONTEXT),
+      getDataStorageResourceAESKeyFromId: this.CONTEXT.getDataStorageResourceAESKeyFromId.bind(this.CONTEXT),
       getAvailableDataEntries: this.CONTEXT.AVAILABLE_DATA_ENTRIES_CONTEXT.getAvailableDataEntries.bind(this.CONTEXT.AVAILABLE_DATA_ENTRIES_CONTEXT),
       generateRandomDataEntryId: this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT.generateRandomDataEntryId.bind(
         this.CONTEXT.INITIALISED_DATA_STORAGES_CONTEXT

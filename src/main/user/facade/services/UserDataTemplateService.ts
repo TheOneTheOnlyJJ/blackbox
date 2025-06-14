@@ -15,6 +15,7 @@ import { UUID } from "node:crypto";
 
 export interface IUserDataTemplateServiceContext {
   getSignedInUser: () => Readonly<ISignedInUser> | null;
+  getDataStorageResourceAESKeyFromId: (storageId: UUID, logger: LogFunctions | null) => Buffer | undefined;
   getAvailableDataTemplates: () => IUserDataTemplate[];
   generateRandomDataTemplateId: (userDataStorageId: UUID, userDataBoxId: UUID) => UUID;
   addSecuredUserDataTemplateConfig: (securedUserDataTemplateConfig: ISecuredUserDataTemplateConfig, encryptionAESKey: Buffer) => boolean;
@@ -60,7 +61,14 @@ export class UserDataTemplateService {
     }
     // TODO: Delete this
     // this.logger.info(`RECEIVED TEMPLATE CONFIG:\n${JSON.stringify(securedUserDataTemplateConfig, null, 2)}`);
-    return this.CONTEXT.addSecuredUserDataTemplateConfig(securedUserDataTemplateConfig, SIGNED_IN_USER.userDataAESKey); // TODO: When Box Visibility Groups, use key from there
+    const ENCRYPTION_AES_KEY: Buffer | undefined = this.CONTEXT.getDataStorageResourceAESKeyFromId(
+      securedUserDataTemplateConfig.storageId,
+      this.logger
+    );
+    if (ENCRYPTION_AES_KEY === undefined) {
+      throw new Error(`Could not get Secured User Data Template Config encryption AES key`);
+    }
+    return this.CONTEXT.addSecuredUserDataTemplateConfig(securedUserDataTemplateConfig, ENCRYPTION_AES_KEY);
   }
 
   public isUserDataTemplateNameAvailable(userDataTemplateNameAvailabilityRequest: IUserDataTemplateNameAvailabilityRequest): boolean {
@@ -70,6 +78,13 @@ export class UserDataTemplateService {
     const SIGNED_IN_USER: Readonly<ISignedInUser> | null = this.CONTEXT.getSignedInUser();
     if (SIGNED_IN_USER === null) {
       throw new Error("No signed in user");
+    }
+    const DECRYPTION_AES_KEY: Buffer | undefined = this.CONTEXT.getDataStorageResourceAESKeyFromId(
+      userDataTemplateNameAvailabilityRequest.storageId as UUID,
+      this.logger
+    );
+    if (DECRYPTION_AES_KEY === undefined) {
+      throw new Error(`Could not get Storage Secured User Data Template Config decryption AES key`);
     }
     // TODO: Don't make a data storage read for this
     for (const STORAGE_SECURED_DATA_TEMPLATE_CONFIG of this.CONTEXT.getStorageSecuredUserDataTemplates(
@@ -82,7 +97,7 @@ export class UserDataTemplateService {
     )) {
       const SECURED_DATA_TEMPLATE_CONFIG: ISecuredUserDataTemplateConfig = storageSecuredUserDataTemplateConfigToSecuredUserDataTemplateConfig(
         STORAGE_SECURED_DATA_TEMPLATE_CONFIG,
-        SIGNED_IN_USER.userDataAESKey, // TODO: When Box Visibility Groups become a thing, use the corresponding key here
+        DECRYPTION_AES_KEY,
         null
       );
       if (SECURED_DATA_TEMPLATE_CONFIG.name === userDataTemplateNameAvailabilityRequest.name) {

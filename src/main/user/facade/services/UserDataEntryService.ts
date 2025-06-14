@@ -9,6 +9,7 @@ import { UUID } from "node:crypto";
 
 export interface IUserDataEntryServiceContext {
   getSignedInUser: () => Readonly<ISignedInUser> | null;
+  getDataStorageResourceAESKeyFromId: (storageId: UUID, logger: LogFunctions | null) => Buffer | undefined;
   getAvailableDataEntries: () => IUserDataEntry[];
   generateRandomDataEntryId: (userDataStorageId: UUID, userDataBoxId: UUID, userDataTemplateId: UUID) => UUID;
   addUserDataEntry: (userDataEntry: IUserDataEntry, encryptionAESKey: Buffer) => boolean;
@@ -49,7 +50,11 @@ export class UserDataEntryService {
     if (SIGNED_IN_USER === null) {
       throw new Error("No signed in user");
     }
-    return this.CONTEXT.addUserDataEntry(userDataEntry, SIGNED_IN_USER.userDataAESKey); // TODO: When Box Visibility Groups, use key from there
+    const ENCRYPTION_AES_KEY: Buffer | undefined = this.CONTEXT.getDataStorageResourceAESKeyFromId(userDataEntry.storageId, this.logger);
+    if (ENCRYPTION_AES_KEY === undefined) {
+      throw new Error(`Could not get User Data Entry encryption AES key`);
+    }
+    return this.CONTEXT.addUserDataEntry(userDataEntry, ENCRYPTION_AES_KEY);
   }
 
   public getAllSignedInUserAvailableUserDataEntriesInfo(): IUserDataEntryInfo[] {

@@ -8,7 +8,7 @@ import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import DebouncedLink from "./DebouncedLink";
 import { SvgIconComponent } from "@mui/icons-material";
 import { DashboardNavigationArea } from "@renderer/navigationAreas/DashboardNavigationAreas";
-import { ISignedInRootContext, useSignedInRootContext } from "../roots/signedInRoot/SignedInRootContext";
+// import { ISignedInRootContext, useSignedInRootContext } from "../roots/signedInRoot/SignedInRootContext";
 
 interface IUserAccountMenuItem {
   name: string;
@@ -27,7 +27,7 @@ export interface IUserAccountMenuProps {
 }
 
 const UserAccountMenu: FC<IUserAccountMenuProps> = (props: IUserAccountMenuProps) => {
-  const signedInRootContext: ISignedInRootContext = useSignedInRootContext();
+  // const signedInRootContext: ISignedInRootContext = useSignedInRootContext();
   const { dashboardNavigationArea, ...menuProps } = props;
   const USER_ACCOUNT_MENU_ITEMS: IUserAccountMenuItem[] = useMemo<IUserAccountMenuItem[]>((): IUserAccountMenuItem[] => {
     return [
@@ -53,7 +53,7 @@ const UserAccountMenu: FC<IUserAccountMenuProps> = (props: IUserAccountMenuProps
         divider: false
       }
     ];
-  }, [signedInRootContext.signedInUserInfo]);
+  }, []);
 
   return (
     <Menu id="account-menu" {...menuProps}>

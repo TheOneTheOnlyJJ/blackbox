@@ -131,6 +131,38 @@ export class UserContext {
     this.wireAllContextHandlers();
   }
 
+  // This is shared by all services that persist data in User Data Storages
+  // For finer-grained control, declare as required in individual services
+  public getDataStorageResourceAESKeyFromId(storageId: UUID, logger: LogFunctions | null): Buffer | undefined {
+    const SIGNED_IN_USER: Readonly<ISignedInUser> | null = this.AUTH_CONTEXT.getSignedInUser();
+    if (SIGNED_IN_USER === null) {
+      logger?.warn("Cannot get User Data Storage resource AES key! No signed in user");
+      return undefined;
+    }
+    let visibilityGroupId: string | null | undefined = undefined;
+    for (const AVAILABLE_DATA_STORAGE_CONFIG of this.AVAILABLE_DATA_STORAGE_CONFIGS_CONTEXT.getAvailableSecuredDataStorageConfigs()) {
+      if (AVAILABLE_DATA_STORAGE_CONFIG.storageId === storageId) {
+        visibilityGroupId = AVAILABLE_DATA_STORAGE_CONFIG.visibilityGroupId;
+        break;
+      }
+    }
+    if (visibilityGroupId === undefined) {
+      logger?.warn(`Cannot get User Data Storage resource AES key! "${storageId}" not found among available Secured User Data Storage Configs`);
+      return undefined;
+    }
+    if (visibilityGroupId === null) {
+      return SIGNED_IN_USER.userDataAESKey;
+    } else {
+      for (const OPEN_VISIBILITY_GROUP of this.OPEN_DATA_STORAGE_VISIBILITY_GROUPS_CONTEXT.getOpenDataStorageVisibilityGroups()) {
+        if (OPEN_VISIBILITY_GROUP.visibilityGroupId === visibilityGroupId) {
+          return OPEN_VISIBILITY_GROUP.AESKey;
+        }
+      }
+      logger?.warn(`Cannot get User Data Storage resource AES key! User Data Storage Visibility Group "${visibilityGroupId}" not open`);
+      return undefined;
+    }
+  }
+
   private wireAllContextHandlers(): void {
     this.logger.info("Wiring all User Context subcontext handlers.");
     this.wireUserAccountStorageContextHandlers();
@@ -466,6 +498,7 @@ export class UserContext {
         }
       });
     const SECURED_DATA_STORAGE_CONFIGS: ISecuredUserDataStorageConfig[] = [];
+    // TODO: A Map? Or something cleaner and more efficient
     for (let i = visibilityGroups.length - 1; i >= 0; i--) {
       const VISIBILITY_GROUP: IUserDataStorageVisibilityGroup = visibilityGroups[i];
       for (let j = STORAGE_SECURED_DATA_STORAGE_CONFIGS.length - 1; j >= 0; j--) {
@@ -486,13 +519,16 @@ export class UserContext {
     if (SIGNED_IN_USER === null) {
       throw new Error("Null signed in user");
     }
+    const DECRYPTION_AES_KEY: Buffer | undefined = this.getDataStorageResourceAESKeyFromId(dataStorageId, this.logger);
+    if (DECRYPTION_AES_KEY === undefined) {
+      throw new Error(`Could not get Storage Secured User Data Box Config decryption AES key`);
+    }
     return this.INITIALISED_DATA_STORAGES_CONTEXT.getStorageSecuredUserDataBoxConfigsForUserDataStorage(dataStorageId, {
       includeIds: "all",
       excludeIds: null
     } satisfies IUserDataStorageUserDataBoxConfigFilter).map((storageSecuredDataBoxConfig: IStorageSecuredUserDataBoxConfig): IUserDataBox => {
       return securedUserDataBoxConfigToUserDataBox(
-        // TODO: Is this really the correct encryption key to use here? Shouldn't it be the visibility group's key if there is a group?
-        storageSecuredUserDataBoxConfigToSecuredUserDataBoxConfig(storageSecuredDataBoxConfig, SIGNED_IN_USER.userDataAESKey, null),
+        storageSecuredUserDataBoxConfigToSecuredUserDataBoxConfig(storageSecuredDataBoxConfig, DECRYPTION_AES_KEY, null),
         null
       );
     });
@@ -512,6 +548,10 @@ export class UserContext {
     });
     const DATA_TEMPLATES: IUserDataTemplate[] = [];
     STORAGE_ID_TO_BOX_IDS.forEach((boxIds: UUID[], storageId: UUID): void => {
+      const DECRYPTION_AES_KEY: Buffer | undefined = this.getDataStorageResourceAESKeyFromId(storageId, this.logger);
+      if (DECRYPTION_AES_KEY === undefined) {
+        throw new Error(`Could not get Storage Secured User Data Template Config decryption AES key`);
+      }
       const STORAGE_SECURED_DATA_TEMPLATE_CONFIGS: IStorageSecuredUserDataTemplateConfig[] =
         this.INITIALISED_DATA_STORAGES_CONTEXT.getStorageSecuredUserDataTemplates(storageId, {
           includeIds: "all",
@@ -521,11 +561,7 @@ export class UserContext {
       STORAGE_SECURED_DATA_TEMPLATE_CONFIGS.forEach((storageSecuredUserDataTemplateConfig: IStorageSecuredUserDataTemplateConfig): void => {
         DATA_TEMPLATES.push(
           securedUserDataTemplateConfigToUserDataTemplate(
-            storageSecuredUserDataTemplateConfigToSecuredUserDataTemplateConfig(
-              storageSecuredUserDataTemplateConfig,
-              SIGNED_IN_USER.userDataAESKey,
-              null
-            ),
+            storageSecuredUserDataTemplateConfigToSecuredUserDataTemplateConfig(storageSecuredUserDataTemplateConfig, DECRYPTION_AES_KEY, null),
             null
           )
         );
@@ -550,6 +586,10 @@ export class UserContext {
     });
     let dataEntries: IUserDataEntry[] = [];
     STORAGE_ID_TO_TEMPLATE_IDS.forEach((templateIds: UUID[], storageId: UUID): void => {
+      const DECRYPTION_AES_KEY: Buffer | undefined = this.getDataStorageResourceAESKeyFromId(storageId, this.logger);
+      if (DECRYPTION_AES_KEY === undefined) {
+        throw new Error(`Could not get Storage Secured User Data Entry decryption AES key`);
+      }
       const STORAGE_SECURED_DATA_ENTRIES: IStorageSecuredUserDataEntry[] = this.INITIALISED_DATA_STORAGES_CONTEXT.getStorageSecuredUserDataEntries(
         storageId,
         {
@@ -562,7 +602,7 @@ export class UserContext {
         } satisfies IUserDataStorageUserDataEntryFilter
       );
       STORAGE_SECURED_DATA_ENTRIES.forEach((storageSecuredUserDataEntry: IStorageSecuredUserDataEntry): void => {
-        dataEntries.push(storageSecuredUserDataEntryToUserDataEntry(storageSecuredUserDataEntry, SIGNED_IN_USER.userDataAESKey, null));
+        dataEntries.push(storageSecuredUserDataEntryToUserDataEntry(storageSecuredUserDataEntry, DECRYPTION_AES_KEY, null));
       });
     });
     if (dataEntries.length > 0) {

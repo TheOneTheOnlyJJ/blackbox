@@ -62,20 +62,17 @@ export class UserDataStorageConfigService {
       this.logger
     );
     let encryptionAESKey: Buffer;
-    let visibilityGroupName: string | null | undefined = undefined;
     if (userDataStorageConfig.visibilityGroupId === null) {
       encryptionAESKey = SIGNED_IN_USER.userDataAESKey;
-      visibilityGroupName = null;
     } else {
       let visibilityGroupAESKey: Buffer | undefined = undefined;
       for (const OPEN_VISIBILITY_GROUP of this.CONTEXT.getOpenDataStorageVisibilityGroups()) {
         if (OPEN_VISIBILITY_GROUP.visibilityGroupId === userDataStorageConfig.visibilityGroupId) {
           visibilityGroupAESKey = OPEN_VISIBILITY_GROUP.AESKey;
-          visibilityGroupName = OPEN_VISIBILITY_GROUP.name;
           break;
         }
       }
-      if (visibilityGroupAESKey === undefined || visibilityGroupName === undefined) {
+      if (visibilityGroupAESKey === undefined) {
         throw new Error(
           `User Data Storage Visibility Group "${userDataStorageConfig.visibilityGroupId}" not open! Cannot encrypt new User Data Storage Config`
         );
