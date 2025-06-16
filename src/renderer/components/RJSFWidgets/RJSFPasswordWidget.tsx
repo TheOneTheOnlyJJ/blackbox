@@ -8,7 +8,7 @@ import { getUiOptions, WidgetProps } from "@rjsf/utils";
 import { FocusEvent, ChangeEvent, FC, useState, useMemo, useCallback } from "react";
 import { Theme, Tooltip } from "@mui/material";
 
-const PasswordWidget: FC<WidgetProps> = (props: WidgetProps) => {
+const RJSFPasswordWidget: FC<WidgetProps> = (props: WidgetProps) => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const { id, value, uiSchema, required, disabled, readonly, options, rawErrors, onChange, onBlur, onFocus } = props;
   const theme: Theme = useTheme();
@@ -85,4 +85,4 @@ const PasswordWidget: FC<WidgetProps> = (props: WidgetProps) => {
   );
 };
 
-export default PasswordWidget;
+export default RJSFPasswordWidget;
