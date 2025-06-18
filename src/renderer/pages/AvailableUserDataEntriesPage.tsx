@@ -1,16 +1,20 @@
-import { Box, Typography } from "@mui/material";
+import { Box, Button, Stack, Typography } from "@mui/material";
 import AvailableUserDataEntriesDataGrid from "@renderer/components/dataGrids/AvailableUserDataEntriesDataGrid";
+import NewUserDataEntryFormDialog from "@renderer/components/dialogs/forms/user/data/entry/NewUserDataEntryFormDialog";
 import {
   IDashboardLayoutRootContext,
   useDashboardLayoutRootContext
 } from "@renderer/components/roots/dashboardLayoutRoot/DashboardLayoutRootContext";
+import { useDialogOpenState } from "@renderer/hooks/useDialogState";
 import { DASHBOARD_NAVIGATION_AREAS } from "@renderer/navigationAreas/DashboardNavigationAreas";
+import { appLogger } from "@renderer/utils/loggers";
 import { IUserDataBoxInfo } from "@shared/user/data/box/info/UserDataBoxInfo";
 import { IUserDataStorageInfo } from "@shared/user/data/storage/info/UserDataStorageInfo";
 import { IUserDataTemplateIdentifier } from "@shared/user/data/template/identifier/UserDataTemplateIdentifier";
 import { IUserDataTemplateInfo } from "@shared/user/data/template/info/UserDataTemplateInfo";
-import { FC, useEffect, useMemo } from "react";
+import { FC, useCallback, useEffect, useMemo } from "react";
 import { useParams } from "react-router-dom";
+import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 
 export interface IAvailableUserDataEntriesPageParams extends Record<string, string> {
   storageId: string;
@@ -58,6 +62,21 @@ const AvailableUserDataEntriesPage: FC = () => {
     } satisfies IAvailableUserDataEntriesPageData;
   }, [params, dashboardLayoutRootContext]);
 
+  const [isNewUserDataEntryFormDialogOpen, setIsNewUserDataEntryFormDialogOpen] = useDialogOpenState(appLogger, "new User Data Entry form");
+
+  const handleNewDataEntryButtonClick = useCallback((): void => {
+    appLogger.debug("New User Data Entry button clicked.");
+    setIsNewUserDataEntryFormDialogOpen(true);
+  }, [setIsNewUserDataEntryFormDialogOpen]);
+
+  const handleNewUserDataEntryFormDialogClose = useCallback((): void => {
+    setIsNewUserDataEntryFormDialogOpen(false);
+  }, [setIsNewUserDataEntryFormDialogOpen]);
+
+  const handleSuccessfullyAddedNewUserDataEntry = useCallback((): void => {
+    handleNewUserDataEntryFormDialogClose();
+  }, [handleNewUserDataEntryFormDialogClose]);
+
   useEffect((): void => {
     dashboardLayoutRootContext.setDashboardNavigationArea(DASHBOARD_NAVIGATION_AREAS.boxes);
     dashboardLayoutRootContext.setForbiddenLocationName("Available Entries");
@@ -78,6 +97,11 @@ const AvailableUserDataEntriesPage: FC = () => {
         </Typography>
       ) : (
         <>
+          <Stack direction="row" spacing={2}>
+            <Button variant="contained" size="large" startIcon={<AddOutlinedIcon />} onClick={handleNewDataEntryButtonClick}>
+              {`New ${pageData.templateInfo.name} entry`}
+            </Button>
+          </Stack>
           <Typography variant="h5">Available entries:</Typography>
           <Typography variant="caption">
             From template <b>{pageData.templateInfo.name}</b>, box <b>{pageData.boxInfo.name}</b>, storage <b>{pageData.storageInfo.name}</b>.
@@ -85,6 +109,12 @@ const AvailableUserDataEntriesPage: FC = () => {
           <Box sx={{ flex: 1, minHeight: 0, marginTop: ".5rem" }}>
             <AvailableUserDataEntriesDataGrid userDataTemplateInfo={pageData.templateInfo} />
           </Box>
+          <NewUserDataEntryFormDialog
+            templateInfo={pageData.templateInfo}
+            onAddedSuccessfully={handleSuccessfullyAddedNewUserDataEntry}
+            open={isNewUserDataEntryFormDialogOpen}
+            onClose={handleNewUserDataEntryFormDialogClose}
+          />
         </>
       )}
     </Box>

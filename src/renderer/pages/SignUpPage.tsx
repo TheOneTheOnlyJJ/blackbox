@@ -43,7 +43,7 @@ const SignUpPage: FC = () => {
             display: "flex",
             flexDirection: "column",
             alignItems: "stretch",
-            minWidth: "80%",
+            minWidth: "40%",
             maxHeight: "80%",
             padding: "1em",
             overflow: "auto"

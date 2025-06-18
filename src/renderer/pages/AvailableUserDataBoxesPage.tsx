@@ -49,7 +49,6 @@ const AvailableUserDataBoxesPage: FC = () => {
           width: "100%"
         }}
       >
-        {/* TODO: Remove this stack? */}
         <Stack direction="row" spacing={2}>
           <Button variant="contained" size="large" startIcon={<AddOutlinedIcon />} onClick={handleNewDataBoxButtonClick}>
             New box
