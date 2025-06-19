@@ -31,7 +31,7 @@ export const getUserDataEntryCreateInputUISchemaFromTemplateInfo = (
     {}
   );
   return {
-    "ui:title": `New ${userDataTemplateFieldInfo.name} Data Entry`,
+    "ui:title": `New ${userDataTemplateFieldInfo.name} entry`,
     "ui:description": `Adding new data entry to template ${userDataTemplateFieldInfo.name} from box ${userDataBoxName} in data storage ${userDataStorageName}.`,
     storageId: {
       // "ui:title": "Storage",
